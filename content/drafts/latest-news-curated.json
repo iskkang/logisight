@@ -7,13 +7,15 @@
     "shipping": [
       {
         "title": "SCFI drops 3.2% as transpacific spot rates slide amid US tariff uncertainty",
-        "title_ko": "SCFI 3.2% 하락, 미주 서안 운임 $3,420/FEU 약세",
+        "title_ko": "SCFI 3.2% 하락, 미주 서안 $3,420/FEU 약세",
         "url": "https://www.freightwaves.com/news/scfi-drops-transpacific-tariff",
         "source": "FreightWaves",
         "published_at": "2026-05-21T02:00:00.000Z",
         "importance_score": 7,
-        "score_reasons": ["한국↔미주 노선 직접 영향 +3", "SCFI 수치 포함 +2", "미국 관세 정책 언급 +2"],
-        "editor_note": "관세 불확실성으로 부킹 감소 → 미주향 스팟 운임 추가 하락 모니터링 필요"
+        "score_reasons": ["한국↔미주 노선 직접 영향 +3", "SCFI 수치(1,842pt·$3,420/FEU) 포함 +2", "미국 관세 정책 영향 +2"],
+        "editor_note": "관세 불확실성으로 부킹 감소 → 미주향 스팟 운임 추가 하락 가능성 모니터링 필요",
+        "image_url": "https://images.unsplash.com/photo-1628789665182-84e2b3757b59?w=600&h=200&fit=crop&auto=format",
+        "image_credit": "Fredrick F. / Unsplash"
       }
     ],
     "air": [
@@ -24,20 +26,24 @@
         "source": "AirCargoNews",
         "published_at": "2026-05-20T08:00:00.000Z",
         "importance_score": 5,
-        "score_reasons": ["한국↔유럽·미주 수익률 회복 수치 포함 +3", "IATA 공식 통계 +2"],
-        "editor_note": "이커머스·제약 주도 항공화물 강세, 해상 약세 구간 항공 전환 화주 참고"
+        "score_reasons": ["한국↔유럽·미주 수익률 회복 수치 포함 +3", "IATA 공식 통계(11.4% YoY, yield +8~12%) +2"],
+        "editor_note": "이커머스·제약 주도 항공화물 강세, 해상 약세 구간 항공 전환 화주 참고",
+        "image_url": "https://images.unsplash.com/photo-1713846047266-12aa96cbbb6c?w=600&h=200&fit=crop&auto=format",
+        "image_credit": "John McArthur / Unsplash"
       }
     ],
     "rail": [
       {
         "title": "China-Europe rail freight volume hits record 1,800 trains in April; TCR corridor share rises to 34%",
-        "title_ko": "중국-유럽 블록트레인 4월 1,800회 최고치, TCR 점유율 34% 확대",
+        "title_ko": "중국-유럽 블록트레인 4월 1,800회 최고치, TCR 34% 확대",
         "url": "https://www.railfreight.com/beltandroad/2026/05/21/china-europe-rail-april-record",
         "source": "RailFreight",
         "published_at": "2026-05-21T04:00:00.000Z",
         "importance_score": 6,
-        "score_reasons": ["CIS·중앙아시아(TCR) MTL 차별화 노선 +3", "러시아 제재 → TSR→TCR 전환 지정학 리스크 +2", "서비스 동향 +1"],
-        "editor_note": "TCR 점유율 34% 사상 최고 — MTL TCR 영업 레퍼런스로 즉시 활용 가능"
+        "score_reasons": ["CIS·중앙아시아(TCR) MTL 차별화 노선 +3", "러시아 제재 → TSR→TCR 전환 지정학 +2", "서비스 동향 +1"],
+        "editor_note": "TCR 점유율 34% 사상 최고 — MTL TCR 영업 레퍼런스로 즉시 활용 가능",
+        "image_url": "https://images.unsplash.com/photo-1768813387248-9d46c8a515f1?w=600&h=200&fit=crop&auto=format",
+        "image_credit": "Emmanuel Munoz / Unsplash"
       }
     ],
     "trade": []
