@@ -41,7 +41,7 @@ workers/
     ├── rail_tcr.ts                    # CR Express + 중국 NRA
     ├── rail_tsr.ts                    # RZD / PortNews / Vgudok
     ├── news_global.ts                 # JOC, Loadstar, FreightWaves RSS
-    ├── news_korea.ts                  # 카고뉴스, 카고프레스, 쉬핑가제트코리아아 RSS
+    ├── news_korea.ts                  # 카고뉴스, 카고프레스, 쉬핑가제트코리아 RSS
     ├── news_china.ts                  # Landbridge 5 카테고리
     ├── policy_us.ts                   # USTR, CBP RSS
     ├── policy_eu.ts                   # CBAM, ETS
