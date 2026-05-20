@@ -1,0 +1,57 @@
+{
+  "date": "2026-05-21",
+  "curated_at": "2026-05-21T09:00:00+09:00",
+  "total_collected": 3,
+  "total_selected": 3,
+  "sections": {
+    "shipping": [
+      {
+        "title": "SCFI drops 3.2% as transpacific spot rates slide amid US tariff uncertainty",
+        "title_ko": "SCFI 3.2% 하락, 미주 서안 운임 $3,420/FEU로 약세",
+        "url": "https://www.freightwaves.com/news/scfi-drops-transpacific-tariff",
+        "source": "FreightWaves",
+        "published_at": "2026-05-21T02:00:00.000Z",
+        "importance_score": 7,
+        "score_reasons": [
+          "한국↔미주 노선 직접 영향 (+3)",
+          "SCFI 수치 포함 — 1,842pt, $3,420/FEU (+2)",
+          "미국 관세 정책 영향 언급 (+2)"
+        ],
+        "editor_note": "관세 불확실성으로 부킹 감소 → 미주향 스팟 운임 추가 하락 가능성 모니터링 필요"
+      }
+    ],
+    "air": [
+      {
+        "title": "Air cargo demand surges 11% YoY in April driven by e-commerce and pharma",
+        "title_ko": "IATA 항공화물 4월 수요 11.4% 증가, 아시아-유럽 운임 회복",
+        "url": "https://www.aircargonews.net/airlines/air-cargo-demand-surges-april-2026",
+        "source": "AirCargoNews",
+        "published_at": "2026-05-20T08:00:00.000Z",
+        "importance_score": 5,
+        "score_reasons": [
+          "한국↔유럽·미주 노선 수익률 회복 수치 포함 (+3)",
+          "IATA 공식 수치 — 11.4% YoY, yield +8~12% (+2)"
+        ],
+        "editor_note": "이커머스·제약 주도 항공화물 강세, 해상 약세 구간 항공 전환 화주 참고"
+      }
+    ],
+    "rail": [
+      {
+        "title": "China-Europe rail freight volume hits record 1,800 trains in April; TCR corridor share rises to 34%",
+        "title_ko": "중국-유럽 블록트레인 4월 1,800회 최고치, TCR 점유율 34%로 확대",
+        "url": "https://www.railfreight.com/beltandroad/2026/05/21/china-europe-rail-april-record",
+        "source": "RailFreight",
+        "published_at": "2026-05-21T04:00:00.000Z",
+        "importance_score": 6,
+        "score_reasons": [
+          "CIS·중앙아시아(TCR) 노선 직접 영향 — MTL 차별화 노선 (+3)",
+          "러시아 제재 지속으로 TSR→TCR 전환 가속 (+2)",
+          "서비스 동향 — TCR 점유율 28%→34% 상승 (+1)"
+        ],
+        "editor_note": "TCR 점유율 34% 사상 최고 — MTL TCR 영업 레퍼런스로 즉시 활용 가능"
+      }
+    ],
+    "trade": []
+  },
+  "editor_note": "TCR 사상 최고 점유율 34% + 미주 SCFI 급락, 운임 양극화 심화"
+}

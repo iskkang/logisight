@@ -11,6 +11,7 @@ const path = require('path');
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const TYPE = process.argv.find(a => a.startsWith('--type='))?.split('=')[1] || 'daily';
+const HTML_FILE = process.argv.find(a => a.startsWith('--html='))?.split('=').slice(1).join('=');
 const TO = process.env.SEND_TO || process.env.INTERNAL_EMAIL;
 const FROM = 'Logisight <newsletter@logisight.mtlship.com>';
 
@@ -265,7 +266,17 @@ async function send() {
   const data = loadNewsData();
   let subject, html, attachments = [];
 
-  if (TYPE === 'daily') {
+  // --html=path 플래그가 있으면 외부 HTML 파일 직접 사용
+  if (HTML_FILE) {
+    const htmlPath = path.resolve(process.cwd(), HTML_FILE);
+    if (!fs.existsSync(htmlPath)) {
+      console.error(`❌ HTML 파일 없음: ${htmlPath}`);
+      process.exit(1);
+    }
+    html = fs.readFileSync(htmlPath, 'utf-8');
+    subject = `📦 Logisight 뉴스레터 — ${new Date().toLocaleDateString('ko-KR')}`;
+    console.log(`📄 외부 HTML 사용: ${HTML_FILE}`);
+  } else if (TYPE === 'daily') {
     subject = `📦 Logisight 일일 브리핑 — ${new Date().toLocaleDateString('ko-KR')}`;
     html = buildDailyHtml(data);
   } else {
