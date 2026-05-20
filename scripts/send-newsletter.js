@@ -13,7 +13,9 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const TYPE = process.argv.find(a => a.startsWith('--type='))?.split('=')[1] || 'daily';
 const HTML_FILE = process.argv.find(a => a.startsWith('--html='))?.split('=').slice(1).join('=');
 const TO = process.env.SEND_TO || process.env.INTERNAL_EMAIL;
-const FROM = 'Logisight <newsletter@logisight.mtlship.com>';
+// 도메인 미인증 시 Resend 테스트 발신자 사용 (onboarding@resend.dev)
+// 인증 완료 후 → 'Logisight <newsletter@logisight.mtlship.com>' 로 변경
+const FROM = 'Logisight <onboarding@resend.dev>';
 
 // ──────────────────────────────────────────
 // 뉴스 데이터 로드 (수집기 결과 또는 fallback)
@@ -308,8 +310,14 @@ async function send() {
       ...(attachments.length > 0 ? { attachments } : {}),
     });
 
+    // SDK v3: errors are returned in result.error, not thrown
+    if (result.error) {
+      console.error('❌ 이메일 발송 실패:', JSON.stringify(result.error));
+      process.exit(1);
+    }
+
     console.log(`✅ 이메일 발송 성공 → ${TO}`);
-    console.log(`   ID: ${result.data?.id ?? result.id}`);
+    console.log(`   ID: ${result.data?.id}`);
     console.log(`   제목: ${subject}`);
   } catch (error) {
     console.error('❌ 이메일 발송 실패:', error.message);
