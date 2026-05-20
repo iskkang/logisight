@@ -6,9 +6,9 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "collect:all": "ts-node workers/collectors/index.ts",
-    "collect:shipping": "ts-node workers/collectors/shipping_indices.ts",
-    "collect:news": "ts-node workers/collectors/news_global.ts",
+    "collect:all": "ts-node --project tsconfig.workers.json workers/collectors/index.ts",
+    "collect:shipping": "ts-node --project tsconfig.workers.json workers/collectors/shipping_indices.ts",
+    "collect:news": "ts-node --project tsconfig.workers.json workers/collectors/news_global.ts",
     "pdf": "node scripts/generate-pdf.js",
     "lint": "eslint src --ext ts,tsx"
   },
@@ -23,6 +23,15 @@
     "react-router-dom": "^6.22.0",
     "recharts": "^2.10.0",
     "resend": "^3.5.0"
+  },
+  "ts-node": {
+    "compilerOptions": {
+      "module": "CommonJS",
+      "moduleResolution": "node",
+      "esModuleInterop": true,
+      "noUnusedLocals": false,
+      "noUnusedParameters": false
+    }
   },
   "devDependencies": {
     "@types/react": "^18.2.0",

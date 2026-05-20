@@ -1,25 +1,50 @@
 // workers/collectors/utils/snapshot_writer.ts
-// Persists a CollectorResult snapshot.
-// Phase 1 (no Supabase): console output only.
-// Phase 2: replace the console block with a Supabase upsert.
+// Phase 1: writes CollectorResult to content/drafts/latest-news.json.
+// Phase 2 (Supabase): replace the fs block with a Supabase upsert.
 
-import type { CollectorResult, CollectorData } from '../types';
+import * as fs from 'fs';
+import * as path from 'path';
+import type { CollectorResult } from '../types';
 
-function formatRow(item: CollectorData): string {
-  const status = item.is_complete ? '✅' : '❌';
-  const value = typeof item.data_value === 'object'
-    ? JSON.stringify(item.data_value).slice(0, 120)
-    : String(item.data_value);
-  const suffix = item.error_message ? ` — ${item.error_message}` : '';
-  return `  ${status} [${item.data_type}] ${item.data_key} | ${value}${suffix}`;
+const OUTPUT_PATH = path.resolve(__dirname, '../../../content/drafts/latest-news.json');
+
+interface NewsOutput {
+  date: string;
+  shipping: object[];
+  air: object[];
+  rail: object[];
+  trade: object[];
+}
+
+function loadExisting(): NewsOutput {
+  if (fs.existsSync(OUTPUT_PATH)) {
+    try {
+      return JSON.parse(fs.readFileSync(OUTPUT_PATH, 'utf-8'));
+    } catch {
+      // corrupted — start fresh
+    }
+  }
+  return { date: '', shipping: [], air: [], rail: [], trade: [] };
 }
 
 export async function snapshotWriter(result: CollectorResult): Promise<void> {
-  const total = result.data.length;
-  const ok = result.data.filter(d => d.is_complete).length;
+  const output = loadExisting();
+  output.date = new Date().toLocaleDateString('ko-KR');
 
-  console.log(`\n📦 snapshot [${result.section}] — ${ok}/${total} complete`);
+  let added = 0;
   for (const item of result.data) {
-    console.log(formatRow(item));
+    if (!item.is_complete) continue;
+    const section: string = item.data_value?.section ?? result.section;
+    if (section in output) {
+      (output as unknown as Record<string, object[]>)[section].push(item.data_value);
+      added++;
+    }
   }
+
+  fs.mkdirSync(path.dirname(OUTPUT_PATH), { recursive: true });
+  fs.writeFileSync(OUTPUT_PATH, JSON.stringify(output, null, 2), 'utf-8');
+
+  const ok = result.data.filter(d => d.is_complete).length;
+  const total = result.data.length;
+  console.log(`\n📦 snapshot [${result.section}] — ${ok}/${total} 성공, +${added}건 → latest-news.json`);
 }

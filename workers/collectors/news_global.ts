@@ -87,6 +87,15 @@ async function parseRssFeed(url: string): Promise<NewsItem[]> {
   return items;
 }
 
+async function runStandalone() {
+  const result = await collect();
+  await snapshotWriter(result);
+}
+
+if (require.main === module) {
+  runStandalone().catch(err => { console.error(err); process.exit(1); });
+}
+
 export async function collect(): Promise<CollectorResult> {
   const result: CollectorResult = {
     section: 'shipping',
