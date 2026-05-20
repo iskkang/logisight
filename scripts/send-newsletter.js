@@ -13,9 +13,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const TYPE = process.argv.find(a => a.startsWith('--type='))?.split('=')[1] || 'daily';
 const HTML_FILE = process.argv.find(a => a.startsWith('--html='))?.split('=').slice(1).join('=');
 const TO = process.env.SEND_TO || process.env.INTERNAL_EMAIL;
-// 도메인 미인증 시 Resend 테스트 발신자 사용 (onboarding@resend.dev)
-// 인증 완료 후 → 'Logisight <newsletter@logisight.mtlship.com>' 로 변경
-const FROM = 'Logisight <onboarding@resend.dev>';
+const FROM = 'Logisight <newsletter@mtlb.co.kr>';
 
 // ──────────────────────────────────────────
 // 뉴스 데이터 로드 (수집기 결과 또는 fallback)
