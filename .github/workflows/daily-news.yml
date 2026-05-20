@@ -1,0 +1,37 @@
+name: Daily News Briefing
+
+on:
+  schedule:
+    - cron: '0 0 * * *'   # 매일 09:00 KST (UTC 00:00)
+  workflow_dispatch:
+
+jobs:
+  daily-news:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Collect news
+        run: npm run collect:news
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Generate daily brief
+        run: npm run brief:generate
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Send daily email
+        run: node scripts/send-newsletter.js --type=daily
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          SEND_TO: ${{ secrets.INTERNAL_EMAIL }}

@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+scripts/node_modules/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build
+dist/
+dist-ssr/
+
+# Claude Code settings (local only)
+.claude/settings.local.json
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+*.swp
+
+# Supabase local
+supabase/.temp/
+
+# Content drafts (선택: 팀이면 포함, 혼자면 제외)
+# content/drafts/
+
+# PDF 생성 임시 파일
+*.pdf.tmp
+
+# Repo setup zip
+*.zip
