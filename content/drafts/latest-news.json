@@ -1,37 +1,266 @@
 {
-  "date": "2026. 5. 21.",
+  "date": "2026. 5. 22.",
   "shipping": [
     {
-      "title": "SCFI drops 3.2% as transpacific spot rates slide amid US tariff uncertainty",
-      "url": "https://www.freightwaves.com/news/scfi-drops-transpacific-tariff",
-      "published_at": "2026-05-21T02:00:00.000Z",
-      "summary_en": "The Shanghai Containerized Freight Index fell 3.2% week-on-week to 1,842 points as spot rates on the Asia-US West Coast lane declined $180/FEU to $3,420/FEU. Carriers cite reduced bookings following the latest round of US tariff escalations on Chinese goods.",
+      "title": "SCFI drops 3.2% as transpacific spot rates slide",
+      "url": "https://www.freightwaves.com",
+      "source": "FreightWaves",
+      "published_at": "2026-05-21"
+    },
+    {
+      "title": "Blank sailings surge 34 void voyages in W20-W24",
+      "url": "https://www.drewry.co.uk",
+      "source": "Drewry",
+      "published_at": "2026-05-21"
+    },
+    {
+      "title": "FreightWaves announces 2026 Fraud Fighters Award winners",
+      "url": "https://www.freightwaves.com/news/freightwaves-announces-2026-fraud-fighters-award-winners",
+      "published_at": "2026-05-21T14:50:06.000Z",
+      "summary_en": "FreightWaves awarded two categories of winners: Logistics Operations and Solution Providers.\nThe post FreightWaves announces 2026 Fraud Fighters Award winners appeared first on FreightWaves.",
+      "source": "FreightWaves",
+      "section": "shipping",
+      "language": "en"
+    },
+    {
+      "title": "Target moves to elevate supply chain operations, inventory reliability",
+      "url": "https://www.freightwaves.com/news/target-moves-to-elevate-supply-chain-operations-inventory-reliability",
+      "published_at": "2026-05-21T14:08:05.000Z",
+      "summary_en": "Target has made it a strategic priority to improve supply chain operations so it can avoid out-of-stock situations and reduce costs.\nThe post Target moves to elevate supply chain operations, inventory reliability appeared first on FreightWaves.",
+      "source": "FreightWaves",
+      "section": "shipping",
+      "language": "en"
+    },
+    {
+      "title": "OmniTrax tabs Hoskins to lead transload",
+      "url": "https://www.freightwaves.com/news/omnitrax-tabs-hoskins-to-lead-transload",
+      "published_at": "2026-05-21T13:57:53.000Z",
+      "summary_en": "OmniTRAX appoints VP of transload to lead its network-wide expansion.\nThe post OmniTrax tabs Hoskins to lead transload appeared first on FreightWaves.",
+      "source": "FreightWaves",
+      "section": "shipping",
+      "language": "en"
+    },
+    {
+      "title": "DoJ indicts Chinese container makers on price-fixing charges",
+      "url": "https://www.freightwaves.com/news/doj-indicts-chinese-container-makers-on-price-fixing-charges",
+      "published_at": "2026-05-21T12:12:25.000Z",
+      "summary_en": "The U.S. Justice Department has indicted four major Chinese shipping container manufacturers and seven executives in a global price-fixing conspiracy.\nThe post DoJ indicts Chinese container makers on price-fixing charges appeared first on FreightWaves.",
+      "source": "FreightWaves",
+      "section": "shipping",
+      "language": "en"
+    },
+    {
+      "title": "Another CA truck crash and two dead kids on Highway 99",
+      "url": "https://www.freightwaves.com/news/another-ca-truck-crash-and-two-dead-kids-on-highway-99",
+      "published_at": "2026-05-21T09:55:00.000Z",
+      "summary_en": "A Freightliner Cascadia operated by Amritsar Trans Inc., a five-truck carrier out of Manteca, California, rear-ended three vehicles on Highway 99 near Lodi on May 19, 2026, killing two young men. The driver fled on foot. The carrier sits inside a web of 267 carriers clustered across residential addr",
       "source": "FreightWaves",
       "section": "shipping",
       "language": "en"
     }
   ],
+  "rail": [
+    {
+      "title": "China-Europe rail freight hits record 1800 trains in April",
+      "url": "https://www.railfreight.com",
+      "source": "RailFreight",
+      "published_at": "2026-05-21"
+    }
+  ],
+  "trade": [
+    {
+      "title": "EU ETS shipping phase 100% transition approaching",
+      "url": "https://www.supplychaindive.com",
+      "source": "Supply Chain Dive",
+      "published_at": "2026-05-21"
+    },
+    {
+      "title": "Matson reports air-to-ocean freight conversions amid Iran war",
+      "url": "https://www.supplychaindive.com/news/matson-reports-air-to-ocean-freight-conversions-amid-iran-war/820506/",
+      "published_at": "2026-05-21T15:11:00.000Z",
+      "summary_en": "&lt;figure&gt;&lt;div&gt;&lt;img src=\"https://imgproxy.divecdn.com/kGEQkjwd2YGOHpA2SmN-KteVWK5VQp8nJR8GBFDb4IE/g:ce/rs:fill:1600:900:1/Z3M6Ly9kaXZlc2l0ZS1zdG9yYWdlL2RpdmVpbWFnZS9HZXR0eUltYWdlcy0xMTg4NTA0MjIyLmpwZw==.webp\"/&gt;&lt;/div&gt;&lt;/figure&gt;&lt;p&gt;The U.S.-based ocean carrier benefited",
+      "source": "SupplyChainDive",
+      "section": "trade",
+      "language": "en"
+    },
+    {
+      "title": "EU lawmakers back US trade pact with built-in safeguards",
+      "url": "https://www.supplychaindive.com/news/eu-lawmakers-back-us-trade-pact-with-built-in-safeguards/820749/",
+      "published_at": "2026-05-20T19:53:00.000Z",
+      "summary_en": "&lt;figure&gt;&lt;div&gt;&lt;img src=\"https://imgproxy.divecdn.com/J8unAr-aTmBy0eK9_x-loJ1SbBfLamZ_3c8oI8TXcgA/g:ce/rs:fill:1600:900:1/Z3M6Ly9kaXZlc2l0ZS1zdG9yYWdlL2RpdmVpbWFnZS9HZXR0eUltYWdlcy0yMjI2NjA0Njc2LmpwZw==.webp\"/&gt;&lt;/div&gt;&lt;/figure&gt;&lt;p&gt;The European Parliament and EU Council",
+      "source": "SupplyChainDive",
+      "section": "trade",
+      "language": "en"
+    },
+    {
+      "title": "Muted peak season expected as ocean shippers delay contract signing",
+      "url": "https://www.supplychaindive.com/news/muted-peak-season-expected-as-ocean-shippers-delay-contract-signing/820397/",
+      "published_at": "2026-05-20T16:06:42.000Z",
+      "summary_en": "&lt;figure&gt;&lt;div&gt;&lt;img src=\"https://imgproxy.divecdn.com/n91zTUxXVsYoAHw6FMcaLfP0imTWJ8TCCYKIf5lZ6NA/g:ce/rs:fill:1600:900:1/Z3M6Ly9kaXZlc2l0ZS1zdG9yYWdlL2RpdmVpbWFnZS9HZXR0eUltYWdlcy0yMjU4NzExNDUxXzEuanBn.webp\"/&gt;&lt;/div&gt;&lt;/figure&gt;&lt;p&gt;Despite market uncertainty, some shipp",
+      "source": "SupplyChainDive",
+      "section": "trade",
+      "language": "en"
+    },
+    {
+      "title": "Havertys Furniture battles rising fuel costs across supply chain",
+      "url": "https://www.supplychaindive.com/news/havertys-furniture-battles-rising-fuel-costs-across-supply-chain/820299/",
+      "published_at": "2026-05-20T14:58:31.000Z",
+      "summary_en": "&lt;figure&gt;&lt;div&gt;&lt;img src=\"https://imgproxy.divecdn.com/6ObwmB7Kl4WdG2teylCK-r8MrA9heYayo7UIEQRplik/g:ce/rs:fill:1600:900:1/Z3M6Ly9kaXZlc2l0ZS1zdG9yYWdlL2RpdmVpbWFnZS9HZXR0eUltYWdlcy0xMTkwNDQ2NDg3LmpwZw==.webp\"/&gt;&lt;/div&gt;&lt;/figure&gt;&lt;p&gt;The retailer is facing elevated vendor",
+      "source": "SupplyChainDive",
+      "section": "trade",
+      "language": "en"
+    },
+    {
+      "title": "FedEx board approves trucking business spinoff",
+      "url": "https://www.supplychaindive.com/news/fedex-board-approves-trucking-business-spinoff/820379/",
+      "published_at": "2026-05-20T14:54:00.000Z",
+      "summary_en": "&lt;p&gt;A new stand-alone FedEx Freight may resemble a start-up, but the LTL carrier is far from it, experts say.&amp;nbsp;&lt;/p&gt;",
+      "source": "SupplyChainDive",
+      "section": "trade",
+      "language": "en"
+    },
+    {
+      "title": "Oil Prices Bounce Higher on Iran War Uncertainty",
+      "url": "https://www.ttnews.com/articles/oil-prices-bounce-higher",
+      "published_at": "2026-05-21T14:26:33.000Z",
+      "summary_en": "Brent crude, the international standard, gained 3.4% to $108.54 per barrel.",
+      "source": "TTNews",
+      "section": "trade",
+      "language": "en"
+    },
+    {
+      "title": "Proterra to Offer U.S. Cell Option for Batteries From 2027",
+      "url": "https://www.ttnews.com/articles/proterra-us-cell-option-2027",
+      "published_at": "2026-05-21T14:01:02.000Z",
+      "summary_en": "Proterra’s Onyx battery platform currently uses cylindrical nickel manganese cobalt lithium-ion cells from LG Energy Solutions, manufactured in South Korea.",
+      "source": "TTNews",
+      "section": "trade",
+      "language": "en"
+    },
+    {
+      "title": "FedEx Files Files Staged-Crash Racketeering Suit",
+      "url": "https://www.ttnews.com/articles/fedex-files-racketeering-case",
+      "published_at": "2026-05-21T13:32:59.000Z",
+      "summary_en": "The lawsuit describes an intentional collision-for-profit enterprise that recruited claimants to stage or exaggerate crashes involving FedEx’s commercial vehicles.",
+      "source": "TTNews",
+      "section": "trade",
+      "language": "en"
+    },
+    {
+      "title": "Walmart Delivers Strong Quarter Fueled by Online Shopping",
+      "url": "https://www.ttnews.com/articles/walmart-earnings-q1-2026",
+      "published_at": "2026-05-21T12:18:58.000Z",
+      "summary_en": "Walmart was cautious about the rest of the year given the current economic uncertainty.",
+      "source": "TTNews",
+      "section": "trade",
+      "language": "en"
+    },
+    {
+      "title": "Class 8 Truck Sales Decline 11.8% as Fleets Delay Purchases",
+      "url": "https://www.ttnews.com/articles/class-8-sales-April-2026",
+      "published_at": "2026-05-20T22:07:00.000Z",
+      "summary_en": "U.S. Class 8 retail sales fell below the prior-year level as buyers continued to wait for a more sustained freight market recovery in April.",
+      "source": "TTNews",
+      "section": "trade",
+      "language": "en"
+    }
+  ],
   "air": [
     {
-      "title": "Air cargo demand surges 11% YoY in April driven by e-commerce and pharma",
-      "url": "https://www.aircargonews.net/airlines/air-cargo-demand-surges-april-2026",
-      "published_at": "2026-05-20T08:00:00.000Z",
-      "summary_en": "IATA reported air cargo demand grew 11.4% year-on-year in April 2026, with capacity utilization reaching 62.3%. E-commerce from Asia and pharmaceutical shipments led growth. Asia-Europe and transpacific lanes saw the strongest yield recovery, up 8-12% versus April 2025.",
+      "title": "Air cargo demand surges 11% YoY in April",
+      "url": "https://www.aircargonews.net",
+      "source": "AirCargoNews",
+      "published_at": "2026-05-21"
+    },
+    {
+      "title": "IAG Cargo to benefit from new routes to Mexico and Peru",
+      "url": "https://www.aircargonews.net/supply-chains/2026/05/iag-cargo-to-benefit-from-new-routes-to-mexico-and-peru/",
+      "published_at": "2026-05-21T13:25:54.000Z",
+      "summary_en": "IAG Cargo is set to benefit from more opportunities to move specialist verticals from Spain to Mexico and Peru. International Airlines Group (IAG), the parent and passenger arm of IAG Cargo, has announced two new passenger routes, from Madrid (MAD) to Monterrey (MTY) and Barcelona (BCN) to Lima (LIM",
       "source": "AirCargoNews",
       "section": "air",
       "language": "en"
-    }
-  ],
-  "rail": [
+    },
     {
-      "title": "China-Europe rail freight volume hits record 1,800 trains in April; TCR corridor share rises to 34%",
-      "url": "https://www.railfreight.com/beltandroad/2026/05/21/china-europe-rail-april-record",
-      "published_at": "2026-05-21T04:00:00.000Z",
-      "summary_en": "China-Europe block trains reached 1,800 trips in April 2026, a 14% year-on-year increase. The Trans-Caspian Route (TCR) corridor — via Kazakhstan, Caspian Sea, and Azerbaijan — captured a 34% share, up from 28% in Q4 2025, as operators seek alternatives to the Trans-Siberian Route amid ongoing Russia sanctions.",
-      "source": "RailFreight",
-      "section": "rail",
+      "title": "Widebody conversions overtake narrowbodies for first time in over 15 years",
+      "url": "https://www.aircargonews.net/freighter-conversions-mro/2026/05/widebody-conversions-overtake-narrowbodies-for-first-time-in-over-15-years/",
+      "published_at": "2026-05-21T11:17:42.000Z",
+      "summary_en": "Widebody freighter conversions exceeded narrowbody conversions for the first time since 2009 last year as a result of narrowbody oversupply. This pivotal change in the freighter conversion market was highlighted by aviation advisory firm IBA in its &#8220;The Freighter Outlook, Values &#38; Conversi",
+      "source": "AirCargoNews",
+      "section": "air",
+      "language": "en"
+    },
+    {
+      "title": "ACS continues German expansion with new office",
+      "url": "https://www.aircargonews.net/charter-company/2026/05/acs-continues-german-expansion-with-new-office/",
+      "published_at": "2026-05-21T10:41:24.000Z",
+      "summary_en": "Charter firm Air Charter Service (ACS) has continued its office expansion with the opening of a new base in Stuttgart. ACS said the new office was its fifth in Germany and its 42nd globally. Stuttgart had been chosen as a location because of its importance as a financial centre and the fact that it",
+      "source": "AirCargoNews",
+      "section": "air",
+      "language": "en"
+    },
+    {
+      "title": "ACN Awards category spotlight: Innovation &#8211; digital",
+      "url": "https://www.aircargonews.net/editorial/2026/05/acn-awards-category-spotlight-innovation-digital/",
+      "published_at": "2026-05-21T10:41:01.000Z",
+      "summary_en": "This year’s Air Cargo News Awards are now open for entry and we are looking for companies that have developed innovative digital solutions for the industry. This award recognises air cargo companies that have independently or in partnership invested in or developed innovative digital solutions that",
+      "source": "AirCargoNews",
+      "section": "air",
+      "language": "en"
+    },
+    {
+      "title": "Swissport enters Moroccan cargo market through latest acquisition",
+      "url": "https://www.aircargonews.net/ground-handler/2026/05/swissport-enters-moroccan-cargo-market-through-latest-acquisition/",
+      "published_at": "2026-05-21T10:40:42.000Z",
+      "summary_en": "Ground handler Swissport has entered the Moroccan cargo market through the purchase of Swiftair Maroc as part of its strategy to expand its cargo presence. Casablanca-based Swiftair Maroc is a cargo handling company operating at Mohammed V Airport, which is Morocco’s primary airfreight hub and handl",
+      "source": "AirCargoNews",
+      "section": "air",
+      "language": "en"
+    },
+    {
+      "title": "SpaceX is heavily reliant on Starlink for growth and profit as it marches toward Nasdaq listing",
+      "url": "https://www.cnbc.com/2026/05/21/spacex-starlink-growth-profit-nasdaq-ipo.html",
+      "published_at": "2026-05-21T14:12:49.000Z",
+      "summary_en": "SpaceX's IPO prospectus underscores the importance of Starlink to the company's operations.",
+      "source": "CNBC Logistics",
+      "section": "air",
+      "language": "en"
+    },
+    {
+      "title": "Oil prices jump more than 3% after Iran supreme leader says uranium must remain in country",
+      "url": "https://www.cnbc.com/2026/05/21/oil-price-today-iran-war-strait-hormuz-trump.html",
+      "published_at": "2026-05-21T15:14:02.000Z",
+      "summary_en": "Iran's position on its enriched uranium will likely complicate peace talks with the U.S.",
+      "source": "CNBC Logistics",
+      "section": "air",
+      "language": "en"
+    },
+    {
+      "title": "Quantum stocks soar as U.S. reportedly plans $2 billion ‘award’ and taking equity stakes",
+      "url": "https://www.cnbc.com/2026/05/21/quantum-stocks--us-taking-equity-stakes.html",
+      "published_at": "2026-05-21T14:59:39.000Z",
+      "summary_en": "Quantum computing shares popped following reports that the U.S. government will award grants to nine firms operating in the space.",
+      "source": "CNBC Logistics",
+      "section": "air",
+      "language": "en"
+    },
+    {
+      "title": "Spotify stock pops on guidance at first investor day since 2022",
+      "url": "https://www.cnbc.com/2026/05/21/spotify-spot-stock-guidance-investor-day-ai.html",
+      "published_at": "2026-05-21T15:00:52.000Z",
+      "summary_en": "Spotify, which is holding its first investor day in four years, is now under the direction of co-CEOs Gustav Söderström and Alex Norström.",
+      "source": "CNBC Logistics",
+      "section": "air",
+      "language": "en"
+    },
+    {
+      "title": "Stellantis targets 35% North American sales increase, led by Ram Trucks and Chrysler revival",
+      "url": "https://www.cnbc.com/2026/05/21/stellantis-north-american-sales-ram-chrysler.html",
+      "published_at": "2026-05-21T15:10:54.000Z",
+      "summary_en": "Stellantis said at an investor day Thursday that it plans to increase its North American sales by 35% by 2030.",
+      "source": "CNBC Logistics",
+      "section": "air",
       "language": "en"
     }
-  ],
-  "trade": []
+  ]
 }
