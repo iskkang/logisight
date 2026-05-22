@@ -462,6 +462,626 @@
       "unit": "$/FEU",
       "source": "Freightos FBX",
       "source_url": "https://fbx.freightos.com/"
+    },
+    {
+      "port": "Global Average",
+      "fuel": "VLSFO",
+      "price": 380,
+      "currency": "USD",
+      "unit": "$/MT",
+      "date": "2026-05-22",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices"
+    },
+    {
+      "port": "Global Average",
+      "fuel": "IFO380",
+      "price": 380,
+      "currency": "USD",
+      "unit": "$/MT",
+      "date": "2026-05-22",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices"
+    },
+    {
+      "port": "Global Average",
+      "fuel": "MGO",
+      "price": 380,
+      "currency": "USD",
+      "unit": "$/MT",
+      "date": "2026-05-22",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices"
+    },
+    {
+      "name": "FBX_글로벌",
+      "value": null,
+      "change_pct": null,
+      "date": "2026-05-22",
+      "unit": "$/FEU",
+      "source": "Freightos FBX",
+      "source_url": "https://fbx.freightos.com/"
+    },
+    {
+      "void_count": 30,
+      "cancel_rate": 4,
+      "total_sailings": null,
+      "raw_snippet": "Home\n/\nExpertise\n/\nSupply Chain Advisors\nRegister\nLogin\nContact\nDrewry Online Services\nResources\nAbout us\nResearch\nAdvisory\nSectors\nSupply Chain Advisors\nBack to Supply Chain Advisors\nService Expertise\nRelated research\nContact us\nIndices and Trackers\nWorld Container Index - 21 May\nIntra-Asia Container Index - 15 May\nAirfreight Price Index - April\nCancelled Sailings Tracker - 15 May\nLow-sulphur Bunker Price Tracker\nAreas of Expertise\nOcean Freight Cost Benchmarks\nOcean Freight Bid Support\nContrac",
+      "date": "2026-05-22",
+      "source": "Drewry Cancelled Sailings Tracker",
+      "source_url": "https://www.drewry.co.uk/supply-chain-advisors/supply-chain-expertise/cancelled-sailings-tracker",
+      "weeks": "W20-W24"
+    },
+    {
+      "title": "IAG카고, 멕시코·페루 노선 신설",
+      "url": "http://www.cargonews.co.kr/news/articleView.html?idxno=60204",
+      "published_at": "2026-05-21T21:20:52.000Z",
+      "summary_en": "",
+      "source": "카고뉴스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "부산항만공사, 안전캠페인 주간 운영",
+      "url": "http://www.cargonews.co.kr/news/articleView.html?idxno=60202",
+      "published_at": "2026-05-21T06:20:48.000Z",
+      "summary_en": "",
+      "source": "카고뉴스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "인천공항공사, 사이버보안 협의회 개최",
+      "url": "http://www.cargonews.co.kr/news/articleView.html?idxno=60201",
+      "published_at": "2026-05-21T01:39:55.000Z",
+      "summary_en": "",
+      "source": "카고뉴스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "油價 하락 항공화물 운임 다소 하락세",
+      "url": "http://www.cargonews.co.kr/news/articleView.html?idxno=60196",
+      "published_at": "2026-05-20T23:11:34.000Z",
+      "summary_en": "",
+      "source": "카고뉴스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "텔레포트, 매출 ‘34%’ 화물 ‘25%’나 급증",
+      "url": "http://www.cargonews.co.kr/news/articleView.html?idxno=60195",
+      "published_at": "2026-05-20T09:19:09.000Z",
+      "summary_en": "",
+      "source": "카고뉴스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "'택배 분류하고 냉장고 번쩍'…국내도 ‘휴머노이드 경쟁’ 본격화",
+      "url": "https://www.klnews.co.kr/news/articleView.html?idxno=321226",
+      "published_at": "2026-05-22T07:03:07.029Z",
+      "summary_en": "",
+      "source": "KL뉴스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "태웅로직스, 우즈벡에 제2물류창고 건설…중앙아시아 물류 영토 넓힌다",
+      "url": "https://www.klnews.co.kr/news/articleView.html?idxno=321205",
+      "published_at": "2026-05-22T07:03:07.029Z",
+      "summary_en": "",
+      "source": "KL뉴스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "“물류업계도 밸류업 시대”…일부 기업은 소극 행보 여전",
+      "url": "https://www.klnews.co.kr/news/articleView.html?idxno=321202",
+      "published_at": "2026-05-22T07:03:07.029Z",
+      "summary_en": "",
+      "source": "KL뉴스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "용마로지스, ‘안성 신허브 물류센터’ 착공...초격차 스마트 물류 시동",
+      "url": "https://www.klnews.co.kr/news/articleView.html?idxno=321172",
+      "published_at": "2026-05-22T07:03:07.029Z",
+      "summary_en": "",
+      "source": "KL뉴스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "과기부, 'K-휴머노이드' 미래 앞당긴다",
+      "url": "https://www.klnews.co.kr/news/articleView.html?idxno=321171",
+      "published_at": "2026-05-22T07:03:07.029Z",
+      "summary_en": "",
+      "source": "KL뉴스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "Cargo Korea",
+      "url": "http://www.maritimepress.co.kr/news/articleList.html?sc_section_code=S1N3&view_type=sm",
+      "published_at": "2026-05-22T07:03:07.254Z",
+      "summary_en": "",
+      "source": "마리타임프레스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "MaritimePress",
+      "url": "http://www.maritimepress.co.kr/news/articleList.html?sc_section_code=S1N13&view_type=sm",
+      "published_at": "2026-05-22T07:03:07.255Z",
+      "summary_en": "",
+      "source": "마리타임프레스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "(2/18)긴급해양전략회의-공정위 과징금 대응을 중심으로",
+      "url": "http://www.maritimepress.co.kr/bbs/view.html?idxno=18712",
+      "published_at": "2026-05-22T07:03:07.255Z",
+      "summary_en": "",
+      "source": "마리타임프레스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "(10/21)한국해사포럼 제3회 공개포럼개최",
+      "url": "http://www.maritimepress.co.kr/bbs/view.html?idxno=14813",
+      "published_at": "2026-05-22T07:03:07.255Z",
+      "summary_en": "",
+      "source": "마리타임프레스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "교육/2017 하반기 해운 금융 위험관리교육",
+      "url": "http://www.maritimepress.co.kr/bbs/view.html?idxno=11259",
+      "published_at": "2026-05-22T07:03:07.255Z",
+      "summary_en": "",
+      "source": "마리타임프레스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "State of Freight 5 takeaways: Montgomery talk; short-term strength",
+      "url": "https://www.freightwaves.com/news/state-of-freight-5-takeaways-montgomery-talk-short-term-strength",
+      "published_at": "2026-05-21T22:36:56.000Z",
+      "summary_en": "Fallout from the Montgomery case was a subject in this month’s State of Freight webinar.\nThe post State of Freight 5 takeaways: Montgomery talk; short-term strength appeared first on FreightWaves.",
+      "source": "FreightWaves",
+      "section": "shipping",
+      "language": "en"
+    },
+    {
+      "title": "AAR slams “hypocrisy” as Trump-backed rail safety measure is included in transportation funding bill",
+      "url": "https://www.freightwaves.com/news/aar-slams-hypocrisy-as-trump-backed-rail-safety-measure-is-included-in-transportation-funding-bill",
+      "published_at": "2026-05-21T20:23:30.000Z",
+      "summary_en": "The Railway Safety Act opposed by railroads rode Trump’s backing to be included in surface transportation funding legislation.\nThe post AAR slams “hypocrisy” as Trump-backed rail safety measure is included in transportation funding bill appeared first on FreightWaves.",
+      "source": "FreightWaves",
+      "section": "shipping",
+      "language": "en"
+    },
+    {
+      "title": "Broker liability ruling: Carriers, brokers, analysts weigh in",
+      "url": "https://www.freightwaves.com/news/broker-liability-ruling-carriers-brokers-analysts-weigh-in",
+      "published_at": "2026-05-21T20:09:16.000Z",
+      "summary_en": "Industry participants say asset-based carriers are likely the winners following the Supreme Court’s landmark ruling on freight broker liability.\nThe post Broker liability ruling: Carriers, brokers, analysts weigh in appeared first on FreightWaves.",
+      "source": "FreightWaves",
+      "section": "shipping",
+      "language": "en"
+    },
+    {
+      "title": "Georgia ports volumes hit by higher costs, softer market",
+      "url": "https://www.freightwaves.com/news/georgia-ports-volumes-hit-by-higher-costs-softer-market",
+      "published_at": "2026-05-21T19:46:33.000Z",
+      "summary_en": "The Georgia Ports Authority said higher operating costs and a softer market were reflected in the latest container figures for the Port of Savannah. \nThe post Georgia ports volumes hit by higher costs, softer market appeared first on FreightWaves.",
+      "source": "FreightWaves",
+      "section": "shipping",
+      "language": "en"
+    },
+    {
+      "title": "The Charcoal on That Truck Costs More to Import, More to Buy, and Is Headed to a Cookout That Runs 13% Higher Than Last Year. Here Is What That Tells You About the Consumer Right Now.",
+      "url": "https://www.freightwaves.com/news/the-charcoal-on-that-truck-costs-more-to-import-more-to-buy-and-is-headed-to-a-cookout-that-runs-13-higher-than-last-year-here-is-what-that-tells-you-about-the-consumer-right-now",
+      "published_at": "2026-05-21T19:35:13.000Z",
+      "summary_en": "Pull up the import data on U.S. charcoal briquette shipments and you are looking at something that some people in trucking would not think to check heading into a holiday weekend. But that data, read against the consumer spending picture for Memorial Day 2026, tells you something specific about the",
+      "source": "FreightWaves",
+      "section": "shipping",
+      "language": "en"
+    },
+    {
+      "title": "IAG카고, 멕시코·페루 노선 신설",
+      "url": "http://www.cargonews.co.kr/news/articleView.html?idxno=60204",
+      "published_at": "2026-05-21T21:20:52.000Z",
+      "summary_en": "",
+      "source": "카고뉴스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "부산항만공사, 안전캠페인 주간 운영",
+      "url": "http://www.cargonews.co.kr/news/articleView.html?idxno=60202",
+      "published_at": "2026-05-21T06:20:48.000Z",
+      "summary_en": "",
+      "source": "카고뉴스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "인천공항공사, 사이버보안 협의회 개최",
+      "url": "http://www.cargonews.co.kr/news/articleView.html?idxno=60201",
+      "published_at": "2026-05-21T01:39:55.000Z",
+      "summary_en": "",
+      "source": "카고뉴스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "油價 하락 항공화물 운임 다소 하락세",
+      "url": "http://www.cargonews.co.kr/news/articleView.html?idxno=60196",
+      "published_at": "2026-05-20T23:11:34.000Z",
+      "summary_en": "",
+      "source": "카고뉴스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "텔레포트, 매출 ‘34%’ 화물 ‘25%’나 급증",
+      "url": "http://www.cargonews.co.kr/news/articleView.html?idxno=60195",
+      "published_at": "2026-05-20T09:19:09.000Z",
+      "summary_en": "",
+      "source": "카고뉴스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "(주)에어컨설팅",
+      "url": "https://www.cargopress.co.kr/korean/about.php",
+      "published_at": "2026-05-22T07:05:52.950Z",
+      "summary_en": "",
+      "source": "카고프레스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "'택배 분류하고 냉장고 번쩍'…국내도 ‘휴머노이드 경쟁’ 본격화",
+      "url": "https://www.klnews.co.kr/news/articleView.html?idxno=321226",
+      "published_at": "2026-05-22T07:05:53.113Z",
+      "summary_en": "",
+      "source": "KL뉴스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "태웅로직스, 우즈벡에 제2물류창고 건설…중앙아시아 물류 영토 넓힌다",
+      "url": "https://www.klnews.co.kr/news/articleView.html?idxno=321205",
+      "published_at": "2026-05-22T07:05:53.113Z",
+      "summary_en": "",
+      "source": "KL뉴스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "“물류업계도 밸류업 시대”…일부 기업은 소극 행보 여전",
+      "url": "https://www.klnews.co.kr/news/articleView.html?idxno=321202",
+      "published_at": "2026-05-22T07:05:53.113Z",
+      "summary_en": "",
+      "source": "KL뉴스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "용마로지스, ‘안성 신허브 물류센터’ 착공...초격차 스마트 물류 시동",
+      "url": "https://www.klnews.co.kr/news/articleView.html?idxno=321172",
+      "published_at": "2026-05-22T07:05:53.113Z",
+      "summary_en": "",
+      "source": "KL뉴스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "과기부, 'K-휴머노이드' 미래 앞당긴다",
+      "url": "https://www.klnews.co.kr/news/articleView.html?idxno=321171",
+      "published_at": "2026-05-22T07:05:53.113Z",
+      "summary_en": "",
+      "source": "KL뉴스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "Cargo Korea",
+      "url": "http://www.maritimepress.co.kr/news/articleList.html?sc_section_code=S1N3&view_type=sm",
+      "published_at": "2026-05-22T07:05:53.237Z",
+      "summary_en": "",
+      "source": "마리타임프레스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "MaritimePress",
+      "url": "http://www.maritimepress.co.kr/news/articleList.html?sc_section_code=S1N13&view_type=sm",
+      "published_at": "2026-05-22T07:05:53.237Z",
+      "summary_en": "",
+      "source": "마리타임프레스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "(2/18)긴급해양전략회의-공정위 과징금 대응을 중심으로",
+      "url": "http://www.maritimepress.co.kr/bbs/view.html?idxno=18712",
+      "published_at": "2026-05-22T07:05:53.237Z",
+      "summary_en": "",
+      "source": "마리타임프레스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "(10/21)한국해사포럼 제3회 공개포럼개최",
+      "url": "http://www.maritimepress.co.kr/bbs/view.html?idxno=14813",
+      "published_at": "2026-05-22T07:05:53.238Z",
+      "summary_en": "",
+      "source": "마리타임프레스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "교육/2017 하반기 해운 금융 위험관리교육",
+      "url": "http://www.maritimepress.co.kr/bbs/view.html?idxno=11259",
+      "published_at": "2026-05-22T07:05:53.238Z",
+      "summary_en": "",
+      "source": "마리타임프레스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "name": "FBX_글로벌",
+      "value": null,
+      "change_pct": null,
+      "date": "2026-05-22",
+      "unit": "$/FEU",
+      "source": "Freightos FBX",
+      "source_url": "https://fbx.freightos.com/"
+    },
+    {
+      "port": "Global Average",
+      "fuel": "VLSFO",
+      "price": 380,
+      "currency": "USD",
+      "unit": "$/MT",
+      "date": "2026-05-22",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices"
+    },
+    {
+      "port": "Global Average",
+      "fuel": "IFO380",
+      "price": 380,
+      "currency": "USD",
+      "unit": "$/MT",
+      "date": "2026-05-22",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices"
+    },
+    {
+      "port": "Global Average",
+      "fuel": "MGO",
+      "price": 380,
+      "currency": "USD",
+      "unit": "$/MT",
+      "date": "2026-05-22",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices"
+    },
+    {
+      "name": "FBX_글로벌",
+      "value": null,
+      "change_pct": null,
+      "date": "2026-05-22",
+      "unit": "$/FEU",
+      "source": "Freightos FBX",
+      "source_url": "https://fbx.freightos.com/"
+    },
+    {
+      "void_count": 30,
+      "cancel_rate": 4,
+      "total_sailings": null,
+      "raw_snippet": "Home\n/\nExpertise\n/\nSupply Chain Advisors\nRegister\nLogin\nContact\nDrewry Online Services\nResources\nAbout us\nResearch\nAdvisory\nSectors\nSupply Chain Advisors\nBack to Supply Chain Advisors\nService Expertise\nRelated research\nContact us\nIndices and Trackers\nWorld Container Index - 21 May\nIntra-Asia Container Index - 15 May\nAirfreight Price Index - April\nCancelled Sailings Tracker - 15 May\nLow-sulphur Bunker Price Tracker\nAreas of Expertise\nOcean Freight Cost Benchmarks\nOcean Freight Bid Support\nContrac",
+      "date": "2026-05-22",
+      "source": "Drewry Cancelled Sailings Tracker",
+      "source_url": "https://www.drewry.co.uk/supply-chain-advisors/supply-chain-expertise/cancelled-sailings-tracker",
+      "weeks": "W20-W24"
+    },
+    {
+      "title": "IAG카고, 멕시코·페루 노선 신설",
+      "url": "http://www.cargonews.co.kr/news/articleView.html?idxno=60204",
+      "published_at": "2026-05-21T21:20:52.000Z",
+      "summary_en": "",
+      "source": "카고뉴스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "부산항만공사, 안전캠페인 주간 운영",
+      "url": "http://www.cargonews.co.kr/news/articleView.html?idxno=60202",
+      "published_at": "2026-05-21T06:20:48.000Z",
+      "summary_en": "",
+      "source": "카고뉴스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "인천공항공사, 사이버보안 협의회 개최",
+      "url": "http://www.cargonews.co.kr/news/articleView.html?idxno=60201",
+      "published_at": "2026-05-21T01:39:55.000Z",
+      "summary_en": "",
+      "source": "카고뉴스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "油價 하락 항공화물 운임 다소 하락세",
+      "url": "http://www.cargonews.co.kr/news/articleView.html?idxno=60196",
+      "published_at": "2026-05-20T23:11:34.000Z",
+      "summary_en": "",
+      "source": "카고뉴스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "텔레포트, 매출 ‘34%’ 화물 ‘25%’나 급증",
+      "url": "http://www.cargonews.co.kr/news/articleView.html?idxno=60195",
+      "published_at": "2026-05-20T09:19:09.000Z",
+      "summary_en": "",
+      "source": "카고뉴스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "(주)에어컨설팅",
+      "url": "https://www.cargopress.co.kr/korean/about.php",
+      "published_at": "2026-05-22T07:06:24.492Z",
+      "summary_en": "",
+      "source": "카고프레스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "'택배 분류하고 냉장고 번쩍'…국내도 ‘휴머노이드 경쟁’ 본격화",
+      "url": "https://www.klnews.co.kr/news/articleView.html?idxno=321226",
+      "published_at": "2026-05-22T07:06:24.605Z",
+      "summary_en": "",
+      "source": "KL뉴스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "태웅로직스, 우즈벡에 제2물류창고 건설…중앙아시아 물류 영토 넓힌다",
+      "url": "https://www.klnews.co.kr/news/articleView.html?idxno=321205",
+      "published_at": "2026-05-22T07:06:24.605Z",
+      "summary_en": "",
+      "source": "KL뉴스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "“물류업계도 밸류업 시대”…일부 기업은 소극 행보 여전",
+      "url": "https://www.klnews.co.kr/news/articleView.html?idxno=321202",
+      "published_at": "2026-05-22T07:06:24.605Z",
+      "summary_en": "",
+      "source": "KL뉴스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "용마로지스, ‘안성 신허브 물류센터’ 착공...초격차 스마트 물류 시동",
+      "url": "https://www.klnews.co.kr/news/articleView.html?idxno=321172",
+      "published_at": "2026-05-22T07:06:24.605Z",
+      "summary_en": "",
+      "source": "KL뉴스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "과기부, 'K-휴머노이드' 미래 앞당긴다",
+      "url": "https://www.klnews.co.kr/news/articleView.html?idxno=321171",
+      "published_at": "2026-05-22T07:06:24.605Z",
+      "summary_en": "",
+      "source": "KL뉴스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "Cargo Korea",
+      "url": "http://www.maritimepress.co.kr/news/articleList.html?sc_section_code=S1N3&view_type=sm",
+      "published_at": "2026-05-22T07:06:24.723Z",
+      "summary_en": "",
+      "source": "마리타임프레스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "MaritimePress",
+      "url": "http://www.maritimepress.co.kr/news/articleList.html?sc_section_code=S1N13&view_type=sm",
+      "published_at": "2026-05-22T07:06:24.723Z",
+      "summary_en": "",
+      "source": "마리타임프레스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "(2/18)긴급해양전략회의-공정위 과징금 대응을 중심으로",
+      "url": "http://www.maritimepress.co.kr/bbs/view.html?idxno=18712",
+      "published_at": "2026-05-22T07:06:24.723Z",
+      "summary_en": "",
+      "source": "마리타임프레스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "(10/21)한국해사포럼 제3회 공개포럼개최",
+      "url": "http://www.maritimepress.co.kr/bbs/view.html?idxno=14813",
+      "published_at": "2026-05-22T07:06:24.723Z",
+      "summary_en": "",
+      "source": "마리타임프레스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "교육/2017 하반기 해운 금융 위험관리교육",
+      "url": "http://www.maritimepress.co.kr/bbs/view.html?idxno=11259",
+      "published_at": "2026-05-22T07:06:24.723Z",
+      "summary_en": "",
+      "source": "마리타임프레스",
+      "section": "shipping",
+      "language": "ko"
+    },
+    {
+      "title": "State of Freight 5 takeaways: Montgomery talk; short-term strength",
+      "url": "https://www.freightwaves.com/news/state-of-freight-5-takeaways-montgomery-talk-short-term-strength",
+      "published_at": "2026-05-21T22:36:56.000Z",
+      "summary_en": "Fallout from the Montgomery case was a subject in this month’s State of Freight webinar.\nThe post State of Freight 5 takeaways: Montgomery talk; short-term strength appeared first on FreightWaves.",
+      "source": "FreightWaves",
+      "section": "shipping",
+      "language": "en"
+    },
+    {
+      "title": "AAR slams “hypocrisy” as Trump-backed rail safety measure is included in transportation funding bill",
+      "url": "https://www.freightwaves.com/news/aar-slams-hypocrisy-as-trump-backed-rail-safety-measure-is-included-in-transportation-funding-bill",
+      "published_at": "2026-05-21T20:23:30.000Z",
+      "summary_en": "The Railway Safety Act opposed by railroads rode Trump’s backing to be included in surface transportation funding legislation.\nThe post AAR slams “hypocrisy” as Trump-backed rail safety measure is included in transportation funding bill appeared first on FreightWaves.",
+      "source": "FreightWaves",
+      "section": "shipping",
+      "language": "en"
+    },
+    {
+      "title": "Broker liability ruling: Carriers, brokers, analysts weigh in",
+      "url": "https://www.freightwaves.com/news/broker-liability-ruling-carriers-brokers-analysts-weigh-in",
+      "published_at": "2026-05-21T20:09:16.000Z",
+      "summary_en": "Industry participants say asset-based carriers are likely the winners following the Supreme Court’s landmark ruling on freight broker liability.\nThe post Broker liability ruling: Carriers, brokers, analysts weigh in appeared first on FreightWaves.",
+      "source": "FreightWaves",
+      "section": "shipping",
+      "language": "en"
+    },
+    {
+      "title": "Georgia ports volumes hit by higher costs, softer market",
+      "url": "https://www.freightwaves.com/news/georgia-ports-volumes-hit-by-higher-costs-softer-market",
+      "published_at": "2026-05-21T19:46:33.000Z",
+      "summary_en": "The Georgia Ports Authority said higher operating costs and a softer market were reflected in the latest container figures for the Port of Savannah. \nThe post Georgia ports volumes hit by higher costs, softer market appeared first on FreightWaves.",
+      "source": "FreightWaves",
+      "section": "shipping",
+      "language": "en"
+    },
+    {
+      "title": "The Charcoal on That Truck Costs More to Import, More to Buy, and Is Headed to a Cookout That Runs 13% Higher Than Last Year. Here Is What That Tells You About the Consumer Right Now.",
+      "url": "https://www.freightwaves.com/news/the-charcoal-on-that-truck-costs-more-to-import-more-to-buy-and-is-headed-to-a-cookout-that-runs-13-higher-than-last-year-here-is-what-that-tells-you-about-the-consumer-right-now",
+      "published_at": "2026-05-21T19:35:13.000Z",
+      "summary_en": "Pull up the import data on U.S. charcoal briquette shipments and you are looking at something that some people in trucking would not think to check heading into a holiday weekend. But that data, read against the consumer spending picture for Memorial Day 2026, tells you something specific about the",
+      "source": "FreightWaves",
+      "section": "shipping",
+      "language": "en"
     }
   ],
   "rail": [
@@ -750,6 +1370,696 @@
       "section": "rail",
       "language": "en",
       "category": "central_asia"
+    },
+    {
+      "title": "Fuel relief may be fuel grief for rail freight in the UK",
+      "url": "https://www.railfreight.com/in-depth/2026/05/22/fuel-relief-may-be-fuel-grief-for-rail-freight-in-the-uk/",
+      "published_at": "2026-05-22T06:40:53.000Z",
+      "summary_en": "",
+      "source": "RailFreight",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "First vehicle transits through the Semmering Base Tunnel",
+      "url": "https://www.railfreight.com/infrastructure/2026/05/21/first-vehicle-transits-through-the-semmering-base-tunnel/",
+      "published_at": "2026-05-21T13:14:14.000Z",
+      "summary_en": "",
+      "source": "RailFreight",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "‘Competition between rail and road is mostly about funding, not business’",
+      "url": "https://www.railfreight.com/intermodal/2026/05/21/competition-between-rail-and-road-is-mostly-about-funding-not-business/",
+      "published_at": "2026-05-21T09:51:46.000Z",
+      "summary_en": "",
+      "source": "RailFreight",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Spain prepares to reduce TACs for freight on 1,435-millimetre gauge",
+      "url": "https://www.railfreight.com/railfreight/2026/05/21/spain-prepares-to-reduce-tacs-for-freight-on-1435-millimetre-gauge/",
+      "published_at": "2026-05-21T07:51:08.000Z",
+      "summary_en": "",
+      "source": "RailFreight",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Outgoing Hupac CEO Michail Stahlhut joins Rail Innovators Group",
+      "url": "https://www.railfreight.com/railfreight/2026/05/20/outgoing-hupac-ceo-michail-stahlhut-joins-rail-innovators-group/",
+      "published_at": "2026-05-20T12:23:24.000Z",
+      "summary_en": "",
+      "source": "RailFreight",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Rohlig SUUS sees “strong potential in Central Asia” and expands into Uzbekistan",
+      "url": "https://www.railfreight.com/railfreight/2026/05/20/rohlig-suus-sees-strong-potential-in-central-asia-and-expands-into-uzbekistan/",
+      "published_at": "2026-05-20T09:32:00.000Z",
+      "summary_en": "",
+      "source": "RailFreight BeltAndRoad",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Turkmenistan modernises its railways to become a new Middle Corridor gateway",
+      "url": "https://www.railfreight.com/railfreight/2026/05/13/turkmenistan-modernises-its-railways-to-become-a-new-middle-corridor-gateway/",
+      "published_at": "2026-05-13T10:01:47.000Z",
+      "summary_en": "",
+      "source": "RailFreight BeltAndRoad",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Georgia announces €1.4bn railway investment for coming decade",
+      "url": "https://www.railfreight.com/railfreight/2026/05/07/georgia-announces-e1-4bn-railway-investment-for-coming-decade/",
+      "published_at": "2026-05-07T09:19:44.000Z",
+      "summary_en": "",
+      "source": "RailFreight BeltAndRoad",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "‘Reduced container availability in Europe due to repositioning to Asia’",
+      "url": "https://www.railfreight.com/railfreight/2026/05/06/reduced-container-availability-in-europe-due-to-repositioning-to-asia/",
+      "published_at": "2026-05-06T09:45:05.000Z",
+      "summary_en": "",
+      "source": "RailFreight BeltAndRoad",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Kazakh Railways starts building its own maritime fleet",
+      "url": "https://www.railfreight.com/railfreight/2026/05/04/kazakh-railways-starts-building-its-own-maritime-fleet/",
+      "published_at": "2026-05-04T07:58:52.000Z",
+      "summary_en": "",
+      "source": "RailFreight BeltAndRoad",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Central Asia",
+      "url": "https://www.transportcorridors.com/category/regions/central-asia",
+      "published_at": "2026-05-22T07:03:20.597Z",
+      "summary_en": "",
+      "source": "TransportCorridors CentralAsia",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "In Ashgabat, the development of international railway corridors and the digitalization of transportation were discussed.",
+      "url": "https://www.transportcorridors.com/20767",
+      "published_at": "2026-05-22T07:03:20.597Z",
+      "summary_en": "",
+      "source": "TransportCorridors CentralAsia",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "21.05.2026",
+      "url": "https://www.transportcorridors.com/20767",
+      "published_at": "2026-05-22T07:03:20.597Z",
+      "summary_en": "",
+      "source": "TransportCorridors CentralAsia",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Intermodal",
+      "url": "https://www.transportcorridors.com/category/modalities/intermodal-en",
+      "published_at": "2026-05-22T07:03:20.597Z",
+      "summary_en": "",
+      "source": "TransportCorridors CentralAsia",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Kazlogistics participated in the Kazakh-German Transport and Logistics Forum in Almaty.",
+      "url": "https://www.transportcorridors.com/20752",
+      "published_at": "2026-05-22T07:03:20.597Z",
+      "summary_en": "",
+      "source": "TransportCorridors CentralAsia",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "VR Sverige wins a new contract in the south of Sweden.",
+      "url": "https://www.transportcorridors.com/20777",
+      "published_at": "2026-05-22T07:03:21.698Z",
+      "summary_en": "",
+      "source": "TransportCorridors Rail",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "22.05.2026",
+      "url": "https://www.transportcorridors.com/20777",
+      "published_at": "2026-05-22T07:03:21.698Z",
+      "summary_en": "",
+      "source": "TransportCorridors Rail",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "21.05.2026",
+      "url": "https://www.transportcorridors.com/20772",
+      "published_at": "2026-05-22T07:03:21.698Z",
+      "summary_en": "",
+      "source": "TransportCorridors Rail",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Central Asia",
+      "url": "https://www.transportcorridors.com/category/regions/central-asia",
+      "published_at": "2026-05-22T07:03:21.698Z",
+      "summary_en": "",
+      "source": "TransportCorridors Rail",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "In Ashgabat, the development of international railway corridors and the digitalization of transportation were discussed.",
+      "url": "https://www.transportcorridors.com/20767",
+      "published_at": "2026-05-22T07:03:21.698Z",
+      "summary_en": "",
+      "source": "TransportCorridors Rail",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Rohlig SUUS sees “strong potential in Central Asia” and expands into Uzbekistan",
+      "url": "https://www.railfreight.com/railfreight/2026/05/20/rohlig-suus-sees-strong-potential-in-central-asia-and-expands-into-uzbekistan/",
+      "published_at": "2026-05-20T09:32:00.000Z",
+      "summary_en": "",
+      "source": "RailFreight",
+      "section": "rail",
+      "language": "en",
+      "category": "bri_rail"
+    },
+    {
+      "title": "Turkmenistan modernises its railways to become a new Middle Corridor gateway",
+      "url": "https://www.railfreight.com/railfreight/2026/05/13/turkmenistan-modernises-its-railways-to-become-a-new-middle-corridor-gateway/",
+      "published_at": "2026-05-13T10:01:47.000Z",
+      "summary_en": "",
+      "source": "RailFreight",
+      "section": "rail",
+      "language": "en",
+      "category": "bri_rail"
+    },
+    {
+      "title": "Georgia announces €1.4bn railway investment for coming decade",
+      "url": "https://www.railfreight.com/railfreight/2026/05/07/georgia-announces-e1-4bn-railway-investment-for-coming-decade/",
+      "published_at": "2026-05-07T09:19:44.000Z",
+      "summary_en": "",
+      "source": "RailFreight",
+      "section": "rail",
+      "language": "en",
+      "category": "bri_rail"
+    },
+    {
+      "title": "‘Reduced container availability in Europe due to repositioning to Asia’",
+      "url": "https://www.railfreight.com/railfreight/2026/05/06/reduced-container-availability-in-europe-due-to-repositioning-to-asia/",
+      "published_at": "2026-05-06T09:45:05.000Z",
+      "summary_en": "",
+      "source": "RailFreight",
+      "section": "rail",
+      "language": "en",
+      "category": "bri_rail"
+    },
+    {
+      "title": "Kazakh Railways starts building its own maritime fleet",
+      "url": "https://www.railfreight.com/railfreight/2026/05/04/kazakh-railways-starts-building-its-own-maritime-fleet/",
+      "published_at": "2026-05-04T07:58:52.000Z",
+      "summary_en": "",
+      "source": "RailFreight",
+      "section": "rail",
+      "language": "en",
+      "category": "bri_rail"
+    },
+    {
+      "title": "Shenzhou-20 taikonauts make 1st public appearance after safe return following debris incident, recounts details",
+      "url": "https://www.globaltimes.cn/page/202601/1353427.shtml",
+      "published_at": "2026-01-16T00:00:00.000Z",
+      "summary_en": "",
+      "source": "Global Times",
+      "section": "rail",
+      "language": "en",
+      "category": "bri_rail"
+    },
+    {
+      "title": "Practitioners' Insights: How a project building cross-border digital bridge for connectivity embodies Chinese wisdom to enhance global firms' efficiency",
+      "url": "https://www.globaltimes.cn/page/202511/1348337.shtml",
+      "published_at": "2025-11-17T00:00:00.000Z",
+      "summary_en": "",
+      "source": "Global Times",
+      "section": "rail",
+      "language": "en",
+      "category": "bri_rail"
+    },
+    {
+      "title": "View Post",
+      "url": "https://www.transportcorridors.com/20767",
+      "published_at": "2026-05-22T07:03:36.649Z",
+      "summary_en": "",
+      "source": "TransportCorridors",
+      "section": "rail",
+      "language": "en",
+      "category": "central_asia"
+    },
+    {
+      "title": "Central Asia",
+      "url": "https://www.transportcorridors.com/category/regions/central-asia",
+      "published_at": "2026-05-22T07:03:36.649Z",
+      "summary_en": "",
+      "source": "TransportCorridors",
+      "section": "rail",
+      "language": "en",
+      "category": "central_asia"
+    },
+    {
+      "title": "In Ashgabat, the development of international railway corridors and the digitalization of transportation were discussed.",
+      "url": "https://www.transportcorridors.com/20767",
+      "published_at": "2026-05-22T07:03:36.649Z",
+      "summary_en": "",
+      "source": "TransportCorridors",
+      "section": "rail",
+      "language": "en",
+      "category": "central_asia"
+    },
+    {
+      "title": "21.05.2026",
+      "url": "https://www.transportcorridors.com/20767",
+      "published_at": "2026-05-22T07:03:36.649Z",
+      "summary_en": "",
+      "source": "TransportCorridors",
+      "section": "rail",
+      "language": "en",
+      "category": "central_asia"
+    },
+    {
+      "title": "Intermodal",
+      "url": "https://www.transportcorridors.com/category/modalities/intermodal-en",
+      "published_at": "2026-05-22T07:03:36.649Z",
+      "summary_en": "",
+      "source": "TransportCorridors",
+      "section": "rail",
+      "language": "en",
+      "category": "central_asia"
+    },
+    {
+      "title": "Russian rail freight might gain momentum from Middle East war",
+      "url": "https://www.railfreight.com/railfreight/2026/04/13/russian-rail-freight-hopes-to-benefit-from-middle-east-war/",
+      "published_at": "2026-04-13T09:12:04.000Z",
+      "summary_en": "",
+      "source": "RailFreight Russia",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Russia to introduce new penalty scheme to boost rail infrastructure usage",
+      "url": "https://www.railfreight.com/policy/2026/03/27/russia-to-introduce-new-penalty-scheme-to-boost-rail-infrastructure-usage/",
+      "published_at": "2026-03-27T09:27:29.000Z",
+      "summary_en": "",
+      "source": "RailFreight Russia",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Sanctions push Russia to broaden the use of intermodal rail",
+      "url": "https://www.railfreight.com/intermodal/2026/03/16/sanctions-push-russia-to-broaden-the-use-of-intermodal-rail/",
+      "published_at": "2026-03-16T09:20:08.000Z",
+      "summary_en": "",
+      "source": "RailFreight Russia",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Russian rolling stock production shrinks substantially in 2025",
+      "url": "https://www.railfreight.com/railfreight/2026/03/02/russian-rolling-stock-production-shrinks-substantially-in-2025/",
+      "published_at": "2026-03-02T13:21:45.000Z",
+      "summary_en": "",
+      "source": "RailFreight Russia",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Moscow resorts to urgent tariff increase to help the destitute Russian Railways",
+      "url": "https://www.railfreight.com/railfreight/2026/02/17/moscow-resorts-to-urgent-tariff-increase-to-help-the-destitute-russian-railways/",
+      "published_at": "2026-02-17T08:43:29.000Z",
+      "summary_en": "",
+      "source": "RailFreight Russia",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Fuel relief may be fuel grief for rail freight in the UK",
+      "url": "https://www.railfreight.com/in-depth/2026/05/22/fuel-relief-may-be-fuel-grief-for-rail-freight-in-the-uk/",
+      "published_at": "2026-05-22T06:40:53.000Z",
+      "summary_en": "",
+      "source": "RailFreight",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "First vehicle transits through the Semmering Base Tunnel",
+      "url": "https://www.railfreight.com/infrastructure/2026/05/21/first-vehicle-transits-through-the-semmering-base-tunnel/",
+      "published_at": "2026-05-21T13:14:14.000Z",
+      "summary_en": "",
+      "source": "RailFreight",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "‘Competition between rail and road is mostly about funding, not business’",
+      "url": "https://www.railfreight.com/intermodal/2026/05/21/competition-between-rail-and-road-is-mostly-about-funding-not-business/",
+      "published_at": "2026-05-21T09:51:46.000Z",
+      "summary_en": "",
+      "source": "RailFreight",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Spain prepares to reduce TACs for freight on 1,435-millimetre gauge",
+      "url": "https://www.railfreight.com/railfreight/2026/05/21/spain-prepares-to-reduce-tacs-for-freight-on-1435-millimetre-gauge/",
+      "published_at": "2026-05-21T07:51:08.000Z",
+      "summary_en": "",
+      "source": "RailFreight",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Outgoing Hupac CEO Michail Stahlhut joins Rail Innovators Group",
+      "url": "https://www.railfreight.com/railfreight/2026/05/20/outgoing-hupac-ceo-michail-stahlhut-joins-rail-innovators-group/",
+      "published_at": "2026-05-20T12:23:24.000Z",
+      "summary_en": "",
+      "source": "RailFreight",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Rohlig SUUS sees “strong potential in Central Asia” and expands into Uzbekistan",
+      "url": "https://www.railfreight.com/railfreight/2026/05/20/rohlig-suus-sees-strong-potential-in-central-asia-and-expands-into-uzbekistan/",
+      "published_at": "2026-05-20T09:32:00.000Z",
+      "summary_en": "",
+      "source": "RailFreight BeltAndRoad",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Turkmenistan modernises its railways to become a new Middle Corridor gateway",
+      "url": "https://www.railfreight.com/railfreight/2026/05/13/turkmenistan-modernises-its-railways-to-become-a-new-middle-corridor-gateway/",
+      "published_at": "2026-05-13T10:01:47.000Z",
+      "summary_en": "",
+      "source": "RailFreight BeltAndRoad",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Georgia announces €1.4bn railway investment for coming decade",
+      "url": "https://www.railfreight.com/railfreight/2026/05/07/georgia-announces-e1-4bn-railway-investment-for-coming-decade/",
+      "published_at": "2026-05-07T09:19:44.000Z",
+      "summary_en": "",
+      "source": "RailFreight BeltAndRoad",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "‘Reduced container availability in Europe due to repositioning to Asia’",
+      "url": "https://www.railfreight.com/railfreight/2026/05/06/reduced-container-availability-in-europe-due-to-repositioning-to-asia/",
+      "published_at": "2026-05-06T09:45:05.000Z",
+      "summary_en": "",
+      "source": "RailFreight BeltAndRoad",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Kazakh Railways starts building its own maritime fleet",
+      "url": "https://www.railfreight.com/railfreight/2026/05/04/kazakh-railways-starts-building-its-own-maritime-fleet/",
+      "published_at": "2026-05-04T07:58:52.000Z",
+      "summary_en": "",
+      "source": "RailFreight BeltAndRoad",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Central Asia",
+      "url": "https://www.transportcorridors.com/category/regions/central-asia",
+      "published_at": "2026-05-22T07:06:37.751Z",
+      "summary_en": "",
+      "source": "TransportCorridors CentralAsia",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "In Ashgabat, the development of international railway corridors and the digitalization of transportation were discussed.",
+      "url": "https://www.transportcorridors.com/20767",
+      "published_at": "2026-05-22T07:06:37.751Z",
+      "summary_en": "",
+      "source": "TransportCorridors CentralAsia",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "21.05.2026",
+      "url": "https://www.transportcorridors.com/20767",
+      "published_at": "2026-05-22T07:06:37.751Z",
+      "summary_en": "",
+      "source": "TransportCorridors CentralAsia",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Intermodal",
+      "url": "https://www.transportcorridors.com/category/modalities/intermodal-en",
+      "published_at": "2026-05-22T07:06:37.751Z",
+      "summary_en": "",
+      "source": "TransportCorridors CentralAsia",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Kazlogistics participated in the Kazakh-German Transport and Logistics Forum in Almaty.",
+      "url": "https://www.transportcorridors.com/20752",
+      "published_at": "2026-05-22T07:06:37.751Z",
+      "summary_en": "",
+      "source": "TransportCorridors CentralAsia",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "VR Sverige wins a new contract in the south of Sweden.",
+      "url": "https://www.transportcorridors.com/20777",
+      "published_at": "2026-05-22T07:06:38.386Z",
+      "summary_en": "",
+      "source": "TransportCorridors Rail",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "22.05.2026",
+      "url": "https://www.transportcorridors.com/20777",
+      "published_at": "2026-05-22T07:06:38.386Z",
+      "summary_en": "",
+      "source": "TransportCorridors Rail",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "21.05.2026",
+      "url": "https://www.transportcorridors.com/20772",
+      "published_at": "2026-05-22T07:06:38.386Z",
+      "summary_en": "",
+      "source": "TransportCorridors Rail",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Central Asia",
+      "url": "https://www.transportcorridors.com/category/regions/central-asia",
+      "published_at": "2026-05-22T07:06:38.386Z",
+      "summary_en": "",
+      "source": "TransportCorridors Rail",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "In Ashgabat, the development of international railway corridors and the digitalization of transportation were discussed.",
+      "url": "https://www.transportcorridors.com/20767",
+      "published_at": "2026-05-22T07:06:38.386Z",
+      "summary_en": "",
+      "source": "TransportCorridors Rail",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Rohlig SUUS sees “strong potential in Central Asia” and expands into Uzbekistan",
+      "url": "https://www.railfreight.com/railfreight/2026/05/20/rohlig-suus-sees-strong-potential-in-central-asia-and-expands-into-uzbekistan/",
+      "published_at": "2026-05-20T09:32:00.000Z",
+      "summary_en": "",
+      "source": "RailFreight",
+      "section": "rail",
+      "language": "en",
+      "category": "bri_rail"
+    },
+    {
+      "title": "Turkmenistan modernises its railways to become a new Middle Corridor gateway",
+      "url": "https://www.railfreight.com/railfreight/2026/05/13/turkmenistan-modernises-its-railways-to-become-a-new-middle-corridor-gateway/",
+      "published_at": "2026-05-13T10:01:47.000Z",
+      "summary_en": "",
+      "source": "RailFreight",
+      "section": "rail",
+      "language": "en",
+      "category": "bri_rail"
+    },
+    {
+      "title": "Georgia announces €1.4bn railway investment for coming decade",
+      "url": "https://www.railfreight.com/railfreight/2026/05/07/georgia-announces-e1-4bn-railway-investment-for-coming-decade/",
+      "published_at": "2026-05-07T09:19:44.000Z",
+      "summary_en": "",
+      "source": "RailFreight",
+      "section": "rail",
+      "language": "en",
+      "category": "bri_rail"
+    },
+    {
+      "title": "‘Reduced container availability in Europe due to repositioning to Asia’",
+      "url": "https://www.railfreight.com/railfreight/2026/05/06/reduced-container-availability-in-europe-due-to-repositioning-to-asia/",
+      "published_at": "2026-05-06T09:45:05.000Z",
+      "summary_en": "",
+      "source": "RailFreight",
+      "section": "rail",
+      "language": "en",
+      "category": "bri_rail"
+    },
+    {
+      "title": "Kazakh Railways starts building its own maritime fleet",
+      "url": "https://www.railfreight.com/railfreight/2026/05/04/kazakh-railways-starts-building-its-own-maritime-fleet/",
+      "published_at": "2026-05-04T07:58:52.000Z",
+      "summary_en": "",
+      "source": "RailFreight",
+      "section": "rail",
+      "language": "en",
+      "category": "bri_rail"
+    },
+    {
+      "title": "Shenzhou-20 taikonauts make 1st public appearance after safe return following debris incident, recounts details",
+      "url": "https://www.globaltimes.cn/page/202601/1353427.shtml",
+      "published_at": "2026-01-16T00:00:00.000Z",
+      "summary_en": "",
+      "source": "Global Times",
+      "section": "rail",
+      "language": "en",
+      "category": "bri_rail"
+    },
+    {
+      "title": "Practitioners' Insights: How a project building cross-border digital bridge for connectivity embodies Chinese wisdom to enhance global firms' efficiency",
+      "url": "https://www.globaltimes.cn/page/202511/1348337.shtml",
+      "published_at": "2025-11-17T00:00:00.000Z",
+      "summary_en": "",
+      "source": "Global Times",
+      "section": "rail",
+      "language": "en",
+      "category": "bri_rail"
+    },
+    {
+      "title": "View Post",
+      "url": "https://www.transportcorridors.com/20767",
+      "published_at": "2026-05-22T07:06:55.253Z",
+      "summary_en": "",
+      "source": "TransportCorridors",
+      "section": "rail",
+      "language": "en",
+      "category": "central_asia"
+    },
+    {
+      "title": "Central Asia",
+      "url": "https://www.transportcorridors.com/category/regions/central-asia",
+      "published_at": "2026-05-22T07:06:55.253Z",
+      "summary_en": "",
+      "source": "TransportCorridors",
+      "section": "rail",
+      "language": "en",
+      "category": "central_asia"
+    },
+    {
+      "title": "In Ashgabat, the development of international railway corridors and the digitalization of transportation were discussed.",
+      "url": "https://www.transportcorridors.com/20767",
+      "published_at": "2026-05-22T07:06:55.253Z",
+      "summary_en": "",
+      "source": "TransportCorridors",
+      "section": "rail",
+      "language": "en",
+      "category": "central_asia"
+    },
+    {
+      "title": "21.05.2026",
+      "url": "https://www.transportcorridors.com/20767",
+      "published_at": "2026-05-22T07:06:55.253Z",
+      "summary_en": "",
+      "source": "TransportCorridors",
+      "section": "rail",
+      "language": "en",
+      "category": "central_asia"
+    },
+    {
+      "title": "Intermodal",
+      "url": "https://www.transportcorridors.com/category/modalities/intermodal-en",
+      "published_at": "2026-05-22T07:06:55.253Z",
+      "summary_en": "",
+      "source": "TransportCorridors",
+      "section": "rail",
+      "language": "en",
+      "category": "central_asia"
+    },
+    {
+      "title": "Russian rail freight indeed benefits from Iran war",
+      "url": "https://www.railfreight.com/railfreight/2026/05/11/russian-rail-freight-indeed-benefits-from-iran-war/",
+      "published_at": "2026-05-11T07:52:56.000Z",
+      "summary_en": "",
+      "source": "RailFreight Russia",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Russian rail freight might gain momentum from Middle East war",
+      "url": "https://www.railfreight.com/railfreight/2026/04/13/russian-rail-freight-hopes-to-benefit-from-middle-east-war/",
+      "published_at": "2026-04-13T09:12:04.000Z",
+      "summary_en": "",
+      "source": "RailFreight Russia",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Russia to introduce new penalty scheme to boost rail infrastructure usage",
+      "url": "https://www.railfreight.com/policy/2026/03/27/russia-to-introduce-new-penalty-scheme-to-boost-rail-infrastructure-usage/",
+      "published_at": "2026-03-27T09:27:29.000Z",
+      "summary_en": "",
+      "source": "RailFreight Russia",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Sanctions push Russia to broaden the use of intermodal rail",
+      "url": "https://www.railfreight.com/intermodal/2026/03/16/sanctions-push-russia-to-broaden-the-use-of-intermodal-rail/",
+      "published_at": "2026-03-16T09:20:08.000Z",
+      "summary_en": "",
+      "source": "RailFreight Russia",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Russian rolling stock production shrinks substantially in 2025",
+      "url": "https://www.railfreight.com/railfreight/2026/03/02/russian-rolling-stock-production-shrinks-substantially-in-2025/",
+      "published_at": "2026-03-02T13:21:45.000Z",
+      "summary_en": "",
+      "source": "RailFreight Russia",
+      "section": "rail",
+      "language": "en"
     }
   ],
   "trade": [
@@ -1028,6 +2338,406 @@
       "source": "TTNews",
       "section": "trade",
       "language": "en"
+    },
+    {
+      "title": "Procurement leaders urge incremental AI adoption to avoid heavy spend",
+      "url": "https://www.supplychaindive.com/news/procurement-leaders-urge-incremental-ai-adoption-to-avoid-heavy-spend/820557/",
+      "published_at": "2026-05-21T20:26:00.000Z",
+      "summary_en": "&lt;figure&gt;&lt;div&gt;&lt;img src=\"https://imgproxy.divecdn.com/m1zh0M4MYgWSBh0OjRTFSNLgYb_7z_GKRhCFffFAlqg/g:ce/rs:fill:1600:900:1/Z3M6Ly9kaXZlc2l0ZS1zdG9yYWdlL2RpdmVpbWFnZS9JTUdfMDM3MC5qcGVn.webp\"/&gt;&lt;/div&gt;&lt;/figure&gt;&lt;p&gt;Managing the cost of using AI rests on starting low-risk p",
+      "source": "SupplyChainDive",
+      "section": "trade",
+      "language": "en"
+    },
+    {
+      "title": "Matson reports air-to-ocean freight conversions amid Iran war",
+      "url": "https://www.supplychaindive.com/news/matson-reports-air-to-ocean-freight-conversions-amid-iran-war/820506/",
+      "published_at": "2026-05-21T15:11:00.000Z",
+      "summary_en": "&lt;figure&gt;&lt;div&gt;&lt;img src=\"https://imgproxy.divecdn.com/kGEQkjwd2YGOHpA2SmN-KteVWK5VQp8nJR8GBFDb4IE/g:ce/rs:fill:1600:900:1/Z3M6Ly9kaXZlc2l0ZS1zdG9yYWdlL2RpdmVpbWFnZS9HZXR0eUltYWdlcy0xMTg4NTA0MjIyLmpwZw==.webp\"/&gt;&lt;/div&gt;&lt;/figure&gt;&lt;p&gt;The U.S.-based ocean carrier benefited",
+      "source": "SupplyChainDive",
+      "section": "trade",
+      "language": "en"
+    },
+    {
+      "title": "Danone to close plant-based dairy facility in New Jersey",
+      "url": "https://www.supplychaindive.com/news/danone-to-close-plant-based-dairy-facility-in-new-jersey/820390/",
+      "published_at": "2026-05-21T12:46:00.000Z",
+      "summary_en": "&lt;figure&gt;&lt;div&gt;&lt;img src=\"https://imgproxy.divecdn.com/vFSPShZASlHDPFQtLpczBXgeJNh4BAShx1lsi69DB5o/g:ce/rs:fill:1600:900:1/Z3M6Ly9kaXZlc2l0ZS1zdG9yYWdlL2RpdmVpbWFnZS9HZXR0eUltYWdlcy01NDUzMzE5NzYuanBn.webp\"/&gt;&lt;/div&gt;&lt;/figure&gt;&lt;p&gt;The Silk and So Delicious manufacturer sai",
+      "source": "SupplyChainDive",
+      "section": "trade",
+      "language": "en"
+    },
+    {
+      "title": "EU lawmakers back US trade pact with built-in safeguards",
+      "url": "https://www.supplychaindive.com/news/eu-lawmakers-back-us-trade-pact-with-built-in-safeguards/820749/",
+      "published_at": "2026-05-20T19:53:00.000Z",
+      "summary_en": "&lt;figure&gt;&lt;div&gt;&lt;img src=\"https://imgproxy.divecdn.com/J8unAr-aTmBy0eK9_x-loJ1SbBfLamZ_3c8oI8TXcgA/g:ce/rs:fill:1600:900:1/Z3M6Ly9kaXZlc2l0ZS1zdG9yYWdlL2RpdmVpbWFnZS9HZXR0eUltYWdlcy0yMjI2NjA0Njc2LmpwZw==.webp\"/&gt;&lt;/div&gt;&lt;/figure&gt;&lt;p&gt;The European Parliament and EU Council",
+      "source": "SupplyChainDive",
+      "section": "trade",
+      "language": "en"
+    },
+    {
+      "title": "Muted peak season expected as ocean shippers delay contract signing",
+      "url": "https://www.supplychaindive.com/news/muted-peak-season-expected-as-ocean-shippers-delay-contract-signing/820397/",
+      "published_at": "2026-05-20T16:06:42.000Z",
+      "summary_en": "&lt;figure&gt;&lt;div&gt;&lt;img src=\"https://imgproxy.divecdn.com/n91zTUxXVsYoAHw6FMcaLfP0imTWJ8TCCYKIf5lZ6NA/g:ce/rs:fill:1600:900:1/Z3M6Ly9kaXZlc2l0ZS1zdG9yYWdlL2RpdmVpbWFnZS9HZXR0eUltYWdlcy0yMjU4NzExNDUxXzEuanBn.webp\"/&gt;&lt;/div&gt;&lt;/figure&gt;&lt;p&gt;Despite market uncertainty, some shipp",
+      "source": "SupplyChainDive",
+      "section": "trade",
+      "language": "en"
+    },
+    {
+      "title": "Stellantis Targets 60 New Models by 2030",
+      "url": "https://www.ttnews.com/articles/stellantis-60-new-models-2030",
+      "published_at": "2026-05-21T20:00:30.000Z",
+      "summary_en": "Stellantis announced a major investment push focused on four core brands in a broad reset to boost profitability.",
+      "source": "TTNews",
+      "section": "trade",
+      "language": "en"
+    },
+    {
+      "title": "Waymo Halts Atlanta Robotaxi Service Over Flood Risk",
+      "url": "https://www.ttnews.com/articles/waymo-halts-atlanta-robotaxi",
+      "published_at": "2026-05-21T19:10:24.000Z",
+      "summary_en": "Waymo has temporarily halted service in Atlanta over concerns that its robotaxis may attempt to drive on flooded roads, following a similar issue in San Antonio.",
+      "source": "TTNews",
+      "section": "trade",
+      "language": "en"
+    },
+    {
+      "title": "Trump Eases Refrigerant Rule in Bid to Address Grocery Costs",
+      "url": "https://www.ttnews.com/articles/trump-ease-refrigerant-rule",
+      "published_at": "2026-05-21T17:50:05.000Z",
+      "summary_en": "It is not clear how much or how quickly the loosening of the refrigerant rule might impact grocery prices.",
+      "source": "TTNews",
+      "section": "trade",
+      "language": "en"
+    },
+    {
+      "title": "April Trailer Orders Defy Seasonal Expectations Again",
+      "url": "https://www.ttnews.com/articles/trailer-orders-april-2026",
+      "published_at": "2026-05-21T17:59:40.000Z",
+      "summary_en": "Preliminary net data from ACT Research showed orders rose 126% year over year to 19,400 units, though the report noted that prior-year trailer orders were weak.",
+      "source": "TTNews",
+      "section": "trade",
+      "language": "en"
+    },
+    {
+      "title": "Highway Bill Would Expand Access to Truck Parking",
+      "url": "https://www.ttnews.com/articles/highway-bill-truck-parking",
+      "published_at": "2026-05-21T17:08:00.000Z",
+      "summary_en": "The BUILD America 250 Act introduced by House leaders would address trucking industry concerns, including access to truck parking and combating cargo theft.",
+      "source": "TTNews",
+      "section": "trade",
+      "language": "en"
+    },
+    {
+      "title": "Weekly Trade Focus: APEC",
+      "url": "https://ustr.gov/about-us/policy-offices/press-office/blog/weekly-trade-focus-apec",
+      "published_at": "2009-07-20T18:28:39.000Z",
+      "summary_en": "",
+      "source": "USTR",
+      "section": "trade",
+      "language": "en",
+      "region": "US"
+    },
+    {
+      "title": "USTR to Host G20 Trade Ministerial in Milwaukee, Wisconsin",
+      "url": "https://ustr.gov/about/policy-offices/press-office/press-releases/2026/may/ustr-host-g20-trade-ministerial-milwaukee-wisconsin",
+      "published_at": "2026-05-19T10:03:10.000Z",
+      "summary_en": "",
+      "source": "USTR",
+      "section": "trade",
+      "language": "en",
+      "region": "US"
+    },
+    {
+      "title": "Public Hearings Regarding Section 301 Investigations Relating to Structural Excess Capacity",
+      "url": "https://ustr.gov/about/policy-offices/press-office/press-releases/2026/may/public-hearings-regarding-section-301-investigations-relating-structural-excess-capacity",
+      "published_at": "2026-05-04T13:54:17.000Z",
+      "summary_en": "",
+      "source": "USTR",
+      "section": "trade",
+      "language": "en",
+      "region": "US"
+    },
+    {
+      "title": "Ambassador Greer Issues Statement on Preferential Duty Access for Whiskey Produced in the United Kingdom",
+      "url": "https://ustr.gov/about/policy-offices/press-office/press-releases/2026/april/ambassador-greer-issues-statement-preferential-duty-access-whiskey-produced-united-kingdom",
+      "published_at": "2026-04-30T19:45:13.000Z",
+      "summary_en": "",
+      "source": "USTR",
+      "section": "trade",
+      "language": "en",
+      "region": "US"
+    },
+    {
+      "title": "Video message for roundtable discussion on LNG &amp; Shipping organised by CBS Alumni Club and Columbia Global Energy Centre",
+      "url": "https://ec.europa.eu/commission/presscorner/detail/en/speech_26_977",
+      "published_at": "2026-05-27T22:00:00.000Z",
+      "summary_en": "",
+      "source": "EU Commission Trade",
+      "section": "trade",
+      "language": "en",
+      "region": "EU"
+    },
+    {
+      "title": "Speech by Commissioner Albuquerque at the European Securities and Markets Authority (ESMA) conference: A new era for EU capital markets",
+      "url": "https://ec.europa.eu/commission/presscorner/detail/en/speech_26_1128",
+      "published_at": "2026-05-21T08:06:23.000Z",
+      "summary_en": "",
+      "source": "EU Commission Trade",
+      "section": "trade",
+      "language": "en",
+      "region": "EU"
+    },
+    {
+      "title": "Opening Remarks by Commissioner Kadis at the European Maritime Day 2026 in Limassol, Cyprus",
+      "url": "https://ec.europa.eu/commission/presscorner/detail/en/speech_26_1127",
+      "published_at": "2026-05-21T07:38:35.000Z",
+      "summary_en": "",
+      "source": "EU Commission Trade",
+      "section": "trade",
+      "language": "en",
+      "region": "EU"
+    },
+    {
+      "title": "Speech by Commissioner Albuquerque at the 6th Annual European Financial Integration Conference, organised by the Association for Financial Markets in Europe (AFME)",
+      "url": "https://ec.europa.eu/commission/presscorner/detail/en/speech_26_1118",
+      "published_at": "2026-05-20T12:15:26.000Z",
+      "summary_en": "",
+      "source": "EU Commission Trade",
+      "section": "trade",
+      "language": "en",
+      "region": "EU"
+    },
+    {
+      "title": "Authorisation Management Module&nbsp;",
+      "url": "https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism/cbam-registry-and-reporting_en#authorisation-management-module",
+      "published_at": "2026-05-22T07:03:42.889Z",
+      "summary_en": "",
+      "source": "EU CBAM",
+      "section": "trade",
+      "language": "en",
+      "region": "EU"
+    },
+    {
+      "title": "CBAM Legislation and Guidance",
+      "url": "https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism/cbam-legislation-and-guidance_en",
+      "published_at": "2026-05-22T07:03:42.889Z",
+      "summary_en": "",
+      "source": "EU CBAM",
+      "section": "trade",
+      "language": "en",
+      "region": "EU"
+    },
+    {
+      "title": "More information",
+      "url": "https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism/cbam-information-sector_en",
+      "published_at": "2026-05-22T07:03:42.889Z",
+      "summary_en": "",
+      "source": "EU CBAM",
+      "section": "trade",
+      "language": "en",
+      "region": "EU"
+    },
+    {
+      "title": "Procurement leaders urge incremental AI adoption to avoid heavy spend",
+      "url": "https://www.supplychaindive.com/news/procurement-leaders-urge-incremental-ai-adoption-to-avoid-heavy-spend/820557/",
+      "published_at": "2026-05-21T20:26:00.000Z",
+      "summary_en": "&lt;figure&gt;&lt;div&gt;&lt;img src=\"https://imgproxy.divecdn.com/m1zh0M4MYgWSBh0OjRTFSNLgYb_7z_GKRhCFffFAlqg/g:ce/rs:fill:1600:900:1/Z3M6Ly9kaXZlc2l0ZS1zdG9yYWdlL2RpdmVpbWFnZS9JTUdfMDM3MC5qcGVn.webp\"/&gt;&lt;/div&gt;&lt;/figure&gt;&lt;p&gt;Managing the cost of using AI rests on starting low-risk p",
+      "source": "SupplyChainDive",
+      "section": "trade",
+      "language": "en"
+    },
+    {
+      "title": "Matson reports air-to-ocean freight conversions amid Iran war",
+      "url": "https://www.supplychaindive.com/news/matson-reports-air-to-ocean-freight-conversions-amid-iran-war/820506/",
+      "published_at": "2026-05-21T15:11:00.000Z",
+      "summary_en": "&lt;figure&gt;&lt;div&gt;&lt;img src=\"https://imgproxy.divecdn.com/kGEQkjwd2YGOHpA2SmN-KteVWK5VQp8nJR8GBFDb4IE/g:ce/rs:fill:1600:900:1/Z3M6Ly9kaXZlc2l0ZS1zdG9yYWdlL2RpdmVpbWFnZS9HZXR0eUltYWdlcy0xMTg4NTA0MjIyLmpwZw==.webp\"/&gt;&lt;/div&gt;&lt;/figure&gt;&lt;p&gt;The U.S.-based ocean carrier benefited",
+      "source": "SupplyChainDive",
+      "section": "trade",
+      "language": "en"
+    },
+    {
+      "title": "Danone to close plant-based dairy facility in New Jersey",
+      "url": "https://www.supplychaindive.com/news/danone-to-close-plant-based-dairy-facility-in-new-jersey/820390/",
+      "published_at": "2026-05-21T12:46:00.000Z",
+      "summary_en": "&lt;figure&gt;&lt;div&gt;&lt;img src=\"https://imgproxy.divecdn.com/vFSPShZASlHDPFQtLpczBXgeJNh4BAShx1lsi69DB5o/g:ce/rs:fill:1600:900:1/Z3M6Ly9kaXZlc2l0ZS1zdG9yYWdlL2RpdmVpbWFnZS9HZXR0eUltYWdlcy01NDUzMzE5NzYuanBn.webp\"/&gt;&lt;/div&gt;&lt;/figure&gt;&lt;p&gt;The Silk and So Delicious manufacturer sai",
+      "source": "SupplyChainDive",
+      "section": "trade",
+      "language": "en"
+    },
+    {
+      "title": "EU lawmakers back US trade pact with built-in safeguards",
+      "url": "https://www.supplychaindive.com/news/eu-lawmakers-back-us-trade-pact-with-built-in-safeguards/820749/",
+      "published_at": "2026-05-20T19:53:00.000Z",
+      "summary_en": "&lt;figure&gt;&lt;div&gt;&lt;img src=\"https://imgproxy.divecdn.com/J8unAr-aTmBy0eK9_x-loJ1SbBfLamZ_3c8oI8TXcgA/g:ce/rs:fill:1600:900:1/Z3M6Ly9kaXZlc2l0ZS1zdG9yYWdlL2RpdmVpbWFnZS9HZXR0eUltYWdlcy0yMjI2NjA0Njc2LmpwZw==.webp\"/&gt;&lt;/div&gt;&lt;/figure&gt;&lt;p&gt;The European Parliament and EU Council",
+      "source": "SupplyChainDive",
+      "section": "trade",
+      "language": "en"
+    },
+    {
+      "title": "Muted peak season expected as ocean shippers delay contract signing",
+      "url": "https://www.supplychaindive.com/news/muted-peak-season-expected-as-ocean-shippers-delay-contract-signing/820397/",
+      "published_at": "2026-05-20T16:06:42.000Z",
+      "summary_en": "&lt;figure&gt;&lt;div&gt;&lt;img src=\"https://imgproxy.divecdn.com/n91zTUxXVsYoAHw6FMcaLfP0imTWJ8TCCYKIf5lZ6NA/g:ce/rs:fill:1600:900:1/Z3M6Ly9kaXZlc2l0ZS1zdG9yYWdlL2RpdmVpbWFnZS9HZXR0eUltYWdlcy0yMjU4NzExNDUxXzEuanBn.webp\"/&gt;&lt;/div&gt;&lt;/figure&gt;&lt;p&gt;Despite market uncertainty, some shipp",
+      "source": "SupplyChainDive",
+      "section": "trade",
+      "language": "en"
+    },
+    {
+      "title": "Stellantis Targets 60 New Models by 2030",
+      "url": "https://www.ttnews.com/articles/stellantis-60-new-models-2030",
+      "published_at": "2026-05-21T20:00:30.000Z",
+      "summary_en": "Stellantis announced a major investment push focused on four core brands in a broad reset to boost profitability.",
+      "source": "TTNews",
+      "section": "trade",
+      "language": "en"
+    },
+    {
+      "title": "Waymo Halts Atlanta Robotaxi Service Over Flood Risk",
+      "url": "https://www.ttnews.com/articles/waymo-halts-atlanta-robotaxi",
+      "published_at": "2026-05-21T19:10:24.000Z",
+      "summary_en": "Waymo has temporarily halted service in Atlanta over concerns that its robotaxis may attempt to drive on flooded roads, following a similar issue in San Antonio.",
+      "source": "TTNews",
+      "section": "trade",
+      "language": "en"
+    },
+    {
+      "title": "Trump Eases Refrigerant Rule in Bid to Address Grocery Costs",
+      "url": "https://www.ttnews.com/articles/trump-ease-refrigerant-rule",
+      "published_at": "2026-05-21T17:50:05.000Z",
+      "summary_en": "It is not clear how much or how quickly the loosening of the refrigerant rule might impact grocery prices.",
+      "source": "TTNews",
+      "section": "trade",
+      "language": "en"
+    },
+    {
+      "title": "April Trailer Orders Defy Seasonal Expectations Again",
+      "url": "https://www.ttnews.com/articles/trailer-orders-april-2026",
+      "published_at": "2026-05-21T17:59:40.000Z",
+      "summary_en": "Preliminary net data from ACT Research showed orders rose 126% year over year to 19,400 units, though the report noted that prior-year trailer orders were weak.",
+      "source": "TTNews",
+      "section": "trade",
+      "language": "en"
+    },
+    {
+      "title": "Highway Bill Would Expand Access to Truck Parking",
+      "url": "https://www.ttnews.com/articles/highway-bill-truck-parking",
+      "published_at": "2026-05-21T17:08:00.000Z",
+      "summary_en": "The BUILD America 250 Act introduced by House leaders would address trucking industry concerns, including access to truck parking and combating cargo theft.",
+      "source": "TTNews",
+      "section": "trade",
+      "language": "en"
+    },
+    {
+      "title": "Weekly Trade Focus: APEC",
+      "url": "https://ustr.gov/about-us/policy-offices/press-office/blog/weekly-trade-focus-apec",
+      "published_at": "2009-07-20T18:28:39.000Z",
+      "summary_en": "",
+      "source": "USTR",
+      "section": "trade",
+      "language": "en",
+      "region": "US"
+    },
+    {
+      "title": "USTR to Host G20 Trade Ministerial in Milwaukee, Wisconsin",
+      "url": "https://ustr.gov/about/policy-offices/press-office/press-releases/2026/may/ustr-host-g20-trade-ministerial-milwaukee-wisconsin",
+      "published_at": "2026-05-19T10:03:10.000Z",
+      "summary_en": "",
+      "source": "USTR",
+      "section": "trade",
+      "language": "en",
+      "region": "US"
+    },
+    {
+      "title": "Public Hearings Regarding Section 301 Investigations Relating to Structural Excess Capacity",
+      "url": "https://ustr.gov/about/policy-offices/press-office/press-releases/2026/may/public-hearings-regarding-section-301-investigations-relating-structural-excess-capacity",
+      "published_at": "2026-05-04T13:54:17.000Z",
+      "summary_en": "",
+      "source": "USTR",
+      "section": "trade",
+      "language": "en",
+      "region": "US"
+    },
+    {
+      "title": "Ambassador Greer Issues Statement on Preferential Duty Access for Whiskey Produced in the United Kingdom",
+      "url": "https://ustr.gov/about/policy-offices/press-office/press-releases/2026/april/ambassador-greer-issues-statement-preferential-duty-access-whiskey-produced-united-kingdom",
+      "published_at": "2026-04-30T19:45:13.000Z",
+      "summary_en": "",
+      "source": "USTR",
+      "section": "trade",
+      "language": "en",
+      "region": "US"
+    },
+    {
+      "title": "Video message for roundtable discussion on LNG &amp; Shipping organised by CBS Alumni Club and Columbia Global Energy Centre",
+      "url": "https://ec.europa.eu/commission/presscorner/detail/en/speech_26_977",
+      "published_at": "2026-05-27T22:00:00.000Z",
+      "summary_en": "",
+      "source": "EU Commission Trade",
+      "section": "trade",
+      "language": "en",
+      "region": "EU"
+    },
+    {
+      "title": "Speech by Commissioner Albuquerque at the European Securities and Markets Authority (ESMA) conference: A new era for EU capital markets",
+      "url": "https://ec.europa.eu/commission/presscorner/detail/en/speech_26_1128",
+      "published_at": "2026-05-21T08:06:23.000Z",
+      "summary_en": "",
+      "source": "EU Commission Trade",
+      "section": "trade",
+      "language": "en",
+      "region": "EU"
+    },
+    {
+      "title": "Opening Remarks by Commissioner Kadis at the European Maritime Day 2026 in Limassol, Cyprus",
+      "url": "https://ec.europa.eu/commission/presscorner/detail/en/speech_26_1127",
+      "published_at": "2026-05-21T07:38:35.000Z",
+      "summary_en": "",
+      "source": "EU Commission Trade",
+      "section": "trade",
+      "language": "en",
+      "region": "EU"
+    },
+    {
+      "title": "Speech by Commissioner Albuquerque at the 6th Annual European Financial Integration Conference, organised by the Association for Financial Markets in Europe (AFME)",
+      "url": "https://ec.europa.eu/commission/presscorner/detail/en/speech_26_1118",
+      "published_at": "2026-05-20T12:15:26.000Z",
+      "summary_en": "",
+      "source": "EU Commission Trade",
+      "section": "trade",
+      "language": "en",
+      "region": "EU"
+    },
+    {
+      "title": "Authorisation Management Module&nbsp;",
+      "url": "https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism/cbam-registry-and-reporting_en#authorisation-management-module",
+      "published_at": "2026-05-22T07:07:00.024Z",
+      "summary_en": "",
+      "source": "EU CBAM",
+      "section": "trade",
+      "language": "en",
+      "region": "EU"
+    },
+    {
+      "title": "CBAM Legislation and Guidance",
+      "url": "https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism/cbam-legislation-and-guidance_en",
+      "published_at": "2026-05-22T07:07:00.024Z",
+      "summary_en": "",
+      "source": "EU CBAM",
+      "section": "trade",
+      "language": "en",
+      "region": "EU"
+    },
+    {
+      "title": "More information",
+      "url": "https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism/cbam-information-sector_en",
+      "published_at": "2026-05-22T07:07:00.024Z",
+      "summary_en": "",
+      "source": "EU CBAM",
+      "section": "trade",
+      "language": "en",
+      "region": "EU"
     }
   ],
   "air": [
@@ -1216,6 +2926,222 @@
       "source": "AirCargoNews",
       "section": "air",
       "language": "en"
+    },
+    {
+      "title": "Oil resumes rally as Iran reportedly wants to keep enriched uranium within the country",
+      "url": "https://www.cnbc.com/2026/05/22/oil-prices-today-trump-iran-strait-of-hormuz-uranium-.html",
+      "published_at": "2026-05-22T01:39:56.000Z",
+      "summary_en": "The International Energy Agency warned that as travel demand grows during the summer season, oil markets could enter a \"red zone\" soon.",
+      "source": "CNBC Logistics",
+      "section": "air",
+      "language": "en"
+    },
+    {
+      "title": "SpaceX scrubs test flight of massive Starship rocket, will retry Friday",
+      "url": "https://www.cnbc.com/2026/05/21/spacex-plans-12th-test-flight-of-massive-starship-rocket-as-ipo-looms.html",
+      "published_at": "2026-05-21T23:52:46.000Z",
+      "summary_en": "SpaceX's attempted Starship launch follows the company's release of its IPO prospectus, which set the stage for what's likely to be a record offering.",
+      "source": "CNBC Logistics",
+      "section": "air",
+      "language": "en"
+    },
+    {
+      "title": "The Cuba situation is starting to resemble a pre-conflict playbook",
+      "url": "https://www.cnbc.com/2026/05/22/the-cuba-situation-is-starting-to-resemble-a-pre-conflict-playbook.html",
+      "published_at": "2026-05-22T05:00:01.000Z",
+      "summary_en": "The U.S. pressure campaign against Cuba appears to have entered a new phase.",
+      "source": "CNBC Logistics",
+      "section": "air",
+      "language": "en"
+    },
+    {
+      "title": "Anthropic, Microsoft in talks for AI chip deal after $5 billion investment",
+      "url": "https://www.cnbc.com/2026/05/21/anthropic-microsoft-maia-200-ai-chip.html",
+      "published_at": "2026-05-21T19:53:21.000Z",
+      "summary_en": "Microsoft has not made the Maia 200 chips available to customers, but they are used in the company's data centers, offering better efficiency than other silicon.",
+      "source": "CNBC Logistics",
+      "section": "air",
+      "language": "en"
+    },
+    {
+      "title": "Eli Lilly says next-generation weight loss drug clears crucial obesity trial",
+      "url": "https://www.cnbc.com/2026/05/21/eli-lilly-weight-loss-drug-retatrutide-clears-obesity-trial.html",
+      "published_at": "2026-05-21T13:43:14.000Z",
+      "summary_en": "The results bring Lilly one step closer to filing for approval of the injection, retatrutide, which works differently from existing injections and pills.",
+      "source": "CNBC Logistics",
+      "section": "air",
+      "language": "en"
+    },
+    {
+      "title": "IAG Cargo to benefit from new routes to Mexico and Peru",
+      "url": "https://www.aircargonews.net/supply-chains/2026/05/iag-cargo-to-benefit-from-new-routes-to-mexico-and-peru/",
+      "published_at": "2026-05-21T13:25:54.000Z",
+      "summary_en": "IAG Cargo is set to benefit from more opportunities to move specialist verticals from Spain to Mexico and Peru. International Airlines Group (IAG), the parent and passenger arm of IAG Cargo, has announced two new passenger routes, from Madrid (MAD) to Monterrey (MTY) and Barcelona (BCN) to Lima (LIM",
+      "source": "AirCargoNews",
+      "section": "air",
+      "language": "en"
+    },
+    {
+      "title": "Widebody conversions overtake narrowbodies for first time in over 15 years",
+      "url": "https://www.aircargonews.net/freighter-conversions-mro/2026/05/widebody-conversions-overtake-narrowbodies-for-first-time-in-over-15-years/",
+      "published_at": "2026-05-21T11:17:42.000Z",
+      "summary_en": "Widebody freighter conversions exceeded narrowbody conversions for the first time since 2009 last year as a result of narrowbody oversupply. This pivotal change in the freighter conversion market was highlighted by aviation advisory firm IBA in its &#8220;The Freighter Outlook, Values &#38; Conversi",
+      "source": "AirCargoNews",
+      "section": "air",
+      "language": "en"
+    },
+    {
+      "title": "ACS continues German expansion with new office",
+      "url": "https://www.aircargonews.net/charter-company/2026/05/acs-continues-german-expansion-with-new-office/",
+      "published_at": "2026-05-21T10:41:24.000Z",
+      "summary_en": "Charter firm Air Charter Service (ACS) has continued its office expansion with the opening of a new base in Stuttgart. ACS said the new office was its fifth in Germany and its 42nd globally. Stuttgart had been chosen as a location because of its importance as a financial centre and the fact that it",
+      "source": "AirCargoNews",
+      "section": "air",
+      "language": "en"
+    },
+    {
+      "title": "ACN Awards category spotlight: Innovation &#8211; digital",
+      "url": "https://www.aircargonews.net/editorial/2026/05/acn-awards-category-spotlight-innovation-digital/",
+      "published_at": "2026-05-21T10:41:01.000Z",
+      "summary_en": "This year’s Air Cargo News Awards are now open for entry and we are looking for companies that have developed innovative digital solutions for the industry. This award recognises air cargo companies that have independently or in partnership invested in or developed innovative digital solutions that",
+      "source": "AirCargoNews",
+      "section": "air",
+      "language": "en"
+    },
+    {
+      "title": "Swissport enters Moroccan cargo market through latest acquisition",
+      "url": "https://www.aircargonews.net/ground-handler/2026/05/swissport-enters-moroccan-cargo-market-through-latest-acquisition/",
+      "published_at": "2026-05-21T10:40:42.000Z",
+      "summary_en": "Ground handler Swissport has entered the Moroccan cargo market through the purchase of Swiftair Maroc as part of its strategy to expand its cargo presence. Casablanca-based Swiftair Maroc is a cargo handling company operating at Mohammed V Airport, which is Morocco’s primary airfreight hub and handl",
+      "source": "AirCargoNews",
+      "section": "air",
+      "language": "en"
+    },
+    {
+      "name": "Freightos Air Index",
+      "value": 8211,
+      "change_pct": null,
+      "unit": "$/kg",
+      "date": "2026-05-22",
+      "source": "Freightos Air Index",
+      "source_url": "https://fbx.freightos.com/air"
+    },
+    {
+      "name": "Jet Fuel (IATA)",
+      "value": 162.55,
+      "change_pct": null,
+      "unit": "$/gallon",
+      "date": "2026-05-22",
+      "source": "Jet Fuel (IATA)",
+      "source_url": "https://www.iata.org/en/publications/economics/fuel-monitor/"
+    },
+    {
+      "title": "Oil resumes rally as Iran reportedly wants to keep enriched uranium within the country",
+      "url": "https://www.cnbc.com/2026/05/22/oil-prices-today-trump-iran-strait-of-hormuz-uranium-.html",
+      "published_at": "2026-05-22T01:39:56.000Z",
+      "summary_en": "The International Energy Agency warned that as travel demand grows during the summer season, oil markets could enter a \"red zone\" soon.",
+      "source": "CNBC Logistics",
+      "section": "air",
+      "language": "en"
+    },
+    {
+      "title": "SpaceX scrubs test flight of massive Starship rocket, will retry Friday",
+      "url": "https://www.cnbc.com/2026/05/21/spacex-plans-12th-test-flight-of-massive-starship-rocket-as-ipo-looms.html",
+      "published_at": "2026-05-21T23:52:46.000Z",
+      "summary_en": "SpaceX's attempted Starship launch follows the company's release of its IPO prospectus, which set the stage for what's likely to be a record offering.",
+      "source": "CNBC Logistics",
+      "section": "air",
+      "language": "en"
+    },
+    {
+      "title": "The Cuba situation is starting to resemble a pre-conflict playbook",
+      "url": "https://www.cnbc.com/2026/05/22/the-cuba-situation-is-starting-to-resemble-a-pre-conflict-playbook.html",
+      "published_at": "2026-05-22T05:00:01.000Z",
+      "summary_en": "The U.S. pressure campaign against Cuba appears to have entered a new phase.",
+      "source": "CNBC Logistics",
+      "section": "air",
+      "language": "en"
+    },
+    {
+      "title": "Anthropic, Microsoft in talks for AI chip deal after $5 billion investment",
+      "url": "https://www.cnbc.com/2026/05/21/anthropic-microsoft-maia-200-ai-chip.html",
+      "published_at": "2026-05-21T19:53:21.000Z",
+      "summary_en": "Microsoft has not made the Maia 200 chips available to customers, but they are used in the company's data centers, offering better efficiency than other silicon.",
+      "source": "CNBC Logistics",
+      "section": "air",
+      "language": "en"
+    },
+    {
+      "title": "Eli Lilly says next-generation weight loss drug clears crucial obesity trial",
+      "url": "https://www.cnbc.com/2026/05/21/eli-lilly-weight-loss-drug-retatrutide-clears-obesity-trial.html",
+      "published_at": "2026-05-21T13:43:14.000Z",
+      "summary_en": "The results bring Lilly one step closer to filing for approval of the injection, retatrutide, which works differently from existing injections and pills.",
+      "source": "CNBC Logistics",
+      "section": "air",
+      "language": "en"
+    },
+    {
+      "title": "IAG Cargo to benefit from new routes to Mexico and Peru",
+      "url": "https://www.aircargonews.net/supply-chains/2026/05/iag-cargo-to-benefit-from-new-routes-to-mexico-and-peru/",
+      "published_at": "2026-05-21T13:25:54.000Z",
+      "summary_en": "IAG Cargo is set to benefit from more opportunities to move specialist verticals from Spain to Mexico and Peru. International Airlines Group (IAG), the parent and passenger arm of IAG Cargo, has announced two new passenger routes, from Madrid (MAD) to Monterrey (MTY) and Barcelona (BCN) to Lima (LIM",
+      "source": "AirCargoNews",
+      "section": "air",
+      "language": "en"
+    },
+    {
+      "title": "Widebody conversions overtake narrowbodies for first time in over 15 years",
+      "url": "https://www.aircargonews.net/freighter-conversions-mro/2026/05/widebody-conversions-overtake-narrowbodies-for-first-time-in-over-15-years/",
+      "published_at": "2026-05-21T11:17:42.000Z",
+      "summary_en": "Widebody freighter conversions exceeded narrowbody conversions for the first time since 2009 last year as a result of narrowbody oversupply. This pivotal change in the freighter conversion market was highlighted by aviation advisory firm IBA in its &#8220;The Freighter Outlook, Values &#38; Conversi",
+      "source": "AirCargoNews",
+      "section": "air",
+      "language": "en"
+    },
+    {
+      "title": "ACS continues German expansion with new office",
+      "url": "https://www.aircargonews.net/charter-company/2026/05/acs-continues-german-expansion-with-new-office/",
+      "published_at": "2026-05-21T10:41:24.000Z",
+      "summary_en": "Charter firm Air Charter Service (ACS) has continued its office expansion with the opening of a new base in Stuttgart. ACS said the new office was its fifth in Germany and its 42nd globally. Stuttgart had been chosen as a location because of its importance as a financial centre and the fact that it",
+      "source": "AirCargoNews",
+      "section": "air",
+      "language": "en"
+    },
+    {
+      "title": "ACN Awards category spotlight: Innovation &#8211; digital",
+      "url": "https://www.aircargonews.net/editorial/2026/05/acn-awards-category-spotlight-innovation-digital/",
+      "published_at": "2026-05-21T10:41:01.000Z",
+      "summary_en": "This year’s Air Cargo News Awards are now open for entry and we are looking for companies that have developed innovative digital solutions for the industry. This award recognises air cargo companies that have independently or in partnership invested in or developed innovative digital solutions that",
+      "source": "AirCargoNews",
+      "section": "air",
+      "language": "en"
+    },
+    {
+      "title": "Swissport enters Moroccan cargo market through latest acquisition",
+      "url": "https://www.aircargonews.net/ground-handler/2026/05/swissport-enters-moroccan-cargo-market-through-latest-acquisition/",
+      "published_at": "2026-05-21T10:40:42.000Z",
+      "summary_en": "Ground handler Swissport has entered the Moroccan cargo market through the purchase of Swiftair Maroc as part of its strategy to expand its cargo presence. Casablanca-based Swiftair Maroc is a cargo handling company operating at Mohammed V Airport, which is Morocco’s primary airfreight hub and handl",
+      "source": "AirCargoNews",
+      "section": "air",
+      "language": "en"
+    },
+    {
+      "name": "Freightos Air Index",
+      "value": 8211,
+      "change_pct": null,
+      "unit": "$/kg",
+      "date": "2026-05-22",
+      "source": "Freightos Air Index",
+      "source_url": "https://fbx.freightos.com/air"
+    },
+    {
+      "name": "Jet Fuel (IATA)",
+      "value": 162.55,
+      "change_pct": null,
+      "unit": "$/gallon",
+      "date": "2026-05-22",
+      "source": "Jet Fuel (IATA)",
+      "source_url": "https://www.iata.org/en/publications/economics/fuel-monitor/"
     },
     {
       "title": "Oil resumes rally as Iran reportedly wants to keep enriched uranium within the country",

@@ -10,19 +10,27 @@ const SOURCES = [
   {
     name: '카고뉴스',
     url: 'https://www.cargonews.co.kr/',
-    rss: 'https://www.cargonews.co.kr/rss/allArticle.xml',
+    rss: ['https://www.cargonews.co.kr/rss/allArticle.xml'],
     section: 'shipping' as const,
   },
   {
     name: '쉬핑뉴스넷',
     url: 'https://www.shippingnewsnet.com/',
-    rss: 'https://www.shippingnewsnet.com/rss',
+    rss: [
+      'https://www.shippingnewsnet.com/feed',
+      'https://www.shippingnewsnet.com/feed/rss',
+      'https://www.shippingnewsnet.com/rss.xml',
+    ],
     section: 'shipping' as const,
   },
   {
     name: '쉬핑데일리',
     url: 'https://www.shippingdaily.co.kr/index.php',
-    rss: 'https://www.shippingdaily.co.kr/rss',
+    rss: [
+      'https://www.shippingdaily.co.kr/feed',
+      'https://www.shippingdaily.co.kr/rss.xml',
+      'https://www.shippingdaily.co.kr/feed/rss',
+    ],
     section: 'shipping' as const,
   },
   {
@@ -83,6 +91,18 @@ async function parseRss(rssUrl: string, sourceName: string): Promise<NewsItem[]>
   return items;
 }
 
+async function tryRssFallbacks(urls: string[], sourceName: string): Promise<NewsItem[]> {
+  for (const url of urls) {
+    try {
+      const items = await parseRss(url, sourceName);
+      if (items.length > 0) return items;
+    } catch {
+      // try next
+    }
+  }
+  throw new Error(`RSS 모든 후보 실패: ${urls.join(', ')}`);
+}
+
 async function fetchAndParseHtml(pageUrl: string, sourceName: string): Promise<NewsItem[]> {
   const res = await fetch(pageUrl, {
     headers: FETCH_HEADERS,
@@ -95,7 +115,7 @@ async function fetchAndParseHtml(pageUrl: string, sourceName: string): Promise<N
   const items: NewsItem[] = [];
   const seen = new Set<string>();
 
-  for (const m of html.matchAll(/<a[^>]+href="([^"]+)"[^>]*>([^<]{10,80})<\/a>/g)) {
+  for (const m of html.matchAll(/<a[^>]+href="([^"]+)"[^>]*>([^<]{8,120})<\/a>/g)) {
     let href = m[1].trim();
     const title = m[2].trim().replace(/\s+/g, ' ');
 
@@ -125,7 +145,7 @@ export async function collect(): Promise<CollectorResult> {
   for (const source of SOURCES) {
     try {
       const items = source.rss
-        ? await rateLimited(source.rss, () => parseRss(source.rss!, source.name))
+        ? await rateLimited(source.url, () => tryRssFallbacks(source.rss!, source.name))
         : await rateLimited(source.url, () => fetchAndParseHtml(source.url, source.name));
 
       for (const item of items) {

@@ -77,7 +77,7 @@ async function fetchFBX(): Promise<IndexData[]> {
 
 // ── SCFI — 자동 수집 불가, 수동 입력 필요 ──────────────────────
 function buildSCFIStub(): IndexData[] {
-  console.log('⚠️ SCFI 자동 수집 불가 — 수동 입력 필요 (Shanghai Shipping Exchange 접근 차단)');
+  console.log('⚠️ SCFI 자동 수집 불가 — Shanghai Shipping Exchange 한국 IP 차단, 수동 입력 필요');
   return [{
     name: 'SCFI_종합',
     value: null,
@@ -86,57 +86,23 @@ function buildSCFIStub(): IndexData[] {
     unit: 'point',
     source: 'Shanghai Shipping Exchange',
     source_url: 'https://en.sse.net.cn/indices/scfinew.jsp',
-    note: 'SCFI 자동 수집 불가 — 수동 입력 필요',
+    note: 'Shanghai Shipping Exchange 한국 IP 차단 — 수동 입력 필요',
   }];
 }
 
-// ── KCCI (한국컨테이너운임지수) — KOBC fetch + 정규식 ───────────
-async function fetchKCCI(): Promise<IndexData[]> {
-  const url = 'https://www.kobc.or.kr/index/kcci';
-  try {
-    const res = await fetch(url, {
-      headers: {
-        'User-Agent': 'Logisight/1.0 (logisight.mtlship.com; bot)',
-        'Accept-Language': 'ko-KR,ko;q=0.9',
-      },
-      signal: AbortSignal.timeout(10000),
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const html = await res.text();
-
-    const raw =
-      html.match(/KCCI.*?(\d{1,4}(?:\.\d+)?)/is)?.[1] ||
-      html.match(/종합.*?(\d{3,4}(?:\.\d+)?)/is)?.[1] ||
-      null;
-
-    const value = raw ? parseFloat(raw) : null;
-    if (value === null) {
-      console.log('⚠️ KCCI 수치 파싱 실패: 정규식 매칭 없음');
-    } else {
-      console.log(`✅ KCCI: ${value}`);
-    }
-
-    return [{
-      name: 'KCCI_종합',
-      value,
-      change_pct: null,
-      date: TODAY,
-      unit: 'point',
-      source: 'KOBC',
-      source_url: url,
-    }];
-  } catch (e) {
-    console.log(`⚠️ KCCI 수집 실패: ${(e as Error).message}`);
-    return [{
-      name: 'KCCI_종합',
-      value: null,
-      change_pct: null,
-      date: TODAY,
-      unit: 'point',
-      source: 'KOBC',
-      source_url: url,
-    }];
-  }
+// ── KCCI (한국컨테이너운임지수) — JS 렌더링, fetch 불가 ───────────
+function buildKCCIStub(): IndexData[] {
+  console.log('⚠️ KCCI 자동 수집 불가 — JS 렌더링 사이트, 수동 입력 또는 API 연결 필요');
+  return [{
+    name: 'KCCI_종합',
+    value: null,
+    change_pct: null,
+    date: TODAY,
+    unit: 'point',
+    source: 'KOBC',
+    source_url: 'https://www.kobc.or.kr/index/kcci',
+    note: 'JS 렌더링 사이트 — 수동 입력 또는 API 연결 필요',
+  }];
 }
 
 export async function collect(): Promise<CollectorResult> {
@@ -155,19 +121,31 @@ export async function collect(): Promise<CollectorResult> {
     });
   }
 
-  // WCI + FBX + KCCI (병렬 fetch)
-  const [wciRes, fbxRes, kcciRes] = await Promise.allSettled([
+  // KCCI stub (동기, JS 렌더링 사이트)
+  for (const d of buildKCCIStub()) {
+    result.data.push({
+      data_type: 'index',
+      data_key: d.name,
+      data_value: d,
+      source: d.source,
+      source_url: d.source_url,
+      is_complete: false,
+      error_message: d.note,
+    });
+  }
+
+  // WCI + FBX (병렬 fetch)
+  const [wciRes, fbxRes] = await Promise.allSettled([
     rateLimited('https://www.drewry.co.uk', () => fetchWCI()),
     rateLimited('https://fbx.freightos.com', () => fetchFBX()),
-    rateLimited('https://www.kobc.or.kr', () => fetchKCCI()),
   ]);
 
-  for (const [label, res] of [['WCI', wciRes], ['FBX', fbxRes], ['KCCI', kcciRes]] as const) {
+  for (const [label, res] of [['WCI', wciRes], ['FBX', fbxRes]] as const) {
     if (res.status === 'rejected') {
       console.log(`⚠️ ${label} 실패: ${(res.reason as Error).message}`);
       continue;
     }
-    for (const d of res.value) {
+    for (const d of res.value as IndexData[]) {
       result.data.push({
         data_type: 'index',
         data_key: d.name,
