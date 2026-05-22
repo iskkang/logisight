@@ -8,9 +8,9 @@ import type { CollectorResult, NewsItem } from './types';
 
 const SOURCES = [
   {
-    name: 'FreightWaves',
-    rss: 'https://www.freightwaves.com/feed',
-    section: 'shipping' as const,
+    name: 'CNBC Logistics',
+    rss: 'https://www.cnbc.com/id/100003114/device/rss/rss.html',
+    section: 'air' as const,
     language: 'en',
   },
   {
@@ -32,9 +32,9 @@ const SOURCES = [
     language: 'en',
   },
   {
-    name: 'CNBC Logistics',
-    rss: 'https://www.cnbc.com/id/100003114/device/rss/rss.html',
-    section: 'air' as const,
+    name: 'FreightWaves',
+    rss: 'https://www.freightwaves.com/feed',
+    section: 'shipping' as const,
     language: 'en',
   },
 ];

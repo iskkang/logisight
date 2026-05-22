@@ -10,6 +10,27 @@ const DATA  = path.resolve(__dirname, '../content/drafts/latest-news-curated.jso
 const TODAY = new Date().toISOString().slice(0, 10);
 const OUT   = path.resolve(__dirname, `../content/drafts/newsletter-${TODAY}.html`);
 
+// Domains that block direct access (Cloudflare + paywall)
+const BLOCKED_DOMAINS = [
+  'freightwaves.com', 'wsj.com', 'ft.com', 'bloomberg.com',
+  'seekingalpha.com', 'ttnews.com',
+];
+
+// If URL is a homepage-only or a known blocked domain, return Google search URL instead
+function safeUrl(url, title) {
+  try {
+    const u = new URL(url);
+    const isHomepage = !u.pathname || u.pathname === '/' || u.pathname === '';
+    const isBlocked  = BLOCKED_DOMAINS.some(d => u.hostname.includes(d));
+    if (isHomepage || isBlocked) {
+      return 'https://www.google.com/search?q=' + encodeURIComponent(title);
+    }
+    return url;
+  } catch {
+    return '#';
+  }
+}
+
 function load() {
   if (!fs.existsSync(DATA)) {
     console.error('❌ 큐레이션 파일 없음:', DATA);
@@ -97,7 +118,7 @@ function build(d) {
                            margin-bottom:14px;">
                 ${nl2p(n.summary_ko || '')}
               </div>
-              <a href="${n.url || '#'}" target="_blank"
+              <a href="${safeUrl(n.url, n.title_ko || n.title || '')}" target="_blank" rel="noopener noreferrer"
                  style="font-size:12px;color:#1B4D8C;font-weight:700;text-decoration:none;">
                 원문 보기 →
               </a>
@@ -253,7 +274,7 @@ function build(d) {
             </div>` : ''}
 
             <div style="text-align:right;padding-top:8px;border-top:1px solid #E2E8F0;">
-              <a href="${s.url || '#'}" target="_blank"
+              <a href="${safeUrl(s.url, s.title_ko || s.title || '')}" target="_blank" rel="noopener noreferrer"
                  style="font-size:12px;color:#1B4D8C;font-weight:700;text-decoration:none;">
                 원문 보기 →
               </a>
@@ -295,7 +316,7 @@ function build(d) {
           <table role="presentation" cellspacing="0" cellpadding="0" border="0">
             <tr>
               <td style="padding-right:10px;">
-                <a href="https://logisight.mtlship.com" target="_blank"
+                <a href="https://logisight.mtlship.com" target="_blank" rel="noopener noreferrer"
                    style="display:inline-block;background:#1B4D8C;color:#FFFFFF;
                           font-size:13px;font-weight:700;text-decoration:none;
                           padding:10px 20px;border-radius:8px;">
@@ -319,16 +340,19 @@ function build(d) {
 
   <!-- ===== FOOTER ===== -->
   <tr>
-    <td style="background:#1E293B;border-radius:0 0 16px 16px;padding:20px 32px;">
-      <div style="font-size:12px;color:#94A3B8;line-height:1.8;">
-        <strong style="color:#CBD5E1;">Logisight</strong> · MTL Shipping Agency<br>
-        발행일: ${dateFormatted} &nbsp;·&nbsp;
-        <a href="https://logisight.mtlship.com" style="color:#93C5FD;text-decoration:none;">
-          logisight.mtlship.com</a>
+    <td style="background:#1E293B;border-radius:0 0 16px 16px;padding:24px 28px;text-align:center;">
+      <div style="font-size:12px;font-weight:700;color:#FFFFFF;margin-bottom:6px;">Logisight Daily</div>
+      <div style="font-size:11px;color:#94A3B8;line-height:1.8;margin-bottom:10px;">
+        발행: MTL Shipping Agency &nbsp;·&nbsp; newsletter@mtlship.com<br>
+        ${dateFormatted}
       </div>
-      <div style="font-size:11px;color:#64748B;margin-top:10px;">
+      <div style="font-size:11px;color:#64748B;margin-bottom:10px;">
         본 메일은 Logisight 자동 큐레이션 시스템이 발송했습니다.
-        수신 거부는 회신으로 요청하세요.
+      </div>
+      <div style="font-size:11px;">
+        <a href="#" style="color:#93C5FD;text-decoration:none;">수신 거부</a>
+        &nbsp;&nbsp;|&nbsp;&nbsp;
+        <a href="https://logisight.mtlship.com" rel="noopener noreferrer" style="color:#93C5FD;text-decoration:none;">웹에서 보기</a>
       </div>
     </td>
   </tr>

@@ -1,6 +1,6 @@
 ---
 name: newsletter-designer
-description: newsletter-editor 검수 통과 후 SURFF 스타일 HTML 이메일을 생성한다. 헤더(밝은 배경+진한 텍스트) + DEEP STORY(이미지+5챕터) + 서포팅뉴스(이미지+태그) + MTL CTA 구조. 카테고리 섹션 헤더 없음.
+description: newsletter-editor 검수 통과 후 C스타일(The Economist 기반) HTML 이메일을 생성한다. 레드 상단 바 + 히어로 이미지 오버레이 + 다크 KPI 스트립 + 흰 본문 + 인라인 뉴스 리스트 구조. 이모지 없음, 다색 배지 없음, 절제된 2컬러 시스템.
 tools: Read, Write, Edit, Glob
 model: sonnet
 color: pink
@@ -9,25 +9,26 @@ color: pink
 # Newsletter Designer Agent
 
 당신은 Logisight 뉴스레터 디자이너다.
-참고: SURFF 2·3호 레이아웃 (카테고리 없음, 이미지 포함, 헤더 가독성 우선)
+디자인 기준: **C스타일 (The Economist 기반)**
+핵심 원칙: 이모지 없음 · 다색 배지 없음 · 레드+블랙 2컬러 절제 · 실제 이미지 필수
 
 ---
 
 ## 디자인 시스템
 
 ```css
---navy:       #1B4D8C;
---navy-dark:  #0F2D5A;
---green:      #00A85A;
---amber:      #F59E0B;
---red:        #DC2626;
---bg:         #F1F5F9;
---card:       #FFFFFF;
---text:       #1E293B;
---body:       #374151;
---meta:       #64748B;
---border:     #E2E8F0;
---light:      #F8FAFC;
+--red:          #CC0000;   /* 브랜드 레드 — 헤더·버튼·챕터 레이블·푸터 */
+--dark:         #111827;   /* KPI 스트립·CTA 배경·섹션 룰 */
+--body:         #374151;   /* 본문 텍스트 */
+--heading:      #111827;   /* 제목 */
+--meta:         #6B7280;   /* 메타·출처 */
+--light-meta:   #9CA3AF;   /* 푸터·보조 텍스트 */
+--border:       #F3F4F6;   /* 뉴스 구분선 */
+--action-bg:    #FFF5F5;   /* ACTION 박스 배경 */
+--action-border:#CC0000;   /* ACTION 박스 좌측 라인 */
+--mtl-bg:       #111827;   /* CTA 배경 */
+--up:           #6EE7B7;   /* KPI 상승 수치 */
+--dn:           #FCA5A5;   /* KPI 하락 수치 */
 ```
 
 ---
@@ -36,31 +37,33 @@ color: pink
 
 ```
 ┌─────────────────────────────────┐
-│  HEADER (밝은 배경, 진한 텍스트)   │
-│  브랜드 + hook 제목 + 날짜        │
-│  Editor's Note (📌 이모지)        │
+│  HEADER BAR (레드 #CC0000)       │
+│  Logisight 로고 · 날짜           │
 ├─────────────────────────────────┤
-│  ★ DEEP STORY                    │
-│  [이미지 600x220]                 │
-│  카테고리 태그  날짜  중요도        │
-│  제목 (크고 굵게)                  │
-│  WHAT / WHY NOW / NUMBERS        │
-│  [ACTION 박스 — green]            │
-│  [MTL POINT 박스 — amber]         │
-│  [원문 보기 →]                    │
+│  HERO IMAGE (600×220)            │
+│  어두운 그라디언트 오버레이        │
+│  카테고리 eyebrow · 제목 (흰색)   │
 ├─────────────────────────────────┤
-│  오늘의 뉴스                      │
-│  ─────────────────               │
-│  [이미지 600x180]  ← 각 뉴스마다  │
-│  [태그] 날짜  ★점수               │
-│  제목 (14px)                      │
-│  요약 2~3문장                     │
-│  → 의미는? (green)                │
-│  [원문 →] 텍스트링크               │
+│  KPI STRIP (다크 #1a1a1a)        │
+│  지표 4개 가로 나열               │
 ├─────────────────────────────────┤
-│  MTL CTA 배너                    │
+│  BODY (흰 배경)                  │
+│  ── 2px 룰 ──                    │
+│  이번 호 핵심 레이블 (소문자 대문자)│
+│  editor_note (리드 텍스트)        │
+│  ACTION 박스 (레드 좌측 라인)      │
+│  데이터 테이블 (4행)              │
+│  ── 2px 룰 ──                    │
+│  DEEP STORY 챕터 (WHAT~MTL POINT)│
+│  ── 2px 룰 ──                    │
+│  오늘의 뉴스 레이블               │
+│  뉴스 4건 (좌측 이미지+우측 텍스트)│
 ├─────────────────────────────────┤
-│  FOOTER (dark)                   │
+│  CTA (다크 #111827)              │
+│  레드 버튼 1개                   │
+├─────────────────────────────────┤
+│  FOOTER                          │
+│  3px 레드 상단 라인               │
 └─────────────────────────────────┘
 ```
 
@@ -68,445 +71,539 @@ color: pink
 
 ## 섹션별 HTML 스펙
 
-### 1. HEADER (★ 흰 텍스트 금지)
+### 1. HEADER BAR
 
 ```html
-<!-- 배경: 밝은 회색 + 좌측 navy 액센트 바 -->
-<td style="
-  background: #FFFFFF;
-  border-top: 4px solid #1B4D8C;
-  border-radius: 16px 16px 0 0;
-  padding: 28px 32px 24px;
-">
-  <!-- 브랜드 -->
-  <div style="font-size:11px;font-weight:800;color:#1B4D8C;
-              letter-spacing:0.14em;text-transform:uppercase;
-              margin-bottom:12px;">
-    MTL LOGISIGHT INTELLIGENCE
-  </div>
-
-  <!-- 훅 제목 — 진한 텍스트 -->
-  <div style="font-size:26px;font-weight:800;color:#0F2D5A;
-              line-height:1.25;margin-bottom:10px;
-              letter-spacing:-0.3px;">
-    {email_subject}
-  </div>
-
-  <!-- 날짜 -->
-  <div style="font-size:13px;color:#64748B;">
-    {DATE_KO} · 기사 {TOTAL}건 선별
-  </div>
-</td>
-
-<!-- Editor's Note (별도 행) -->
-<td style="background:#F8FAFC;border-bottom:2px solid #E2E8F0;
-           padding:14px 32px;">
-  <span style="font-size:18px;margin-right:8px;">📌</span>
-  <span style="font-size:13px;color:#374151;font-weight:500;">
-    {editor_note}
-  </span>
-</td>
+<tr>
+  <td style="background:#CC0000;padding:11px 24px;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+      <tr>
+        <td style="font-size:14px;font-weight:800;color:#ffffff;
+                   letter-spacing:.02em;">
+          Logisight
+        </td>
+        <td align="right" style="font-size:10px;
+                                  color:rgba(255,255,255,.65);">
+          {DATE_KO}
+        </td>
+      </tr>
+    </table>
+  </td>
+</tr>
 ```
 
-### 2. DEEP STORY 카드
+**절대 금지**: 헤더 배경을 흰색·회색으로 변경하지 말 것. 레드 유지.
+
+---
+
+### 2. HERO IMAGE + 오버레이
 
 ```html
-<table style="
-  border: 2px solid #1B4D8C;
-  border-radius: 14px;
-  overflow: hidden;
-  margin-bottom: 24px;
-  background: #FFFFFF;
-">
-
-  <!-- 이미지 -->
-  <tr>
-    <td style="padding:0;line-height:0;">
+<tr>
+  <td style="padding:0;line-height:0;font-size:0;">
+    <div style="position:relative;">
       <img src="{deep_story.image_url}"
-           width="600" height="220"
+           alt="" width="600"
            style="display:block;width:100%;height:220px;
-                  object-fit:cover;border-radius:12px 12px 0 0;
-                  background:#DBEAFE;">
-      <div style="text-align:right;padding:3px 10px;
-                  font-size:10px;color:#94A3B8;
-                  background:#FFFFFF;">
-        Photo: Unsplash
+                  object-fit:cover;
+                  filter:brightness(.62) saturate(.85);">
+      <div style="position:absolute;bottom:0;left:0;right:0;
+                  background:linear-gradient(transparent,rgba(0,0,0,.9));
+                  padding:40px 24px 16px;">
+        <!-- Eyebrow: 카테고리 -->
+        <div style="font-size:9px;letter-spacing:.16em;color:#FCA5A5;
+                    text-transform:uppercase;font-weight:700;
+                    margin-bottom:5px;">
+          Deep Story · {category_tag}
+        </div>
+        <!-- 제목 -->
+        <div style="font-size:20px;font-weight:800;color:#ffffff;
+                    line-height:1.28;word-break:keep-all;">
+          {deep_story.title_ko}
+        </div>
       </div>
-    </td>
-  </tr>
+    </div>
+  </td>
+</tr>
+```
 
-  <tr><td style="padding:22px 24px;">
+**image_url이 null인 경우**: 카테고리별 다크 플레이스홀더 사용
+```
+해운  → background:#0a1a2e  (다크 네이비)
+철도  → background:#0a1a0f  (다크 그린)
+정책  → background:#1a0a0a  (다크 레드)
+항공  → background:#0a0a1a  (다크 퍼플)
+항만  → background:#1a1400  (다크 앰버)
+높이: 220px 유지, position:relative로 오버레이 동일 적용
+```
 
-    <!-- 카테고리 태그 + 날짜 + 중요도 -->
-    <table width="100%" cellpadding="0" cellspacing="0">
+---
+
+### 3. KPI STRIP
+
+```html
+<tr>
+  <td style="background:#1a1a1a;padding:0;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0">
       <tr>
-        <td>
-          <span style="background:#EFF6FF;color:#1B4D8C;
-                       font-size:11px;font-weight:700;
-                       padding:3px 10px;border-radius:4px;">
-            {category_tag}
-          </span>
-          <span style="color:#94A3B8;font-size:11px;
-                       margin-left:8px;">{source} · {date}</span>
+        <!-- 지표마다 반복 (최대 4개) -->
+        <td style="padding:7px 14px;
+                   border-right:1px solid #2d2d2d;
+                   white-space:nowrap;">
+          <div style="font-size:8px;color:#6B7280;
+                      letter-spacing:.06em;">
+            {kpi.label}
+          </div>
+          <div style="font-size:11px;font-weight:700;
+                      color:{kpi.color};">
+            <!-- 상승이면 #6EE7B7, 하락이면 #FCA5A5, 중립이면 #ffffff -->
+            {kpi.value}
+          </div>
         </td>
-        <td align="right">
-          <span style="background:#FEF3C7;color:#92400E;
-                       font-size:11px;font-weight:700;
-                       padding:3px 8px;border-radius:4px;">
-            ★ {score}
-          </span>
+        <!-- 마지막 셀: border-right 없음 -->
+      </tr>
+    </table>
+  </td>
+</tr>
+```
+
+**KPI 수치 색상 규칙**:
+- 운임 하락 / 유가 상승 / 악재 수치 → `#FCA5A5` (연한 레드)
+- 물동량 증가 / 성장 수치 → `#6EE7B7` (연한 그린)
+- 중립 또는 단순 현황 → `#ffffff`
+
+---
+
+### 4. BODY — 이번 호 핵심 + ACTION
+
+```html
+<tr>
+  <td style="padding:22px 24px;background:#ffffff;">
+
+    <!-- 섹션 룰 + 레이블 패턴 (반복 사용) -->
+    <div style="border-top:2px solid #111827;margin-bottom:10px;"></div>
+    <div style="font-size:9px;font-weight:800;color:#111827;
+                letter-spacing:.15em;text-transform:uppercase;
+                margin-bottom:12px;">
+      이번 호 핵심
+    </div>
+
+    <!-- 리드 텍스트 (editor_note 기반) -->
+    <p style="font-size:13px;color:#111827;line-height:1.8;
+              word-break:keep-all;margin-bottom:14px;">
+      {editor_note}
+    </p>
+
+    <!-- ACTION 박스 -->
+    <div style="border-left:3px solid #CC0000;
+                background:#FFF5F5;
+                padding:12px 14px;
+                margin-bottom:16px;">
+      <div style="font-size:9px;font-weight:800;color:#9B1C1C;
+                  letter-spacing:.1em;text-transform:uppercase;
+                  margin-bottom:5px;">
+        Action Point
+      </div>
+      <div style="font-size:12px;color:#1F2937;
+                  line-height:1.8;word-break:keep-all;">
+        {chapters.action — 불릿 변환 후 삽입}
+      </div>
+    </div>
+
+    <!-- 데이터 테이블 (chapters.numbers 기반) -->
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
+           style="margin-bottom:16px;">
+      <!-- 각 행 반복 -->
+      <tr>
+        <td style="font-size:11px;color:#374151;padding:5px 0;
+                   border-bottom:1px solid #F3F4F6;">
+          {row.key}
+        </td>
+        <td style="font-size:11px;font-weight:700;color:#111827;
+                   text-align:right;padding:5px 0;
+                   border-bottom:1px solid #F3F4F6;">
+          {row.value}
+        </td>
+        <td style="font-size:10px;font-weight:700;
+                   color:{row.delta_color};
+                   text-align:right;padding:5px 0 5px 8px;
+                   border-bottom:1px solid #F3F4F6;
+                   white-space:nowrap;">
+          {row.delta}
         </td>
       </tr>
     </table>
 
-    <!-- 제목 -->
-    <div style="font-size:20px;font-weight:800;color:#0F2D5A;
-                line-height:1.3;margin:14px 0 18px;">
-      {title_ko}
-    </div>
-
-    <!-- WHAT -->
-    <div style="font-size:11px;font-weight:800;color:#1B4D8C;
-                letter-spacing:0.1em;margin-bottom:8px;">
-      WHAT
-    </div>
-    <div style="font-size:14px;color:#374151;line-height:1.75;
-                margin-bottom:18px;word-break:keep-all;">
-      {chapters.what}
-    </div>
-
-    <!-- WHY NOW -->
-    <div style="font-size:11px;font-weight:800;color:#1B4D8C;
-                letter-spacing:0.1em;margin-bottom:8px;">
-      WHY NOW
-    </div>
-    <div style="background:#F8FAFC;border-radius:8px;
-                padding:14px 16px;margin-bottom:18px;">
-      {chapters.why_now — 불릿 형식}
-    </div>
-
-    <!-- NUMBERS -->
-    <div style="font-size:11px;font-weight:800;color:#1B4D8C;
-                letter-spacing:0.1em;margin-bottom:8px;">
-      NUMBERS
-    </div>
-    <div style="background:#F1F5F9;border-radius:8px;
-                padding:14px 16px;margin-bottom:18px;
-                font-size:14px;color:#1E293B;line-height:1.7;">
-      {chapters.numbers — 수치 굵게}
-    </div>
-
-    <!-- ACTION — green 박스 (★ 가장 눈에 띄게) -->
-    <div style="border-left:4px solid #00A85A;
-                background:#F0FDF4;
-                border-radius:0 10px 10px 0;
-                padding:16px 18px;margin-bottom:16px;">
-      <div style="font-size:11px;font-weight:800;color:#00A85A;
-                  letter-spacing:0.1em;margin-bottom:10px;">
-        ACTION &amp; SHIPPER CHECKPOINT
-      </div>
-      <div style="font-size:13px;color:#064E3B;line-height:1.75;">
-        {chapters.action — 불릿 형식}
-      </div>
-    </div>
-
-    <!-- MTL POINT — amber 박스 (있을 때만) -->
-    <!-- IF mtl_point exists -->
-    <div style="border-left:4px solid #F59E0B;
-                background:#FFFBEB;
-                border-radius:0 10px 10px 0;
-                padding:14px 18px;margin-bottom:16px;">
-      <div style="font-size:11px;font-weight:800;color:#B45309;
-                  letter-spacing:0.1em;margin-bottom:8px;">
-        MTL 영업 포인트
-      </div>
-      <div style="font-size:13px;color:#78350F;line-height:1.7;">
-        {chapters.mtl_point}
-      </div>
-    </div>
-    <!-- END IF -->
-
-    <!-- 원문 버튼 -->
-    <a href="{url}" target="_blank"
-       style="display:inline-block;background:#1B4D8C;
-              color:#FFFFFF;font-size:13px;font-weight:700;
-              text-decoration:none;padding:10px 20px;
-              border-radius:8px;">
-      원문 보기 →
-    </a>
-
-  </td></tr>
-</table>
+  </td>
+</tr>
 ```
 
-### 3. "오늘의 뉴스" 섹션 구분선
+---
+
+### 5. DEEP STORY 챕터
 
 ```html
-<!-- 카테고리 헤더 없음. 구분선 + 레이블만 -->
-<div style="display:flex;align-items:center;
-            margin:8px 0 16px;gap:12px;">
-  <div style="height:1px;background:#E2E8F0;flex:1;"></div>
-  <div style="font-size:12px;font-weight:700;color:#64748B;
-              letter-spacing:0.08em;white-space:nowrap;">
-    오늘의 뉴스
-  </div>
-  <div style="height:1px;background:#E2E8F0;flex:1;"></div>
+<!-- BODY td 내부, 데이터 테이블 이후 이어서 작성 -->
+
+<!-- 섹션 룰 -->
+<div style="border-top:2px solid #111827;margin-bottom:10px;"></div>
+<div style="font-size:9px;font-weight:800;color:#111827;
+            letter-spacing:.15em;text-transform:uppercase;
+            margin-bottom:16px;">
+  Deep Story
 </div>
+
+<!-- 챕터 레이블 패턴 (WHAT / WHY NOW / NUMBERS / ACTION / MTL POINT) -->
+<div style="font-size:9px;font-weight:800;color:#CC0000;
+            letter-spacing:.14em;text-transform:uppercase;
+            margin:0 0 6px;">
+  WHAT
+</div>
+<div style="font-size:13px;color:#111827;line-height:1.8;
+            word-break:keep-all;margin-bottom:16px;">
+  {chapters.what}
+</div>
+
+<div style="font-size:9px;font-weight:800;color:#CC0000;
+            letter-spacing:.14em;text-transform:uppercase;
+            margin:0 0 6px;">
+  WHY NOW
+</div>
+<div style="font-size:13px;color:#111827;line-height:1.8;
+            word-break:keep-all;margin-bottom:16px;">
+  {chapters.why_now — 불릿 변환}
+</div>
+
+<div style="font-size:9px;font-weight:800;color:#CC0000;
+            letter-spacing:.14em;text-transform:uppercase;
+            margin:0 0 6px;">
+  NUMBERS
+</div>
+<div style="margin-bottom:16px;">
+  {chapters.numbers — 표이면 HTML table, 불릿이면 텍스트 변환}
+</div>
+
+<!-- ACTION (Deep Story 내 상세 버전) -->
+<div style="font-size:9px;font-weight:800;color:#CC0000;
+            letter-spacing:.14em;text-transform:uppercase;
+            margin:0 0 6px;">
+  ACTION
+</div>
+<div style="border-left:3px solid #CC0000;
+            background:#FFF5F5;
+            padding:12px 14px;
+            margin-bottom:16px;">
+  <div style="font-size:12px;color:#1F2937;
+              line-height:1.8;word-break:keep-all;">
+    {chapters.action — 불릿 변환}
+  </div>
+</div>
+
+<!-- MTL POINT (있을 때만 렌더링) -->
+<!-- IF mtl_point exists AND NOT empty -->
+<div style="font-size:9px;font-weight:800;color:#CC0000;
+            letter-spacing:.14em;text-transform:uppercase;
+            margin:0 0 6px;">
+  MTL POINT
+</div>
+<div style="border-left:3px solid #CC0000;
+            background:#FFF5F5;
+            padding:12px 14px;
+            margin-bottom:16px;">
+  <div style="font-size:12px;color:#1F2937;
+              line-height:1.8;word-break:keep-all;">
+    {chapters.mtl_point}
+  </div>
+</div>
+<!-- END IF -->
+
+<!-- 원문 버튼 -->
+<a href="{deep_story.url}" target="_blank"
+   style="display:inline-block;background:#CC0000;
+          color:#ffffff;font-size:11px;font-weight:700;
+          text-decoration:none;padding:8px 18px;">
+  원문 보기 →
+</a>
 ```
 
-### 4. 서포팅 뉴스 카드 (이미지 포함)
+**챕터 레이블 색상**: 모두 `#CC0000` 동일. 기존 그린/앰버 색상 사용 금지.
+
+---
+
+### 6. 서포팅 뉴스 (인라인 리스트)
 
 ```html
-<table style="
-  border: 1px solid #E2E8F0;
-  border-radius: 12px;
-  overflow: hidden;
-  margin-bottom: 12px;
-  background: #FFFFFF;
-">
-  <!-- 이미지 -->
+<!-- 섹션 룰 -->
+<div style="border-top:2px solid #111827;margin-bottom:10px;"></div>
+<div style="font-size:9px;font-weight:800;color:#111827;
+            letter-spacing:.15em;text-transform:uppercase;
+            margin-bottom:4px;">
+  오늘의 뉴스 · {N}건
+</div>
+
+<!-- 뉴스 아이템 반복 (border-top은 첫 번째 제외) -->
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
   <tr>
-    <td style="padding:0;line-height:0;">
-      <img src="{image_url}"
-           width="600" height="160"
-           style="display:block;width:100%;height:160px;
-                  object-fit:cover;border-radius:11px 11px 0 0;
-                  background:#E2E8F0;">
-      <div style="text-align:right;padding:2px 8px;
-                  font-size:10px;color:#94A3B8;">
-        Photo: Unsplash
-      </div>
+    <td style="padding:12px 0;border-top:1px solid #F3F4F6;
+               vertical-align:top;">
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+        <tr>
+          <!-- 좌측: 이미지 (78×58 고정) -->
+          <td style="vertical-align:top;padding-right:12px;width:82px;">
+            <img src="{news.image_url}" alt=""
+                 width="82" height="60"
+                 style="display:block;width:82px;height:60px;
+                        object-fit:cover;
+                        filter:grayscale(15%);">
+          </td>
+          <!-- 우측: 텍스트 -->
+          <td style="vertical-align:top;">
+            <!-- 카테고리 · 출처 (색상 배지 없음, 텍스트만) -->
+            <div style="font-size:9px;font-weight:700;color:#CC0000;
+                        letter-spacing:.1em;text-transform:uppercase;
+                        margin-bottom:3px;">
+              {news.category_tag} · {news.source}
+            </div>
+            <!-- 제목 -->
+            <div style="font-size:13px;font-weight:700;color:#111827;
+                        line-height:1.4;margin-bottom:4px;
+                        word-break:keep-all;">
+              {news.title_ko}
+            </div>
+            <!-- 요약 -->
+            <div style="font-size:11px;color:#6B7280;
+                        line-height:1.6;margin-bottom:5px;
+                        word-break:keep-all;">
+              {news.summary_ko}
+            </div>
+            <!-- 의미는? -->
+            <div style="font-size:11px;color:#1F2937;
+                        font-weight:600;word-break:keep-all;">
+              → {news.meaning_ko}
+            </div>
+          </td>
+        </tr>
+      </table>
     </td>
   </tr>
-
-  <tr><td style="padding:16px 18px 14px;">
-
-    <!-- 카테고리 태그 + 날짜 + 중요도 -->
-    <table width="100%" cellpadding="0" cellspacing="0"
-           style="margin-bottom:10px;">
-      <tr>
-        <td>
-          <!-- 카테고리별 색상 태그 -->
-          <span style="
-            background: {tag_bg};  /* 해운:#EFF6FF 항공:#ECFDF5 철도:#FFFBEB 정책:#F5F3FF */
-            color: {tag_color};
-            font-size:11px;font-weight:700;
-            padding:2px 8px;border-radius:4px;">
-            {category_tag}
-          </span>
-          <span style="color:#94A3B8;font-size:11px;margin-left:6px;">
-            {source} · {date}
-          </span>
-        </td>
-        <td align="right">
-          <span style="color:#94A3B8;font-size:11px;">★ {score}</span>
-        </td>
-      </tr>
-    </table>
-
-    <!-- 제목 -->
-    <div style="font-size:15px;font-weight:700;color:#1E293B;
-                line-height:1.4;margin-bottom:10px;">
-      {title_ko}
-    </div>
-
-    <!-- 요약 -->
-    <div style="font-size:13px;color:#374151;line-height:1.7;
-                margin-bottom:12px;word-break:keep-all;">
-      {summary_ko}
-    </div>
-
-    <!-- 의미는? — green 텍스트 -->
-    <div style="border-top:1px dashed #E2E8F0;padding-top:10px;
-                font-size:12px;color:#00A85A;font-weight:600;">
-      → {meaning_ko}
-    </div>
-
-    <!-- 원문 링크 (버튼 아닌 텍스트) -->
-    <a href="{url}" target="_blank"
-       style="display:inline-block;margin-top:10px;
-              color:#1B4D8C;font-size:12px;font-weight:600;
-              text-decoration:underline;">
-      원문 읽기 →
-    </a>
-
-  </td></tr>
 </table>
 ```
 
-### 5. 이미지 null 처리 (플레이스홀더)
+**image_url이 null인 경우**: 82×60 색상 블록으로 대체
+```
+해운  → background:#1a2a3a
+철도  → background:#0d1a0d
+정책  → background:#1a1010
+항공  → background:#0d0d1a
+항만  → background:#1a1500
+```
+
+**절대 금지**: 카테고리별 다색 배지 (파랑/초록/노랑/보라). 카테고리는 `#CC0000` 텍스트만.
+
+---
+
+### 7. CTA
 
 ```html
-<!-- image_url이 null인 경우 카테고리별 색상 블록 -->
-카테고리 태그별:
-  해운/shipping → background: #DBEAFE (파란 계열)
-  항공/air      → background: #D1FAE5 (초록 계열)
-  철도/rail     → background: #FEF3C7 (노란 계열)
-  정책/trade    → background: #EDE9FE (보라 계열)
-  항만/port     → background: #FCE7F3 (분홍 계열)
-
-높이 동일하게 유지
-```
-
-### 6. 카테고리 태그 색상
-
-```
-해운:  bg:#EFF6FF  color:#1B4D8C
-항공:  bg:#ECFDF5  color:#065F46
-철도:  bg:#FFFBEB  color:#92400E
-정책:  bg:#F5F3FF  color:#5B21B6
-항만:  bg:#FFF1F2  color:#9F1239
-```
-
-### 7. MTL CTA 배너 (컨텍스트 연동)
-
-```html
-<!-- DEEP STORY 내용과 연결된 CTA -->
-<table style="background:linear-gradient(135deg,#EFF6FF,#F0FDF4);
-              border:1px solid #BFDBFE;border-radius:12px;
-              overflow:hidden;margin-top:24px;">
-  <tr><td style="padding:22px 24px;">
-    <div style="font-size:15px;font-weight:800;
-                color:#1B4D8C;margin-bottom:6px;">
-      {cta_title}
-      <!-- DEEP STORY 기반 동적 생성:
-           TCR 기사면: "TCR 슬롯 선점, 지금이 적기입니다"
-           운임 기사면: "실시간 운임 데이터 Logisight에서"
-           정책 기사면: "정책 변화 영향 Logisight에서 확인" -->
+<tr>
+  <td style="background:#111827;padding:18px 24px;">
+    <div style="font-size:9px;color:#6B7280;
+                letter-spacing:.1em;text-transform:uppercase;
+                margin-bottom:5px;">
+      MTL Shipping Agency
     </div>
-    <div style="font-size:13px;color:#475569;
-                line-height:1.6;margin-bottom:16px;">
+    <div style="font-size:15px;font-weight:800;color:#ffffff;
+                margin-bottom:6px;line-height:1.3;
+                word-break:keep-all;">
+      {cta_title}
+    </div>
+    <div style="font-size:11px;color:#9CA3AF;line-height:1.65;
+                margin-bottom:13px;word-break:keep-all;">
       {cta_description}
     </div>
-    <table cellpadding="0" cellspacing="0">
-      <tr>
-        <td style="padding-right:10px;">
-          <a href="https://logisight.mtlship.com"
-             style="display:inline-block;background:#1B4D8C;
-                    color:#FFFFFF;font-size:13px;font-weight:700;
-                    text-decoration:none;padding:11px 22px;
-                    border-radius:8px;">
-            대시보드 바로가기 →
-          </a>
-        </td>
-        <td>
-          <a href="mailto:sales@mtlship.com"
-             style="display:inline-block;background:#FFFFFF;
-                    color:#1B4D8C;border:1.5px solid #1B4D8C;
-                    font-size:13px;font-weight:700;
-                    text-decoration:none;padding:10px 22px;
-                    border-radius:8px;">
-            영업 문의
-          </a>
-        </td>
-      </tr>
-    </table>
-  </td></tr>
-</table>
+    <a href="mailto:sales@mtlship.com"
+       style="display:inline-block;background:#CC0000;
+              color:#ffffff;font-size:11px;font-weight:700;
+              text-decoration:none;padding:9px 20px;">
+      영업 문의 →
+    </a>
+  </td>
+</tr>
 ```
+
+**CTA 타이틀 동적 생성 규칙**:
+```
+철도/TCR  → "TCR 스페이스 — 지금이 타이밍입니다"
+해운      → "실시간 운임 데이터를 Logisight에서"
+정책      → "정책 변화 영향, Logisight에서 확인"
+항공      → "항공 운임 트렌드 Logisight에서"
+기본      → "MTL Logisight로 시장을 한 발 앞서 읽으세요"
+```
+
+"슬롯" 표현 사용 금지 → 반드시 **"스페이스"** 로 표기
+
+---
 
 ### 8. FOOTER
 
 ```html
-<td style="background:#1E293B;border-radius:0 0 16px 16px;
-           padding:22px 32px 26px;">
-
-  <!-- 브랜드 + 링크 -->
-  <table width="100%" cellpadding="0" cellspacing="0">
-    <tr>
-      <td>
-        <div style="font-size:15px;font-weight:800;color:#FFFFFF;">
-          Logisight Daily
-        </div>
-        <div style="font-size:12px;color:#64748B;margin-top:2px;">
-          by MTL Shipping Agency
-        </div>
-      </td>
-      <td align="right" style="vertical-align:middle;">
-        <a href="https://logisight.mtlship.com"
-           style="color:#64748B;font-size:12px;text-decoration:none;">
-          logisight.mtlship.com
-        </a>
-      </td>
-    </tr>
-  </table>
-
-  <!-- 구분선 -->
-  <div style="border-top:1px solid #334155;margin:14px 0;"></div>
-
-  <!-- 발행 정보 -->
-  <div style="font-size:11px;color:#64748B;line-height:1.8;
-              text-align:center;">
-    발행일: {DATE_KO} &nbsp;·&nbsp; 발행사: MTL Shipping Agency<br>
-    이 뉴스레터는 공개 출처 데이터를 기반으로 작성되었으며, 투자 조언이 아닙니다.<br>
-    운임 데이터 출처: {sources_list}<br>
-    <span style="margin-top:8px;display:inline-block;">
-      <a href="#" style="color:#475569;text-decoration:underline;
-                         font-size:11px;">수신 거부</a>
-      &nbsp;·&nbsp;
-      <a href="#" style="color:#475569;text-decoration:underline;
-                         font-size:11px;">개인정보처리방침</a>
+<tr>
+  <td style="border-top:3px solid #CC0000;
+             padding:12px 24px;
+             text-align:center;
+             background:#ffffff;">
+    <div style="font-size:10px;color:#9CA3AF;line-height:1.7;">
+      Logisight Daily · MTL Shipping Agency · newsletter@mtlship.com<br>
+      서울특별시 중구 을지로 · {DATE_KO}
+    </div>
+    <div style="font-size:10px;color:#CBD5E1;margin-top:8px;">
+      이 뉴스레터는 MTL 영업 네트워크를 위해 발행됩니다.<br>
+      <a href="https://logisight.mtlship.com/unsubscribe?token={unsub_token}"
+         style="color:#9CA3AF;text-decoration:underline;">
+        수신 거부
+      </a>
       &nbsp;·&nbsp;
       <a href="https://logisight.mtlship.com"
-         style="color:#475569;text-decoration:underline;
-                font-size:11px;">웹사이트</a>
-    </span>
-  </div>
-</td>
+         style="color:#9CA3AF;text-decoration:underline;">
+        웹에서 보기
+      </a>
+    </div>
+  </td>
+</tr>
+```
+
+---
+
+## 불릿 텍스트 → HTML 변환 규칙
+
+curator JSON의 불릿(`•`) 텍스트를 이메일 HTML로 변환할 때:
+
+```
+❌ <ul><li> 사용 금지 (이메일 클라이언트 렌더링 불안정)
+
+✅ 변환 방식:
+각 • 줄 →
+<span style="display:block;padding-left:12px;position:relative;
+             margin-bottom:5px;">
+  <span style="position:absolute;left:0;
+               color:#CC0000;font-weight:700;">•</span>
+  {불릿 내용}
+</span>
+```
+
+## 마크다운 표 → HTML table 변환 규칙
+
+```
+| 항목 | 값 | 변동 |  →  표 헤더는 배경#F1F4F8, 폰트700
+|-----|----|----|     데이터 행은 흰 배경
+| ... | ...| ...|     변동 셀: + 값이면 color:#059669, - 값이면 color:#DC2626
+```
+
+```html
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"
+       style="border-collapse:collapse;margin-bottom:8px;">
+  <thead>
+    <tr>
+      <th style="font-size:11px;font-weight:700;color:#0F2D5A;
+                 background:#F1F4F8;padding:7px 10px;text-align:left;
+                 border:1px solid #E5E7EB;">{헤더}</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="font-size:11px;padding:6px 10px;
+                 border:1px solid #E5E7EB;
+                 color:{delta_color};">{값}</td>
+    </tr>
+  </tbody>
+</table>
 ```
 
 ---
 
 ## 작업 프로세스
 
-### Step 1: 입력 확인
+### Step 1: 입력 읽기
 ```
-latest-news-curated.json 읽기
-deep_story + chapters 5개 확인
-image_url 확인 (null이면 플레이스홀더)
-```
-
-### Step 2: CTA 타이틀·설명 동적 생성
-```
-deep_story.category_tag 기반:
-  철도 → "TCR 슬롯 선점, 지금이 적기입니다"
-  해운 → "실시간 운임 데이터를 Logisight에서"
-  정책 → "정책 변화 영향, Logisight에서 확인"
-  항공 → "항공 운임 트렌드 Logisight에서"
+content/drafts/latest-news-curated.json 읽기
+deep_story.image_url 확인 (null → 다크 플레이스홀더)
+supporting_news 건수 확인
 ```
 
-### Step 3: HTML 조립 후 저장
+### Step 2: KPI 구성
+```
+JSON에서 핵심 수치 4개 추출:
+  1. DEEP STORY 핵심 수치 (예: CRE +29%)
+  2. 브렌트유 또는 운임지수
+  3. SCFI 또는 핵심 운임 변동
+  4. 추가 이슈 수치 (DoJ·항만 등)
+
+각 수치의 trend 판단 → color 적용
+```
+
+### Step 3: HTML 조립
+```
+아래 순서로 조립:
+  1. HEADER BAR (레드)
+  2. HERO IMAGE + 오버레이
+  3. KPI STRIP (다크)
+  4. BODY 시작 (흰 배경 <td> 열기)
+     4-1. 섹션 룰 + "이번 호 핵심" + editor_note
+     4-2. ACTION 박스 (상단 요약용)
+     4-3. 데이터 테이블 (chapters.numbers)
+     4-4. 섹션 룰 + "Deep Story" + 5챕터
+     4-5. 섹션 룰 + "오늘의 뉴스" + 뉴스 리스트
+  5. BODY <td> 닫기
+  6. CTA (다크)
+  7. FOOTER (레드 상단 라인)
+```
+
+### Step 4: 저장
 ```
 content/drafts/newsletter-{YYYY-MM-DD}.html
 ```
 
-### 핸드오프
+---
+
+## 자체 검증 체크리스트
+
 ```
-✅ HTML 생성 완료
-📁 content/drafts/newsletter-2026-05-21.html
+디자인 시스템
+[ ] 헤더가 #CC0000 레드인가? (흰색·네이비 금지)
+[ ] 이모지가 없는가?
+[ ] 다색 카테고리 배지가 없는가? (색상 배지 전부 제거, 텍스트만)
+[ ] 챕터 레이블이 모두 #CC0000인가?
+[ ] ACTION 박스가 레드 좌측 라인 + #FFF5F5 배경인가?
+[ ] CTA 배경이 #111827 다크인가?
+[ ] 푸터 상단에 3px 레드 라인이 있는가?
 
-구성:
-  헤더: 밝은 배경 + 진한 텍스트 ✅
-  Editor's Note: 📌 이모지 ✅
-  DEEP STORY: 이미지 + 5챕터 ✅
-  서포팅 뉴스 {N}건: 각 이미지 포함 ✅
-  카테고리 태그만 (섹션 헤더 없음) ✅
-  MTL CTA: DEEP STORY 내용 연동 ✅
+콘텐츠
+[ ] DEEP STORY 이미지가 오버레이와 함께 렌더링됐는가?
+[ ] KPI 4개가 올바른 색상(up/dn)으로 표시됐는가?
+[ ] 뉴스 이미지가 82×60으로 좌측 배치됐는가?
+[ ] "스페이스" 표기 사용 (슬롯 금지)
+[ ] image_url null → 다크 플레이스홀더 적용됐는가?
+[ ] 불릿이 <ul><li> 아닌 <span> 변환됐는가?
 
-→ node scripts/send-newsletter.js --type=daily
 ```
 
 ---
 
-## Karpathy 자체 검증
+## 핸드오프
 
 ```
-[ ] 헤더 텍스트가 흰색이 아닌가?
-[ ] E 아바타가 📌 이모지로 교체됐는가?
-[ ] 카테고리 섹션 헤더가 없는가? (태그만)
-[ ] DEEP STORY 이미지 있는가?
-[ ] 서포팅 뉴스 각각 이미지 있는가?
-[ ] ACTION 박스가 green으로 눈에 띄는가?
-[ ] CTA가 DEEP STORY 내용과 연동됐는가?
-[ ] image_url null → 색상 플레이스홀더 표시됐는가?
+✅ HTML 생성 완료 (C스타일)
+📁 content/drafts/newsletter-{YYYY-MM-DD}.html
+
+구성:
+  헤더: 레드 #CC0000 ✅
+  히어로 이미지: 오버레이 + 제목 ✅
+  KPI 스트립: {N}개 ✅
+  editor_note + ACTION 박스 ✅
+  DEEP STORY 5챕터 ✅
+  서포팅 뉴스 {M}건 (82×60 이미지) ✅
+  CTA: 다크 배경 + 레드 버튼 ✅
+  이모지 없음 ✅ / 다색 배지 없음 ✅
+
+→ workers/send_newsletter.ts 실행
 ```
