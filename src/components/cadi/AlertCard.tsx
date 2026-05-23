@@ -14,8 +14,9 @@ function fmtDate(iso: string | null): string | null {
 
 /**
  * Locale-aware field selector with fallback.
- * Filters null, undefined, and whitespace-only strings.
  * Fallback chain: current locale field → en field → first non-empty field.
+ * Treats null, undefined, and whitespace-only strings as "not available".
+ * Note: 'uz' and 'ja' locales fall back to 'en' — DB has no title_uz/title_ja columns.
  */
 function getLocaleField(
   lng: string,
@@ -51,6 +52,8 @@ export default function AlertCard({ event }: { event: DisruptionEvent }) {
 
   // Fallback to event_type if all title fields are empty
   const titleDisplay = title || event.event_type.replace(/_/g, ' ');
+
+  const body = getLocaleField(lng, { en: event.body_en });
 
   const style = SEVERITY_STYLE[event.severity] ?? { card: 'border-slate-300 bg-slate-50', badge: 'bg-slate-200 text-slate-700' };
 
@@ -89,10 +92,9 @@ export default function AlertCard({ event }: { event: DisruptionEvent }) {
       </div>
 
       {/* Body (intel detail) */}
-      {(() => {
-        const body = getLocaleField(lng, { en: event.body_en });
-        return body ? <p className="mt-2 text-xs text-slate-600 leading-relaxed">{body}</p> : null;
-      })()}
+      {body && (
+        <p className="mt-2 text-xs text-slate-600 leading-relaxed">{body}</p>
+      )}
 
       {/* Affected lanes pills */}
       {event.affected_lanes && event.affected_lanes.length > 0 && (
