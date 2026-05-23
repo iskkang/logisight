@@ -1,0 +1,25 @@
+{
+  "_instructions": {
+    "en": "Copy this file and fill in the event details below. Required fields: event_date, title_en, category, severity. Optional fields can be left null. Remove this _instructions key before running 'node scripts/add-disruption.js'.",
+    "ko": "이 파일을 복사해서 아래 이벤트 정보를 입력하세요. 필수 필드: event_date, title_en, category, severity. 선택 필드는 null로 두면 됩니다. 스크립트 실행 전 _instructions 키를 제거하세요."
+  },
+  "_comment": "Example: Kyrgyzstan truck policy change on 2026-05-15",
+  "event_date": "2026-05-15",
+  "title_en": "Kyrgyzstan truck entry restrictions on primary routes",
+  "title_ko": "키르기스스탄 주요 노선 트럭 진입 제한",
+  "title_ru": "Ограничения на въезд грузовиков в Кыргызстане на основных маршрутах",
+  "title_zh": "吉尔吉斯斯坦主要路线卡车进入限制",
+  "category": "policy",
+  "event_type": "POLICY_CHANGE",
+  "region": "KG-UZ border",
+  "severity": "high",
+  "started_at": null,
+  "resolved_at": null,
+  "lane_id": "TMGR",
+  "affected_lanes": ["TMGR", "TCR"],
+  "body_en": "Kyrgyzstan customs authority issued directive restricting truck entry on corridors north of Osh. Estimated 15-20% capacity reduction for Mongolia-routed lanes. Government negotiations with CARICOM ongoing.",
+  "impact_days": 5.0,
+  "source_url": "https://example-source.kg/trade-notice-2026-05-15",
+  "verified_by": ["field_report"],
+  "description_en": "Kyrgyzstan truck entry restrictions on primary routes"
+}
