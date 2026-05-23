@@ -12,15 +12,45 @@ function fmtDate(iso: string | null): string | null {
   return new Date(iso).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
 }
 
+/**
+ * Locale-aware field selector with fallback.
+ * Filters null, undefined, and whitespace-only strings.
+ * Fallback chain: current locale field → en field → first non-empty field.
+ */
+function getLocaleField(
+  lng: string,
+  fields: { ko?: string | null; ru?: string | null; zh?: string | null; en: string | null }
+): string {
+  const notEmpty = (v: string | null | undefined): boolean =>
+    v != null && typeof v === 'string' && v.trim() !== '';
+
+  if (lng === 'ko' && notEmpty(fields.ko) && fields.ko) return fields.ko;
+  if (lng === 'ru' && notEmpty(fields.ru) && fields.ru) return fields.ru;
+  if (lng === 'zh' && notEmpty(fields.zh) && fields.zh) return fields.zh;
+  if (notEmpty(fields.en) && fields.en) return fields.en;
+  // last resort: first non-empty of all fields
+  const allFields = [fields.ko, fields.ru, fields.zh, fields.en];
+  for (const field of allFields) {
+    if (field && typeof field === 'string' && field.trim() !== '') {
+      return field;
+    }
+  }
+  return '';
+}
+
 export default function AlertCard({ event }: { event: DisruptionEvent }) {
   const { i18n } = useTranslation();
   const lng = i18n.language;
 
-  const title =
-    (lng === 'ko' && event.title_ko) ||
-    (lng === 'ru' && event.title_ru) ||
-    (lng === 'zh' && event.title_zh) ||
-    event.title_en;
+  const title = getLocaleField(lng, {
+    ko: event.title_ko,
+    ru: event.title_ru,
+    zh: event.title_zh,
+    en: event.title_en,
+  });
+
+  // Fallback to event_type if all title fields are empty
+  const titleDisplay = title || event.event_type.replace(/_/g, ' ');
 
   const style = SEVERITY_STYLE[event.severity] ?? { card: 'border-slate-300 bg-slate-50', badge: 'bg-slate-200 text-slate-700' };
 
@@ -43,7 +73,7 @@ export default function AlertCard({ event }: { event: DisruptionEvent }) {
       </div>
 
       {/* Title */}
-      <p className="font-semibold text-slate-800 text-sm leading-snug">{title}</p>
+      <p className="font-semibold text-slate-800 text-sm leading-snug">{titleDisplay}</p>
 
       {/* Meta: date + impact */}
       <div className="flex gap-4 mt-1.5 text-xs text-slate-500">
@@ -59,9 +89,10 @@ export default function AlertCard({ event }: { event: DisruptionEvent }) {
       </div>
 
       {/* Body (intel detail) */}
-      {event.body_en && (
-        <p className="mt-2 text-xs text-slate-600 leading-relaxed">{event.body_en}</p>
-      )}
+      {(() => {
+        const body = getLocaleField(lng, { en: event.body_en });
+        return body ? <p className="mt-2 text-xs text-slate-600 leading-relaxed">{body}</p> : null;
+      })()}
 
       {/* Affected lanes pills */}
       {event.affected_lanes && event.affected_lanes.length > 0 && (
