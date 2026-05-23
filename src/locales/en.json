@@ -7,7 +7,7 @@
   },
   "home": {
     "hero": "Central Asia Delay Intelligence",
-    "subtitle": "Weekly delay metrics for TCR/TSR/TITR land bridge shipments — powered by MTL data.",
+    "subtitle": "Weekly delay metrics for TCR/TSR land bridge shipments — powered by MTL live data.",
     "latestAlerts": "Latest Alerts",
     "noAlerts": "No active disruptions.",
     "viewDashboard": "View CADI Dashboard",

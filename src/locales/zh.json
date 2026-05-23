@@ -7,7 +7,7 @@
   },
   "home": {
     "hero": "中亚延误智能 (CADI)",
-    "subtitle": "TCR/TSR/TITR陆桥货物每周延误指标 — 基于MTL处理数据。",
+    "subtitle": "TCR/TSR陆桥货物每周延误指标 — 基于MTL处理数据。",
     "latestAlerts": "最新预警",
     "noAlerts": "当前无活跃干扰事件。",
     "viewDashboard": "查看CADI仪表板",
