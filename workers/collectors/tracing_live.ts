@@ -130,12 +130,16 @@ function deriveCurrentMilestone(
 }
 
 // ─── Week ISO from a date string ──────────────────────────────────────────────
+// ISO 8601: week 1 = the week containing the first Thursday of the year (Mon start).
 function toWeekIso(dateStr: string | null): string {
   const d = dateStr ? new Date(dateStr) : new Date();
   if (isNaN(d.getTime())) return toWeekIso(null);
-  const jan4 = new Date(d.getFullYear(), 0, 4);
-  const w = Math.ceil((((d.getTime() - jan4.getTime()) / 86_400_000) + jan4.getDay() + 1) / 7);
-  return `${d.getFullYear()}-W${String(w).padStart(2, '0')}`;
+  const day      = d.getUTCDay() === 0 ? 7 : d.getUTCDay(); // 1=Mon … 7=Sun
+  const thursday = new Date(d);
+  thursday.setUTCDate(d.getUTCDate() + 4 - day);            // Thursday of same ISO week
+  const yearStart = new Date(Date.UTC(thursday.getUTCFullYear(), 0, 1));
+  const weekNo    = Math.ceil(((thursday.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7);
+  return `${thursday.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
 }
 
 // ─── Stats helpers ────────────────────────────────────────────────────────────
@@ -254,11 +258,12 @@ async function main() {
   const lanesRes = await fetch(`${SUPABASE_URL}/rest/v1/lanes?select=id`, {
     headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
   });
-  const validLanes: Set<string> = new Set();
-  if (lanesRes.ok) {
-    const laneList = await lanesRes.json() as { id: string }[];
-    laneList.forEach(l => validLanes.add(l.id));
+  if (!lanesRes.ok) {
+    throw new Error(`Failed to fetch lane IDs: HTTP ${lanesRes.status}`);
   }
+  const validLanes: Set<string> = new Set();
+  const laneList = await lanesRes.json() as { id: string }[];
+  laneList.forEach(l => validLanes.add(l.id));
 
   const filteredLegs = legRows.filter(leg => {
     if (!validLanes.has(leg.lane_id as string)) {

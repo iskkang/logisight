@@ -88,12 +88,16 @@ function deriveCurrentMilestone(
 }
 
 // ─── Week ISO from a date string ──────────────────────────────────────────────
+// ISO 8601: week 1 = the week containing the first Thursday of the year (Mon start).
 function toWeekIso(dateStr: string | null): string {
   const d = dateStr ? new Date(dateStr) : new Date();
   if (isNaN(d.getTime())) return toWeekIso(null);
-  const jan4 = new Date(d.getFullYear(), 0, 4);
-  const w = Math.ceil((((d.getTime() - jan4.getTime()) / 86_400_000) + jan4.getDay() + 1) / 7);
-  return `${d.getFullYear()}-W${String(w).padStart(2, '0')}`;
+  const day      = d.getUTCDay() === 0 ? 7 : d.getUTCDay(); // 1=Mon … 7=Sun
+  const thursday = new Date(d);
+  thursday.setUTCDate(d.getUTCDate() + 4 - day);            // Thursday of same ISO week
+  const yearStart = new Date(Date.UTC(thursday.getUTCFullYear(), 0, 1));
+  const weekNo    = Math.ceil(((thursday.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7);
+  return `${thursday.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
 }
 
 // ─── Stats helpers ────────────────────────────────────────────────────────────
@@ -232,21 +236,28 @@ async function main() {
       data_source:   'fesco',
       // ⛔ container_number NOT stored (SHA-256 anonymized above)
       // ⛔ order_number NOT stored (internal only)
+      // Memory-only flag: sea leg actual date received (not upserted to DB)
+      _is_completed: actualDate !== null,
     });
   }
 
   console.log(`${legRows.length} rows mapped / ${skipped} skipped`);
 
+  // Strip memory-only fields before DB upsert
+  const legRowsForDb = legRows.map(({ _is_completed: _unused, ...rest }) => rest);
+
   // ── 3. Fetch valid lane IDs from DB (guard against FK violation) ─────────
   const lanesRes = await fetch(`${SUPABASE_URL}/rest/v1/lanes?select=id`, {
     headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
   });
-  const validLanes: Set<string> = new Set();
-  if (lanesRes.ok) {
-    const laneList = await lanesRes.json() as { id: string }[];
-    laneList.forEach(l => validLanes.add(l.id));
+  if (!lanesRes.ok) {
+    throw new Error(`Failed to fetch lane IDs: HTTP ${lanesRes.status}`);
   }
+  const validLanes: Set<string> = new Set();
+  const laneList = await lanesRes.json() as { id: string }[];
+  laneList.forEach(l => validLanes.add(l.id));
 
+  // filteredLegs retains _is_completed for aggregation gate; filteredLegsForDb is sent to DB
   const filteredLegs = legRows.filter(leg => {
     if (!validLanes.has(leg.lane_id as string)) {
       console.warn(`  lane "${leg.lane_id}" not in DB — skipping row`);
@@ -254,11 +265,12 @@ async function main() {
     }
     return true;
   });
-  console.log(`DB lane filter: ${filteredLegs.length} rows kept (${legRows.length - filteredLegs.length} excluded)`);
+  const filteredLegsForDb = legRowsForDb.filter(leg => validLanes.has(leg.lane_id as string));
+  console.log(`DB lane filter: ${filteredLegsForDb.length} rows kept (${legRows.length - filteredLegsForDb.length} excluded)`);
 
   // ── Upsert shipment_legs (service-role only) ──────────────────────────────
-  await sbUpsert('shipment_legs', filteredLegs, 'shipment_ref,milestone');
-  console.log(`shipment_legs upsert done (${filteredLegs.length} rows)`);
+  await sbUpsert('shipment_legs', filteredLegsForDb, 'shipment_ref,milestone');
+  console.log(`shipment_legs upsert done (${filteredLegsForDb.length} rows)`);
 
   // ── 4. Aggregate → delay_index_weekly ────────────────────────────────────
   // Key = lane_id|week_iso. route_pattern = 'tsr' always.
@@ -268,8 +280,12 @@ async function main() {
   for (const leg of filteredLegs) {
     const d = leg.delay_hours as number | null;
     if (d === null) continue;
-    // Aggregate completed sea-leg arrivals and confirmed overdue red-signal
-    if (leg.milestone !== 'DEST_ARR' && leg.signal !== 'red') continue;
+    // Only aggregate containers with a completed SEA leg (actual VVO date present)
+    // or confirmed overdue red-signal. SEA-in-progress containers are excluded to
+    // prevent SEA-leg delays from polluting the total T/T delay bucket.
+    const isCompleted = leg._is_completed as boolean;
+    const isOverdue   = leg.signal === 'red' && !isCompleted;
+    if (!isCompleted && !isOverdue) continue;
 
     const key = `${leg.lane_id}|${leg.week_iso}`;
     if (!buckets.has(key)) {
@@ -328,7 +344,7 @@ async function main() {
   }
 
   // Vladivostok bottleneck report
-  const atVlad = filteredLegs.filter(l =>
+  const atVlad = filteredLegsForDb.filter(l =>
     (String(l.current_loc ?? '')).toLowerCase().includes('vmtp') ||
     (String(l.current_loc ?? '')).toLowerCase().includes('vladivostok')
   );
