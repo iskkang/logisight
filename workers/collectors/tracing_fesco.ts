@@ -233,7 +233,7 @@ async function main() {
       signal:        c.signal,
       transport_mode: c.current_segment_type,
       load_type:     null,
-      data_source:   'fesco',
+      data_source:   'tracing',  // 'fesco' is not an allowed value; route_pattern='tsr' distinguishes TSR legs
       // ⛔ container_number NOT stored (SHA-256 anonymized above)
       // ⛔ order_number NOT stored (internal only)
       // Memory-only flag: sea leg actual date received (not upserted to DB)
