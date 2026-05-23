@@ -150,7 +150,7 @@ function buildUserPrompt(week, input, delayTable) {
   const answered = {};
   for (const [key, meta] of Object.entries(Q_META)) {
     const val = input[key];
-    if (val == null || val === '') continue;
+    if (val == null || String(val).trim() === '') continue;
     if (!answered[meta.section]) answered[meta.section] = [];
     answered[meta.section].push({ label: meta.label, value: val });
   }
@@ -211,7 +211,11 @@ async function main() {
     messages: [{ role: 'user', content: userPrompt }],
   });
 
-  const text = msg.content[0].type === 'text' ? msg.content[0].text : '';
+  const text = msg.content[0]?.type === 'text' ? msg.content[0].text : '';
+  if (!text) {
+    console.error('❌ Claude returned empty content. Draft not written.');
+    process.exit(1);
+  }
 
   // Build output file
   const today = new Date().toISOString().slice(0, 10);
