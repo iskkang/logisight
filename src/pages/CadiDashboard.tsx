@@ -21,7 +21,7 @@ const CHART_MILESTONES = [
 export default function CadiDashboard() {
   const { t } = useTranslation();
   const [lanes, setLanes]             = useState<Lane[]>([]);
-  const [selectedLane, setSelectedLane] = useState('TCR');
+  const [selectedLane, setSelectedLane] = useState('KR-ANDIJAN');
   const [rows, setRows]               = useState<DelayRow[]>([]);
   const [alerts, setAlerts]           = useState<DisruptionEvent[]>([]);
   const [loading, setLoading]         = useState(true);
@@ -30,7 +30,11 @@ export default function CadiDashboard() {
   // Load lane list once
   useEffect(() => {
     api.lanes()
-      .then(l => { setLanes(l); if (l.length > 0) setSelectedLane(l[0].id); })
+      .then(l => {
+        setLanes(l);
+        // Keep current selection if valid; otherwise fall back to first lane
+        setSelectedLane(prev => l.some(ln => ln.id === prev) ? prev : (l[0]?.id ?? prev));
+      })
       .catch(e => setError((e as Error).message));
   }, []);
 

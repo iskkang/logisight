@@ -1,10 +1,12 @@
-name: CADI Tracing Ingest
+name: CADI Live Tracing Ingest
 
 on:
+  schedule:
+    - cron: '0 2 * * 1'   # 월요일 02:00 UTC (11:00 KST) — 주간 갱신
   workflow_dispatch:
     inputs:
       dry_run:
-        description: 'Dry run — skip DB write'
+        description: 'Dry run — print snapshot without DB write'
         required: false
         default: 'false'
         type: choice
@@ -26,18 +28,27 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run CADI tracing ingest
+      - name: Run CADI live tracing ingest
         if: ${{ github.event.inputs.dry_run != 'true' }}
-        run: npm run collect:tracing
+        run: npm run collect:live
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          # Optional: add TRACKING_API_TOKEN when MTL Link token is applied
+          # TRACKING_API_TOKEN: ${{ secrets.TRACKING_API_TOKEN }}
 
-      - name: Dry run
+      - name: Dry run — print snapshot only
         if: ${{ github.event.inputs.dry_run == 'true' }}
-        run: echo "DRY RUN — DB write skipped"
+        run: |
+          echo "=== DRY RUN — DB write skipped ==="
+          node -e "
+            fetch('https://link.mtlship.com/api/tcr?action=list')
+              .then(r => r.json())
+              .then(d => console.log('API total:', d.total, 'containers'))
+              .catch(e => console.error('fetch failed:', e.message))
+          "
 
       - name: Notify on failure
         if: failure()
         run: |
-          echo "⚠️ CADI ingest 실패 — Actions 로그 확인"
+          echo "⚠️ CADI live ingest 실패 — Actions 로그 확인"
