@@ -26,16 +26,17 @@ interface LaneCardProps {
   label: string;
   badge: string;
   accentClass: string;
+  badgeClass: string;
   row: DelayRow | null;
   noDataText: string;
 }
 
-function LaneCard({ label, badge, accentClass, row, noDataText }: LaneCardProps) {
+function LaneCard({ label, badge, accentClass, badgeClass, row, noDataText }: LaneCardProps) {
   return (
     <div className={`flex-1 rounded-lg border-2 ${accentClass} bg-white p-4`}>
       <div className="flex items-center gap-2 mb-3">
         <span className="text-sm font-semibold text-slate-700">{label}</span>
-        <span className={`text-xs px-2 py-0.5 rounded font-medium ${accentClass.replace('border-', 'bg-').replace('-400', '-100').replace('-500', '-100')} text-slate-700`}>
+        <span className={`text-xs px-2 py-0.5 rounded font-medium ${badgeClass}`}>
           {badge}
         </span>
       </div>
@@ -72,6 +73,7 @@ export default function TsrCompareWidget() {
   const [tcrRow, setTcrRow] = useState<DelayRow | null>(null);
   const [tsrRow, setTsrRow] = useState<DelayRow | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -82,13 +84,14 @@ export default function TsrCompareWidget() {
         setTcrRow(latestDestArr(tcrRows));
         setTsrRow(latestDestArr(tsrRows));
       })
-      .catch(() => {
-        // On error leave both null — widget will return null (both empty)
+      .catch((e: unknown) => {
+        setError((e as Error).message ?? 'Failed to load comparison data');
       })
       .finally(() => setLoading(false));
   }, []);
 
   if (loading) return <LoadingState />;
+  if (error) return <p className="text-xs text-red-500 mt-4">{error}</p>;
   if (tcrRow == null && tsrRow == null) return null;
 
   const noData = t('cadi.compare.noData');
@@ -101,6 +104,7 @@ export default function TsrCompareWidget() {
           label="KR-ANDIJAN"
           badge={t('cadi.compare.tcr')}
           accentClass="border-sky-400"
+          badgeClass="bg-sky-100 text-sky-800"
           row={tcrRow}
           noDataText={noData}
         />
@@ -108,6 +112,7 @@ export default function TsrCompareWidget() {
           label="KR-CHUKURSAY"
           badge={t('cadi.compare.tsr')}
           accentClass="border-purple-400"
+          badgeClass="bg-purple-100 text-purple-800"
           row={tsrRow}
           noDataText={noData}
         />

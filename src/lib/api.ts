@@ -31,7 +31,7 @@ export interface DelayRow {
   lane_id: string;
   week_iso: string;
   milestone: string;
-  route_pattern: 'kashi' | 'khorgos' | 'tsr' | null;
+  route_pattern: 'kashi' | 'khorgos' | 'northern' | 'tsr' | null;
   destination: string | null;
   median_delay_h: number | null;
   p90_delay_h: number | null;
