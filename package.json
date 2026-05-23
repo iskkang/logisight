@@ -9,6 +9,8 @@
     "collect:all": "ts-node --project tsconfig.workers.json workers/collectors/index.ts",
     "collect:shipping": "ts-node --project tsconfig.workers.json workers/collectors/shipping_indices.ts",
     "collect:news": "ts-node --project tsconfig.workers.json workers/collectors/news_global.ts",
+    "collect:tracing": "ts-node --project tsconfig.workers.json workers/collectors/tracing_ingest.ts",
+    "report:cadi": "node scripts/generate-cadi-report.js",
     "pdf": "node scripts/generate-pdf.js",
     "lint": "eslint src --ext ts,tsx"
   },
@@ -22,7 +24,8 @@
     "react-i18next": "^14.0.0",
     "react-router-dom": "^6.22.0",
     "recharts": "^2.10.0",
-    "resend": "^3.5.0"
+    "resend": "^3.5.0",
+    "xlsx": "^0.18.5"
   },
   "ts-node": {
     "compilerOptions": {

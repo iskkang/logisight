@@ -1,0 +1,43 @@
+name: CADI Tracing Ingest
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run — skip DB write'
+        required: false
+        default: 'false'
+        type: choice
+        options: ['false', 'true']
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run CADI tracing ingest
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: npm run collect:tracing
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Dry run
+        if: ${{ github.event.inputs.dry_run == 'true' }}
+        run: echo "DRY RUN — DB write skipped"
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "⚠️ CADI ingest 실패 — Actions 로그 확인"
