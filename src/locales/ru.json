@@ -26,6 +26,13 @@
       "confirmed": "Подтверждено",
       "provisional": "Предварительно",
       "indicative": "Ориентировочно"
+    },
+    "compare": {
+      "title": "Коридор UZ — TCR vs TSR",
+      "noData": "Нет данных",
+      "tcr": "TCR (Кашгар)",
+      "tsr": "TSR (Владивосток)",
+      "routeFilter": "Маршрут"
     }
   },
   "methodology": {

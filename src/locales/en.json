@@ -26,6 +26,13 @@
       "confirmed": "Confirmed",
       "provisional": "Provisional",
       "indicative": "Indicative"
+    },
+    "compare": {
+      "title": "UZ Corridor — TCR vs TSR",
+      "noData": "No data",
+      "tcr": "TCR (Kashi)",
+      "tsr": "TSR (Vladivostok)",
+      "routeFilter": "Route pattern"
     }
   },
   "methodology": {

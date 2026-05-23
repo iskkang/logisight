@@ -26,6 +26,13 @@
       "confirmed": "Tasdiqlangan",
       "provisional": "Vaqtinchalik",
       "indicative": "Ko'rsatma"
+    },
+    "compare": {
+      "title": "UZ yo'lagi — TCR vs TSR",
+      "noData": "Ma'lumot yo'q",
+      "tcr": "TCR (Koshg'ar)",
+      "tsr": "TSR (Vladivostok)",
+      "routeFilter": "Yo'nalish turi"
     }
   },
   "methodology": {

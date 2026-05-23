@@ -26,6 +26,13 @@
       "confirmed": "확인",
       "provisional": "잠정",
       "indicative": "참고"
+    },
+    "compare": {
+      "title": "UZ 회랑 비교 — TCR vs TSR",
+      "noData": "데이터 없음",
+      "tcr": "TCR (카시)",
+      "tsr": "TSR (블라디보스토크)",
+      "routeFilter": "경로 패턴"
     }
   },
   "methodology": {

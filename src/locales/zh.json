@@ -26,6 +26,13 @@
       "confirmed": "已确认",
       "provisional": "暂定",
       "indicative": "参考"
+    },
+    "compare": {
+      "title": "UZ走廊 — TCR vs TSR",
+      "noData": "暂无数据",
+      "tcr": "TCR（喀什）",
+      "tsr": "TSR（符拉迪沃斯托克）",
+      "routeFilter": "路由模式"
     }
   },
   "methodology": {

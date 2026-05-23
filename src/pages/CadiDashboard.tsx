@@ -5,6 +5,7 @@ import LaneSelector from '../components/cadi/LaneSelector';
 import DelayChart from '../components/cadi/DelayChart';
 import DataQualityBadge from '../components/cadi/DataQualityBadge';
 import AlertCard from '../components/cadi/AlertCard';
+import TsrCompareWidget from '../components/cadi/TsrCompareWidget';
 import LoadingState from '../components/shared/LoadingState';
 import EmptyState from '../components/shared/EmptyState';
 
@@ -18,14 +19,25 @@ const CHART_MILESTONES = [
   'DEST_ARR',
 ] as const;
 
+type RouteFilter = 'kashi' | 'khorgos' | 'northern' | 'tsr' | null;
+
+const ROUTE_FILTERS: { label: string; value: RouteFilter }[] = [
+  { label: 'ALL', value: null },
+  { label: 'kashi', value: 'kashi' },
+  { label: 'khorgos', value: 'khorgos' },
+  { label: 'northern', value: 'northern' },
+  { label: 'tsr', value: 'tsr' },
+];
+
 export default function CadiDashboard() {
   const { t } = useTranslation();
-  const [lanes, setLanes]             = useState<Lane[]>([]);
+  const [lanes, setLanes]               = useState<Lane[]>([]);
   const [selectedLane, setSelectedLane] = useState('KR-ANDIJAN');
-  const [rows, setRows]               = useState<DelayRow[]>([]);
-  const [alerts, setAlerts]           = useState<DisruptionEvent[]>([]);
-  const [loading, setLoading]         = useState(true);
-  const [error, setError]             = useState<string | null>(null);
+  const [rows, setRows]                 = useState<DelayRow[]>([]);
+  const [alerts, setAlerts]             = useState<DisruptionEvent[]>([]);
+  const [loading, setLoading]           = useState(true);
+  const [error, setError]               = useState<string | null>(null);
+  const [routeFilter, setRouteFilter]   = useState<RouteFilter>(null);
 
   // Load lane list once
   useEffect(() => {
@@ -47,9 +59,14 @@ export default function CadiDashboard() {
       .finally(() => setLoading(false));
   }, [selectedLane]);
 
-  // Latest row per milestone (most recent week)
+  // Apply route_pattern filter
+  const filteredRows: DelayRow[] = routeFilter == null
+    ? rows
+    : rows.filter(r => r.route_pattern === routeFilter);
+
+  // Latest row per milestone (most recent week) from filtered rows
   const latestByMilestone = new Map<string, DelayRow>();
-  for (const r of rows) {
+  for (const r of filteredRows) {
     const existing = latestByMilestone.get(r.milestone);
     if (!existing || r.week_iso > existing.week_iso) {
       latestByMilestone.set(r.milestone, r);
@@ -73,9 +90,29 @@ export default function CadiDashboard() {
 
       <LaneSelector lanes={lanes} selected={selectedLane} onChange={setSelectedLane} />
 
+      {/* Route pattern filter toggle */}
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <span className="text-xs text-slate-500">{t('cadi.compare.routeFilter')}:</span>
+        {ROUTE_FILTERS.map(({ label, value }) => (
+          <button
+            key={label}
+            onClick={() => setRouteFilter(value)}
+            className={`px-2.5 py-0.5 rounded-full text-xs border transition-colors ${
+              routeFilter === value
+                ? 'bg-sky-600 text-white border-sky-600'
+                : 'border-slate-300 text-slate-600 hover:border-slate-500'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <TsrCompareWidget />
+
       {loading ? (
         <LoadingState text={t('loading')} />
-      ) : rows.length === 0 ? (
+      ) : filteredRows.length === 0 ? (
         <div className="mt-8">
           <EmptyState message={t('cadi.noData')} />
         </div>
@@ -119,7 +156,7 @@ export default function CadiDashboard() {
                     />
                   )}
                 </div>
-                <DelayChart rows={rows} milestone={ms} />
+                <DelayChart rows={filteredRows} milestone={ms} />
               </div>
             ))}
           </div>
