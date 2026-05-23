@@ -27,6 +27,9 @@ color: pink
 --action-bg:    #FFF5F5;   /* ACTION 박스 배경 */
 --action-border:#CC0000;   /* ACTION 박스 좌측 라인 */
 --mtl-bg:       #111827;   /* CTA 배경 */
+--mtl-point-bg: #0F2D5A;   /* MTL POINT 박스 — 다크 네이비 (ACTION과 시각 분리) */
+--mtl-point-txt:#E0EEFF;   /* MTL POINT 본문 텍스트 */
+--mtl-point-lbl:#93C5FD;   /* MTL POINT 서브 레이블 */
 --up:           #6EE7B7;   /* KPI 상승 수치 */
 --dn:           #FCA5A5;   /* KPI 하락 수치 */
 ```
@@ -194,19 +197,25 @@ color: pink
       {editor_note}
     </p>
 
-    <!-- ACTION 박스 -->
+    <!-- ACTION 박스 — 상단 초압축 테이저 (3줄 이하) -->
+    <!-- 헤더: "오늘의 판단 {N}" (N = 불릿 개수) -->
+    <!-- 불릿: ① ② ③ 번호 형식 (· 아님) -->
     <div style="border-left:3px solid #CC0000;
                 background:#FFF5F5;
                 padding:12px 14px;
                 margin-bottom:16px;">
       <div style="font-size:9px;font-weight:800;color:#9B1C1C;
                   letter-spacing:.1em;text-transform:uppercase;
-                  margin-bottom:5px;">
-        Action Point
+                  margin-bottom:7px;">
+        오늘의 판단 {N}
       </div>
       <div style="font-size:12px;color:#1F2937;
                   line-height:1.8;word-break:keep-all;">
-        {chapters.action — 불릿 변환 후 삽입}
+        <!-- 각 줄: ①②③ 번호 + 핵심 키워드 → <strong>행동 암시</strong> -->
+        <span style="display:block;padding-left:16px;position:relative;margin-bottom:4px;">
+          <span style="position:absolute;left:0;color:#CC0000;font-weight:800;">①</span>
+          {키워드} → <strong>{행동 결론}</strong>
+        </span>
       </div>
     </div>
 
@@ -301,21 +310,33 @@ color: pink
 
 <!-- MTL POINT (있을 때만 렌더링) -->
 <!-- IF mtl_point exists AND NOT empty -->
-<div style="font-size:9px;font-weight:800;color:#CC0000;
+<!-- ★ ACTION과 반드시 시각적으로 다른 박스 사용: 다크 네이비 #0F2D5A -->
+<div style="font-size:9px;font-weight:800;color:#0F2D5A;
             letter-spacing:.14em;text-transform:uppercase;
             margin:0 0 6px;">
   MTL POINT
 </div>
-<div style="border-left:3px solid #CC0000;
-            background:#FFF5F5;
-            padding:12px 14px;
-            margin-bottom:16px;">
-  <div style="font-size:12px;color:#1F2937;
-              line-height:1.8;word-break:keep-all;">
+<div style="background:#0F2D5A;border-radius:2px;
+            padding:14px 16px;margin-bottom:16px;">
+  <div style="font-size:9px;font-weight:700;color:#93C5FD;
+              letter-spacing:.1em;text-transform:uppercase;
+              margin-bottom:8px;">
+    MTL 화주를 위한 전략 시사점
+  </div>
+  <div style="font-size:12px;color:#E0EEFF;
+              line-height:1.85;word-break:keep-all;">
     {chapters.mtl_point}
   </div>
 </div>
 <!-- END IF -->
+
+<!-- MTL POINT 주의사항 -->
+<!--
+  ❌ ACTION 박스와 동일한 #FFF5F5 레드 계열 배경 금지
+  ✅ 반드시 #0F2D5A 네이비 배경 + #E0EEFF 흰색 계열 텍스트
+  이유: 독자가 ACTION(빨간 박스)과 MTL POINT(파란 박스)를
+        즉각 구분해야 함. 같은 스타일이면 MTL POINT가 묻힘.
+-->
 
 <!-- 원문 버튼 -->
 <a href="{deep_story.url}" target="_blank"
@@ -389,6 +410,22 @@ color: pink
 </table>
 ```
 
+**이미지 URL 형식**:
+```
+✅ 올바른 형식 (Unsplash API v2):
+   히어로:  https://images.unsplash.com/photo-{id}?w=600&h=220&fit=crop&q=80
+   썸네일: https://images.unsplash.com/photo-{id}?w=82&h=60&fit=crop&q=80
+
+❌ 절대 금지 (2023년 서비스 종료 — 이메일 발송 시 이미지 깨짐):
+   https://source.unsplash.com/600x220/?keyword
+
+Unsplash 이미지 ID 조회 방법:
+  GET https://api.unsplash.com/photos/random
+      ?query={keyword}&orientation=landscape&client_id={UNSPLASH_ACCESS_KEY}
+  → 응답 JSON의 "id" 필드 → URL에 삽입
+  UNSPLASH_ACCESS_KEY는 .env.local에서 읽기
+```
+
 **image_url이 null인 경우**: 82×60 색상 블록으로 대체
 ```
 해운  → background:#1a2a3a
@@ -438,6 +475,24 @@ color: pink
 정책      → "정책 변화 영향, Logisight에서 확인"
 항공      → "항공 운임 트렌드 Logisight에서"
 기본      → "MTL Logisight로 시장을 한 발 앞서 읽으세요"
+```
+
+**CTA 버튼 텍스트 규칙**:
+```
+❌ 금지: "영업 문의 →"  (맥락 없는 수동적 표현)
+
+✅ Deep Story 주제와 연동한 행동 유도 문구:
+   해운/선복 부족 → "6월 부킹 문의하기 →"
+   운임 계약      → "운임 계약 상담하기 →"
+   철도/TCR      → "TCR 스페이스 문의하기 →"
+   정책/관세      → "수출입 영향 상담하기 →"
+   기본           → "지금 Logisight 둘러보기 →"
+```
+
+**수신거부 토큰**:
+```
+❌ 금지: token=2026-05-22  (날짜 하드코딩 — 매번 수동 수정 필요)
+✅ 필수: token={{UNSUB_TOKEN}}  (발송 스크립트가 구독자별 토큰으로 치환)
 ```
 
 "슬롯" 표현 사용 금지 → 반드시 **"스페이스"** 로 표기
@@ -533,10 +588,15 @@ supporting_news 건수 확인
 ### Step 2: KPI 구성
 ```
 JSON에서 핵심 수치 4개 추출:
-  1. DEEP STORY 핵심 수치 (예: CRE +29%)
-  2. 브렌트유 또는 운임지수
-  3. SCFI 또는 핵심 운임 변동
-  4. 추가 이슈 수치 (DoJ·항만 등)
+  1. DEEP STORY 핵심 수치 (예: 블랭킹 34항차)
+  2. 유가·벙커·운임지수 중 1개
+  3. 서포팅 뉴스의 헤드라인 수치 (DoJ 95%, TITR +30% 등)
+  4. 물동량 또는 환율·비용 관련 수치
+
+★ KPI 4개는 반드시 NUMBERS 테이블 행과 겹치지 않아야 함
+   KPI = "훑어보기용 4가지 다른 팩트"
+   NUMBERS = "Deep Story 상세 데이터"
+   두 구간이 같은 수치를 반복하면 독자가 같은 숫자를 두 번 보게 됨 → 금지
 
 각 수치의 trend 판단 → color 적용
 ```
@@ -573,14 +633,21 @@ content/drafts/newsletter-{YYYY-MM-DD}.html
 [ ] 이모지가 없는가?
 [ ] 다색 카테고리 배지가 없는가? (색상 배지 전부 제거, 텍스트만)
 [ ] 챕터 레이블이 모두 #CC0000인가?
-[ ] ACTION 박스가 레드 좌측 라인 + #FFF5F5 배경인가?
+[ ] ACTION 박스: 레드 좌측 라인 + #FFF5F5 배경인가?
+[ ] MTL POINT 박스: #0F2D5A 네이비 배경 + #E0EEFF 텍스트인가? (ACTION과 시각적으로 다른가?)
 [ ] CTA 배경이 #111827 다크인가?
 [ ] 푸터 상단에 3px 레드 라인이 있는가?
 
 콘텐츠
 [ ] DEEP STORY 이미지가 오버레이와 함께 렌더링됐는가?
+[ ] KPI 4개 항목이 NUMBERS 테이블 항목과 겹치지 않는가?
 [ ] KPI 4개가 올바른 색상(up/dn)으로 표시됐는가?
+[ ] Action Point 헤더가 "오늘의 판단 N" 형식인가? ("Action Point" 금지)
+[ ] Action Point 불릿이 ①②③ 번호인가? (· 불릿 금지)
 [ ] 뉴스 이미지가 82×60으로 좌측 배치됐는가?
+[ ] 이미지 URL이 images.unsplash.com/photo-{id} 형식인가? (source.unsplash.com 금지)
+[ ] CTA 버튼이 주제 연동 문구인가? ("영업 문의 →" 금지)
+[ ] 수신거부 토큰이 {{UNSUB_TOKEN}}인가? (날짜 하드코딩 금지)
 [ ] "스페이스" 표기 사용 (슬롯 금지)
 [ ] image_url null → 다크 플레이스홀더 적용됐는가?
 [ ] 불릿이 <ul><li> 아닌 <span> 변환됐는가?

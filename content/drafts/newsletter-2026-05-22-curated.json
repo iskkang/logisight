@@ -1,0 +1,97 @@
+{
+  "date": "2026-05-22",
+  "curated_at": "2026-05-22T09:30:00+09:00",
+  "total_collected": 80,
+  "total_selected": 8,
+  "editor_note": "호르무즈 봉쇄로 유가 $107 급등 + W20-W24 블랭킹 34항차 확정, 6월 성수기 운임 방향성 주시 필요",
+  "items": [
+    {
+      "rank": 1,
+      "title": "Blank sailings surge: 34 void voyages confirmed W20-W24",
+      "url": "https://www.drewry.co.uk/supply-chain-advisors/supply-chain-expertise/cancelled-sailings-tracker",
+      "source": "Drewry Cancelled Sailings Tracker",
+      "published_at": "2026-05-22",
+      "category": "shipping",
+      "importance": "HIGH",
+      "fetch_status": "limited",
+      "summary_ko": "드류리 데이터 기준 W20~W24(5월 2주~6월 초) 기간 블랭킹 세일링이 34항차로 확정됐다. 취소율은 전체 계획 대비 약 4%로, 선사들이 이란 전쟁 이후 급등한 스팟 운임을 방어하기 위해 선복을 인위적으로 축소하는 전략을 유지하고 있다. 미주·유럽행 화물의 선적 공간이 예상보다 빠르게 타이트해질 수 있어 6월 선적분 부킹은 최소 3주 전 확정이 필요하다. MTL SOC 보유 화주는 선복 부족 구간에서 협상 우위를 확보할 수 있는 시점이다."
+    },
+    {
+      "rank": 2,
+      "title": "Oil prices surge to $107/bbl as Iran war shuts Strait of Hormuz",
+      "url": "https://www.ttnews.com/articles/oil-prices-bounce-higher",
+      "source": "TTNews",
+      "published_at": "2026-05-21",
+      "category": "trade",
+      "importance": "HIGH",
+      "fetch_status": "success",
+      "summary_ko": "이란 전쟁 여파로 호르무즈 해협이 봉쇄되면서 브렌트 유가가 배럴당 $106.81(+1.7%)까지 상승했다. 봉쇄로 페르시아만 내 유조선 이동이 차단되면서 시장은 공급 불안을 가격에 반영하고 있으며, 분쟁 장기화 여부에 따라 추가 급등 가능성이 열려 있다. 벙커 비용 상승은 선사의 EFS(비상연료할증) 인상으로 이어지며 한국 화주의 실질 운임 부담을 즉각 끌어올리는 요인이다. 현재 벙커 가격 $380/MT는 추가 상승 압력 하에 있어 8월까지 계약 운임에 산입되는 BAF 조정 조항을 재확인할 필요가 있다."
+    },
+    {
+      "rank": 3,
+      "title": "Muted peak season expected as ocean shippers delay contract signing",
+      "url": "https://www.supplychaindive.com/news/muted-peak-season-expected-as-ocean-shippers-delay-contract-signing/820397/",
+      "source": "Supply Chain Dive",
+      "published_at": "2026-05-20",
+      "category": "shipping",
+      "importance": "HIGH",
+      "fetch_status": "success",
+      "summary_ko": "2026년 여름 성수기는 '완만한 약세' 국면이 예상되며, 화주들이 이란 전쟁 불확실성을 이유로 연간 운임 계약 체결을 의도적으로 지연하고 있다. 현재 스팟 운임은 분쟁 이전 대비 50% 이상 높게 유지되고 있으나 6월 물동량은 5월 대비 2% 감소, 7월은 4% 반등이 전망된다. 화주들은 단기 스팟 프리미엄을 감수하더라도 계약 시점을 늦춰 하반기 유리한 요율을 확보하려는 전략을 택하고 있다. 미주향 장기 계약 협상 중인 한국 화주는 7~8월 내 계약 시점을 재검토할 필요가 있다."
+    },
+    {
+      "rank": 4,
+      "title": "DoJ indicts Chinese container makers on price-fixing charges",
+      "url": "https://www.freightwaves.com/news/doj-indicts-chinese-container-makers-on-price-fixing-charges",
+      "source": "FreightWaves",
+      "published_at": "2026-05-21",
+      "category": "policy",
+      "importance": "HIGH",
+      "fetch_status": "success",
+      "summary_ko": "미 법무부가 CIMC·CXIC·Singamas 등 글로벌 컨테이너 생산량의 95%를 점유하는 중국 4개 제조사와 임원 7명을 셔먼 반독점법 위반 혐의로 기소했다. 이들은 생산량을 인위적으로 줄이고 신규 공장 건설을 담합으로 억제해 2019~2021년 컨테이너 가격을 2배로 끌어올렸다는 혐의를 받는다. 법적 절차가 진행될수록 향후 SOC(선사 소유 컨테이너) 조달 및 리스 시장에 불확실성이 추가될 수 있어 장기 컨테이너 수급 계획에 변수가 된다. 현재 직접적인 가격 변동은 없으나 미국 내 SOC 관련 규제 동향을 지속 모니터링해야 한다."
+    },
+    {
+      "rank": 5,
+      "title": "Matson reports air-to-ocean freight conversions amid Iran war",
+      "url": "https://www.supplychaindive.com/news/matson-reports-air-to-ocean-freight-conversions-amid-iran-war/820506/",
+      "source": "Supply Chain Dive",
+      "published_at": "2026-05-21",
+      "category": "trade",
+      "importance": "HIGH",
+      "fetch_status": "success",
+      "summary_ko": "미국 해운사 Matson이 이란 전쟁으로 인한 항공유 급등과 항공 화물 공간 감소를 배경으로 항공-해운 전환 수요가 증가하고 있다고 밝혔다. 특히 중국 남부발 데이터센터 장비와 이커머스 화물이 해상으로 이동하고 있으며, 여객기 배리 공간(전체 항공 화물의 50%) 감소가 전환을 가속화하고 있다. 항공 운임 강세가 지속될 경우 한국발 긴급·고부가가치 화물의 항공 비용 부담이 증가하므로, 항공-해상 복합 루트 시뮬레이션을 사전 준비해두는 것이 유리하다."
+    },
+    {
+      "rank": 6,
+      "title": "EU lawmakers back US trade pact with built-in safeguards",
+      "url": "https://www.supplychaindive.com/news/eu-lawmakers-back-us-trade-pact-with-built-in-safeguards/820749/",
+      "source": "Supply Chain Dive",
+      "published_at": "2026-05-20",
+      "category": "policy",
+      "importance": "MEDIUM",
+      "fetch_status": "success",
+      "summary_ko": "유럽의회가 미국 공산품 관세 철폐를 핵심으로 하는 EU-미 무역협정 기본안에 찬성 입장을 밝혔다. 미국이 EU산 철강·알루미늄 파생제품에 15% 초과 관세를 부과할 경우 혜택을 즉시 중단할 수 있는 안전장치가 포함됐으며, 트럼프의 이행 데드라인은 7월 4일이다. 한국 수출기업 입장에서는 EU산과 경쟁하는 제품군(철강·부품 등)의 대미 가격 경쟁력 변화를 면밀히 추적해야 하며, 협정 발효 시 일부 품목에서 한국산의 상대적 불리가 발생할 수 있다."
+    },
+    {
+      "rank": 7,
+      "title": "Rohlig SUUS sees strong potential in Central Asia and expands into Uzbekistan",
+      "url": "https://www.railfreight.com/railfreight/2026/05/20/rohlig-suus-sees-strong-potential-in-central-asia-and-expands-into-uzbekistan/",
+      "source": "RailFreight",
+      "published_at": "2026-05-20",
+      "category": "rail",
+      "importance": "HIGH",
+      "fetch_status": "limited",
+      "summary_ko": "폴란드 물류기업 Rohlig SUUS가 우즈베키스탄에 현지 법인을 설립하고 도로·철도 복합운송, 창고, 통관 서비스를 본격 개시했다. 중국-유럽 미들 코리더(TITR) 수요 증가를 배경으로 중앙아시아를 거점으로 하는 유럽계 대형 포워더의 진입이 본격화되고 있음을 보여준다. 우즈베키스탄·카자흐스탄 물류 시장의 경쟁이 심화되는 국면으로, MTL 알마티·타슈켄트 현지 네트워크의 차별화 포인트를 강화하고 장기 계약 고객에 대한 밀착 서비스를 선제적으로 제안해야 할 시점이다."
+    },
+    {
+      "rank": 8,
+      "title": "태웅로직스, 우즈벡에 제2물류창고 건설…중앙아시아 물류 영토 넓힌다",
+      "url": "https://www.klnews.co.kr/news/articleView.html?idxno=321205",
+      "source": "KL뉴스",
+      "published_at": "2026-05-22",
+      "category": "rail",
+      "importance": "MEDIUM",
+      "fetch_status": "success",
+      "summary_ko": "태웅로직스가 타슈켄트에서 제2물류창고 착공식을 개최하며, 이커머스 및 자동차 부품 수요 급증에 대응한 중앙아시아 거점 확장에 나섰다. 기존 2만 8000m² 부지에 신규 창고를 추가해 7월 말 완공·8월 초 운영을 목표로 하며, 우즈베키스탄 이커머스 시장 연평균 20% 이상 성장을 전망하고 있다. 한국 포워더의 우즈베키스탄 물류 인프라 경쟁이 가속화되는 신호로, MTL은 기존 CIS 노선 및 알마티 경유 복합운송 서비스로 차별화된 원스톱 솔루션을 강조할 필요가 있다."
+    },
+  ]
+}
