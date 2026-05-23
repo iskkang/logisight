@@ -32,10 +32,16 @@ export default function DelayChart({ rows, milestone }: Props) {
   const medLabel = t('cadi.medianDelay');
   const p90Label = t('cadi.p90Delay');
 
+  // Display in days; fall back to hours/24 if generated column not yet available
+  const toDays = (r: DelayRow, field: 'median' | 'p90'): number | null => {
+    if (field === 'median') return r.median_delay_d ?? (r.median_delay_h != null ? r.median_delay_h / 24 : null);
+    return r.p90_delay_d ?? (r.p90_delay_h != null ? r.p90_delay_h / 24 : null);
+  };
+
   const data = filtered.map(r => ({
     week: r.week_iso.replace(/^\d{4}-/, ''),  // show 'W20' not '2026-W20'
-    [medLabel]: r.median_delay_h,
-    [p90Label]: r.p90_delay_h,
+    [medLabel]: toDays(r, 'median') != null ? Math.round(toDays(r, 'median')! * 10) / 10 : null,
+    [p90Label]: toDays(r, 'p90')   != null ? Math.round(toDays(r, 'p90')! * 10) / 10 : null,
   }));
 
   return (
@@ -43,8 +49,8 @@ export default function DelayChart({ rows, milestone }: Props) {
       <LineChart data={data} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
         <XAxis dataKey="week" tick={{ fontSize: 10 }} />
-        <YAxis tick={{ fontSize: 10 }} unit="h" />
-        <Tooltip formatter={(v: number) => `${v}h`} />
+        <YAxis tick={{ fontSize: 10 }} unit="d" />
+        <Tooltip formatter={(v: number) => `${v >= 0 ? '+' : ''}${v}d`} />
         <Legend wrapperStyle={{ fontSize: 11 }} />
         <Line
           type="monotone"

@@ -86,7 +86,11 @@ export default function CadiDashboard() {
                 <div key={ms} className="bg-white rounded-lg border border-slate-200 p-3">
                   <p className="text-xs text-slate-400 mb-1">{ms.replace(/_/g, ' ')}</p>
                   <p className="text-xl font-bold text-slate-900">
-                    {latest.median_delay_h != null ? `${latest.median_delay_h}h` : '—'}
+                    {latest.median_delay_d != null
+                      ? `${latest.median_delay_d >= 0 ? '+' : ''}${latest.median_delay_d.toFixed(1)}d`
+                      : latest.median_delay_h != null
+                        ? `${(latest.median_delay_h / 24) >= 0 ? '+' : ''}${(latest.median_delay_h / 24).toFixed(1)}d`
+                        : '—'}
                   </p>
                   <div className="mt-1">
                     <DataQualityBadge quality={latest.data_quality} sampleCount={latest.sample_count} />

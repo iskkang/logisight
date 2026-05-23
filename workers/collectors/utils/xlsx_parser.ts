@@ -53,7 +53,7 @@ const MILESTONE_KEYWORDS: Array<{
   { milestone: 'DEST_ARR',     variant: 'actual',  keywords: ['ata', 'dest act', 'destination act', 'arr act', '目的地实际', '到达实际', 'прибытие факт'] },
 ];
 
-/** Detect route/lane from file path or sampled cell values */
+/** Detect route/lane type from file path or sampled cell values */
 export function detectLane(filePath: string, cellValues: string[]): string {
   const combined = [filePath, ...cellValues].join(' ').toLowerCase();
   if (combined.includes('titr') || combined.includes('middle corridor') || combined.includes('caspian')) return 'TITR';
@@ -61,6 +61,52 @@ export function detectLane(filePath: string, cellValues: string[]): string {
   if (combined.includes('mongol') || combined.includes('tmgr')) return 'TMGR';
   if (combined.includes('manchur') || combined.includes('tmr') || combined.includes('manzhouli')) return 'TMR';
   return 'TCR'; // default: most common MTL route
+}
+
+/**
+ * Detect route pattern (kashi / khorgos / tsr) per CADI spec 4절.
+ * kashi  = Qingdao→Kashi→truck→KG/UZ (Bishkek, Osh, Andijan, Tashkent, Chukursay)
+ * khorgos = Qingdao→Xian→Khorgos/Dostyk→Almaty/MALA
+ * tsr    = via Russia/Vladivostok (TSR)
+ */
+export function detectRoutePattern(
+  filePath: string,
+  cellValues: string[]
+): 'kashi' | 'khorgos' | 'tsr' | null {
+  const combined = [filePath, ...cellValues].join(' ').toLowerCase();
+
+  const kashiHints = ['kashi', 'kashgar', '喀什', 'bishkek', '比什凯克', 'osh', '奥什',
+    'andijan', '安集延', 'chukursay', 'fergana', 'tashkent', '塔什干', 'kg border', 'kg-uz'];
+  const khorgosHints = ['khorgos', 'khorgas', '霍尔果斯', 'altynkol', 'dostyk', '多斯托克',
+    'almaty', '阿拉木图', 'mala', 'malaszewicze', 'xian hub', '西安', 'кз граница'];
+  const tsrHints = ['vladivostok', 'владивосток', 'tsr', 'trans-siberian', 'zabaykalsk'];
+
+  const kashiScore   = kashiHints.filter(h => combined.includes(h)).length;
+  const khorgosScore = khorgosHints.filter(h => combined.includes(h)).length;
+  const tsrScore     = tsrHints.filter(h => combined.includes(h)).length;
+
+  const max = Math.max(kashiScore, khorgosScore, tsrScore);
+  if (max === 0) return null;
+  if (tsrScore === max) return 'tsr';
+  if (khorgosScore >= kashiScore) return 'khorgos';
+  return 'kashi';
+}
+
+/**
+ * Detect final destination city from file path or sampled cell values.
+ * Returns the most specific match, or null if ambiguous.
+ */
+export function detectDestination(filePath: string, cellValues: string[]): string | null {
+  const combined = [filePath, ...cellValues].join(' ').toLowerCase();
+
+  if (combined.includes('andijan') || combined.includes('안디잔') || combined.includes('安集延')) return 'Andijan';
+  if (combined.includes('chukursay') || combined.includes('추쿠르사이')) return 'Chukursay';
+  if (combined.includes('tashkent') || combined.includes('타슈켄트') || combined.includes('塔什干')) return 'Tashkent';
+  if (combined.includes('bishkek') || combined.includes('비슈켁') || combined.includes('比什凯克')) return 'Bishkek';
+  if (combined.includes('osh') || combined.includes('오쉬') || combined.includes('奥什')) return 'Osh';
+  if (combined.includes('mala') || combined.includes('malaszewicze')) return 'MALA';
+  if (combined.includes('almaty') || combined.includes('알마티') || combined.includes('阿拉木图')) return 'Almaty';
+  return null;
 }
 
 /** Try rows 0–4 for the one with the most milestone keyword hits */
@@ -160,6 +206,8 @@ export interface ParsedShipment {
   shipmentRef: string;
   weekIso: string;
   laneId: string;
+  routePattern: 'kashi' | 'khorgos' | 'tsr' | null;  // spec 4절
+  destination: string | null;                           // 'Andijan','Almaty','Bishkek',...
   milestones: Array<{
     milestone: MilestoneCode;
     plannedAt: string | null;
@@ -187,7 +235,7 @@ export function parseXlsx(filePath: string): ParsedShipment[] {
       continue;
     }
 
-    // Sample values for lane detection
+    // Sample values for lane/pattern/destination detection
     const sampleValues: string[] = [];
     for (let r = headerRow; r <= Math.min(headerRow + 5, range.e.r); r++) {
       for (let c = range.s.c; c <= Math.min(range.s.c + 10, range.e.c); c++) {
@@ -195,7 +243,11 @@ export function parseXlsx(filePath: string): ParsedShipment[] {
         if (cell) sampleValues.push(String(cell.v ?? ''));
       }
     }
-    const laneId = detectLane(filePath, sampleValues);
+    // Include sheet name as a strong signal
+    const signalValues = [sheetName, ...sampleValues];
+    const laneId       = detectLane(filePath, signalValues);
+    const routePattern = detectRoutePattern(filePath, signalValues);
+    const destination  = detectDestination(filePath, signalValues);
 
     // Group planned/actual by milestone
     const milestoneMap = new Map<MilestoneCode, { plannedIdx: number | null; actualIdx: number | null }>();
@@ -245,7 +297,7 @@ export function parseXlsx(filePath: string): ParsedShipment[] {
       const fileName = filePath.replace(/.*[\\/]/, '');
       const shipmentRef = `${fileName}:row${r}:${rawRef.slice(0, 8)}`;
 
-      const shipment: ParsedShipment = { shipmentRef, weekIso, laneId, milestones: [] };
+      const shipment: ParsedShipment = { shipmentRef, weekIso, laneId, routePattern, destination, milestones: [] };
 
       for (const [milestone, { plannedIdx, actualIdx }] of milestoneMap) {
         const planned = normalizeDate(
@@ -276,21 +328,42 @@ export function parseXlsx(filePath: string): ParsedShipment[] {
   return results;
 }
 
-/** Group ParsedShipment[] into buckets keyed by lane+week+milestone */
+/** Group ParsedShipment[] into buckets keyed by lane+week+milestone+routePattern */
 export function aggregateWeekly(
   shipments: ParsedShipment[]
-): Map<string, { laneId: string; weekIso: string; milestone: MilestoneCode; delayHours: number[] }> {
+): Map<string, {
+  laneId: string;
+  weekIso: string;
+  milestone: MilestoneCode;
+  routePattern: 'kashi' | 'khorgos' | 'tsr' | null;
+  destination: string | null;
+  delayHours: number[];
+}> {
   const buckets = new Map<
     string,
-    { laneId: string; weekIso: string; milestone: MilestoneCode; delayHours: number[] }
+    {
+      laneId: string;
+      weekIso: string;
+      milestone: MilestoneCode;
+      routePattern: 'kashi' | 'khorgos' | 'tsr' | null;
+      destination: string | null;
+      delayHours: number[];
+    }
   >();
 
   for (const s of shipments) {
     for (const m of s.milestones) {
       if (m.delayHours === null) continue;
-      const key = `${s.laneId}|${s.weekIso}|${m.milestone}`;
+      const key = `${s.laneId}|${s.weekIso}|${m.milestone}|${s.routePattern ?? ''}`;
       if (!buckets.has(key)) {
-        buckets.set(key, { laneId: s.laneId, weekIso: s.weekIso, milestone: m.milestone, delayHours: [] });
+        buckets.set(key, {
+          laneId: s.laneId,
+          weekIso: s.weekIso,
+          milestone: m.milestone,
+          routePattern: s.routePattern,
+          destination: s.destination,
+          delayHours: [],
+        });
       }
       buckets.get(key)!.delayHours.push(m.delayHours);
     }

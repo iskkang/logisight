@@ -78,15 +78,18 @@ async function main() {
   // ── 2. Upsert shipment_legs ────────────────────────────────────────────────
   const legRows = allShipments.flatMap(s =>
     s.milestones.map(m => ({
-      lane_id: s.laneId,
-      shipment_ref: s.shipmentRef,
-      week_iso: s.weekIso,
-      milestone: m.milestone as string,
-      planned_at: m.plannedAt,
-      actual_at: m.actualAt,
-      delay_hours: m.delayHours,
-      flag: m.flag,
+      lane_id:       s.laneId,
+      shipment_ref:  s.shipmentRef,
+      week_iso:      s.weekIso,
+      route_pattern: s.routePattern,   // 'kashi'|'khorgos'|'tsr'|null
+      destination:   s.destination,    // 'Andijan'|'Almaty'|...
+      milestone:     m.milestone as string,
+      planned_at:    m.plannedAt,
+      actual_at:     m.actualAt,
+      delay_hours:   m.delayHours,
+      flag:          m.flag,
       raw_source_file: s.shipmentRef.split(':')[0],
+      data_source:   'tracing',
     }))
   );
 
@@ -104,29 +107,33 @@ async function main() {
   // ── 3. Aggregate → delay_index_weekly ─────────────────────────────────────
   const buckets = aggregateWeekly(allShipments);
   const indexRows: Array<{
-    lane_id: string;
-    week_iso: string;
-    milestone: MilestoneCode;
+    lane_id:       string;
+    week_iso:      string;
+    milestone:     MilestoneCode;
+    route_pattern: 'kashi' | 'khorgos' | 'tsr' | null;
+    destination:   string | null;
     median_delay_h: number;
-    p90_delay_h: number;
-    on_time_rate: number;
-    sample_count: number;
-    data_quality: string;
-    updated_at: string;
+    p90_delay_h:   number;
+    on_time_rate:  number;
+    sample_count:  number;
+    data_quality:  string;
+    updated_at:    string;
   }> = [];
 
   for (const [, bucket] of buckets) {
     const n = bucket.delayHours.length;
     indexRows.push({
-      lane_id: bucket.laneId,
-      week_iso: bucket.weekIso,
-      milestone: bucket.milestone,
+      lane_id:       bucket.laneId,
+      week_iso:      bucket.weekIso,
+      milestone:     bucket.milestone,
+      route_pattern: bucket.routePattern,
+      destination:   bucket.destination,
       median_delay_h: Math.round(median(bucket.delayHours) * 10) / 10,
-      p90_delay_h: Math.round(p90(bucket.delayHours) * 10) / 10,
-      on_time_rate: Math.round((bucket.delayHours.filter(h => h <= 0).length / n) * 1000) / 1000,
-      sample_count: n,
-      data_quality: dataQuality(n),
-      updated_at: new Date().toISOString(),
+      p90_delay_h:   Math.round(p90(bucket.delayHours) * 10) / 10,
+      on_time_rate:  Math.round((bucket.delayHours.filter(h => h <= 0).length / n) * 1000) / 1000,
+      sample_count:  n,
+      data_quality:  dataQuality(n),
+      updated_at:    new Date().toISOString(),
     });
   }
 

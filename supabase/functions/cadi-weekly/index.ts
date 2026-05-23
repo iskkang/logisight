@@ -29,7 +29,15 @@ serve(async (req) => {
 
   let query = supabase
     .from('delay_index_weekly')
-    .select('lane_id, week_iso, milestone, median_delay_h, p90_delay_h, on_time_rate, sample_count, data_quality, updated_at')
+    .select([
+      'lane_id', 'week_iso', 'milestone',
+      'route_pattern', 'destination',
+      'median_delay_h', 'p90_delay_h',
+      'median_delay_d', 'p90_delay_d',   // generated (hours/24)
+      'on_time_rate', 'otp_pct',          // generated (rate*100)
+      'sample_count', 'data_quality',
+      'methodology_version', 'updated_at',
+    ].join(', '))
     .gte('week_iso', minWeek)
     .order('week_iso', { ascending: false });
 

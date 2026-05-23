@@ -22,7 +22,12 @@ serve(async (req) => {
 
   let query = supabase
     .from('disruption_events')
-    .select('id, lane_id, event_type, title_en, title_ru, title_zh, title_ko, severity, started_at, resolved_at, source_url')
+    .select([
+      'id', 'lane_id', 'event_type', 'category', 'region',
+      'title_en', 'title_ru', 'title_zh', 'title_ko',
+      'body_en', 'impact_days', 'affected_lanes', 'verified_by',
+      'severity', 'event_date', 'started_at', 'resolved_at', 'source_url',
+    ].join(', '))
     .is('resolved_at', null)
     .order('severity')
     .limit(20);

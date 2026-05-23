@@ -31,11 +31,17 @@ export interface DelayRow {
   lane_id: string;
   week_iso: string;
   milestone: string;
+  route_pattern: 'kashi' | 'khorgos' | 'tsr' | null;
+  destination: string | null;
   median_delay_h: number | null;
   p90_delay_h: number | null;
-  on_time_rate: number | null;
+  median_delay_d: number | null;   // generated: median_delay_h / 24
+  p90_delay_d: number | null;      // generated: p90_delay_h / 24
+  on_time_rate: number | null;     // fraction 0–1
+  otp_pct: number | null;          // generated: on_time_rate * 100
   sample_count: number;
   data_quality: 'confirmed' | 'provisional' | 'indicative';
+  methodology_version: string;
   updated_at: string;
 }
 
@@ -43,11 +49,18 @@ export interface DisruptionEvent {
   id: string;
   lane_id: string | null;
   event_type: string;
+  category: string | null;
+  region: string | null;
   title_en: string;
   title_ru: string | null;
   title_zh: string | null;
   title_ko: string | null;
+  body_en: string | null;
+  impact_days: number | null;
+  affected_lanes: string[] | null;
+  verified_by: string[] | null;
   severity: 'high' | 'medium' | 'low';
+  event_date: string | null;
   started_at: string | null;
   resolved_at: string | null;
   source_url: string | null;
