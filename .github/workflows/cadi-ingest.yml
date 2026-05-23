@@ -37,6 +37,14 @@ jobs:
           # Optional: add TRACKING_API_TOKEN when MTL Link token is applied
           # TRACKING_API_TOKEN: ${{ secrets.TRACKING_API_TOKEN }}
 
+      - name: Run CADI FESCO/TSR tracing ingest
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: npm run collect:tsr
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          # TRACKING_API_TOKEN: ${{ secrets.TRACKING_API_TOKEN }}
+
       - name: Dry run — print snapshot only
         if: ${{ github.event.inputs.dry_run == 'true' }}
         run: |

@@ -11,6 +11,7 @@
     "collect:news": "ts-node --project tsconfig.workers.json workers/collectors/news_global.ts",
     "collect:tracing": "ts-node --project tsconfig.workers.json workers/collectors/tracing_ingest.ts",
     "collect:live": "ts-node --project tsconfig.workers.json workers/collectors/tracing_live.ts",
+    "collect:tsr": "ts-node --project tsconfig.workers.json workers/collectors/tracing_fesco.ts",
     "report:cadi": "node scripts/generate-cadi-report.js",
     "pdf": "node scripts/generate-pdf.js",
     "lint": "eslint src --ext ts,tsx"
