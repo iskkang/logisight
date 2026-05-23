@@ -26,8 +26,8 @@ function Nav() {
       </NavLink>
 
       <div className="flex gap-4">
-        {/* Intelligence drop-level: CADI is the flagship */}
-        <NavLink to="/intelligence/cadi" className={navClass}>CADI</NavLink>
+        {/* IA: Intelligence > CADI (flagship); base modules added in Phase 8 */}
+        <NavLink to="/intelligence/cadi" className={navClass}>Intelligence</NavLink>
         <NavLink to="/news"              className={navClass}>News & Analysis</NavLink>
         <NavLink to="/methodology"       className={navClass}>Methodology</NavLink>
         <NavLink to="/subscribe"         className={navClass}>Subscribe</NavLink>
