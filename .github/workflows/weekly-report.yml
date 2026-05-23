@@ -2,7 +2,7 @@ name: Weekly Market Report
 
 on:
   schedule:
-    - cron: '0 9 * * 0'   # 일요일 18:00 KST (UTC 09:00)
+    - cron: '0 9 1,15 * *'   # 매월 1·15일 09:00 UTC (18:00 KST) — 격주 CADI 리포트 발행. 데이터 수집은 cadi-ingest.yml(주간)이 별도 담당.
   workflow_dispatch:       # 수동 실행 가능
 
 jobs:
@@ -45,6 +45,18 @@ jobs:
       - name: Generate CADI report
         run: npm run report:cadi
         env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Generate CADI weekly AI draft (Q16 → Claude)
+        run: |
+          if [ -f content/inputs/cadi-weekly-input.json ]; then
+            npm run report:weekly
+          else
+            echo "ℹ️  content/inputs/cadi-weekly-input.json not found — skipping AI draft (fill in questionnaire first)"
+          fi
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
