@@ -1,0 +1,20 @@
+{
+  "_instructions": "Copy this file to cadi-weekly-input.json and fill in answers for the current week. Leave fields null if you don't know — empty sections are automatically omitted from the draft. Remove this _instructions key before running 'node scripts/generate-cadi-weekly.js'.",
+  "week": "2026-W21",
+  "q1_transit_times": null,
+  "q2_delay_vs_normal": "安集延线本周比平时慢约5天",
+  "q3_cargo_stuck": null,
+  "q4_policy_change": "吉尔吉斯突然要求UZ向过境货物全部换用吉国卡车（5/15发布）",
+  "q5_border_status": null,
+  "q6_delay_case": "已在乌兹别克安排好的车辆被迫换吉国车并重新清关，安集延交付延迟约5天",
+  "q7_rate_change": null,
+  "q8_space_availability": null,
+  "q9_spot_rate": null,
+  "q10_equipment": null,
+  "q11_equipment_issues": null,
+  "q12_truck_last_mile": null,
+  "q13_tsr_status": "TSR经符拉迪沃斯托克至塔什干本周稳定",
+  "q14_sea_vs_rail": null,
+  "q15_next_week_watch": null,
+  "q16_other": null
+}
