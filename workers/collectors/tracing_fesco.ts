@@ -284,7 +284,7 @@ async function main() {
     // or confirmed overdue red-signal. SEA-in-progress containers are excluded to
     // prevent SEA-leg delays from polluting the total T/T delay bucket.
     const isCompleted = leg._is_completed as boolean;
-    const isOverdue   = leg.signal === 'red' && !isCompleted;
+    const isOverdue   = leg.signal === 'red' && !isCompleted && leg.milestone === 'DEST_ARR';
     if (!isCompleted && !isOverdue) continue;
 
     const key = `${leg.lane_id}|${leg.week_iso}`;
