@@ -54,7 +54,7 @@ function buildDisruptionSection(events) {
   if (!events || events.length === 0) return '이번 기간 특이 국경·정책 이슈 없음.';
   return events.map(e => {
     const title = e.title_ko ?? e.title_en;
-    const desc  = e.description_en ? `\n${e.description_en}` : '';
+    const desc  = e.body_en ? `\n${e.body_en}` : '';
     const src   = e.source_url ? `\n출처: ${e.source_url}` : '';
     return `**[${e.severity.toUpperCase()}] ${title}**${desc}${src}`;
   }).join('\n\n');
@@ -82,7 +82,7 @@ async function main() {
   // Fetch active disruption events (unresolved)
   const { data: eventRows } = await supabase
     .from('disruption_events')
-    .select('lane_id, event_type, title_en, title_ko, description_en, severity, source_url')
+    .select('lane_id, event_type, title_en, title_ko, body_en, severity, source_url')
     .is('resolved_at', null)
     .order('severity')
     .limit(10);
