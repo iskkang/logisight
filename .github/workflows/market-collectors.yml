@@ -1,0 +1,37 @@
+# .github/workflows/market-collectors.yml
+# 운임 지수 · 벙커 가격 · 블랭크 세일링 · 글로벌 뉴스 수집
+# 스케줄: 매주 월요일 02:00 UTC (11:00 KST)
+name: Logisight Market Collectors
+
+on:
+  schedule:
+    - cron: '0 2 * * 1'   # 월요일 02:00 UTC
+  workflow_dispatch:        # 수동 실행 허용
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Collect market data (shipping_indices · bunker · blank_sailing)
+        run: npm run collect:shipping
+        env:
+          SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Collect news (news_global · news_korea · news_rail · news_industry)
+        run: npm run collect:news
+        env:
+          SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
