@@ -29,6 +29,7 @@ jobs:
         env:
           SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DASHBOARD_ANON_KEY:        ${{ secrets.DASHBOARD_ANON_KEY }}
 
       - name: Collect news (news_global · news_korea · news_rail · news_industry)
         run: npm run collect:news

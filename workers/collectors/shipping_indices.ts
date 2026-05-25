@@ -1,6 +1,6 @@
 // workers/collectors/shipping_indices.ts
 // 컨테이너 운임 지수 수집기 — fetch 기반 (Playwright 미사용)
-// 대상: BDI (stooq), WCI (Drewry), FBX (Freightos), SCFI (stub), KCCI (stub)
+// 대상: BDI (stooq), WCI (Drewry), FBX (Freightos), SCFI/KCCI/CCFI (dashboard-data API)
 
 import { rateLimited } from './utils/rate_limiter';
 import { snapshotWriter } from './utils/snapshot_writer';
@@ -19,6 +19,8 @@ interface IndexData {
 }
 
 const TODAY = new Date().toISOString().slice(0, 10);
+
+const DASHBOARD_URL = 'https://zidkckbabtajpgkhxmfm.supabase.co/functions/v1/dashboard-data';
 
 // Converts any date string to the Monday of its ISO week (YYYY-MM-DD)
 function toMonday(dateStr: string): string {
@@ -103,18 +105,67 @@ async function fetchFBX(): Promise<IndexData[]> {
   }
 }
 
-// ── SCFI / KCCI — 자동 수집 불가 stubs ───────────────────────────
-function buildSCFIStub(): IndexData[] {
-  console.log('⚠️ SCFI 자동 수집 불가 — Shanghai Shipping Exchange 한국 IP 차단');
-  return [{ name: 'SCFI_종합', value: null, change_pct: null, date: TODAY, unit: 'point',
-    source: 'Shanghai Shipping Exchange', source_url: 'https://en.sse.net.cn/indices/scfinew.jsp',
-    note: 'IP 차단 — 수동 입력 필요' }];
+// ── SCFI / KCCI / CCFI — dashboard-data API ───────────────────────
+// DASHBOARD_ANON_KEY: zidkckbabtajpgkhxmfm 프로젝트 anon key (공개키)
+interface DashboardResponse {
+  kcci: { current: number; weeklyGrowth: number; date: string } | null;
+  scfi: { current: number; weeklyGrowth: number; date: string } | null;
+  ccfi: { current: number; weeklyGrowth: number; date: string } | null;
+  fetchedAt: string;
 }
-function buildKCCIStub(): IndexData[] {
-  console.log('⚠️ KCCI 자동 수집 불가 — JS 렌더링 사이트');
-  return [{ name: 'KCCI_종합', value: null, change_pct: null, date: TODAY, unit: 'point',
-    source: 'KOBC', source_url: 'https://www.kobc.or.kr/index/kcci',
-    note: 'JS 렌더링 — 수동 입력 필요' }];
+
+async function fetchDashboardData(): Promise<IndexData[]> {
+  const key = process.env.DASHBOARD_ANON_KEY;
+  if (!key) {
+    console.log('⚠️ DASHBOARD_ANON_KEY 미설정 — SCFI/KCCI/CCFI 수집 스킵');
+    return [
+      { name: 'SCFI_종합', value: null, change_pct: null, date: TODAY, unit: 'point',
+        source: 'Shanghai Shipping Exchange', source_url: 'https://en.sse.net.cn/indices/scfinew.jsp',
+        note: 'DASHBOARD_ANON_KEY 미설정' },
+      { name: 'KCCI_종합', value: null, change_pct: null, date: TODAY, unit: 'point',
+        source: 'KOBC', source_url: 'https://www.kobc.or.kr/index/kcci',
+        note: 'DASHBOARD_ANON_KEY 미설정' },
+      { name: 'CCFI_종합', value: null, change_pct: null, date: TODAY, unit: 'point',
+        source: 'Shanghai Shipping Exchange', source_url: 'https://en.sse.net.cn/indices/ccfinew.jsp',
+        note: 'DASHBOARD_ANON_KEY 미설정' },
+    ];
+  }
+  const res = await fetch(DASHBOARD_URL, {
+    headers: { Authorization: `Bearer ${key}` },
+    signal: AbortSignal.timeout(10000),
+  });
+  if (!res.ok) throw new Error(`dashboard-data HTTP ${res.status}`);
+  const data = await res.json() as DashboardResponse;
+
+  return [
+    {
+      name: 'SCFI_종합',
+      value: data.scfi?.current ?? null,
+      change_pct: data.scfi?.weeklyGrowth ?? null,
+      date: data.scfi?.date ?? TODAY,
+      unit: 'point',
+      source: 'Shanghai Shipping Exchange (via dashboard)',
+      source_url: 'https://en.sse.net.cn/indices/scfinew.jsp',
+    },
+    {
+      name: 'KCCI_종합',
+      value: data.kcci?.current ?? null,
+      change_pct: data.kcci?.weeklyGrowth ?? null,
+      date: data.kcci?.date ?? TODAY,
+      unit: 'point',
+      source: 'KOBC (via dashboard)',
+      source_url: 'https://www.kobc.or.kr/index/kcci',
+    },
+    {
+      name: 'CCFI_종합',
+      value: data.ccfi?.current ?? null,
+      change_pct: data.ccfi?.weeklyGrowth ?? null,
+      date: data.ccfi?.date ?? TODAY,
+      unit: 'point',
+      source: 'Shanghai Shipping Exchange (via dashboard)',
+      source_url: 'https://en.sse.net.cn/indices/ccfinew.jsp',
+    },
+  ];
 }
 
 // ── Supabase 영구 저장 ────────────────────────────────────────────
@@ -139,19 +190,38 @@ async function persistFreightIndices(result: CollectorResult): Promise<void> {
 export async function collect(): Promise<CollectorResult> {
   const result: CollectorResult = { section: 'shipping', data: [] };
 
-  // Stubs (동기)
-  for (const d of [...buildSCFIStub(), ...buildKCCIStub()]) {
-    result.data.push({ data_type: 'index', data_key: d.name, data_value: d,
-      source: d.source, source_url: d.source_url, is_complete: false, error_message: d.note });
-  }
-
-  // BDI + WCI + FBX (병렬 fetch)
-  const [bdiRes, wciRes, fbxRes] = await Promise.allSettled([
+  // SCFI + KCCI + CCFI — dashboard-data API (병렬 중 첫 번째)
+  const [dashRes, bdiRes, wciRes, fbxRes] = await Promise.allSettled([
+    rateLimited(DASHBOARD_URL, () => fetchDashboardData()),
     rateLimited('https://stooq.com',          () => fetchBDI()),
     rateLimited('https://www.drewry.co.uk',   () => fetchWCI()),
     rateLimited('https://fbx.freightos.com',  () => fetchFBX()),
   ]);
 
+  // dashboard 결과 먼저 처리
+  if (dashRes.status === 'rejected') {
+    console.warn(`⚠️ dashboard-data 실패: ${(dashRes.reason as Error).message}`);
+    // 실패 시 null 항목으로 기록
+    for (const name of ['SCFI_종합', 'KCCI_종합', 'CCFI_종합']) {
+      result.data.push({
+        data_type: 'index', data_key: name,
+        data_value: { name, value: null, change_pct: null, date: TODAY, unit: 'point', source: 'dashboard-data', source_url: DASHBOARD_URL },
+        source: 'dashboard-data', source_url: DASHBOARD_URL,
+        is_complete: false, error_message: (dashRes.reason as Error).message,
+      });
+    }
+  } else {
+    for (const d of dashRes.value) {
+      result.data.push({
+        data_type: 'index', data_key: d.name, data_value: d,
+        source: d.source, source_url: d.source_url,
+        is_complete: d.value !== null,
+        error_message: d.value === null ? (d.note ?? '데이터 없음') : undefined,
+      });
+    }
+  }
+
+  // BDI + WCI + FBX 결과 처리
   for (const [label, res] of [['BDI', bdiRes], ['WCI', wciRes], ['FBX', fbxRes]] as const) {
     if (res.status === 'rejected') {
       console.log(`⚠️ ${label} 실패: ${(res.reason as Error).message}`);
