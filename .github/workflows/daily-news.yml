@@ -34,7 +34,16 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
       - name: Send daily email
-        run: node scripts/send-newsletter.js --type=daily
+        run: |
+          TODAY=$(date +%Y-%m-%d)
+          HTML_PATH="content/drafts/newsletter-${TODAY}.html"
+          if [ -f "$HTML_PATH" ]; then
+            echo "📄 생성된 HTML 사용: $HTML_PATH"
+            node scripts/send-newsletter.js --html="$HTML_PATH"
+          else
+            echo "⚠️ 생성된 HTML 없음 — fallback 템플릿 사용"
+            node scripts/send-newsletter.js --type=daily
+          fi
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           SEND_TO: ${{ secrets.INTERNAL_EMAIL }}

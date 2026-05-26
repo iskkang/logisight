@@ -37,11 +37,6 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           # TRACKING_API_TOKEN: ${{ secrets.TRACKING_API_TOKEN }}  # uncomment after token applied
 
-      - name: Generate report draft
-        run: npm run report:generate
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-
       - name: Generate CADI report
         run: npm run report:cadi
         env:
