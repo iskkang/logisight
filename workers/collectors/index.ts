@@ -122,6 +122,12 @@ async function main() {
   if (totalFailed > 0) {
     console.log('⚠️ 실패한 collector:');
     summary.filter(s => !s.success).forEach(s => console.log(`  - ${s.name}`));
+  }
+
+  // 전체 collector가 모두 실패한 경우에만 exit(1)
+  // 일부 실패는 허용 (HTTP 403, 사이트 차단 등 외부 요인 정상)
+  if (totalSuccess === 0) {
+    console.error('❌ 모든 collector 실패 — exit(1)');
     process.exit(1);
   }
 }
