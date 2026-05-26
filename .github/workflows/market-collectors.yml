@@ -24,6 +24,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
       - name: Collect market data (shipping_indices · bunker · blank_sailing)
         run: npm run collect:shipping
         env:
