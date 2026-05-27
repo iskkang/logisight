@@ -22,6 +22,6 @@ export interface CollectorData {
 }
 
 export interface CollectorResult {
-  section: 'shipping' | 'air' | 'rail' | 'trade';
+  section: 'shipping' | 'air' | 'rail' | 'trade' | 'carrier_advisory' | 'risk';
   data: CollectorData[];
 }
