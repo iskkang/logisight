@@ -59,11 +59,12 @@ async function parseRss(url: string, sourceName: string): Promise<NewsItem[]> {
     const b = m[1];
     const title = (b.match(/<title><!\[CDATA\[(.*?)\]\]>/)?.[1] || b.match(/<title>(.*?)<\/title>/)?.[1] || '').trim();
     const link = (b.match(/<link>(.*?)<\/link>/)?.[1] || '').trim();
-    const pubDate = b.match(/<pubDate>(.*?)<\/pubDate>/)?.[1] || '';
     if (title && link) {
+      // 수집 시점을 published_at으로 사용 — RSS pubDate는 과거 날짜일 수 있어
+      // 큐레이션 window 필터를 통과하려면 항상 오늘 날짜여야 함
       items.push({
         title, url: link,
-        published_at: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(),
+        published_at: new Date().toISOString(),
         summary_en: '',
         source: sourceName,
       });
@@ -101,6 +102,8 @@ async function scrapePage(page: Page, source: typeof SCRAPE_SOURCES[0]): Promise
     source: source.name,
   }));
 }
+
+import { snapshotWriter } from './utils/snapshot_writer';
 
 export async function collect(): Promise<CollectorResult> {
   const result: CollectorResult = { section: 'rail', data: [] };
@@ -167,4 +170,8 @@ export async function collect(): Promise<CollectorResult> {
   }
 
   return result;
+}
+
+if (require.main === module) {
+  collect().then(r => snapshotWriter(r)).catch(console.error);
 }

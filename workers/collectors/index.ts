@@ -61,6 +61,7 @@ const GROUPS = [
   {
     name: 'rail-daily',
     collectors: [
+      { name: 'news_rail',      fn: collectNewsRail },                          // RailFreight RSS + TransportCorridors
       { name: 'rail_cn_daily',  fn: () => collectRailCN({ frequency: 'daily' }) },
       { name: 'rail_ops_daily', fn: () => collectRailOps({ frequency: 'daily' }) },
     ],
@@ -68,6 +69,7 @@ const GROUPS = [
   {
     name: 'rail-weekly',
     collectors: [
+      { name: 'news_rail',       fn: collectNewsRail },                         // weekly도 최신 기사 포함
       { name: 'rail_cn_weekly',  fn: () => collectRailCN({ frequency: 'weekly' }) },
       { name: 'rail_ops_weekly', fn: () => collectRailOps({ frequency: 'weekly' }) },
     ],

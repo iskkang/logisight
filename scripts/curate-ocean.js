@@ -12,7 +12,7 @@ const OUT_PATH    = path.resolve(__dirname, '../content/drafts/curated-ocean.jso
 const TODAY       = new Date().toISOString().slice(0, 10);
 
 const windowArg  = process.argv.find(a => a.startsWith('--window='));
-const windowDays = windowArg ? parseInt(windowArg.split('=')[1]) : 1;
+const windowDays = windowArg ? parseInt(windowArg.split('=')[1]) : 3; // daily: 3일, weekly: --window=7d
 const cutoff     = new Date(Date.now() - windowDays * 86_400_000).toISOString();
 
 function loadOceanItems() {
@@ -77,42 +77,49 @@ async function curate(items, portContext) {
     return `${idx + 1}. [${i.source}]${hint} ${i.title_en || i.title} — ${i.url}`;
   }).join('\n');
 
-  const prompt = `당신은 MTL Shipping Agency의 한국 해운 인텔리전스 에디터입니다.
-독자: 부산·인천·광양 출발 화물을 운영하는 한국 화주·포워더.
-핵심 질문: "부산발 내 화물 스케줄·운임에 지금 당장 영향이 있는가?"
+  const prompt = `당신은 MTL Shipping Agency의 해운 인텔리전스 에디터입니다.
+독자: 한국·중국·미주·러시아·CIS 노선 화물을 운영하는 화주·포워더.
+커버리지 우선순위: ① 한국 ② 중국 ③ 미주 ④ 러시아 ⑤ CIS
 ${portContext}
 
-아래 뉴스 목록에서 한국 화주·포워더에게 실질적으로 중요한 3개를 선정하세요.
+아래 뉴스 목록에서 독자에게 실질적으로 중요한 3개를 선정하세요.
 
-평가 기준 (한국 관련성 우선):
-+5: 부산·인천·광양 출발/도착 노선 직접 영향 (블랭크 세일링, GRI, 서비스 중단·변경)
-+5: 한국 주요 수출입 항로 운임 수치 (KCCI·WCI·FBX, 한국 노선 $/FEU 구체 수치 포함)
-+4: HMM 서비스 공지, 또는 한국 기항 포함 선사 공지 (Maersk·MSC·CMA CGM·ONE 등)
-+4: 한국 주요 수출 항로 운항 변경 (미주 서안·북유럽·동남아·중국 노선)
-+3: Blank Sailing / Void Sailing (⚡HIGH 태그, 한국 기항 서비스 포함 가능성)
-+2: 부산·상하이·싱가포르·롱비치 등 한국 관련 주요 항만 혼잡·대기 정보
-+1: 한국 노선과 무관하지만 글로벌 운임 크게 영향 (대규모 항로 봉쇄·운임 지수 급등)
--2: 한국 항로와 무관한 지역 이슈 (대서양 항로, 유럽 내수 항만, 아프리카 항로)
+지역별 가중치:
+● 한국 관련 (+2 보너스): 부산·인천·광양 출발/도착, HMM, 한국 기항 서비스, KCCI
+● 중국 관련 (+1 보너스): 상하이·닝보·칭다오·선전 출발, SCFI, 중국 선사(COSCO·Yang Ming)
+● 미주 관련 (+1 보너스): LA·LB·시애틀 항만, 미주 서안 노선 운임·파업·혼잡
+● 러시아 관련 (+0): 블라디보스토크·보스토치니, 러시아 항만 제재·운영 이슈
+● CIS 관련 (+0): 카자흐 카스피해 노선, 아제르바이잔 항만
+
+기본 평가 기준:
++5: Blank Sailing / Void Sailing 공지 (⚡HIGH 태그, 한국·중국 기항 서비스)
++5: 운임 수치 포함 (WCI·SCFI·KCCI·FBX, $/FEU 구체 수치)
++4: 선사 서비스 변경·신설·종료 공지 (Maersk·MSC·CMA·ONE·HMM·COSCO 등)
++4: 미주 서안 항만 파업·혼잡·대기 이슈 (한국·중국발 주력 노선)
++3: GRI·PSS·EFS·BAF 등 Surcharge 신설·인상 공지
++3: 주요 환적 허브(싱가포르·포트클랑·상하이) 혼잡·대기 급증
++2: Red Sea/Suez/Panama 실제 통항 제한·우회 발효 (운임 수치 포함)
++1: 글로벌 운임 지수 동향 (수치 포함, 간접 영향 있는 것)
+-2: 항만·선사와 무관한 기업 M&A·수상·인사 발표
 -3: 군사 성명·발표·부인 (직접 항로 제한·운임 영향 없는 것)
--4: 한국 수출입과 무관한 해역 인시던트 (오만·홍해 원유 관련, 한국 컨테이너 노선 영향 없는 것)
+-3: ① ~ ⑤ 노선 모두와 무관한 지역 이슈 (대서양 항로, 아프리카 내수)
 -5: 해운·물류와 직접 무관한 뉴스
 
-⛔ 절대 제외 — 점수와 무관하게 선정 금지:
+⛔ 절대 제외:
 - 군사 발표·부인 (미 해군 성명, 군사 작전 논평 등)
-- 한국 노선 직접 영향 없는 단순 국제 선박 사고
 - 물류 수치(운임·일정·TEU) 없는 외교·정치 기사
-- 관련 기사가 3개 미만이면 links를 빈 배열로 줄여도 됨
-- 적격 기사가 0개면 main.title_ko = "오늘 한국 노선 관련 뉴스 없음"으로 출력
+- 관련 기사 3개 미만이면 links를 빈 배열로 줄여도 됨
+- 적격 기사 0개면 main.importance_score = 0, url = "" 으로 출력
 
-Red Sea/Hormuz 선정 기준: 부산발 아시아-유럽·중동 노선에 실제 우회·운임 영향이 확인된 경우만.
-단순 지역 인시던트나 군사 동향은 제외.
+Red Sea/Hormuz/Panama: 실제 통항 제한·우회 운임 수치 확인된 경우만 선정.
+단순 군사 동향이나 인근 인시던트만으로는 선정 금지.
 
 출력 규칙 (엄격히 준수):
-- main: 한국 화주·포워더 실무에 가장 직결되는 기사. 없으면 오늘 없음으로 출력.
+- main: 독자 실무에 가장 직결되는 기사. 없으면 importance_score=0 으로 출력.
 - main.what: 200자 이하. 무슨 일이 일어났나.
-- main.why_now: 200자 이하. 한국 화주 기준으로 왜 지금 중요한가.
-- main.checkpoint: 200자 이하. 한국 화주·포워더가 지금 해야 할 구체적인 행동 1가지.
-- links: 한국 관련 2번째, 3번째 뉴스만. 한국 무관 기사는 links에도 절대 포함 금지.
+- main.why_now: 200자 이하. 화주·포워더 기준 왜 지금 중요한가 (지역 맥락 포함).
+- main.checkpoint: 200자 이하. 화주·포워더가 지금 해야 할 구체적 행동 1가지.
+- links: 상위 2~3순위 뉴스만. 물류 무관 기사는 links에도 절대 포함 금지.
 - MTL 영업 포인트는 출력하지 말 것.
 
 뉴스 목록:

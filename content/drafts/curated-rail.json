@@ -1,19 +1,32 @@
 {
   "date": "2026-05-27",
-  "curated_at": "2026-05-27T11:56:43.363Z",
+  "curated_at": "2026-05-27T12:07:56.034Z",
   "section": "rail",
   "main": {
-    "title": "No Korea-relevant rail/logistics news today",
-    "title_ko": "오늘 한국 노선 관련 뉴스 없음",
-    "url": "",
-    "source": "",
+    "title": "Russia and China agree to build new cross-border railway",
+    "title_ko": "러시아·중국, 신규 국경 철도 건설 합의",
+    "url": "https://www.railfreight.com/railfreight/2026/05/22/russia-and-china-agree-to-build-new-cross-border-railway/",
+    "source": "RailFreight",
     "image_url": null,
-    "what": "수집된 14개 기사 중 TCR/TSR 운임·스케줄·통관 등 한국 화주·포워더에게 실질적으로 관련된 물류 기사가 없습니다.",
-    "why_now": "오늘 수집된 뉴스는 역사·외교·정치·우주 등 물류와 무관한 기사로만 구성되어 있어 한국↔중앙아시아/CIS 노선에 영향을 주는 정보가 없습니다.",
-    "checkpoint": "다음 업데이트까지 기존 TCR/TSR 스케줄 및 운임 조건을 유지하며, 담당 포워더에게 이상 없음 여부를 재확인하세요.",
-    "importance_score": 0
+    "what": "러시아와 중국이 신규 국경 횡단 철도 노선 건설에 합의했다. 이는 기존 TSR·TCR 경유 화물 흐름에 추가적인 루트 옵션을 제공할 수 있는 인프라 개발이다.",
+    "why_now": "한국·중국발 유럽행 블록트레인은 러-중 국경 구간(만주리·수이펀허 등) 용량에 민감하게 반응한다. 신규 노선 확보 시 기존 병목 완화 및 운임·리드타임 변동 가능성이 있어 노선 다양화 검토가 필요하다.",
+    "checkpoint": "신규 국경 노선의 위치·개통 예상 시점·처리 용량 수치를 운송사 또는 RZD/CRCT 채널을 통해 확인하고, 향후 노선 재배정 가능성을 선적 계획에 반영하라.",
+    "importance_score": 4
   },
-  "links": [],
-  "total_collected": 14,
-  "excluded_count": 14
+  "links": [
+    {
+      "title": "Kazakh Railways is not going to be 'just' a rail operator",
+      "title_ko": "카자흐스탄 철도, 단순 운영사 이상으로 사업 확장 선언",
+      "url": "https://www.railfreight.com/railfreight/2026/05/27/kazakh-railways-is-not-going-to-be-just-a-rail-operator/",
+      "source": "RailFreight"
+    },
+    {
+      "title": "China is expanding the use of the TIR system to accelerate transport between Asia and Europe.",
+      "title_ko": "중국, TIR 시스템 확대 적용으로 아시아-유럽 간 운송 가속화",
+      "url": "https://www.transportcorridors.com/20874",
+      "source": "TransportCorridors"
+    }
+  ],
+  "total_collected": 29,
+  "excluded_count": 26
 }
