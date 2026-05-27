@@ -1,0 +1,66 @@
+# .github/workflows/weekly-newsletter.yml
+name: Weekly Newsletter
+
+on:
+  schedule:
+    - cron: '0 2 * * 4'   # 목요일 02:00 UTC (11:00 KST) — WCI 발표일
+  workflow_dispatch:
+
+jobs:
+  weekly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Collect rail (weekly)
+        run: npm run collect:rail:weekly
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Collect ocean (weekly)
+        run: npm run collect:ocean:weekly
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Curate rail (7d window)
+        run: npm run curate:rail -- --window=7d
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Curate ocean (7d window)
+        run: npm run curate:ocean -- --window=7d
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Generate newsletter HTML
+        run: npm run newsletter:generate
+
+      - name: Send weekly newsletter
+        run: |
+          TODAY=$(date +%Y-%m-%d)
+          HTML_PATH="content/drafts/newsletter-${TODAY}.html"
+          if [ -f "$HTML_PATH" ]; then
+            node scripts/send-newsletter.js --html="$HTML_PATH"
+          else
+            echo "⚠️ HTML 없음 — 발송 스킵"
+          fi
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          SEND_TO: ${{ secrets.INTERNAL_EMAIL }}
