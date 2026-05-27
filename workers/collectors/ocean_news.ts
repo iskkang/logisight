@@ -10,10 +10,16 @@ import type { CollectorResult, NewsItem } from './types';
 const BOT_HEADERS = { 'User-Agent': 'Logisight/1.0 (logisight.mtlship.com; news-bot)' };
 
 // 키워드 필터 — 없는 기사 드롭 (노이즈 감소)
+// 해운·물류 직결 키워드 + 해양 안보(항로 영향 있는 경우)
 const SHIPPING_KEYWORDS = [
+  // 핵심 해운
   'container', 'blank sailing', 'surcharge', 'congestion', 'port',
   'gri', 'void', 'omission', 'freight rate', 'schedule', 'carrier',
   'shipping', 'disruption', 'vessel', 'terminal', 'throughput',
+  // 해양 안보·항로
+  'tanker', 'cargo ship', 'red sea', 'suez', 'hormuz', 'canal',
+  'strait', 'piracy', 'hijack', 'incident report', 'ukmto',
+  'transit', 'chokepoint', 'diversion', 'rerouting',
 ];
 
 interface OceanNewsSource {
