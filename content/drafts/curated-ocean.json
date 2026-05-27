@@ -1,29 +1,29 @@
 {
   "date": "2026-05-27",
-  "curated_at": "2026-05-27T11:28:05.865Z",
+  "curated_at": "2026-05-27T11:56:51.071Z",
   "section": "ocean",
   "main": {
-    "title": "Tanker Reports Explosion Off Oman as UKMTO Warns Ships to Use Caution",
-    "title_ko": "오만 인근 해상 탱커 폭발 발생, UKMTO 선박 주의 경보 발령",
-    "url": "https://gcaptain.com/tanker-reports-explosion-off-oman-as-ukmto-warns-ships-to-use-caution/",
-    "source": "gCaptain",
+    "title": "Maersk Launches FI2 Service",
+    "title_ko": "머스크, FI2 신규 서비스 론칭",
+    "url": "https://container-news.com/maersk-launches-fi2-service/",
+    "source": "Container News",
     "image_url": null,
-    "what": "오만 인근 해상에서 탱커가 폭발을 보고하고 UKMTO(영국 해양무역작전센터)가 인근 항행 선박에 주의 경보를 발령. 호르무즈 해협 및 아라비아해 인근 실제 선박 인시던트로 확인됨.",
-    "why_now": "호르무즈 해협 인근 실제 선박 피격·폭발 인시던트는 극동→중동→유럽 항로 운항 선사의 즉각적인 항로 변경 및 전쟁보험료 인상 트리거로 작용. 한국발 CIS·중동 노선 화물에 직접 영향 가능.",
-    "checkpoint": "UKMTO 추가 공지 및 선사별 항로 우회 여부, 전쟁보험 추가 할증(War Risk Surcharge) 신설 공지 모니터링 필요. 오만해 경유 한국↔중동/인도 노선 스케줄 변동 확인 요망.",
+    "what": "머스크가 FI2로 명명된 신규 컨테이너 서비스를 론칭했다. 구체적인 기항지 및 한국 기항 여부는 원문 확인이 필요하나, 머스크의 신규 서비스는 기존 노선 재편 또는 추가 선복 공급과 연계될 수 있어 주목된다.",
+    "why_now": "머스크는 부산·광양·인천 등 한국 주요 항만에 기항하는 핵심 선사 중 하나다. 신규 서비스 개설은 기존 이용 노선의 스케줄 변경, 선복 재배치, 또는 대안 서비스 활용 가능성을 의미하므로 포워더·화주의 즉각적인 확인이 필요하다.",
+    "checkpoint": "머스크 코리아 또는 공식 사이트에서 FI2 서비스의 기항지·출항일·선복 가용 여부를 확인하고, 기존 이용 서비스와의 스케줄 충돌 또는 대체 활용 가능성을 점검하라.",
     "importance_score": 4
   },
   "links": [
     {
-      "title": "Maersk Launches FI2 Service",
-      "title_ko": "머스크, FI2 신규 서비스 론칭",
-      "url": "https://container-news.com/maersk-launches-fi2-service/",
+      "title": "FMC Reaches Settlement with Maersk Over Detention Charge Practices",
+      "title_ko": "FMC, 머스크와 체선료 부과 관행 관련 합의 체결",
+      "url": "https://container-news.com/fmc-reaches-settlement-with-maersk-over-detention-charge-practices/",
       "source": "Container News"
     },
     {
-      "title": "FMC Reaches Settlement with Maersk Over Detention Charge Practices",
-      "title_ko": "미국 FMC, 머스크와 체류료 부과 관행 관련 합의 체결",
-      "url": "https://container-news.com/fmc-reaches-settlement-with-maersk-over-detention-charge-practices/",
+      "title": "June 2026",
+      "title_ko": "2026년 6월 컨테이너 시황 전망",
+      "url": "https://container-news.com/june-2026/",
       "source": "Container News"
     }
   ],

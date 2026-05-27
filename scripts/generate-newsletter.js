@@ -31,10 +31,34 @@ function loadJson(filePath) {
   try { return JSON.parse(fs.readFileSync(filePath, 'utf-8')); } catch { return null; }
 }
 
+// 뉴스 없음 플레이스홀더 — 기사 카드 대신 심플한 박스
+function noNewsHtml(opts) {
+  const { borderColor, icon, label } = opts;
+  return `
+  <!-- ===== ${label} 섹션 — 오늘 업데이트 없음 ===== -->
+  <tr><td style="padding:20px 20px 0;">
+    <div style="font-size:11px;font-weight:800;color:#0F2D5A;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px;">
+      ${icon} ${label}
+    </div>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
+           style="border:1px solid #E2E8F0;border-radius:10px;background:#F8FAFC;">
+      <tr><td style="padding:20px 24px;">
+        <div style="font-size:13px;color:#94A3B8;text-align:center;padding:8px 0;">
+          오늘 한국 노선 관련 업데이트 없음
+        </div>
+      </td></tr>
+    </table>
+  </td></tr>`;
+}
+
 function sectionHtml(data, opts) {
   if (!data || !data.main) return '';
   const { bgColor, borderColor, icon, label } = opts;
   const m = data.main;
+
+  // importance_score 0 = 유효 기사 없음 → 플레이스홀더로 렌더링
+  if (!m.url || m.importance_score === 0) return noNewsHtml(opts);
+
   const links = (data.links || []).slice(0, 2);
 
   const imageHtml = m.image_url
