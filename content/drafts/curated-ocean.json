@@ -1,29 +1,29 @@
 {
   "date": "2026-05-27",
-  "curated_at": "2026-05-27T10:58:50.381Z",
+  "curated_at": "2026-05-27T11:28:05.865Z",
   "section": "ocean",
   "main": {
     "title": "Tanker Reports Explosion Off Oman as UKMTO Warns Ships to Use Caution",
-    "title_ko": "오만 인근 해상 유조선 폭발 사고, UKMTO 선박 주의 경보 발령",
+    "title_ko": "오만 인근 해상 탱커 폭발 발생, UKMTO 선박 주의 경보 발령",
     "url": "https://gcaptain.com/tanker-reports-explosion-off-oman-as-ukmto-warns-ships-to-use-caution/",
     "source": "gCaptain",
     "image_url": null,
-    "what": "오만 앞바다에서 유조선 폭발 사고가 발생하고 UKMTO(영국 해양무역운영국)가 인근 항행 선박에 주의령을 발령했다. 호르무즈 해협 인근 해역으로, 중동발 한국 수입 물동량 및 극동러시아 항로에 영향을 줄 수 있는 실제 인시던트다.",
-    "why_now": "같은 날 미 해군이 호르무즈 해협 해군 호위 재개 보도를 공식 부인하는 등 해협 긴장이 동시에 고조되고 있다. 중동발 컨테이너·탱커 운항 우회 가능성이 커지면 운임 및 스케줄에 즉각적 파급 효과가 예상된다.",
-    "checkpoint": "UKMTO 추가 경보 및 항행 제한 구역 확대 여부 모니터링 필요. 한국 수출입 화물의 중동 경유 선적 일정 및 보험료(전쟁위험할증) 변동 확인 요망.",
-    "importance_score": 7
+    "what": "오만 인근 해상에서 탱커가 폭발을 보고하고 UKMTO(영국 해양무역작전센터)가 인근 항행 선박에 주의 경보를 발령. 호르무즈 해협 및 아라비아해 인근 실제 선박 인시던트로 확인됨.",
+    "why_now": "호르무즈 해협 인근 실제 선박 피격·폭발 인시던트는 극동→중동→유럽 항로 운항 선사의 즉각적인 항로 변경 및 전쟁보험료 인상 트리거로 작용. 한국발 CIS·중동 노선 화물에 직접 영향 가능.",
+    "checkpoint": "UKMTO 추가 공지 및 선사별 항로 우회 여부, 전쟁보험 추가 할증(War Risk Surcharge) 신설 공지 모니터링 필요. 오만해 경유 한국↔중동/인도 노선 스케줄 변동 확인 요망.",
+    "importance_score": 4
   },
   "links": [
     {
-      "title": "U.S. Military Denies Reported Restart of U.S. Naval Escorts in Strait of Hormuz",
-      "title_ko": "미 해군, 호르무즈 해협 해군 호위 재개 보도 공식 부인",
-      "url": "https://gcaptain.com/u-s-military-denies-reported-restart-of-u-s-naval-escorts-in-strait-of-hormuz/",
-      "source": "gCaptain"
+      "title": "Maersk Launches FI2 Service",
+      "title_ko": "머스크, FI2 신규 서비스 론칭",
+      "url": "https://container-news.com/maersk-launches-fi2-service/",
+      "source": "Container News"
     },
     {
-      "title": "Maersk Launches FI2 Service",
-      "title_ko": "머스크, FI2 신규 서비스 출범",
-      "url": "https://container-news.com/maersk-launches-fi2-service/",
+      "title": "FMC Reaches Settlement with Maersk Over Detention Charge Practices",
+      "title_ko": "미국 FMC, 머스크와 체류료 부과 관행 관련 합의 체결",
+      "url": "https://container-news.com/fmc-reaches-settlement-with-maersk-over-detention-charge-practices/",
       "source": "Container News"
     }
   ],
