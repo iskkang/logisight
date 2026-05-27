@@ -1,1 +1,32 @@
-{"date":"2026-05-27","section":"rail","main":{"title":"Test Rail","title_ko":"테스트 철도 뉴스","url":"https://example.com/rail","source":"Test","image_url":null,"what":"중국-유럽 철도 Q1 물동량이 전년 대비 29% 증가했다.","why_now":"이란 전쟁으로 해상 비용이 급등하면서 TCR 경쟁력이 높아졌다.","checkpoint":"TCR 슬롯을 6월 전에 선점할 것.","importance_score":7},"links":[{"title":"Link 1","title_ko":"링크 1","url":"https://example.com/1","source":"RailFreight"},{"title":"Link 2","title_ko":"링크 2","url":"https://example.com/2","source":"RZD"}],"total_collected":20,"excluded_count":17}
+{
+  "date": "2026-05-27",
+  "curated_at": "2026-05-27T10:58:31.616Z",
+  "section": "rail",
+  "main": {
+    "title": "At the 13th Baku Global Forum, global participants look to China for new path of multilateralism and stability",
+    "title_ko": "제13회 바쿠 글로벌 포럼: 다자주의·안정의 새 경로로 중국 주목",
+    "url": "https://www.globaltimes.cn/page/202604/1358941.shtml",
+    "source": "Global Times BRI",
+    "image_url": null,
+    "what": "바쿠에서 열린 제13회 글로벌 포럼에서 각국 참가자들이 지정학적 불안정 속 다자주의 대안으로 중국 주도의 협력 프레임워크에 주목했다. 아제르바이잔 바쿠는 중간 회랑(TITR) 및 INSTC 핵심 노드다.",
+    "why_now": "미-러 갈등과 서방 제재 장기화로 중앙아시아·캅카스 경유 노선 재편 압력이 높아진 시점에, 바쿠 중심의 다자 물류 협력 논의는 TCR·INSTC 대체 루트 전략에 직접 영향을 미친다.",
+    "checkpoint": "바쿠 경유 INSTC 및 중간 회랑(TITR) 노선의 현재 운임·리드타임을 TSR 대비 재점검하고, 카자흐·아제르바이잔 통과 구간 스케줄 변동 여부를 파트너에게 확인할 것.",
+    "importance_score": 3
+  },
+  "links": [
+    {
+      "title": "Over 3,000 protests staged across US on strikes against Iran",
+      "title_ko": "미국 전역 3,000건 이상 시위 — 대이란 공습 반대 여론 확산",
+      "url": "https://www.globaltimes.cn/page/202603/1357823.shtml",
+      "source": "Global Times BRI"
+    },
+    {
+      "title": "China schedules next moonshot this year: developer",
+      "title_ko": "중국, 올해 차기 달 탐사 미션 예정 — 개발사 발표",
+      "url": "https://www.globaltimes.cn/page/202603/1356805.shtml",
+      "source": "Global Times BRI"
+    }
+  ],
+  "total_collected": 10,
+  "excluded_count": 7
+}

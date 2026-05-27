@@ -1,1 +1,32 @@
-{"date":"2026-05-27","section":"ocean","main":{"title":"Maersk blank sailing W24","title_ko":"Maersk W24 블랭크 세일링 공지","url":"https://example.com/ocean","source":"Maersk","image_url":null,"what":"Maersk가 W24 아시아-유럽 항로에서 블랭크 세일링을 발표했다.","why_now":"수요 약세로 선사들이 공급 조절에 나서고 있어 화주 일정에 영향이 예상된다.","checkpoint":"대체 선사 또는 다음 주 부킹으로 전환할 것.","importance_score":8},"links":[{"title":"SCFI drops 3.2%","title_ko":"SCFI 3.2% 하락","url":"https://example.com/scfi","source":"SSE"},{"title":"UKMTO Red Sea incident","title_ko":"UKMTO 홍해 인시던트","url":"https://example.com/ukmto","source":"UKMTO"}],"total_collected":35,"excluded_count":32}
+{
+  "date": "2026-05-27",
+  "curated_at": "2026-05-27T10:58:50.381Z",
+  "section": "ocean",
+  "main": {
+    "title": "Tanker Reports Explosion Off Oman as UKMTO Warns Ships to Use Caution",
+    "title_ko": "오만 인근 해상 유조선 폭발 사고, UKMTO 선박 주의 경보 발령",
+    "url": "https://gcaptain.com/tanker-reports-explosion-off-oman-as-ukmto-warns-ships-to-use-caution/",
+    "source": "gCaptain",
+    "image_url": null,
+    "what": "오만 앞바다에서 유조선 폭발 사고가 발생하고 UKMTO(영국 해양무역운영국)가 인근 항행 선박에 주의령을 발령했다. 호르무즈 해협 인근 해역으로, 중동발 한국 수입 물동량 및 극동러시아 항로에 영향을 줄 수 있는 실제 인시던트다.",
+    "why_now": "같은 날 미 해군이 호르무즈 해협 해군 호위 재개 보도를 공식 부인하는 등 해협 긴장이 동시에 고조되고 있다. 중동발 컨테이너·탱커 운항 우회 가능성이 커지면 운임 및 스케줄에 즉각적 파급 효과가 예상된다.",
+    "checkpoint": "UKMTO 추가 경보 및 항행 제한 구역 확대 여부 모니터링 필요. 한국 수출입 화물의 중동 경유 선적 일정 및 보험료(전쟁위험할증) 변동 확인 요망.",
+    "importance_score": 7
+  },
+  "links": [
+    {
+      "title": "U.S. Military Denies Reported Restart of U.S. Naval Escorts in Strait of Hormuz",
+      "title_ko": "미 해군, 호르무즈 해협 해군 호위 재개 보도 공식 부인",
+      "url": "https://gcaptain.com/u-s-military-denies-reported-restart-of-u-s-naval-escorts-in-strait-of-hormuz/",
+      "source": "gCaptain"
+    },
+    {
+      "title": "Maersk Launches FI2 Service",
+      "title_ko": "머스크, FI2 신규 서비스 출범",
+      "url": "https://container-news.com/maersk-launches-fi2-service/",
+      "source": "Container News"
+    }
+  ],
+  "total_collected": 15,
+  "excluded_count": 12
+}

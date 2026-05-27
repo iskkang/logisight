@@ -89,7 +89,7 @@ export async function collect(): Promise<CollectorResult> {
   }
 
   if (rows.length > 0) {
-    await dbUpsert('port_throughput', rows as Record<string, unknown>[], 'port_code,year,month').catch(e =>
+    await dbUpsert('port_throughput', rows as unknown as Record<string, unknown>[], 'port_code,year,month').catch(e =>
       console.warn('[port_throughput] Supabase persist skipped:', (e as Error).message)
     );
   }
