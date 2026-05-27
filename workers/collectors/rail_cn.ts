@@ -19,11 +19,30 @@ interface CnSource {
   url: string;
   type: 'rss' | 'html';
   frequency: 'daily' | 'weekly';
+  useKeywordFilter?: boolean;  // 일반 뉴스 피드는 물류 키워드 필터 적용
+}
+
+// 물류/철도/무역 관련 키워드 — 이 중 하나라도 없으면 일반 뉴스 피드 기사 드롭
+const RAIL_LOGISTICS_KEYWORDS = [
+  'rail', 'railway', 'freight', 'cargo', 'logistics', 'container', 'teu',
+  'corridor', 'route', 'belt road', 'belt and road', 'bri', 'silk road',
+  'shipping', 'transport', 'transit', 'port', 'terminal', 'customs',
+  'tcr', 'tsr', 'instc', 'train', 'intermodal', 'multimodal',
+  'central asia', 'kazakh', 'uzbek', 'kyrgyz', 'tajik', 'azerbaijan',
+  'china-europe', 'china europe', 'eurasian', 'trans-siberian',
+  'supply chain', 'trade route', 'import', 'export', 'tariff', 'border',
+  '铁路', '班列', '物流', '货运', '集装箱', '一带一路', '通道', '运输',
+];
+
+function passesRailFilter(title: string): boolean {
+  const lower = title.toLowerCase();
+  return RAIL_LOGISTICS_KEYWORDS.some(kw => lower.includes(kw));
 }
 
 const CN_SOURCES: CnSource[] = [
-  { name: 'Global Times BRI',  url: 'https://www.globaltimes.cn/rss/outbrain.xml',                                          type: 'rss',  frequency: 'daily'  },
-  { name: 'Xinhua English',    url: 'https://english.news.cn/rss/world.xml',                                                type: 'rss',  frequency: 'daily'  },
+  // Global Times / Xinhua는 일반 뉴스 피드 → 물류 키워드 필터 필수
+  { name: 'Global Times BRI',  url: 'https://www.globaltimes.cn/rss/outbrain.xml',                                          type: 'rss',  frequency: 'daily',  useKeywordFilter: true  },
+  { name: 'Xinhua English',    url: 'https://english.news.cn/rss/world.xml',                                                type: 'rss',  frequency: 'daily',  useKeywordFilter: true  },
   { name: 'China Railway',     url: 'https://www.china-railway.com.cn/xwzx/zhxw/',                                         type: 'html', frequency: 'weekly' },
   { name: '95306',             url: 'https://www.95306.cn/',                                                                type: 'html', frequency: 'weekly' },
   { name: 'CRCT',              url: 'https://www.crct.com/index.php?m=content&c=index&a=lists&catid=34',                    type: 'html', frequency: 'weekly' },
@@ -47,6 +66,8 @@ async function parseRss(src: CnSource): Promise<NewsItem[]> {
     const link  = (b.match(/<link>(.*?)<\/link>/)?.[1] || '').trim();
     const pubDate = b.match(/<pubDate>(.*?)<\/pubDate>/)?.[1] || '';
     if (!title || !link) continue;
+    // 일반 뉴스 피드는 물류 키워드 필터 적용
+    if (src.useKeywordFilter && !passesRailFilter(title)) continue;
     items.push({ title, url: link, published_at: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(), summary_en: '', source: src.name });
     if (items.length >= 5) break;
   }
