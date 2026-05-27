@@ -14,6 +14,8 @@ interface NewsOutput {
   air: object[];
   rail: object[];
   trade: object[];
+  carrier_advisory: object[];
+  risk: object[];
 }
 
 function loadExisting(): NewsOutput {
@@ -24,7 +26,7 @@ function loadExisting(): NewsOutput {
       // corrupted — start fresh
     }
   }
-  return { date: '', shipping: [], air: [], rail: [], trade: [] };
+  return { date: '', shipping: [], air: [], rail: [], trade: [], carrier_advisory: [], risk: [] };
 }
 
 export async function snapshotWriter(result: CollectorResult): Promise<void> {
