@@ -1,5 +1,5 @@
 {
-  "date": "2026. 5. 22.",
+  "date": "2026. 5. 25.",
   "shipping": [
     {
       "title": "SCFI drops 3.2% as transpacific spot rates slide",
@@ -1082,6 +1082,116 @@
       "source": "FreightWaves",
       "section": "shipping",
       "language": "en"
+    },
+    {
+      "name": "FBX_글로벌",
+      "value": null,
+      "change_pct": null,
+      "date": "2026-05-25",
+      "unit": "$/FEU",
+      "source": "Freightos FBX",
+      "source_url": "https://fbx.freightos.com/"
+    },
+    {
+      "region": "East Asia",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=East%20Asia"
+    },
+    {
+      "region": "Mediterranean",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=Mediterranean"
+    },
+    {
+      "region": "Northwest Europe",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=Northwest%20Europe"
+    },
+    {
+      "region": "Indian Subcontinent",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=Indian%20Subcontinent"
+    },
+    {
+      "region": "Middle East",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=Middle%20East"
+    },
+    {
+      "region": "North America East",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=North%20America%20East"
+    },
+    {
+      "region": "North America West",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=North%20America%20West"
+    },
+    {
+      "name": "FBX_글로벌",
+      "value": null,
+      "change_pct": null,
+      "date": "2026-05-25",
+      "unit": "$/FEU",
+      "source": "Freightos FBX",
+      "source_url": "https://fbx.freightos.com/"
+    },
+    {
+      "name": "SCFI_종합",
+      "value": 2218.15,
+      "change_pct": 3.62,
+      "date": "2026-05-22",
+      "unit": "point",
+      "source": "Shanghai Shipping Exchange (via dashboard)",
+      "source_url": "https://en.sse.net.cn/indices/scfinew.jsp"
+    },
+    {
+      "name": "KCCI_종합",
+      "value": 2361,
+      "change_pct": 7.61,
+      "date": "2026-05-18",
+      "unit": "point",
+      "source": "KOBC (via dashboard)",
+      "source_url": "https://www.kobc.or.kr/index/kcci"
+    },
+    {
+      "name": "CCFI_종합",
+      "value": 1317.36,
+      "change_pct": 2.88,
+      "date": "2026-05-22",
+      "unit": "point",
+      "source": "Shanghai Shipping Exchange (via dashboard)",
+      "source_url": "https://en.sse.net.cn/indices/ccfinew.jsp"
+    },
+    {
+      "name": "FBX_글로벌",
+      "value": null,
+      "change_pct": null,
+      "date": "2026-05-25",
+      "unit": "$/FEU",
+      "source": "Freightos FBX",
+      "source_url": "https://fbx.freightos.com/"
     }
   ],
   "rail": [
