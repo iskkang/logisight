@@ -17,6 +17,12 @@ import { collect as collectRailTCR }     from './rail_tcr';
 import { collect as collectRailTSR }     from './rail_tsr';
 import { snapshotWriter }                from './utils/snapshot_writer';
 import type { CollectorResult }          from './types';
+import { collect as collectRailCN }            from './rail_cn';
+import { collect as collectRailOps }           from './rail_ops';
+import { collect as collectCarrierAdvisories } from './carrier_advisories';
+import { collect as collectOceanNews }         from './ocean_news';
+import { collect as collectChokepoints }       from './chokepoints';
+import { collect as collectPortStats }         from './port_stats';
 
 const GROUPS = [
   {
@@ -52,13 +58,48 @@ const GROUPS = [
       { name: 'policy_imo', fn: collectPolicyIMO },
     ],
   },
+  {
+    name: 'rail-daily',
+    collectors: [
+      { name: 'rail_cn_daily',  fn: () => collectRailCN({ frequency: 'daily' }) },
+      { name: 'rail_ops_daily', fn: () => collectRailOps({ frequency: 'daily' }) },
+    ],
+  },
+  {
+    name: 'rail-weekly',
+    collectors: [
+      { name: 'rail_cn_weekly',  fn: () => collectRailCN({ frequency: 'weekly' }) },
+      { name: 'rail_ops_weekly', fn: () => collectRailOps({ frequency: 'weekly' }) },
+    ],
+  },
+  {
+    name: 'ocean-daily',
+    collectors: [
+      { name: 'carrier_advisories',  fn: collectCarrierAdvisories },
+      { name: 'ocean_news_daily',    fn: () => collectOceanNews({ frequency: 'daily' }) },
+      { name: 'chokepoints_daily',   fn: () => collectChokepoints({ frequency: 'daily' }) },
+    ],
+  },
+  {
+    name: 'ocean-weekly',
+    collectors: [
+      { name: 'carrier_advisories',  fn: collectCarrierAdvisories },
+      { name: 'ocean_news_weekly',   fn: () => collectOceanNews({ frequency: 'weekly' }) },
+      { name: 'chokepoints_weekly',  fn: () => collectChokepoints({ frequency: 'weekly' }) },
+      { name: 'port_stats',          fn: collectPortStats },
+    ],
+  },
 ];
 
 const GROUP_MAP: Record<string, string> = {
-  shipping: '운임 지수',
-  news:     '뉴스',
-  rail:     '철도',
-  policy:   '정책',
+  shipping:      '운임 지수',
+  news:          '뉴스',
+  rail:          '철도',
+  policy:        '정책',
+  'rail-daily':  'rail-daily',
+  'rail-weekly': 'rail-weekly',
+  'ocean-daily': 'ocean-daily',
+  'ocean-weekly':'ocean-weekly',
 };
 
 async function runCollector(name: string, fn: () => Promise<CollectorResult>) {

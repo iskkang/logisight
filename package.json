@@ -17,7 +17,14 @@
     "report:weekly": "node scripts/generate-cadi-weekly.js",
     "disruption:add": "node scripts/add-disruption.js",
     "pdf": "node scripts/generate-pdf.js",
-    "lint": "eslint src --ext ts,tsx"
+    "lint": "eslint src --ext ts,tsx",
+    "collect:rail:daily":   "ts-node --project tsconfig.workers.json workers/collectors/index.ts rail-daily",
+    "collect:rail:weekly":  "ts-node --project tsconfig.workers.json workers/collectors/index.ts rail-weekly",
+    "collect:ocean:daily":  "ts-node --project tsconfig.workers.json workers/collectors/index.ts ocean-daily",
+    "collect:ocean:weekly": "ts-node --project tsconfig.workers.json workers/collectors/index.ts ocean-weekly",
+    "curate:rail":          "node scripts/curate-rail.js",
+    "curate:ocean":         "node scripts/curate-ocean.js",
+    "newsletter:generate":  "node scripts/generate-newsletter.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.24.0",
