@@ -54,6 +54,9 @@ export function Hero({ blankCount }: { blankCount?: string }) {
               }`}>
                 {stat.change}
               </div>
+              {'source' in stat && stat.source && (
+                <div className="text-[9px] mt-0.5 text-white/25">{stat.source}</div>
+              )}
             </div>
           ))}
         </div>

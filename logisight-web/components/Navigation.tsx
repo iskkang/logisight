@@ -54,7 +54,7 @@ export function Navigation() {
               className="bg-white/10 border-0 rounded-md pl-7 pr-2.5 py-1.5 text-white text-[11px] w-44 placeholder:text-white/40 focus:outline-none focus:ring-1 focus:ring-cyan"
             />
           </div>
-          <span className="bg-cyan text-navy-900 text-[10px] font-medium px-1.5 py-0.5 rounded">LIVE</span>
+          <span className="bg-cyan/10 text-cyan text-[10px] font-medium px-1.5 py-0.5 rounded">매주 업데이트</span>
 
           {/* 햄버거 — 모바일만 */}
           <button

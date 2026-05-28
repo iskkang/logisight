@@ -71,49 +71,83 @@ export async function getLatestBriefing(): Promise<WeeklyBriefingData> {
 }
 
 // ----------------------------------------------------------------------------
-// Freight Indices — 기존 스키마(index_code, value, change_pct, week_date) 사용
+// Freight Indices
+//   freight_indices: WCI, FBX, BDI, SCFI, KCCI  (실제 수집)
+//   bunker_prices:   VLSFO Singapore              (별도 테이블)
+//   BAI:             air_indices DB 미저장 → 항상 '—'
 // ----------------------------------------------------------------------------
-const WANTED_INDICES = ['SCFI', 'WCI', 'FBX', 'KCCI', 'BAI', 'VLSFO'];
+const FREIGHT_CODES = ['WCI', 'FBX', 'BDI', 'SCFI', 'KCCI'];
 
 export async function getIndices(): Promise<IndexBarItem[]> {
   if (!hasSupabase) return mock.MOCK_INDICES;
 
   const supabase = createServerClient();
-  const { data, error } = await supabase
-    .from('freight_indices')
-    .select('index_code, value, change_pct, week_date')
-    .order('week_date', { ascending: false })
-    .limit(50);
 
-  if (error || !data || data.length === 0) {
-    if (error) console.error('[getIndices]', error);
-    return mock.MOCK_INDICES;
+  const [freightRes, bunkerRes] = await Promise.all([
+    supabase
+      .from('freight_indices')
+      .select('index_code, value, change_pct, week_date, source')
+      .in('index_code', FREIGHT_CODES)
+      .order('week_date', { ascending: false })
+      .limit(25),
+    supabase
+      .from('bunker_prices')
+      .select('price_usd, obs_date, source')
+      .eq('grade', 'VLSFO')
+      .eq('port', 'Singapore')
+      .order('obs_date', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  if (freightRes.error) console.error('[getIndices freight]', freightRes.error);
+  if (bunkerRes.error)  console.error('[getIndices bunker]',  bunkerRes.error);
+
+  // 코드별 최신 행
+  const latestByCode = new Map<string, {
+    value: number | null; change_pct: number | null;
+    week_date: string | null; source: string | null;
+  }>();
+  for (const row of freightRes.data ?? []) {
+    if (!latestByCode.has(row.index_code)) latestByCode.set(row.index_code, row);
   }
 
-  // 각 index_code별 최신 행 1개만
-  const latestByCode = new Map<string, typeof data[number]>();
-  for (const row of data) {
-    if (!latestByCode.has(row.index_code)) {
-      latestByCode.set(row.index_code, row);
-    }
-  }
-
-  // 원하는 순서대로 정렬, 없는 코드는 mock에서 보완
-  return WANTED_INDICES.map((code): IndexBarItem => {
+  function fromFreight(code: string): IndexBarItem {
     const row = latestByCode.get(code);
     if (row && row.value !== null) {
-      const change = Number(row.change_pct) || 0;
+      const chg = Number(row.change_pct) || 0;
       return {
         name: code,
         value: formatIndexValue(code, Number(row.value)),
-        change_pct: change,
-        change_sign: change > 0 ? 'up' : change < 0 ? 'down' : 'flat',
+        change_pct: chg,
+        change_sign: chg > 0 ? 'up' : chg < 0 ? 'down' : 'flat',
+        source: row.source ?? undefined,
+        week_date: row.week_date ?? undefined,
       };
     }
-    return mock.MOCK_INDICES.find((m) => m.name === code) ?? {
-      name: code, value: '—', change_pct: null, change_sign: 'flat',
-    };
-  });
+    return { name: code, value: '—', change_pct: null, change_sign: 'flat' };
+  }
+
+  const bunker = bunkerRes.data;
+  const vlsfoItem: IndexBarItem = bunker
+    ? {
+        name: 'VLSFO',
+        value: formatIndexValue('VLSFO', Number(bunker.price_usd)),
+        change_pct: null,
+        change_sign: 'flat',
+        source: bunker.source ?? 'Ship & Bunker',
+        week_date: bunker.obs_date ?? undefined,
+      }
+    : { name: 'VLSFO', value: '—', change_pct: null, change_sign: 'flat', source: 'Ship & Bunker' };
+
+  return [
+    fromFreight('WCI'),
+    fromFreight('FBX'),
+    { name: 'BAI',  value: '—', change_pct: null, change_sign: 'flat', source: 'Baltic Exchange' },
+    vlsfoItem,
+    fromFreight('SCFI'),
+    fromFreight('KCCI'),
+  ];
 }
 
 // ----------------------------------------------------------------------------

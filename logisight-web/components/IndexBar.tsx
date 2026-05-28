@@ -1,5 +1,13 @@
 import type { IndexBarItem } from '@/lib/types';
 
+function sourceLabel(idx: IndexBarItem): string | null {
+  const parts = [
+    idx.source,
+    idx.week_date ? idx.week_date.slice(5).replace('-', '/') : null,
+  ].filter(Boolean);
+  return parts.length ? parts.join(' · ') : null;
+}
+
 export function IndexBar({
   indices,
   lastUpdated,
@@ -10,29 +18,42 @@ export function IndexBar({
   return (
     <div className="bg-white border-b border-slate-200 px-3 lg:px-5 py-2 flex items-center overflow-x-auto sticky top-0 z-10">
       <div className="max-w-page mx-auto flex items-center w-full">
-        {indices.map((idx, i) => (
-          <div
-            key={idx.name}
-            className={`flex flex-col px-3 lg:px-5 min-w-[90px] lg:min-w-[120px] flex-shrink-0 ${
-              i < indices.length - 1 ? 'border-r border-slate-200' : ''
-            }`}
-          >
-            <div className="text-[10px] lg:text-[11px] text-slate-500 font-medium mb-0.5">
-              {idx.name}
+        {indices.map((idx, i) => {
+          const isDash = idx.value === '—';
+          const label = sourceLabel(idx);
+          return (
+            <div
+              key={idx.name}
+              className={`flex flex-col px-3 lg:px-5 min-w-[90px] lg:min-w-[120px] flex-shrink-0 ${
+                i < indices.length - 1 ? 'border-r border-slate-200' : ''
+              }`}
+            >
+              <div className="text-[10px] lg:text-[11px] text-slate-500 font-medium mb-0.5">
+                {idx.name}
+              </div>
+              <div
+                className={`text-xs lg:text-[15px] font-medium ${isDash ? 'text-slate-400' : 'text-slate-800'}`}
+                title={isDash ? '수집 예정' : undefined}
+              >
+                {idx.value}
+                {!isDash && idx.change_pct !== null && (
+                  <span className={`text-[10px] ml-1 ${
+                    idx.change_sign === 'up'   ? 'text-success' :
+                    idx.change_sign === 'down' ? 'text-danger'  :
+                    'text-slate-400'
+                  }`}>
+                    {idx.change_pct > 0 ? '+' : ''}{idx.change_pct}%
+                  </span>
+                )}
+              </div>
+              {label && (
+                <div className="text-[9px] text-slate-400 truncate leading-tight mt-0.5">
+                  {label}
+                </div>
+              )}
             </div>
-            <div className="text-xs lg:text-[15px] font-medium text-slate-800">
-              {idx.value}
-              <span className={`text-[10px] ml-1 ${
-                idx.change_sign === 'up'   ? 'text-success' :
-                idx.change_sign === 'down' ? 'text-danger'  :
-                'text-slate-400'
-              }`}>
-                {idx.change_pct !== null && (idx.change_pct > 0 ? '+' : '')}
-                {idx.change_pct}%
-              </span>
-            </div>
-          </div>
-        ))}
+          );
+        })}
 
         {/* 업데이트 시각 — 모바일 숨김 */}
         <div className="hidden lg:flex flex-col px-5 min-w-[120px] flex-shrink-0 ml-auto">

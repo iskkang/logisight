@@ -64,4 +64,6 @@ export interface IndexBarItem {
   value: string; // 이미 포맷된 값
   change_pct: number | null;
   change_sign: 'up' | 'down' | 'flat';
+  source?: string;    // 데이터 출처 (예: 'Drewry WCI')
+  week_date?: string; // 기준 주 (YYYY-MM-DD)
 }
