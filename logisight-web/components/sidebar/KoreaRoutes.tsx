@@ -3,9 +3,9 @@ import type { KoreaRouteData } from '@/lib/supabase/queries';
 
 export function KoreaRoutes({ routes }: { routes: KoreaRouteData[] }) {
   return (
-    <aside className="bg-white border border-slate-200 rounded-xl p-3.5 mb-3.5">
+    <aside className="bg-white border border-slate-200 rounded-xl lg:rounded-2xl p-3.5 lg:p-5 mb-3.5">
       <div className="flex items-center mb-2.5">
-        <h3 className="text-xs font-medium text-slate-800 flex items-center gap-1.5">
+        <h3 className="text-xs lg:text-[15px] font-medium text-slate-800 flex items-center gap-1.5">
           <LineChart size={14} className="text-navy-400" />
           한국발 주요 노선
         </h3>
@@ -19,14 +19,14 @@ export function KoreaRoutes({ routes }: { routes: KoreaRouteData[] }) {
               i < arr.length - 1 ? 'border-b border-slate-100' : ''
             }`}
           >
-            <span className="text-xs text-slate-800">
+            <span className="text-xs lg:text-sm text-slate-800">
               {route.pol_name} → {route.pod_name}
             </span>
             <div className="flex items-center gap-1.5">
-              <span className="text-xs font-medium text-slate-800">
+              <span className="text-xs lg:text-sm font-medium text-slate-800">
                 ${route.rate_usd.toLocaleString()}
               </span>
-              <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+              <span className={`text-[10px] lg:text-[11px] px-1.5 py-0.5 rounded ${
                 route.change_pct > 0
                   ? 'bg-emerald-50 text-emerald-800'
                   : 'bg-rose-50 text-rose-800'

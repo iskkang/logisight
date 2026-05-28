@@ -2,34 +2,35 @@ import Link from 'next/link';
 
 const FOOTER_LINKS = {
   서비스: [
-    { label: '주간 분석',         href: '/briefing' },
-    { label: '운임 대시보드',     href: '/rates' },
-    { label: '유라시아 허브',     href: '/eurasia' },
-    { label: '산업별 인사이트',   href: '/industries' },
+    { label: '주간 분석',       href: '/briefing' },
+    { label: '운임 대시보드',   href: '/rates' },
+    { label: '유라시아 허브',   href: '/eurasia' },
+    { label: '산업별 인사이트', href: '/industries' },
   ],
   뉴스: [
-    { label: '해상', href: '/news?cat=해상' },
-    { label: '항공', href: '/news?cat=항공' },
+    { label: '해상',          href: '/news?cat=해상' },
+    { label: '항공',          href: '/news?cat=항공' },
     { label: '철도·유라시아', href: '/news?cat=철도' },
-    { label: '무역·정책', href: '/news?cat=무역' },
+    { label: '무역·정책',     href: '/news?cat=무역' },
   ],
   MTL: [
-    { label: '회사소개',     href: '/about' },
-    { label: '뉴스레터',     href: '/newsletter' },
-    { label: '제휴 문의',    href: '/contact' },
+    { label: '회사소개',  href: '/about' },
+    { label: '뉴스레터',  href: '/newsletter' },
+    { label: '제휴 문의', href: '/contact' },
   ],
 };
 
 export function Footer() {
   return (
     <footer>
-      <div className="bg-slate-800 px-5 py-5">
-        <div className="max-w-page mx-auto grid grid-cols-[2fr_1fr_1fr_1fr] gap-5">
-          <div>
-            <div className="text-[15px] font-medium text-white mb-1">
+      <div className="bg-slate-800 px-5 py-6">
+        <div className="max-w-page mx-auto grid grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr] gap-5">
+          {/* 브랜드 — 모바일 2열 차지 */}
+          <div className="col-span-2 lg:col-span-1">
+            <div className="text-base lg:text-lg font-medium text-white mb-1">
               Logi<span className="text-cyan">sight</span>
             </div>
-            <p className="text-[11px] text-slate-400 leading-[1.7] mt-1.5 keep-all">
+            <p className="text-xs lg:text-[13px] text-slate-400 leading-[1.7] mt-1.5 keep-all">
               MTL Shipping Agency가 운영하는<br />
               한국 화주·포워더를 위한 물류 인텔리전스
             </p>
@@ -52,7 +53,7 @@ export function Footer() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="block text-[11px] text-slate-500 hover:text-slate-300 mb-1.5"
+                  className="block text-xs lg:text-[13px] text-slate-500 hover:text-slate-300 mb-1.5"
                 >
                   {link.label}
                 </Link>
@@ -63,7 +64,7 @@ export function Footer() {
       </div>
 
       <div className="bg-slate-900 px-5 py-2.5">
-        <div className="max-w-page mx-auto flex justify-between items-center text-[10px] text-slate-500">
+        <div className="max-w-page mx-auto flex flex-col lg:flex-row lg:justify-between lg:items-center gap-1 text-[10px] text-slate-500">
           <span>© 2026 MTL Shipping Agency · 공공데이터(PORT-MIS · 관세청 · 해양수산부) 기반</span>
           <span>logisight.mtlship.com</span>
         </div>

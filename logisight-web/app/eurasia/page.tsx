@@ -45,7 +45,7 @@ export default async function EurasiaPage() {
       <Navigation />
       <IndexBar indices={indices} lastUpdated={lastUpdated} />
 
-      <div className="bg-slate-50 px-5 py-6">
+      <div className="bg-slate-50 px-4 lg:px-8 py-6 lg:py-10">
         <div className="max-w-page mx-auto">
 
           {/* Header */}

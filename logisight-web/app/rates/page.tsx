@@ -124,7 +124,7 @@ export default async function RatesPage({
       <Navigation />
       <IndexBar indices={indices} lastUpdated={lastUpdated} />
 
-      <div className="bg-slate-50 px-5 py-6">
+      <div className="bg-slate-50 px-4 lg:px-8 py-6 lg:py-10">
         <div className="max-w-page mx-auto">
 
           {/* Page header */}
@@ -173,7 +173,7 @@ export default async function RatesPage({
           </div>
 
           {/* 2-column layout */}
-          <div className="grid grid-cols-[1fr_300px] gap-5">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-5">
             {/* Left: rates table */}
             <RatesTable rows={rates} />
 

@@ -125,7 +125,7 @@ export default async function IndustriesPage() {
       <Navigation />
       <IndexBar indices={indices} lastUpdated={lastUpdated} />
 
-      <div className="bg-slate-50 px-5 py-6">
+      <div className="bg-slate-50 px-4 lg:px-8 py-6 lg:py-10">
         <div className="max-w-page mx-auto">
           <h2 className="text-lg font-medium text-slate-800 mb-1">산업별 물류 동향</h2>
           <p className="text-[12px] text-slate-500 mb-6 keep-all">

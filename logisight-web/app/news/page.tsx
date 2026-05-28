@@ -74,7 +74,7 @@ export default async function NewsPage({
       <Navigation />
       <IndexBar indices={indices} lastUpdated={lastUpdated} />
 
-      <div className="bg-slate-50 px-5 py-6">
+      <div className="bg-slate-50 px-4 lg:px-8 py-6 lg:py-10">
         <div className="max-w-page mx-auto">
           <div className="mb-5">
             <h2 className="text-lg font-medium text-slate-800 mb-3">뉴스</h2>
@@ -107,7 +107,7 @@ export default async function NewsPage({
             </div>
           </div>
 
-          <div className="grid grid-cols-[1fr_280px] gap-5">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-5">
             {/* Main: article list */}
             <div>
               {articles.length === 0 ? (

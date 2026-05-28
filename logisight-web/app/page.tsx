@@ -55,8 +55,8 @@ export default async function HomePage() {
       <Hero blankCount={blankCount} />
       <IndexBar indices={indices} lastUpdated={lastUpdated} />
 
-      <div className="bg-slate-50 px-5 py-6">
-        <div className="max-w-page mx-auto grid grid-cols-[1fr_280px] gap-5">
+      <div className="bg-slate-50 px-4 lg:px-8 py-6 lg:py-10">
+        <div className="max-w-page mx-auto grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5">
           <div>
             <WeeklyBriefing briefing={briefing} />
             <NewsFeed heroNews={heroNews} newsGrid={newsGrid} />
