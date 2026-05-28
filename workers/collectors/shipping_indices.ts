@@ -73,17 +73,18 @@ async function fetchWCI(): Promise<IndexData[]> {
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const html = await res.text();
 
-  // Try multiple patterns — Drewry page layout changes periodically
+  // Drewry HTML format: "$2,711.77 per FEU" (not "/FEU")
+  // WCI_Index_20241.png 같은 이미지 파일명을 잘못 잡지 않도록 per/slash FEU만 허용
   const valuePats = [
-    /\$\s*([\d,]+(?:\.\d+)?)\s*\/\s*FEU/i,          // $2,286/FEU
-    /WCI[^<]*?(\d[\d,]+(?:\.\d+)?)/i,                 // WCI ... 2286
-    /"wci"[^}]*?"value"\s*:\s*([\d.]+)/i,             // JSON fragment
-    /composite[^<]*?\$([\d,]+)/i,                     // composite $2,286
+    /\$\s*([\d,]+(?:\.\d+)?)\s+per\s+(?:FEU|40')/i,  // $2,711.77 per FEU
+    /\$\s*([\d,]+(?:\.\d+)?)\s*\/\s*FEU/i,            // $2,712/FEU (슬래시형)
+    /composite[^<$]{0,120}\$([\d,]+(?:\.\d+)?)/i,     // composite ... $2,712
+    /"composite"\s*:\s*([\d.]+)/i,                     // JSON "composite": 2711.77
   ];
   const changePats = [
-    /([+-]?\d+(?:\.\d+)?)\s*%\s*w[\s/]w/i,           // +3.1% w/w
-    /([+-]?\d+(?:\.\d+)?)\s*%\s*week/i,               // +3.1% week
-    /week[^<]*?([+-]?\d+(?:\.\d+)?)\s*%/i,
+    /([+-]?\d+(?:\.\d+)?)\s*%\s*w[\s/]?w/i,           // +3.1% w/w
+    /([+-]?\d+(?:\.\d+)?)\s*%\s*week/i,
+    /week[^<$]{0,60}?([+-]?\d+(?:\.\d+)?)\s*%/i,
   ];
 
   let value: number | null = null;
@@ -216,7 +217,17 @@ async function persistFreightIndices(result: CollectorResult): Promise<void> {
       source_url: v.source_url ?? null,
     });
   }
-  await dbUpsert('freight_indices', rows, 'index_code,week_date');
+  // Sanity check: WCI/FBX historical range ~800–8000 $/FEU
+  const sanitized = rows.filter(r => {
+    const code = String(r.index_code);
+    const val  = Number(r.value);
+    if ((code === 'WCI' || code === 'FBX') && (val < 500 || val > 15000)) {
+      console.warn(`[freight_indices] ${code} 값 범위 초과 → 스킵 (${val})`);
+      return false;
+    }
+    return true;
+  });
+  await dbUpsert('freight_indices', sanitized, 'index_code,week_date');
 }
 
 export async function collect(): Promise<CollectorResult> {
