@@ -1,3 +1,6 @@
+import * as dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
+
 // scripts/fetch-freight-rates.ts
 // 해양수산부 컨테이너 화물운임 공표정보 → freight_rates 테이블 upsert
 //
