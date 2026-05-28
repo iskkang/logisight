@@ -567,3 +567,99 @@ export async function getRatesAll({
     valid_from: row.valid_from ?? null,
   }));
 }
+
+// ----------------------------------------------------------------------------
+// Policy News — /policy 페이지
+// category='무역' OR tags overlap with policy keywords
+// ----------------------------------------------------------------------------
+const POLICY_TAGS = ['정책', '규제', '관세', '제재', 'CBAM', 'ETS'];
+
+export async function getPolicyNews(limit = 8): Promise<NewsArticle[]> {
+  if (!hasSupabase) return mock.MOCK_NEWS_GRID.slice(0, limit);
+
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from('maritime_news')
+    .select('id, title, summary, url, source, lang, category, agent_type, image_url, published_at')
+    .eq('lang', 'ko')
+    .or(`category.eq.무역,tags.ov.{${POLICY_TAGS.join(',')}}`)
+    .order('published_at', { ascending: false })
+    .limit(limit);
+
+  if (error || !data) {
+    if (error) console.error('[getPolicyNews]', error);
+    return mock.MOCK_NEWS_GRID.slice(0, limit);
+  }
+
+  return data.map(mapNewsRow);
+}
+
+// ----------------------------------------------------------------------------
+// Industries News — /industries 페이지
+// 산업별 tags overlap 쿼리를 Promise.all로 병렬 실행
+// ----------------------------------------------------------------------------
+export interface IndustrySection {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  tags: readonly string[];
+  articles: NewsArticle[];
+}
+
+const INDUSTRY_DEFS = [
+  {
+    id: 'battery',
+    name: '배터리·전기차',
+    description: 'UN 38.3 위험물 규정, IATA DGR 개정 영향과 리튬배터리 화물 동향',
+    icon: 'bolt',
+    tags: ['배터리', '전기차', 'ESS', '리튬', '양극재', '이차전지', '셀'],
+  },
+  {
+    id: 'auto',
+    name: '자동차',
+    description: '완성차·부품 USMCA 원산지, 멕시코 IMMEX, 관세 변동 모니터링',
+    icon: 'car',
+    tags: ['자동차', '완성차', '부품', '현대', '기아', 'GM', '르노', '車'],
+  },
+  {
+    id: 'ecommerce',
+    name: '이커머스',
+    description: 'DDP·DDU, de minimis 규제 동향, 크로스보더 직구·역직구 물류',
+    icon: 'shopping-cart',
+    tags: ['이커머스', '직구', '역직구', '알리', '쇼피', '아마존', '크로스보더'],
+  },
+  {
+    id: 'coldchain',
+    name: '냉동냉장',
+    description: '신선식품 리퍼 컨테이너, 냉장창고 운영, 콜드체인 온도 관리',
+    icon: 'snowflake',
+    tags: ['냉동', '냉장', '콜드체인', 'reefer', '냉장창고', '저온'],
+  },
+] as const;
+
+export async function getIndustriesNews(): Promise<IndustrySection[]> {
+  if (!hasSupabase) {
+    return INDUSTRY_DEFS.map((def) => ({ ...def, articles: [] }));
+  }
+
+  const supabase = createServerClient();
+
+  const results = await Promise.all(
+    INDUSTRY_DEFS.map(async (def) => {
+      const { data, error } = await supabase
+        .from('maritime_news')
+        .select('id, title, summary, url, source, lang, category, agent_type, image_url, published_at')
+        .eq('lang', 'ko')
+        .overlaps('tags', def.tags as unknown as string[])
+        .order('published_at', { ascending: false })
+        .limit(3);
+
+      if (error) console.error(`[getIndustriesNews:${def.id}]`, error);
+      const articles = (data ?? []).map(mapNewsRow);
+      return { ...def, articles };
+    })
+  );
+
+  return results;
+}
