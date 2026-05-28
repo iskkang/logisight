@@ -700,6 +700,58 @@ export async function getIndustriesNews(): Promise<IndustrySection[]> {
 }
 
 // ----------------------------------------------------------------------------
+// Trade Statistics — /industries 무역통계 블록
+// ----------------------------------------------------------------------------
+export interface TradeStatRow {
+  period: string;                // 'YYYYMM'
+  stat_type: string;
+  hs_code: string | null;
+  hs_name: string | null;
+  export_usd: number | null;
+  export_weight: number | null;
+  import_usd: number | null;
+  import_weight: number | null;
+  trade_balance: number | null;
+}
+
+export async function getTradeStatsByIndustry(
+  hsCodes: readonly string[],
+): Promise<TradeStatRow[]> {
+  if (!hasSupabase || hsCodes.length === 0) return [];
+
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from('trade_statistics')
+    .select('period, stat_type, hs_code, hs_name, export_usd, export_weight, import_usd, import_weight, trade_balance')
+    .in('hs_code', hsCodes as string[])
+    .eq('stat_type', 'item')
+    .order('period', { ascending: false })
+    .limit(12 * Math.max(hsCodes.length, 1));
+
+  if (error) console.error('[getTradeStatsByIndustry]', error);
+  return (data ?? []) as TradeStatRow[];
+}
+
+export async function getTradeTrend(
+  hsCodes: readonly string[],
+  months = 12,
+): Promise<TradeStatRow[]> {
+  if (!hasSupabase || hsCodes.length === 0) return [];
+
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from('trade_statistics')
+    .select('period, hs_code, export_usd, import_usd, trade_balance')
+    .in('hs_code', hsCodes as string[])
+    .eq('stat_type', 'item')
+    .order('period', { ascending: true })
+    .limit(months * Math.max(hsCodes.length, 1));
+
+  if (error) console.error('[getTradeTrend]', error);
+  return (data ?? []) as TradeStatRow[];
+}
+
+// ----------------------------------------------------------------------------
 // Article detail — /article/[slug]
 // ----------------------------------------------------------------------------
 export interface ArticleDetail {
