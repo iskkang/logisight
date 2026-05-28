@@ -1,0 +1,32 @@
+name: Monthly Trade Statistics
+
+on:
+  schedule:
+    - cron: '0 0 15 * *'   # 매월 15일 00:00 UTC (09:00 KST), 전월 데이터 수집
+  workflow_dispatch:        # 수동 트리거도 허용
+
+jobs:
+  fetch-trade-stats:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: logisight-web/package-lock.json
+
+      - name: Install deps
+        working-directory: logisight-web
+        run: npm ci
+
+      - name: Fetch customs trade statistics
+        working-directory: logisight-web
+        run: npx tsx scripts/fetch-trade-stats.ts
+        env:
+          DATA_GO_KR_API_KEY:        ${{ secrets.DATA_GO_KR_API_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL:  ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

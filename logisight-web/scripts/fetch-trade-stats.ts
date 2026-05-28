@@ -157,7 +157,7 @@ async function main() {
     process.exit(1);
   }
 
-  const { strtYymm, endYymm } = getDateRange(3);
+  const { strtYymm, endYymm } = getDateRange(13);  // 전월~13개월전 범위
 
   // ── 1. 프로브 모드 ───────────────────────────────────────────────────────
   if (IS_PROBE) {
