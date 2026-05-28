@@ -51,7 +51,7 @@ export function Footer() {
               </div>
               {links.map((link) => (
                 <Link
-                  key={link.href}
+                  key={link.label}
                   href={link.href}
                   className="block text-xs lg:text-[13px] text-slate-500 hover:text-slate-300 mb-1.5"
                 >
