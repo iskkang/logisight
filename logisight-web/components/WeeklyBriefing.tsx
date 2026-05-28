@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Brain, TrendingUp, Building2, Globe, Clock, ArrowRight } from 'lucide-react';
 import type { WeeklyBriefingData } from '@/lib/supabase/queries';
 
@@ -55,10 +56,10 @@ export function WeeklyBriefing({ briefing }: { briefing: WeeklyBriefingData }) {
       <div className="text-[11px] text-navy-400/70 flex items-center gap-1.5">
         <Clock size={11} />
         {formatPublishedAt(briefing.published_at)} 발행 · 매주 월요일
-        <a href="#" className="ml-1 text-navy-400 font-medium hover:underline inline-flex items-center gap-0.5">
+        <Link href="/news" className="ml-1 text-navy-400 font-medium hover:underline inline-flex items-center gap-0.5">
           전체 분석 읽기
           <ArrowRight size={11} />
-        </a>
+        </Link>
       </div>
     </section>
   );

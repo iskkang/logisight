@@ -1,11 +1,29 @@
 import Link from 'next/link';
 import { Brain, ArrowRight } from 'lucide-react';
 import { MOCK_HERO_STATS } from '@/lib/mock-data';
+import type { IndexBarItem } from '@/lib/types';
 
-export function Hero({ blankCount }: { blankCount?: string }) {
-  const stats = MOCK_HERO_STATS.map((s) =>
-    s.label === '블랭크' && blankCount ? { ...s, value: blankCount } : s
-  );
+function fmtChange(idx: IndexBarItem): string {
+  if (idx.value === '—') return '수집 예정';
+  if (idx.change_pct === null) return '—';
+  return `${idx.change_pct > 0 ? '+' : ''}${idx.change_pct}% w/w`;
+}
+
+export function Hero({ blankCount, indices = [] }: { blankCount?: string; indices?: IndexBarItem[] }) {
+  const byName = new Map(indices.map((i) => [i.name, i]));
+
+  const stats = MOCK_HERO_STATS.map((s) => {
+    if (s.label === '블랭크' && blankCount) return { ...s, value: blankCount };
+    const idx = byName.get(s.label);
+    if (!idx) return s;
+    return {
+      label: s.label,
+      value: idx.value,
+      change: fmtChange(idx),
+      sign: idx.change_sign,
+      source: idx.source ?? (s as any).source,
+    };
+  });
 
   return (
     <section className="bg-gradient-to-b from-navy-900 to-navy-700 px-5 lg:px-8 py-8 lg:py-16">

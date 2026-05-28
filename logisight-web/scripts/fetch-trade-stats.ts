@@ -1,24 +1,25 @@
 import * as dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
-
 import ws from 'ws';
-// @ts-ignore
-globalThis.WebSocket = ws;
+(globalThis as any).WebSocket = ws;
 
 // scripts/fetch-trade-stats.ts
-// 관세청 품목별국가별 수출입실적 API → trade_statistics 테이블 upsert
+// 관세청 품목별국가별 수출입실적 → trade_statistics 전체 품목 수집
 //
-// 실행: npx tsx scripts/fetch-trade-stats.ts
-// 탐색: npx tsx scripts/fetch-trade-stats.ts --probe    (HS8507×US 1개월, 원시 XML 출력)
-// 건조: npx tsx scripts/fetch-trade-stats.ts --dry-run  (조합 목록만, DB 미반영)
+// 실행:
+//   npx tsx scripts/fetch-trade-stats.ts --probe          (API 패턴 확인: hsSgn 생략 vs 챕터)
+//   npx tsx scripts/fetch-trade-stats.ts --dry-run        (수집 조합 목록만, DB 미반영)
+//   npx tsx scripts/fetch-trade-stats.ts                  (기본: 국가모드 수집)
+//   npx tsx scripts/fetch-trade-stats.ts --mode=chapter   (챕터모드: HS 2자리×국가)
 //
 // 환경변수 (.env.local):
 //   NEXT_PUBLIC_SUPABASE_URL  또는 SUPABASE_URL
 //   SUPABASE_SERVICE_ROLE_KEY
-//   DATA_GO_KR_API_KEY
+//   DATA_GO_KR_API_KEY  (이미 인코딩된 키 — encodeURIComponent 절대 금지)
 
 import { createClient } from '@supabase/supabase-js';
 import { XMLParser } from 'fast-xml-parser';
+import { HS_CHAPTERS } from '../lib/hs-chapters';
 
 // ── 환경변수 ─────────────────────────────────────────────────────────────────
 const SUPABASE_URL = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
@@ -27,34 +28,27 @@ const API_KEY      = process.env.DATA_GO_KR_API_KEY ?? '';
 
 const BASE_URL = 'https://apis.data.go.kr/1220000/nitemtrade/getNitemtradeList';
 
-const IS_PROBE = process.argv.includes('--probe');
-const IS_DRY   = process.argv.includes('--dry-run');
+const IS_PROBE   = process.argv.includes('--probe');
+const IS_DRY     = process.argv.includes('--dry-run');
+const MODE       = process.argv.find(a => a.startsWith('--mode='))?.split('=')[1] ?? 'country';
 
-// ── 대상 정의 ─────────────────────────────────────────────────────────────────
-const HS_CODES = {
-  battery: ['8507'],                    // 축전지/이차전지
-  auto:    ['8703', '8708'],            // 승용차, 자동차부품
-  cold:    ['0303', '0202', '0203'],    // 냉동어류, 냉동쇠고기, 냉동돼지고기
-};
+// 주요 교역국 (중복 제거)
+const COUNTRIES = ['CN', 'US', 'JP', 'DE', 'VN', 'HK', 'IN', 'TW', 'SG'];
 
-const COUNTRIES = ['US', 'CN', 'JP', 'DE', 'VN', 'IN', 'NL', 'HK'];
-
-// ── 날짜 범위 ─────────────────────────────────────────────────────────────────
-// 관세청 데이터는 1~2개월 지연 → endYymm = 2개월 전, strtYymm = 13개월 전
-function getDateRange(): { strtYymm: string; endYymm: string } {
+// 최근 3개월 범위 (2개월 지연 기준)
+function getDateRange(months = 3): { strtYymm: string; endYymm: string } {
   const end = new Date();
   end.setMonth(end.getMonth() - 2);
   const endYymm = `${end.getFullYear()}${String(end.getMonth() + 1).padStart(2, '0')}`;
 
   const start = new Date();
-  start.setMonth(start.getMonth() - 13);
+  start.setMonth(start.getMonth() - 2 - (months - 1));
   const strtYymm = `${start.getFullYear()}${String(start.getMonth() + 1).padStart(2, '0')}`;
 
   return { strtYymm, endYymm };
 }
 
-// ── 기간 파싱 ─────────────────────────────────────────────────────────────────
-// "2026.01" → "202601",  "2026.1" → "202601",  "총계" → null
+// "2026.01" → "202601",  "총계" → null
 function parsePeriod(yearStr: string): string | null {
   const s = String(yearStr ?? '').trim();
   if (!s || s === '총계' || s === '-') return null;
@@ -63,41 +57,41 @@ function parsePeriod(yearStr: string): string | null {
   return `${m[1]}${m[2].padStart(2, '0')}`;
 }
 
-// ── XML 파서 ─────────────────────────────────────────────────────────────────
 const parser = new XMLParser({ ignoreAttributes: false, parseTagValue: true });
 
 interface ApiItem {
   year?:            string | number;
   hsCd?:            string | number;
-  statKor?:         string;          // hs_name
+  statKor?:         string;
   statCd?:          string | number;
-  statCdCntnKor1?:  string;          // country_name
-  expDlr?:          string | number; // export_usd (달러)
-  expWgt?:          string | number; // export_weight (MT)
-  impDlr?:          string | number; // import_usd (달러)
-  impWgt?:          string | number; // import_weight (MT)
-  balPayments?:     string | number; // trade_balance (달러)
-  [key: string]: unknown;
+  statCdCntnKor1?:  string;
+  expDlr?:          string | number;
+  expWgt?:          string | number;
+  impDlr?:          string | number;
+  impWgt?:          string | number;
+  balPayments?:     string | number;
+  [key: string]:    unknown;
 }
 
 // ── API 호출 ─────────────────────────────────────────────────────────────────
+// hsSgn: undefined → 생략 (전체 품목), string → 특정 코드
 async function fetchData(
-  hsSgn: string,
+  hsSgn: string | undefined,
   cntyCd: string,
   strtYymm: string,
   endYymm: string,
 ): Promise<{ items: ApiItem[]; rawXml: string }> {
-  // .env.local의 키는 이미 인코딩된 형식(%2B, %3D 포함) → 그대로 사용
-  const url = `${BASE_URL}?serviceKey=${API_KEY}&hsSgn=${hsSgn}&cntyCd=${cntyCd}&strtYymm=${strtYymm}&endYymm=${endYymm}`;
+  // .env.local의 키는 이미 인코딩된 형식 → 그대로 사용 (encodeURIComponent 금지)
+  let url = `${BASE_URL}?serviceKey=${API_KEY}&cntyCd=${cntyCd}&strtYymm=${strtYymm}&endYymm=${endYymm}`;
+  if (hsSgn !== undefined) url += `&hsSgn=${hsSgn}`;
 
   const res = await fetch(url, {
     headers: { 'User-Agent': 'Logisight/1.0 (logisight.mtlship.com; bot)' },
-    signal: AbortSignal.timeout(15_000),
+    signal: AbortSignal.timeout(20_000),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
 
   const rawXml = await res.text();
-
   const obj  = parser.parse(rawXml);
   const body = obj?.response?.body ?? obj?.body ?? {};
   const raw  = body?.items?.item ?? [];
@@ -123,8 +117,6 @@ interface TradeStatRow {
   fetched_at:    string;
 }
 
-// ── 숫자 변환 헬퍼 ────────────────────────────────────────────────────────────
-// fast-xml-parser가 숫자를 문자열로 반환하는 경우 대비
 function toNum(v: unknown): number | null {
   if (v == null) return null;
   const s = String(v).replace(/,/g, '').trim();
@@ -133,13 +125,12 @@ function toNum(v: unknown): number | null {
   return isNaN(n) ? null : n;
 }
 
-// ── API 아이템 → DB 행 매핑 ──────────────────────────────────────────────────
-function mapItem(item: ApiItem, hsSgn: string, cntyCd: string): TradeStatRow | null {
+function mapItem(item: ApiItem, fallbackHs: string, fallbackCnty: string): TradeStatRow | null {
   const period = parsePeriod(String(item.year ?? ''));
   if (!period) return null;
 
-  const hsCd   = String(item.hsCd  ?? hsSgn).trim();
-  const statCd = String(item.statCd ?? cntyCd).trim();
+  const hsCd   = String(item.hsCd  ?? fallbackHs).trim();
+  const statCd = String(item.statCd ?? fallbackCnty).trim();
   if (hsCd === '-' || statCd === '-') return null;
 
   return {
@@ -166,51 +157,56 @@ async function main() {
     process.exit(1);
   }
 
-  const { strtYymm, endYymm } = getDateRange();
+  const { strtYymm, endYymm } = getDateRange(3);
 
   // ── 1. 프로브 모드 ───────────────────────────────────────────────────────
   if (IS_PROBE) {
-    console.log('🔍 --probe 모드: API 응답 구조 확인\n');
-    console.log(`   파라미터: hsSgn=8507, cntyCd=US, strtYymm=${endYymm}, endYymm=${endYymm}\n`);
+    console.log('🔍 --probe: API 패턴 2가지 테스트\n');
 
-    const { items, rawXml } = await fetchData('8507', 'US', endYymm, endYymm);
-
-    console.log('=== 원본 XML (첫 800자) ===');
-    console.log(rawXml.slice(0, 800));
-    console.log(`\n총 ${items.length}개 아이템 파싱`);
-
-    if (items.length > 0) {
-      console.log('\n=== 첫 번째 아이템 ===');
-      console.log(JSON.stringify(items[0], null, 2));
-      if (items[1]) {
-        console.log('\n=== 두 번째 아이템 ===');
-        console.log(JSON.stringify(items[1], null, 2));
-      }
-    } else {
-      console.log('\n아이템 없음 — XML 전체:');
-      console.log(rawXml);
+    // 테스트 A: hsSgn 생략 (국가 전체 품목)
+    console.log(`[A] hsSgn 생략, cntyCd=CN, 기간=${endYymm}`);
+    try {
+      const { items: itemsA, rawXml: xmlA } = await fetchData(undefined, 'CN', endYymm, endYymm);
+      console.log(`    XML 크기: ${xmlA.length}자, 아이템: ${itemsA.length}개`);
+      const uniqueHs = new Set(itemsA.map(i => String(i.hsCd ?? '')).filter(Boolean));
+      console.log(`    고유 HS코드: ${uniqueHs.size}개 (예: ${[...uniqueHs].slice(0, 5).join(', ')})`);
+      if (itemsA.length > 0) console.log(`    첫 행: ${JSON.stringify(itemsA[0])}`);
+      else console.log('    아이템 없음 — XML 앞 300자:', xmlA.slice(0, 300));
+    } catch (e) {
+      console.log(`    실패: ${(e as Error).message}`);
     }
 
-    const mapped = items.map(i => mapItem(i, '8507', 'US')).filter(Boolean);
-    console.log(`\n=== 매핑 결과 (${mapped.length}행) ===`);
-    if (mapped.length > 0) console.log(JSON.stringify(mapped[0], null, 2));
+    console.log('');
+
+    // 테스트 B: hsSgn=85 (2자리 챕터)
+    console.log(`[B] hsSgn=85, cntyCd=CN, 기간=${endYymm}`);
+    try {
+      const { items: itemsB, rawXml: xmlB } = await fetchData('85', 'CN', endYymm, endYymm);
+      console.log(`    XML 크기: ${xmlB.length}자, 아이템: ${itemsB.length}개`);
+      const uniqueHs = new Set(itemsB.map(i => String(i.hsCd ?? '')).filter(Boolean));
+      console.log(`    고유 HS코드: ${uniqueHs.size}개 (예: ${[...uniqueHs].slice(0, 5).join(', ')})`);
+      if (itemsB.length > 0) console.log(`    첫 행: ${JSON.stringify(itemsB[0])}`);
+      else console.log('    아이템 없음 — XML 앞 300자:', xmlB.slice(0, 300));
+    } catch (e) {
+      console.log(`    실패: ${(e as Error).message}`);
+    }
+
+    console.log('\n결론: A가 아이템을 반환하면 --mode=country(기본) 사용.');
+    console.log('      A가 비어 있으면 --mode=chapter 사용.');
     return;
   }
 
   // ── 2. 드라이런 모드 ─────────────────────────────────────────────────────
-  const allHsCodes = [...HS_CODES.battery, ...HS_CODES.auto, ...HS_CODES.cold];
-  const combinations: Array<{ hsCd: string; country: string }> = [];
-  for (const hsCd of allHsCodes) {
-    for (const country of COUNTRIES) {
-      combinations.push({ hsCd, country });
-    }
-  }
+  const chapters = Object.keys(HS_CHAPTERS);
 
   if (IS_DRY) {
-    console.log(`[--dry-run] 수집 대상: ${combinations.length}개 조합`);
-    console.log(`기간: ${strtYymm} ~ ${endYymm}`);
-    for (const c of combinations) {
-      console.log(`  HS${c.hsCd} × ${c.country}`);
+    if (MODE === 'country') {
+      console.log(`[--dry-run / country 모드] ${COUNTRIES.length}개국 × 기간 ${strtYymm}~${endYymm}`);
+      COUNTRIES.forEach(c => console.log(`  ${c}`));
+    } else {
+      const combos = chapters.length * COUNTRIES.length;
+      console.log(`[--dry-run / chapter 모드] ${chapters.length}챕터 × ${COUNTRIES.length}국 = ${combos}회 호출`);
+      console.log(`기간: ${strtYymm}~${endYymm}`);
     }
     return;
   }
@@ -221,32 +217,55 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`🚀 관세청 무역통계 수집 시작 (${strtYymm} ~ ${endYymm})`);
-  console.log(`   ${combinations.length}개 조합 수집 중...`);
-
   const allRows: TradeStatRow[] = [];
   let errCount = 0;
 
-  for (const { hsCd, country } of combinations) {
-    try {
-      const { items } = await fetchData(hsCd, country, strtYymm, endYymm);
-      const rows = items
-        .map(i => mapItem(i, hsCd, country))
-        .filter((r): r is TradeStatRow => r !== null);
-      allRows.push(...rows);
-      process.stdout.write('.');
-    } catch (e) {
-      process.stdout.write('x');
-      console.warn(`\n   ⚠️ HS${hsCd} × ${country}: ${(e as Error).message}`);
-      errCount++;
+  if (MODE === 'country') {
+    // 국가 모드: hsSgn 생략 → 해당국 전체 품목
+    console.log(`🚀 국가 모드 수집 (${strtYymm}~${endYymm})`);
+    console.log(`   ${COUNTRIES.length}개국 수집 중...`);
+
+    for (const cnty of COUNTRIES) {
+      try {
+        const { items } = await fetchData(undefined, cnty, strtYymm, endYymm);
+        const rows = items.map(i => mapItem(i, '', cnty)).filter((r): r is TradeStatRow => r !== null);
+        // 유효 hs_code(비어 있지 않은 행)만 저장
+        const valid = rows.filter(r => r.hs_code && r.hs_code !== '');
+        allRows.push(...valid);
+        process.stdout.write(`  ${cnty}(${valid.length})`);
+      } catch (e) {
+        process.stdout.write(` ${cnty}(err)`);
+        errCount++;
+      }
+      await new Promise(r => setTimeout(r, 100));
     }
-    await new Promise(r => setTimeout(r, 100));
+    console.log();
+
+  } else {
+    // 챕터 모드: HS 2자리 챕터 × 국가
+    const combos = chapters.flatMap(ch => COUNTRIES.map(c => ({ ch, c })));
+    console.log(`🚀 챕터 모드 수집 (${strtYymm}~${endYymm})`);
+    console.log(`   ${combos.length}개 조합 수집 중...`);
+
+    for (const { ch, c } of combos) {
+      try {
+        const { items } = await fetchData(ch, c, strtYymm, endYymm);
+        const rows = items.map(i => mapItem(i, ch, c)).filter((r): r is TradeStatRow => r !== null);
+        allRows.push(...rows);
+        process.stdout.write('.');
+      } catch (e) {
+        process.stdout.write('x');
+        errCount++;
+      }
+      await new Promise(r => setTimeout(r, 100));
+    }
+    console.log();
   }
 
-  console.log(`\n\n수집 완료: ${allRows.length}행 (오류 ${errCount}건)`);
+  console.log(`\n수집 완료: ${allRows.length}행 (오류 ${errCount}건)`);
 
   if (allRows.length === 0) {
-    console.warn('⚠️ 수집된 행이 없습니다. --probe로 응답 구조를 확인하세요.');
+    console.warn('⚠️ 수집된 행이 없습니다. --probe로 API 동작을 먼저 확인하세요.');
     process.exit(1);
   }
 
@@ -262,10 +281,7 @@ async function main() {
     const batch = allRows.slice(i, i + BATCH);
     const { error } = await supabase
       .from('trade_statistics')
-      .upsert(batch, {
-        onConflict: 'period,hs_code,country_code',
-        ignoreDuplicates: false,
-      });
+      .upsert(batch, { onConflict: 'period,hs_code,country_code', ignoreDuplicates: false });
     if (error) {
       console.error(`❌ upsert 실패 (batch ${i}~${i + BATCH}):`, error.message);
       process.exit(1);
@@ -281,7 +297,7 @@ async function main() {
     dataset:      'trade_statistics/customs.go.kr',
     record_count: upserted,
     status:       'success',
-    notes:        `${today} 수집 (${strtYymm}~${endYymm}, ${combinations.length}조합)`,
+    notes:        `${today} 수집 (${strtYymm}~${endYymm}, mode=${MODE})`,
   });
 
   console.log('✅ data_updates 기록 완료');

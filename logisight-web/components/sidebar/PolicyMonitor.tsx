@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Shield } from 'lucide-react';
 import type { PolicyAlert } from '@/lib/types';
 
@@ -17,7 +18,7 @@ export function PolicyMonitor({ alerts }: { alerts: PolicyAlert[] }) {
           <Shield size={14} className="text-navy-400" />
           정책·규제 모니터
         </h3>
-        <a href="#" className="text-[10px] lg:text-[11px] text-navy-400 font-medium hover:underline">더보기</a>
+        <Link href="/policy" className="text-[10px] lg:text-[11px] text-navy-400 font-medium hover:underline">더보기</Link>
       </div>
 
       <div>

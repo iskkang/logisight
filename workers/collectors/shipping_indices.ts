@@ -63,17 +63,49 @@ async function fetchBDI(): Promise<IndexData[]> {
 async function fetchWCI(): Promise<IndexData[]> {
   const url = 'https://www.drewry.co.uk/supply-chain-advisors/supply-chain-expertise/world-container-index-assessed-by-drewry';
   const res = await fetch(url, {
-    headers: { 'User-Agent': 'Logisight/1.0 (logisight.mtlship.com; bot)' },
-    signal: AbortSignal.timeout(10000),
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (compatible; Logisight/1.0; +https://logisight.mtlship.com)',
+      'Accept': 'text/html,application/xhtml+xml',
+      'Accept-Language': 'en-US,en;q=0.9',
+    },
+    signal: AbortSignal.timeout(15000),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const html = await res.text();
-  const valueMatch  = html.match(/\$\s*([\d,]+(?:\.\d+)?)\s*\/\s*FEU/i);
-  const changeMatch = html.match(/([-+]?\d+(?:\.\d+)?)\s*%/);
+
+  // Try multiple patterns — Drewry page layout changes periodically
+  const valuePats = [
+    /\$\s*([\d,]+(?:\.\d+)?)\s*\/\s*FEU/i,          // $2,286/FEU
+    /WCI[^<]*?(\d[\d,]+(?:\.\d+)?)/i,                 // WCI ... 2286
+    /"wci"[^}]*?"value"\s*:\s*([\d.]+)/i,             // JSON fragment
+    /composite[^<]*?\$([\d,]+)/i,                     // composite $2,286
+  ];
+  const changePats = [
+    /([+-]?\d+(?:\.\d+)?)\s*%\s*w[\s/]w/i,           // +3.1% w/w
+    /([+-]?\d+(?:\.\d+)?)\s*%\s*week/i,               // +3.1% week
+    /week[^<]*?([+-]?\d+(?:\.\d+)?)\s*%/i,
+  ];
+
+  let value: number | null = null;
+  let change_pct: number | null = null;
+
+  for (const p of valuePats) {
+    const m = html.match(p);
+    if (m) { value = parseFloat(m[1].replace(/,/g, '')); break; }
+  }
+  for (const p of changePats) {
+    const m = html.match(p);
+    if (m) { change_pct = parseFloat(m[1]); break; }
+  }
+
+  if (value === null) {
+    console.log('[WCI] 파싱 실패 — HTML 앞 500자:', html.slice(0, 500));
+  }
+
   return [{
     name: 'WCI_종합',
-    value: valueMatch ? parseFloat(valueMatch[1].replace(/,/g, '')) : null,
-    change_pct: changeMatch ? parseFloat(changeMatch[1]) : null,
+    value,
+    change_pct,
     date: TODAY,
     unit: '$/FEU',
     source: 'Drewry WCI',

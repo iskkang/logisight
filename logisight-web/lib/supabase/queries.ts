@@ -14,6 +14,7 @@
 import { createServerClient, hasSupabase } from './server';
 import * as mock from '@/lib/mock-data';
 import { formatIndexValue, formatTimestamp } from '@/lib/format';
+import { HS_CHAPTERS } from '@/lib/hs-chapters';
 import type {
   NewsArticle, IndexBarItem, RailRoute, PolicyAlert,
   WeeklyBriefingPoint,
@@ -804,4 +805,130 @@ export async function getArticleBySlug(slug: string): Promise<ArticleDetail | nu
     published_at: data.published_at?.slice(0, 10) ?? '',
     slug: data.slug,
   };
+}
+
+// ----------------------------------------------------------------------------
+// Top Trade Chapters — /industries 교역량 상위 품목 (HS 챕터별 집계)
+// ----------------------------------------------------------------------------
+export interface TopChapterData {
+  chapter: string;
+  chapterName: string;
+  latestPeriod: string;
+  exportUsd: number;
+  importUsd: number;
+  tradeBalance: number;
+  exportYoY: number | null;
+  importYoY: number | null;
+  trend: Array<{ period: string; export_usd: number; import_usd: number }>;
+  topCountries: Array<{ code: string; name: string | null; export_usd: number; import_usd: number }>;
+}
+
+export async function getTopTradeChapters(limit = 10): Promise<TopChapterData[]> {
+  if (!hasSupabase) return [];
+
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from('trade_statistics')
+    .select('period, hs_code, country_code, country_name, export_usd, import_usd')
+    .eq('stat_type', 'item')
+    .order('period', { ascending: false })
+    .limit(12000);
+
+  if (error) {
+    console.error('[getTopTradeChapters]', error);
+    return [];
+  }
+
+  const rows = (data ?? []) as Array<{
+    period: string;
+    hs_code: string | null;
+    country_code: string | null;
+    country_name: string | null;
+    export_usd: number | null;
+    import_usd: number | null;
+  }>;
+  console.log(`[getTopTradeChapters] raw rows: ${rows.length}`);
+  if (!rows.length) return [];
+
+  // Determine global latest period
+  let globalLatest = '';
+  for (const row of rows) {
+    if (row.period > globalLatest) globalLatest = row.period;
+  }
+
+  // Group by 2-digit chapter code
+  const chapterMap = new Map<string, {
+    byPeriod: Map<string, { export_usd: number; import_usd: number }>;
+    byCountryLatest: Map<string, { name: string | null; export_usd: number; import_usd: number }>;
+    chapterLatest: string;
+  }>();
+
+  for (const row of rows) {
+    const ch = String(row.hs_code ?? '').replace(/\D/g, '').padStart(4, '0').slice(0, 2);
+    if (!ch || ch === '00') continue;
+
+    if (!chapterMap.has(ch)) {
+      chapterMap.set(ch, { byPeriod: new Map(), byCountryLatest: new Map(), chapterLatest: '' });
+    }
+    const entry = chapterMap.get(ch)!;
+
+    if (!entry.byPeriod.has(row.period)) {
+      entry.byPeriod.set(row.period, { export_usd: 0, import_usd: 0 });
+    }
+    const pa = entry.byPeriod.get(row.period)!;
+    pa.export_usd += row.export_usd ?? 0;
+    pa.import_usd += row.import_usd ?? 0;
+
+    if (row.period > entry.chapterLatest) entry.chapterLatest = row.period;
+
+    if (row.period === globalLatest && row.country_code) {
+      if (!entry.byCountryLatest.has(row.country_code)) {
+        entry.byCountryLatest.set(row.country_code, { name: row.country_name ?? null, export_usd: 0, import_usd: 0 });
+      }
+      const ca = entry.byCountryLatest.get(row.country_code)!;
+      ca.export_usd += row.export_usd ?? 0;
+      ca.import_usd += row.import_usd ?? 0;
+    }
+  }
+
+  const results: TopChapterData[] = [];
+  for (const [ch, entry] of chapterMap) {
+    const lp = entry.chapterLatest;
+    if (!lp) continue;
+    const latest = entry.byPeriod.get(lp) ?? { export_usd: 0, import_usd: 0 };
+
+    const lastYearPeriod = String(Number(lp.slice(0, 4)) - 1) + lp.slice(4);
+    const ly = entry.byPeriod.get(lastYearPeriod);
+    const exportYoY = ly && ly.export_usd > 0
+      ? (latest.export_usd - ly.export_usd) / ly.export_usd * 100 : null;
+    const importYoY = ly && ly.import_usd > 0
+      ? (latest.import_usd - ly.import_usd) / ly.import_usd * 100 : null;
+
+    const trend = [...entry.byPeriod.keys()].sort().map(p => ({
+      period: p,
+      export_usd: entry.byPeriod.get(p)!.export_usd,
+      import_usd: entry.byPeriod.get(p)!.import_usd,
+    }));
+
+    const topCountries = [...entry.byCountryLatest.entries()]
+      .map(([code, d]) => ({ code, name: d.name, export_usd: d.export_usd, import_usd: d.import_usd }))
+      .sort((a, b) => b.export_usd - a.export_usd)
+      .slice(0, 5);
+
+    results.push({
+      chapter: ch,
+      chapterName: HS_CHAPTERS[ch] ?? `HS ${ch}`,
+      latestPeriod: lp,
+      exportUsd: latest.export_usd,
+      importUsd: latest.import_usd,
+      tradeBalance: latest.export_usd - latest.import_usd,
+      exportYoY,
+      importYoY,
+      trend,
+      topCountries,
+    });
+  }
+
+  results.sort((a, b) => (b.exportUsd + b.importUsd) - (a.exportUsd + a.importUsd));
+  return results.slice(0, limit);
 }

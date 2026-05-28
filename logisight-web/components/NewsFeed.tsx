@@ -35,10 +35,10 @@ export function NewsFeed({
           <Newspaper size={16} className="text-navy-400" />
           오늘의 물류 뉴스
         </h2>
-        <a href="#" className="text-[11px] text-navy-400 font-medium hover:underline inline-flex items-center gap-0.5">
+        <Link href="/news" className="text-[11px] text-navy-400 font-medium hover:underline inline-flex items-center gap-0.5">
           전체 보기
           <ArrowRight size={11} />
-        </a>
+        </Link>
       </div>
 
       <div className="flex border-b border-slate-200 mb-3.5 overflow-x-auto">

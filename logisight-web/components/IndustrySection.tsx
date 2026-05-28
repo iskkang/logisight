@@ -25,10 +25,10 @@ export function IndustrySection() {
             <Building size={16} className="text-navy-400" />
             산업별 물류 인사이트
           </h2>
-          <a href="#" className="text-[11px] text-navy-400 font-medium hover:underline inline-flex items-center gap-0.5">
+          <Link href="/industries" className="text-[11px] text-navy-400 font-medium hover:underline inline-flex items-center gap-0.5">
             전체 보기
             <ArrowRight size={11} />
-          </a>
+          </Link>
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
