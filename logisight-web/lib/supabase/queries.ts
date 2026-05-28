@@ -507,3 +507,63 @@ export async function getLastUpdated(): Promise<string> {
   if (error || !data) return mock.LAST_UPDATED;
   return formatTimestamp(data.updated_at);
 }
+
+// ----------------------------------------------------------------------------
+// Freight Rates All — /rates 페이지
+// ----------------------------------------------------------------------------
+export interface FreightRateRow {
+  pol_code: string;
+  pol_name: string;
+  pod_code: string;
+  pod_name: string;
+  container_type: string;
+  rate_usd: number | null;
+  weekly_change_pct: number | null;
+  carrier: string | null;
+  data_source: string;
+  valid_from: string | null;
+}
+
+export async function getRatesAll({
+  pol,
+  type,
+}: {
+  pol?: string;
+  type?: string;
+} = {}): Promise<FreightRateRow[]> {
+  if (!hasSupabase) return [];
+
+  const supabase = createServerClient();
+  const today = new Date().toISOString().slice(0, 10);
+
+  let query = supabase
+    .from('freight_rates')
+    .select(
+      'pol_code, pol_name, pod_code, pod_name, container_type, rate_usd, weekly_change_pct, carrier, data_source, valid_from, valid_until, display_order'
+    )
+    .or(`valid_until.is.null,valid_until.gte.${today}`)
+    .order('display_order', { ascending: true });
+
+  if (pol) query = (query as any).eq('pol_code', pol);
+  if (type) query = (query as any).eq('container_type', type);
+
+  const { data, error } = await query;
+
+  if (error || !data) {
+    if (error) console.error('[getRatesAll]', error);
+    return [];
+  }
+
+  return (data as any[]).map((row) => ({
+    pol_code: row.pol_code ?? '',
+    pol_name: row.pol_name ?? row.pol_code ?? '',
+    pod_code: row.pod_code ?? '',
+    pod_name: row.pod_name ?? row.pod_code ?? '',
+    container_type: row.container_type ?? '',
+    rate_usd: row.rate_usd !== null ? Number(row.rate_usd) : null,
+    weekly_change_pct: row.weekly_change_pct !== null ? Number(row.weekly_change_pct) : null,
+    carrier: row.carrier ?? null,
+    data_source: row.data_source ?? '',
+    valid_from: row.valid_from ?? null,
+  }));
+}

@@ -11,6 +11,7 @@ const fs      = require('fs');
 const path    = require('path');
 const https   = require('https');
 const Anthropic = require('@anthropic-ai/sdk').default;
+const { insertArticle } = require('./lib/supabase-insert');
 
 const TODAY      = new Date().toISOString().slice(0, 10);
 const DRAFTS_DIR = path.resolve(__dirname, '../content/drafts');
@@ -179,6 +180,16 @@ async function main() {
 
   fs.writeFileSync(outPath, article, 'utf-8');
   console.log(`✅ 기사 저장: content/articles/${filename}`);
+
+  // maritime_news upsert
+  const canonicalUrl = `https://logisight.mtlship.com/article/${TODAY}-${SECTION}-${slug}`;
+  const defaultCategory = SECTION === 'rail' ? '철도' : '해상';
+  await insertArticle({
+    markdownContent: article,
+    canonicalUrl,
+    agentType: 'shipping',
+    defaultCategory,
+  });
 }
 
 main().catch(e => { console.error(`❌ generate-article-${SECTION} 실패:`, e.message); process.exit(1); });
