@@ -4,6 +4,9 @@
 
 'use strict';
 
+const ws = require('ws');
+globalThis.WebSocket = ws;
+
 const { createClient } = require('@supabase/supabase-js');
 const fs   = require('fs');
 const path = require('path');

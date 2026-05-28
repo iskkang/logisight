@@ -1,6 +1,10 @@
 import * as dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
 
+import ws from 'ws';
+// @ts-ignore
+globalThis.WebSocket = ws;
+
 // scripts/fetch-trade-stats.ts
 // 관세청 품목별국가별 수출입실적 API → trade_statistics 테이블 upsert
 //
