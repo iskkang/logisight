@@ -247,7 +247,10 @@ async function main() {
   }
 
   // ── 4. Supabase upsert ───────────────────────────────────────────────────
-  const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
+  const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
+    auth: { persistSession: false },
+    realtime: { enabled: false } as never,
+  });
 
   const BATCH = 200;
   let upserted = 0;
