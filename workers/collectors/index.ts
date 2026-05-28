@@ -2,6 +2,10 @@
 // 마스터 dispatcher — 모든 collector 순차/병렬 실행
 // 사용법: ts-node index.ts [all|shipping|news|rail|policy]
 
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
+
 import { collect as collectShipping }    from './shipping_indices';
 import { collect as collectBunker }      from './bunker';
 import { collect as collectAir }         from './air_indices';
