@@ -2,9 +2,9 @@ import Link from 'next/link';
 
 const FOOTER_LINKS = {
   서비스: [
-    { label: '주간 분석',       href: '/briefing' },
+    { label: '주간 분석',       href: '/news' },
     { label: '운임 대시보드',   href: '/rates' },
-    { label: '유라시아 허브',   href: '/eurasia' },
+    { label: '정책·규제',       href: '/policy' },
     { label: '산업별 인사이트', href: '/industries' },
   ],
   뉴스: [
@@ -14,9 +14,9 @@ const FOOTER_LINKS = {
     { label: '무역·정책',     href: '/news?cat=무역' },
   ],
   MTL: [
-    { label: '회사소개',  href: '/about' },
-    { label: '뉴스레터',  href: '/newsletter' },
-    { label: '제휴 문의', href: '/contact' },
+    { label: '회사소개',  href: '/' },
+    { label: '뉴스레터',  href: '/news' },
+    { label: '제휴 문의', href: '/' },
   ],
 };
 

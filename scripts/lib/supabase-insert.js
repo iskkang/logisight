@@ -25,6 +25,19 @@ loadEnvLocal();
 const SUPABASE_URL  = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
 const SERVICE_KEY   = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
 
+// frontmatter 이후 본문 추출
+function extractContent(md) {
+  const m = md.match(/^---[\s\S]*?---\s*([\s\S]*)$/);
+  return m ? m[1].trim() : md.trim();
+}
+
+// canonicalUrl에서 slug 추출 (/article/{slug})
+function extractSlug(url) {
+  if (!url) return null;
+  const m = url.match(/\/article\/([^/?#]+)/);
+  return m ? m[1] : null;
+}
+
 // YAML frontmatter 값 추출
 function extractFm(md, key) {
   const re = new RegExp(`^${key}:\\s*["']?(.+?)["']?\\s*$`, 'm');
@@ -102,6 +115,8 @@ async function insertArticle({ markdownContent, canonicalUrl, agentType, default
     published_at: new Date().toISOString(),
     tags: tags.length ? tags : null,
     image_url: imageUrl || null,
+    slug: extractSlug(canonicalUrl),
+    content: extractContent(markdownContent),
     is_hero: false,
     fetched_at: new Date().toISOString(),
   };

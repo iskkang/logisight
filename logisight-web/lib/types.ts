@@ -12,6 +12,7 @@ export interface NewsArticle {
   agent_type?: AgentType;
   source_name?: string;
   source_url?: string;
+  slug?: string;
   image_url?: string;
   tags?: string[];
   published_at: string;

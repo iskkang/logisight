@@ -24,7 +24,8 @@ const CATEGORY_COLOR: Record<NewsCategory, string> = {
 };
 
 function ArticleCard({ article }: { article: NewsArticle }) {
-  const href = article.source_url ?? '#';
+  const internalHref = article.slug ? `/article/${article.slug}` : null;
+  const externalHref = article.source_url ?? null;
   return (
     <article className="bg-white rounded-lg border border-slate-200 p-4 hover:shadow-sm transition">
       <div className="flex items-center gap-2 mb-2">
@@ -37,9 +38,15 @@ function ArticleCard({ article }: { article: NewsArticle }) {
         <span className="text-[10px] text-slate-400 ml-auto">{article.published_at}</span>
       </div>
       <h3 className="text-[14px] font-medium text-slate-800 leading-snug mb-1.5 keep-all">
-        <a href={href} target="_blank" rel="noopener noreferrer" className="hover:text-cyan-600">
-          {article.title}
-        </a>
+        {internalHref ? (
+          <Link href={internalHref} className="hover:text-cyan-600">{article.title}</Link>
+        ) : externalHref ? (
+          <a href={externalHref} target="_blank" rel="noopener noreferrer" className="hover:text-cyan-600">
+            {article.title}
+          </a>
+        ) : (
+          <span>{article.title}</span>
+        )}
       </h3>
       {article.summary && (
         <p className="text-[12px] text-slate-500 leading-relaxed line-clamp-2 keep-all">

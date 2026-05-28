@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Ship, Plane, Train, Truck, Factory, Newspaper, ArrowRight } from 'lucide-react';
 import type { NewsArticle, NewsCategory } from '@/lib/types';
 
@@ -67,9 +68,16 @@ export function NewsFeed({
   );
 }
 
+function articleHref(article: NewsArticle): string {
+  if (article.slug) return `/article/${article.slug}`;
+  return article.source_url ?? '#';
+}
+
 function HeroArticle({ article }: { article: NewsArticle }) {
   const style = CATEGORY_STYLE[article.category];
   const Icon = style.icon;
+  const href = articleHref(article);
+  const isInternal = href.startsWith('/');
   return (
     <article className="bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col sm:flex-row">
       <div className="w-full h-40 sm:w-56 sm:min-h-[180px] bg-blue-100 flex items-center justify-center flex-shrink-0">
@@ -80,7 +88,11 @@ function HeroArticle({ article }: { article: NewsArticle }) {
           {article.category}
         </span>
         <h3 className="text-sm lg:text-[19px] font-medium text-slate-800 leading-snug mb-1.5 keep-all">
-          {article.title}
+          {isInternal ? (
+            <Link href={href} className="hover:text-cyan-600">{article.title}</Link>
+          ) : (
+            <a href={href} target="_blank" rel="noopener noreferrer" className="hover:text-cyan-600">{article.title}</a>
+          )}
         </h3>
         {article.summary && (
           <p className="text-xs lg:text-[14px] text-slate-500 leading-[1.7] mb-2 keep-all">
@@ -99,6 +111,8 @@ function HeroArticle({ article }: { article: NewsArticle }) {
 function ArticleCard({ article }: { article: NewsArticle }) {
   const style = CATEGORY_STYLE[article.category];
   const Icon = style.icon;
+  const href = articleHref(article);
+  const isInternal = href.startsWith('/');
   return (
     <article className="bg-white border border-slate-200 rounded-lg overflow-hidden">
       <div className="h-[74px] bg-slate-100 flex items-center justify-center">
@@ -109,7 +123,13 @@ function ArticleCard({ article }: { article: NewsArticle }) {
           {article.category}
         </span>
         <h4 className="text-xs lg:text-[15px] font-medium text-slate-800 leading-snug mb-0.5 keep-all">
-          {article.title}
+          {isInternal ? (
+            <Link href={href} className="hover:text-cyan-600">{article.title}</Link>
+          ) : href !== '#' ? (
+            <a href={href} target="_blank" rel="noopener noreferrer" className="hover:text-cyan-600">{article.title}</a>
+          ) : (
+            <span>{article.title}</span>
+          )}
         </h4>
         <div className="text-[10px] text-slate-400">
           {article.source_name} · {article.published_at?.slice(-2)}일

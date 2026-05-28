@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Building, Bolt, Car, ShoppingCart, Snowflake, ArrowRight } from 'lucide-react';
 import { MOCK_INDUSTRIES } from '@/lib/mock-data';
 
@@ -7,6 +8,13 @@ const ICONS = {
   'shopping-cart':  { Icon: ShoppingCart, bg: 'bg-pink-50',     color: 'text-rose-800' },
   'snowflake':      { Icon: Snowflake,    bg: 'bg-cyan-50',     color: 'text-cyan-800' },
 } as const;
+
+const TAG_MAP: Record<string, string> = {
+  '배터리':     '배터리',
+  '자동차·부품': '자동차',
+  '이커머스':   '이커머스',
+  '콜드체인':   '냉동',
+};
 
 export function IndustrySection() {
   return (
@@ -28,9 +36,9 @@ export function IndustrySection() {
             const config = ICONS[industry.icon as keyof typeof ICONS];
             const Icon = config.Icon;
             return (
-              <a
+              <Link
                 key={industry.name}
-                href="#"
+                href={`/news?tag=${encodeURIComponent(TAG_MAP[industry.name] ?? industry.name)}`}
                 className="bg-slate-50 border border-slate-200 rounded-lg p-3.5 flex flex-col gap-1.5 hover:bg-slate-100 transition cursor-pointer"
               >
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-1 ${config.bg}`}>
@@ -42,7 +50,7 @@ export function IndustrySection() {
                 <div className="text-[11px] lg:text-[13px] text-slate-500 leading-relaxed keep-all">
                   {industry.stat}
                 </div>
-              </a>
+              </Link>
             );
           })}
         </div>

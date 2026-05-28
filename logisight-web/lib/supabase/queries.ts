@@ -128,6 +128,7 @@ function mapNewsRow(row: any): NewsArticle {
     agent_type: row.agent_type,
     source_name: row.source,
     source_url: row.url,
+    slug: row.slug ?? undefined,
     image_url: row.image_url,
     tags: row.tags,
     published_at: row.published_at?.slice(0, 10) ?? '',
@@ -662,4 +663,49 @@ export async function getIndustriesNews(): Promise<IndustrySection[]> {
   );
 
   return results;
+}
+
+// ----------------------------------------------------------------------------
+// Article detail — /article/[slug]
+// ----------------------------------------------------------------------------
+export interface ArticleDetail {
+  id: string;
+  title: string;
+  summary: string | null;
+  content: string | null;
+  category: string | null;
+  source: string | null;
+  source_url: string | null;
+  image_url: string | null;
+  tags: string[] | null;
+  published_at: string;
+  slug: string;
+}
+
+export async function getArticleBySlug(slug: string): Promise<ArticleDetail | null> {
+  if (!hasSupabase) return null;
+
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from('maritime_news')
+    .select('id, title, summary, content, category, source, url, image_url, tags, published_at, slug')
+    .eq('slug', slug)
+    .maybeSingle();
+
+  if (error) console.error('[getArticleBySlug]', error);
+  if (!data) return null;
+
+  return {
+    id: String(data.id),
+    title: data.title,
+    summary: data.summary ?? null,
+    content: data.content ?? null,
+    category: data.category ?? null,
+    source: data.source ?? null,
+    source_url: data.url ?? null,
+    image_url: data.image_url ?? null,
+    tags: data.tags ?? null,
+    published_at: data.published_at?.slice(0, 10) ?? '',
+    slug: data.slug,
+  };
 }
