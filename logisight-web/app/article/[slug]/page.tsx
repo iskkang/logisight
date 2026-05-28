@@ -26,10 +26,10 @@ export default async function ArticlePage({
   const catColor = CATEGORY_COLOR[article.category ?? ''] ?? 'bg-slate-100 text-slate-600';
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen flex flex-col">
       <Navigation />
 
-      <div className="bg-slate-50 px-4 lg:px-8 py-8 lg:py-12">
+      <div className="flex-1 bg-slate-50 px-4 lg:px-8 py-8 lg:py-12">
         <div className="max-w-3xl mx-auto">
           {/* 메타 */}
           <div className="flex items-center gap-2 mb-4 flex-wrap">

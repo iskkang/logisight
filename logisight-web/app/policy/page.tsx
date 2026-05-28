@@ -92,11 +92,11 @@ export default async function PolicyPage() {
   ]);
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen flex flex-col">
       <Navigation />
       <IndexBar indices={indices} lastUpdated={lastUpdated} />
 
-      <div className="bg-slate-50 px-4 lg:px-8 py-6 lg:py-10">
+      <div className="flex-1 bg-slate-50 px-4 lg:px-8 py-6 lg:py-10">
         <div className="max-w-page mx-auto">
           <h2 className="text-lg font-medium text-slate-800 mb-5">정책·규제 모니터</h2>
 

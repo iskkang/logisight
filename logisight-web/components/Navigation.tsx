@@ -22,9 +22,15 @@ export function Navigation() {
       <div className="h-12 lg:h-16 px-5 flex items-center justify-between">
         <Link
           href="/"
-          className="text-white text-base lg:text-xl font-medium tracking-tight"
+          className="flex items-center gap-2 text-white text-base lg:text-xl font-medium tracking-tight"
           onClick={() => setOpen(false)}
         >
+          <img
+            src="/mtl-logo.gif"
+            alt="MTL"
+            className="h-7 lg:h-8 w-auto mix-blend-screen"
+            style={{ filter: 'grayscale(1) invert(1)' }}
+          />
           Logi<span className="text-cyan">sight</span>
         </Link>
 

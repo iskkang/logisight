@@ -50,12 +50,12 @@ export default async function HomePage() {
   ]);
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen flex flex-col">
       <Navigation />
       <Hero blankCount={blankCount} />
       <IndexBar indices={indices} lastUpdated={lastUpdated} />
 
-      <div className="bg-slate-50 px-4 lg:px-8 py-6 lg:py-10">
+      <div className="flex-1 bg-slate-50 px-4 lg:px-8 py-6 lg:py-10">
         <div className="max-w-page mx-auto grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5">
           <div>
             <WeeklyBriefing briefing={briefing} />
