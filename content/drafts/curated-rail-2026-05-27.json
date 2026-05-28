@@ -1,0 +1,32 @@
+{
+  "date": "2026-05-27",
+  "curated_at": "2026-05-27T12:07:56.034Z",
+  "section": "rail",
+  "main": {
+    "title": "Russia and China agree to build new cross-border railway",
+    "title_ko": "러시아·중국, 신규 국경 철도 건설 합의",
+    "url": "https://www.railfreight.com/railfreight/2026/05/22/russia-and-china-agree-to-build-new-cross-border-railway/",
+    "source": "RailFreight",
+    "image_url": null,
+    "what": "러시아와 중국이 신규 국경 횡단 철도 노선 건설에 합의했다. 이는 기존 TSR·TCR 경유 화물 흐름에 추가적인 루트 옵션을 제공할 수 있는 인프라 개발이다.",
+    "why_now": "한국·중국발 유럽행 블록트레인은 러-중 국경 구간(만주리·수이펀허 등) 용량에 민감하게 반응한다. 신규 노선 확보 시 기존 병목 완화 및 운임·리드타임 변동 가능성이 있어 노선 다양화 검토가 필요하다.",
+    "checkpoint": "신규 국경 노선의 위치·개통 예상 시점·처리 용량 수치를 운송사 또는 RZD/CRCT 채널을 통해 확인하고, 향후 노선 재배정 가능성을 선적 계획에 반영하라.",
+    "importance_score": 4
+  },
+  "links": [
+    {
+      "title": "Kazakh Railways is not going to be 'just' a rail operator",
+      "title_ko": "카자흐스탄 철도, 단순 운영사 이상으로 사업 확장 선언",
+      "url": "https://www.railfreight.com/railfreight/2026/05/27/kazakh-railways-is-not-going-to-be-just-a-rail-operator/",
+      "source": "RailFreight"
+    },
+    {
+      "title": "China is expanding the use of the TIR system to accelerate transport between Asia and Europe.",
+      "title_ko": "중국, TIR 시스템 확대 적용으로 아시아-유럽 간 운송 가속화",
+      "url": "https://www.transportcorridors.com/20874",
+      "source": "TransportCorridors"
+    }
+  ],
+  "total_collected": 29,
+  "excluded_count": 26
+}

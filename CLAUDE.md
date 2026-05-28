@@ -80,7 +80,7 @@ Logisight = MTL Shipping Agency가 운영하는 외부 공개 logistics intellig
 ```
 Frontend  : React 18 + TypeScript + Vite
 Styling   : Tailwind CSS (또는 MTL Link 호환 CSS 변수)
-i18n      : react-i18next (ko/en/zh/ru/uz/ja 6개국어)
+i18n      : react-i18next (ko/en/zh/ru/uz 5개국어) ← ja 제거됨
 Backend   : Supabase (PostgreSQL + Edge Functions Deno)
 DB Vector : pgvector (HS-Code·뉴스 의미 검색)
 Scraping  : Playwright on Vercel Functions
@@ -93,18 +93,29 @@ Cron      : GitHub Actions
 
 새로운 라이브러리 추가 전에는 **반드시** 사용자에게 확인. (Karpathy 1번 원칙)
 
-### 2.3 9대 모듈 (PRD v1.1 기준)
+### 2.3 현재 구현 상태 (2026-05 기준)
 
 ```
-1. HS-Code 글로벌 비교 검색 (5개국)
-2. 해상 컨테이너 통합 트래킹 (10대 선사)
-3. 항공 화물 트래킹 (AWB)
-4. Market Intelligence Hub (KCCI/SCFI/WCI/FBX/MBCI/Bunker)
-5. TCR/TSR Land Bridge Hub ★ MTL 차별화
-6. AI Assistant + Auto Bi-Weekly Report Generator ★ 핵심
-7. Blank Sailing & Capacity Tracker
-8. Geopolitical & Risk Heatmap
-9. Trade Policy & Regulation Watch
+★ 현재 라이브: CADI Beta (Central Asia Delay Intelligence)
+  → 한국·중국 → 중앙아시아 노선 화물 지연 집계 & 운항 중단 알림
+
+[구현 완료]
+  ✅ CADI 지연 인덱스 대시보드 (/intelligence/cadi)
+  ✅ 홈 스냅샷 위젯 (KR-ANDIJAN 최신 주차 지연)
+  ✅ Disruption Alerts 뷰 (/news)
+  ✅ Methodology 페이지 (/methodology)
+  ✅ Subscribe 페이지 (/subscribe — placeholder form)
+  ✅ CADI ETL: xlsx 인제스트 + MTL Link 라이브 API
+
+[미구현 — PRD v1.1 9대 모듈]
+  ⬜ HS-Code 글로벌 비교 검색 (5개국)
+  ⬜ 해상 컨테이너 통합 트래킹 (10대 선사)
+  ⬜ 항공 화물 트래킹 (AWB)
+  ⬜ Market Intelligence Hub (KCCI/SCFI/WCI/FBX/MBCI/Bunker)
+  ⬜ AI Assistant + Auto Bi-Weekly Report Generator
+  ⬜ Blank Sailing & Capacity Tracker
+  ⬜ Geopolitical & Risk Heatmap
+  ⬜ Trade Policy & Regulation Watch
 ```
 
 ### 2.4 1단계 vs 2단계 구분
@@ -129,18 +140,57 @@ Cron      : GitHub Actions
 logisight/
 ├── src/                    # React frontend
 │   ├── pages/              # 페이지별 컴포넌트
-│   ├── components/         # 재사용 컴포넌트
-│   ├── hooks/
-│   ├── lib/                # supabase client, util
-│   └── locales/            # i18n
-├── workers/                # 데이터 수집기 (TS, Vercel Functions)
+│   │   ├── Home.tsx            ← 홈 + CADI 스냅샷 + 알림 CTA
+│   │   ├── CadiDashboard.tsx   ← CADI 메인 대시보드
+│   │   ├── NewsAnalysis.tsx    ← Disruption Alerts 뷰
+│   │   ├── Methodology.tsx     ← 방법론 설명
+│   │   └── Subscribe.tsx       ← 뉴스레터 구독 (placeholder)
+│   ├── components/
+│   │   ├── cadi/           ← CADI 전용 컴포넌트
+│   │   │   ├── AlertCard.tsx
+│   │   │   ├── DataQualityBadge.tsx
+│   │   │   ├── DelayChart.tsx
+│   │   │   ├── LaneSelector.tsx
+│   │   │   └── TsrCompareWidget.tsx  ← TCR vs TSR 비교
+│   │   └── shared/
+│   │       ├── LoadingState.tsx
+│   │       └── EmptyState.tsx
+│   ├── lib/
+│   │   ├── api.ts          ← Edge Function 호출 래퍼 (Lane/DelayRow/DisruptionEvent 타입)
+│   │   └── supabase.ts     ← Supabase anon client
+│   ├── locales/            ← ko/en/zh/ru/uz (ja 없음)
+│   └── i18n.ts             ← react-i18next 초기화
+├── workers/
 │   └── collectors/
+│       ├── index.ts            ← 마스터 dispatcher (그룹별 실행)
+│       ├── tracing_ingest.ts   ← xlsx → Supabase 인제스트
+│       ├── tracing_live.ts     ← MTL Link API → Supabase
+│       ├── tracing_fesco.ts    ← FESCO 전용 트래킹
+│       ├── shipping_indices.ts / bunker.ts / air_indices.ts
+│       ├── blank_sailing.ts / fleet.ts
+│       ├── news_global.ts / news_korea.ts / news_rail.ts / news_industry.ts
+│       ├── policy_us.ts / policy_eu.ts / policy_imo.ts
+│       ├── rail_tcr.ts / rail_tsr.ts
+│       └── utils/              ← playwright_pool, rate_limiter, snapshot_writer, xlsx_parser
 ├── supabase/
-│   ├── migrations/         # SQL 마이그레이션
+│   ├── migrations/         # SQL 마이그레이션 (5개, 001~005)
 │   └── functions/          # Edge Functions (Deno)
-├── .claude/agents/         # 본 문서가 참조하는 sub-agent 정의
-├── .cursor/rules/          # Cursor 규칙
-└── docs/                   # PRD, 지시문, 가이드
+│       ├── cadi-lanes/         ← 레인 목록 (캐시 1일)
+│       ├── cadi-weekly/        ← delay_index_weekly 집계 (캐시 1h, max 12주)
+│       ├── alerts/             ← 활성 disruption_events (캐시 1h, max 20)
+│       └── reports/            ← placeholder (Phase 7+)
+├── scripts/                # 로컬 유틸리티 스크립트
+│   ├── add-disruption.js       ← disruption_events 수동 추가
+│   ├── generate-cadi-report.js ← CADI 보고서 생성
+│   ├── generate-cadi-weekly.js ← 주간 리포트
+│   ├── generate-pdf.js         ← PDF 내보내기
+│   ├── generate-brief.js       ← 브리프 생성
+│   └── send-newsletter.js      ← 뉴스레터 발송
+├── data/
+│   └── samples/            ← xlsx ETL 소스 (tracing_ingest 입력, git에서 제외)
+├── .claude/agents/         ← sub-agent 정의
+├── .cursor/rules/          ← Cursor 규칙
+└── docs/                   ← PRD, 지시문, 가이드
 ```
 
 ### 3.2 명명 규칙
@@ -265,7 +315,7 @@ dev-frontend / dev-backend / dev-scraper 가 작업 완료 시:
 1. 사용자 대화 : 한국어 (사용자가 영어로 시작하면 영어로 응답)
 2. 코드 주석   : 영어 (글로벌 기여 가능성)
 3. 변수·함수명 : 영어 (camelCase)
-4. UI 문자열   : ko 키 + 5개국어 번역 (locales/)
+4. UI 문자열   : ko 키 + 번역 (locales/ko · en · zh · ru · uz) ← ja 없음
 5. DB 데이터   : 원문 그대로 보존 + 한국어 요약 컬럼 별도
 6. 에러 메시지 : 사용자용은 한국어, 로그용은 영어
 ```
@@ -299,8 +349,8 @@ dev-frontend / dev-backend / dev-scraper 가 작업 완료 시:
 실수 2: Supabase 함수 안에서 직접 fetch (Edge runtime fetch는 다름)
    → Deno fetch API 사용, Node.js 패턴 X
 
-실수 3: i18n 키 추가 시 5개국어 번역 누락
-   → ko 키 추가 시 en/zh/ru/uz/ja 동시 추가 (없으면 ko fallback 명시)
+실수 3: i18n 키 추가 시 번역 누락
+   → ko 키 추가 시 en/zh/ru/uz 동시 추가 (없으면 ko fallback 명시, ja는 제거됨)
 
 실수 4: 운임 데이터 표시할 때 출처/날짜 누락
    → 모든 운임 데이터 옆에 "(KOBC, 2026.MM.DD)" 형식 필수
@@ -315,15 +365,29 @@ dev-frontend / dev-backend / dev-scraper 가 작업 완료 시:
 
 ```
 ✅ 환경변수만 사용 (하드코딩 X)
-   - SUPABASE_URL, SUPABASE_ANON_KEY (frontend OK)
-   - SUPABASE_SERVICE_ROLE_KEY (Edge Function only)
-   - ANTHROPIC_API_KEY, OPENAI_API_KEY (Edge Function only)
 
-✅ B/L·컨테이너 번호는 30일 후 익명화
+  [Frontend — .env.local]
+    VITE_SUPABASE_URL          Supabase 프로젝트 URL
+    VITE_SUPABASE_ANON_KEY     anon public key
 
-✅ RLS 정책으로 회원 데이터 보호
+  [Workers (Node ETL) — .env.local 또는 GitHub Actions Secrets]
+    SUPABASE_URL               Supabase 프로젝트 URL
+    SUPABASE_SERVICE_ROLE_KEY  service_role key (절대 frontend 미노출)
+    TRACKING_API_URL           MTL Link API (기본: https://link.mtlship.com/api/tcr?action=list)
+    TRACKING_API_TOKEN         MTL Link read 토큰 (현재 선택적 — 무인증 상태)
 
-❌ 절대 git에 커밋 금지: .env.local, *.key, secrets/
+  [Edge Functions — Supabase Secrets]
+    ANTHROPIC_API_KEY          Claude API (보고서 생성 등)
+    OPENAI_API_KEY             Embeddings (Phase 2)
+
+✅ 컨테이너 번호 익명화: SHA-256 앞 12자 hex (tracing_live.ts)
+   customer_list 절대 저장 안 함 (PII 보호)
+
+✅ RLS 정책으로 데이터 보호
+   - shipment_legs: anon 정책 없음 (집계치만 공개)
+   - delay_index_weekly, disruption_events, lanes: anon 읽기 허용
+
+❌ 절대 git에 커밋 금지: .env.local, *.key, secrets/, data/samples/
 ```
 
 ---
@@ -357,7 +421,109 @@ dev-frontend / dev-backend / dev-scraper 가 작업 완료 시:
 
 ---
 
-## Part 10: 이 파일을 수정할 때
+## Part 10: 개발 커맨드
+
+```bash
+# Frontend
+npm run dev          # Vite dev server → http://localhost:3000
+npm run build        # tsc + vite build (dist/)
+npm run preview      # dist/ preview
+npm run lint         # eslint src --ext ts,tsx
+
+# ETL — 로컬에서 실행 (SUPABASE_URL + SERVICE_ROLE_KEY 필요)
+npm run collect:all      # 전체 collector 순차 실행
+npm run collect:shipping # 해운 운임 지수만
+npm run collect:news     # 글로벌 뉴스만
+npm run collect:tracing  # data/samples/*.xlsx → Supabase (트레이싱 인제스트)
+npm run collect:live     # MTL Link 라이브 API → Supabase
+npm run collect:tsr      # FESCO TSR 트래킹
+
+# 보고서·유틸
+npm run report:cadi      # CADI 보고서 생성
+npm run report:weekly    # 주간 CADI 보고서
+npm run disruption:add   # disruption_events 수동 추가
+npm run pdf              # PDF 내보내기
+```
+
+### 10.1 tracing_ingest 사용법
+
+```
+1. data/samples/ 디렉터리에 xlsx 파일 배치 (git 제외)
+2. npm run collect:tracing 실행
+3. 결과: shipment_legs upsert → delay_index_weekly 집계 자동
+```
+
+### 10.2 tracing_live 주의사항
+
+```
+- 현재 MTL Link API 무인증 상태 (TRACKING_API_TOKEN 비어 있음)
+- customer_list는 fetch 즉시 폐기 — 절대 DB 저장 금지
+- container_no는 SHA-256 익명화 후 저장 (live: 접두어)
+- MTL Link 팀에 read 토큰 적용 요청 권고
+```
+
+---
+
+## Part 11: CADI 데이터 구조
+
+### 11.1 OD-pair 레인 (11개, 2026-05 기준)
+
+```
+[KR 출발 — Kashi 패턴]
+  KR-ANDIJAN       Korea → Andijan      30–40일  ★ flagship lane
+  KR-OSH           Korea → Osh          32–42일
+  KR-BISHKEK       Korea → Bishkek      28–38일
+  KR-CHUKURSAY     Korea → Chukursay    33–45일
+
+[KR 출발 — Khorgos 패턴]
+  KR-ALMATY        Korea → Almaty       25–35일
+
+[KR 출발 — Northern 패턴]
+  KR-MALASZEWICZE  Korea → Małaszewicze 40–55일  (Dostyk→Brest)
+
+[CN 출발]
+  CN-ANDIJAN       China → Andijan      18–28일
+  CN-BISHKEK       China → Bishkek      15–25일
+  CN-OSH           China → Osh          12–22일
+  CN-CHUKURSAY     China → Chukursay    14–24일
+  CN-ALMATY        China → Almaty       10–18일  (Khorgos)
+
+★ 구 route-type (TCR/TSR/TITR/TMR/TMGR)는 migration 003에서 OD-pair로 교체됨
+```
+
+### 11.2 마일스톤 순서
+
+```
+ORIGIN_DEP → SEA_TS_ARR → RAIL_DEP_CN → KASHI_ARR → KASHI_BONDED
+          → TRUCK_DEP → XIAN_HUB → CN_BORDER → KG_UZ_BORDER → DEST_ARR
+```
+
+### 11.3 경로 패턴 (route_pattern)
+
+```
+kashi    : 카시 → 오쉬 → 안디잔/추쿠르사이/비슈켁
+khorgos  : 코르고스 → 알마티
+northern : Dostyk → Kartaly → Brest → Małaszewicze
+tsr      : 블라디보스토크 경유 (TSR)
+```
+
+### 11.4 데이터 품질 등급
+
+```
+confirmed    n ≥ 5   ← 통계적으로 신뢰
+provisional  n ≥ 2   ← 참고 수준
+indicative   n < 2   ← 단일 화물, 표시 주의
+```
+
+### 11.5 delay_reason 분류
+
+```
+policy | customs | truck_swap | schedule | weather | other
+```
+
+---
+
+## Part 12: 이 파일을 수정할 때
 
 ```
 이 CLAUDE.md 파일 자체를 수정할 때:
@@ -367,7 +533,7 @@ dev-frontend / dev-backend / dev-scraper 가 작업 완료 시:
   4. 수정 후 모든 agent 재시작 권장 (변경 사항 반영)
 
 특히 Part 1 (Karpathy 4원칙)은 수정 금지.
-프로젝트 특수 사정으로만 Part 2~9 추가/수정 허용.
+프로젝트 특수 사정으로만 Part 2~11 추가/수정 허용.
 ```
 
 ---

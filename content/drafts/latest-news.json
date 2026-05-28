@@ -1,5 +1,5 @@
 {
-  "date": "2026. 5. 25.",
+  "date": "2026. 5. 28.",
   "shipping": [
     {
       "title": "SCFI drops 3.2% as transpacific spot rates slide",
@@ -1192,6 +1192,895 @@
       "unit": "$/FEU",
       "source": "Freightos FBX",
       "source_url": "https://fbx.freightos.com/"
+    },
+    {
+      "title": "FMC reaches settlement with Maersk over detention charge practices",
+      "url": "https://container-news.com/fmc-reaches-settlement-with-maersk-over-detention-charge-practices/",
+      "published_at": "2026-05-27T10:30:55.000Z",
+      "summary_en": "",
+      "source": "Container News",
+      "section": "shipping",
+      "language": "en",
+      "category": "ocean_news"
+    },
+    {
+      "title": "Euroseas extends charters for M/V Stephania K and M/V Pepi Star",
+      "url": "https://container-news.com/euroseas-extends-charters-for-m-v-stephania-k-and-m-v-pepi-star/",
+      "published_at": "2026-05-27T09:30:29.000Z",
+      "summary_en": "",
+      "source": "Container News",
+      "section": "shipping",
+      "language": "en",
+      "category": "ocean_news"
+    },
+    {
+      "title": "June 2026",
+      "url": "https://container-news.com/june-2026/",
+      "published_at": "2026-05-27T09:09:55.000Z",
+      "summary_en": "",
+      "source": "Container News",
+      "section": "shipping",
+      "language": "en",
+      "category": "ocean_news"
+    },
+    {
+      "title": "MPC Container Ships posts solid Q1 2026 results",
+      "url": "https://container-news.com/mpc-q1-2026-results/",
+      "published_at": "2026-05-27T08:30:18.000Z",
+      "summary_en": "",
+      "source": "Container News",
+      "section": "shipping",
+      "language": "en",
+      "category": "ocean_news"
+    },
+    {
+      "title": "Maersk launches FI2 service",
+      "url": "https://container-news.com/maersk-launches-fi2-service/",
+      "published_at": "2026-05-27T07:30:13.000Z",
+      "summary_en": "",
+      "source": "Container News",
+      "section": "shipping",
+      "language": "en",
+      "category": "ocean_news"
+    },
+    {
+      "title": "Genco Shipping &#038; Trading Limited Sets the Record Straight on Numerous Falsehoods in Diana’s Investor Presentation",
+      "url": "https://www.hellenicshippingnews.com/genco-shipping-trading-limited-sets-the-record-straight-on-numerous-falsehoods-in-dianas-investor-presentation/",
+      "published_at": "2026-05-27T10:00:55.000Z",
+      "summary_en": "",
+      "source": "Hellenic Shipping",
+      "section": "shipping",
+      "language": "en",
+      "category": "ocean_news"
+    },
+    {
+      "title": "Jumbo orders a new class of versatile heavy lift vessels",
+      "url": "https://www.hellenicshippingnews.com/jumbo-orders-a-new-class-of-versatile-heavy-lift-vessels/",
+      "published_at": "2026-05-27T10:00:49.000Z",
+      "summary_en": "",
+      "source": "Hellenic Shipping",
+      "section": "shipping",
+      "language": "en",
+      "category": "ocean_news"
+    },
+    {
+      "title": "MMI Daily Iron Ore Index Report May 27 2026",
+      "url": "https://www.hellenicshippingnews.com/mmi-daily-iron-ore-index-report-may-27-2026/",
+      "published_at": "2026-05-27T10:00:45.000Z",
+      "summary_en": "",
+      "source": "Hellenic Shipping",
+      "section": "shipping",
+      "language": "en",
+      "category": "ocean_news"
+    },
+    {
+      "title": "Safe ammonia bunkering in ports is feasible &#8211; MMMCZCS",
+      "url": "https://www.hellenicshippingnews.com/safe-ammonia-bunkering-in-ports-is-feasible-mmmczcs/",
+      "published_at": "2026-05-27T10:00:43.000Z",
+      "summary_en": "",
+      "source": "Hellenic Shipping",
+      "section": "shipping",
+      "language": "en",
+      "category": "ocean_news"
+    },
+    {
+      "title": "Construction started on liquefied biogas facility at the Port of Gothenburg",
+      "url": "https://www.hellenicshippingnews.com/construction-started-on-liquefied-biogas-facility-at-the-port-of-gothenburg/",
+      "published_at": "2026-05-27T10:00:41.000Z",
+      "summary_en": "",
+      "source": "Hellenic Shipping",
+      "section": "shipping",
+      "language": "en",
+      "category": "ocean_news"
+    },
+    {
+      "title": "Canada to Supply Germany With LNG From $7.3 Billion Export Project",
+      "url": "https://gcaptain.com/canada-to-supply-germany-with-lng-from-7-3-billion-export-project/",
+      "published_at": "2026-05-26T22:34:53.000Z",
+      "summary_en": "",
+      "source": "gCaptain",
+      "section": "shipping",
+      "language": "en",
+      "category": "ocean_news"
+    },
+    {
+      "title": "Chile Approves $4.45 Billion ‘Outer Port’ Expansion at San Antonio",
+      "url": "https://gcaptain.com/chile-approves-4-45-billion-outer-port-expansion-at-san-antonio/",
+      "published_at": "2026-05-26T18:34:27.000Z",
+      "summary_en": "",
+      "source": "gCaptain",
+      "section": "shipping",
+      "language": "en",
+      "category": "ocean_news"
+    },
+    {
+      "title": "Quad Nations Launch Fiji Port Plan, Critical Minerals Pact Amid China Tensions",
+      "url": "https://gcaptain.com/quad-nations-launch-fiji-port-plan-critical-minerals-pact-amid-china-tensions/",
+      "published_at": "2026-05-26T17:42:32.000Z",
+      "summary_en": "",
+      "source": "gCaptain",
+      "section": "shipping",
+      "language": "en",
+      "category": "ocean_news"
+    },
+    {
+      "title": "U.S. Military Denies Reported Restart of U.S. Naval Escorts in Strait of Hormuz",
+      "url": "https://gcaptain.com/u-s-military-denies-reported-restart-of-u-s-naval-escorts-in-strait-of-hormuz/",
+      "published_at": "2026-05-26T17:29:59.000Z",
+      "summary_en": "",
+      "source": "gCaptain",
+      "section": "shipping",
+      "language": "en",
+      "category": "ocean_news"
+    },
+    {
+      "title": "Tanker Reports Explosion Off Oman as UKMTO Warns Ships to Use Caution",
+      "url": "https://gcaptain.com/tanker-reports-explosion-off-oman-as-ukmto-warns-ships-to-use-caution/",
+      "published_at": "2026-05-26T14:14:13.000Z",
+      "summary_en": "",
+      "source": "gCaptain",
+      "section": "shipping",
+      "language": "en",
+      "category": "ocean_news"
+    },
+    {
+      "name": "FBX_글로벌",
+      "value": null,
+      "change_pct": null,
+      "date": "2026-05-28",
+      "unit": "$/FEU",
+      "source": "Freightos FBX",
+      "source_url": "https://fbx.freightos.com/"
+    },
+    {
+      "region": "East Asia",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=East%20Asia"
+    },
+    {
+      "region": "Mediterranean",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=Mediterranean"
+    },
+    {
+      "region": "Northwest Europe",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=Northwest%20Europe"
+    },
+    {
+      "region": "Indian Subcontinent",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=Indian%20Subcontinent"
+    },
+    {
+      "region": "Middle East",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=Middle%20East"
+    },
+    {
+      "region": "North America East",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=North%20America%20East"
+    },
+    {
+      "region": "North America West",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=North%20America%20West"
+    },
+    {
+      "grade": "VLSFO",
+      "port": "Singapore",
+      "priceUsd": 500,
+      "url": "https://shipandbunker.com/prices/apac/sg/sg-sin-singapore",
+      "date": "2026-05-28",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices/apac/sg/sg-sin-singapore"
+    },
+    {
+      "grade": "IFO380",
+      "port": "Singapore",
+      "priceUsd": 380,
+      "url": "https://shipandbunker.com/prices/apac/sg/sg-sin-singapore",
+      "date": "2026-05-28",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices/apac/sg/sg-sin-singapore"
+    },
+    {
+      "grade": "MGO",
+      "port": "Singapore",
+      "priceUsd": 500,
+      "url": "https://shipandbunker.com/prices/apac/sg/sg-sin-singapore",
+      "date": "2026-05-28",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices/apac/sg/sg-sin-singapore"
+    },
+    {
+      "grade": "VLSFO",
+      "port": "Rotterdam",
+      "priceUsd": 500,
+      "url": "https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam",
+      "date": "2026-05-28",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam"
+    },
+    {
+      "grade": "IFO380",
+      "port": "Rotterdam",
+      "priceUsd": 380,
+      "url": "https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam",
+      "date": "2026-05-28",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam"
+    },
+    {
+      "grade": "MGO",
+      "port": "Rotterdam",
+      "priceUsd": 500,
+      "url": "https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam",
+      "date": "2026-05-28",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam"
+    },
+    {
+      "name": "SCFI_종합",
+      "value": 2218.15,
+      "change_pct": 3.62,
+      "date": "2026-05-22",
+      "unit": "point",
+      "source": "Shanghai Shipping Exchange (via dashboard)",
+      "source_url": "https://en.sse.net.cn/indices/scfinew.jsp"
+    },
+    {
+      "name": "KCCI_종합",
+      "value": 2478,
+      "change_pct": 4.96,
+      "date": "2026-05-26",
+      "unit": "point",
+      "source": "KOBC (via dashboard)",
+      "source_url": "https://www.kobc.or.kr/index/kcci"
+    },
+    {
+      "name": "CCFI_종합",
+      "value": 1317.36,
+      "change_pct": 2.88,
+      "date": "2026-05-22",
+      "unit": "point",
+      "source": "Shanghai Shipping Exchange (via dashboard)",
+      "source_url": "https://en.sse.net.cn/indices/ccfinew.jsp"
+    },
+    {
+      "name": "FBX_글로벌",
+      "value": null,
+      "change_pct": null,
+      "date": "2026-05-28",
+      "unit": "$/FEU",
+      "source": "Freightos FBX",
+      "source_url": "https://fbx.freightos.com/"
+    },
+    {
+      "grade": "VLSFO",
+      "port": "Singapore",
+      "priceUsd": 500,
+      "url": "https://shipandbunker.com/prices/apac/sg/sg-sin-singapore",
+      "date": "2026-05-28",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices/apac/sg/sg-sin-singapore"
+    },
+    {
+      "grade": "IFO380",
+      "port": "Singapore",
+      "priceUsd": 380,
+      "url": "https://shipandbunker.com/prices/apac/sg/sg-sin-singapore",
+      "date": "2026-05-28",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices/apac/sg/sg-sin-singapore"
+    },
+    {
+      "grade": "MGO",
+      "port": "Singapore",
+      "priceUsd": 500,
+      "url": "https://shipandbunker.com/prices/apac/sg/sg-sin-singapore",
+      "date": "2026-05-28",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices/apac/sg/sg-sin-singapore"
+    },
+    {
+      "grade": "VLSFO",
+      "port": "Rotterdam",
+      "priceUsd": 500,
+      "url": "https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam",
+      "date": "2026-05-28",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam"
+    },
+    {
+      "grade": "IFO380",
+      "port": "Rotterdam",
+      "priceUsd": 380,
+      "url": "https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam",
+      "date": "2026-05-28",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam"
+    },
+    {
+      "grade": "MGO",
+      "port": "Rotterdam",
+      "priceUsd": 500,
+      "url": "https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam",
+      "date": "2026-05-28",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam"
+    },
+    {
+      "region": "East Asia",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=East%20Asia"
+    },
+    {
+      "region": "Mediterranean",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=Mediterranean"
+    },
+    {
+      "region": "Northwest Europe",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=Northwest%20Europe"
+    },
+    {
+      "region": "Indian Subcontinent",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=Indian%20Subcontinent"
+    },
+    {
+      "region": "Middle East",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=Middle%20East"
+    },
+    {
+      "region": "North America East",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=North%20America%20East"
+    },
+    {
+      "region": "North America West",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=North%20America%20West"
+    },
+    {
+      "name": "WCI_종합",
+      "value": 20241,
+      "change_pct": 15,
+      "date": "2026-05-28",
+      "unit": "$/FEU",
+      "source": "Drewry WCI",
+      "source_url": "https://www.drewry.co.uk/supply-chain-advisors/supply-chain-expertise/world-container-index-assessed-by-drewry"
+    },
+    {
+      "name": "FBX_글로벌",
+      "value": null,
+      "change_pct": null,
+      "date": "2026-05-28",
+      "unit": "$/FEU",
+      "source": "Freightos FBX",
+      "source_url": "https://fbx.freightos.com/"
+    },
+    {
+      "name": "SCFI_종합",
+      "value": 2218.15,
+      "change_pct": 3.62,
+      "date": "2026-05-22",
+      "unit": "point",
+      "source": "Shanghai Shipping Exchange (via dashboard)",
+      "source_url": "https://en.sse.net.cn/indices/scfinew.jsp"
+    },
+    {
+      "name": "KCCI_종합",
+      "value": 2478,
+      "change_pct": 4.96,
+      "date": "2026-05-26",
+      "unit": "point",
+      "source": "KOBC (via dashboard)",
+      "source_url": "https://www.kobc.or.kr/index/kcci"
+    },
+    {
+      "name": "CCFI_종합",
+      "value": 1317.36,
+      "change_pct": 2.88,
+      "date": "2026-05-22",
+      "unit": "point",
+      "source": "Shanghai Shipping Exchange (via dashboard)",
+      "source_url": "https://en.sse.net.cn/indices/ccfinew.jsp"
+    },
+    {
+      "name": "WCI_종합",
+      "value": 20241,
+      "change_pct": 15,
+      "date": "2026-05-28",
+      "unit": "$/FEU",
+      "source": "Drewry WCI",
+      "source_url": "https://www.drewry.co.uk/supply-chain-advisors/supply-chain-expertise/world-container-index-assessed-by-drewry"
+    },
+    {
+      "name": "FBX_글로벌",
+      "value": null,
+      "change_pct": null,
+      "date": "2026-05-28",
+      "unit": "$/FEU",
+      "source": "Freightos FBX",
+      "source_url": "https://fbx.freightos.com/"
+    },
+    {
+      "grade": "VLSFO",
+      "port": "Singapore",
+      "priceUsd": 500,
+      "url": "https://shipandbunker.com/prices/apac/sg/sg-sin-singapore",
+      "date": "2026-05-28",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices/apac/sg/sg-sin-singapore"
+    },
+    {
+      "grade": "IFO380",
+      "port": "Singapore",
+      "priceUsd": 380,
+      "url": "https://shipandbunker.com/prices/apac/sg/sg-sin-singapore",
+      "date": "2026-05-28",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices/apac/sg/sg-sin-singapore"
+    },
+    {
+      "grade": "MGO",
+      "port": "Singapore",
+      "priceUsd": 500,
+      "url": "https://shipandbunker.com/prices/apac/sg/sg-sin-singapore",
+      "date": "2026-05-28",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices/apac/sg/sg-sin-singapore"
+    },
+    {
+      "grade": "VLSFO",
+      "port": "Rotterdam",
+      "priceUsd": 500,
+      "url": "https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam",
+      "date": "2026-05-28",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam"
+    },
+    {
+      "grade": "IFO380",
+      "port": "Rotterdam",
+      "priceUsd": 380,
+      "url": "https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam",
+      "date": "2026-05-28",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam"
+    },
+    {
+      "grade": "MGO",
+      "port": "Rotterdam",
+      "priceUsd": 500,
+      "url": "https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam",
+      "date": "2026-05-28",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam"
+    },
+    {
+      "region": "East Asia",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=East%20Asia"
+    },
+    {
+      "region": "Mediterranean",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=Mediterranean"
+    },
+    {
+      "region": "Northwest Europe",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=Northwest%20Europe"
+    },
+    {
+      "region": "Indian Subcontinent",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=Indian%20Subcontinent"
+    },
+    {
+      "region": "Middle East",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=Middle%20East"
+    },
+    {
+      "region": "North America East",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=North%20America%20East"
+    },
+    {
+      "region": "North America West",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=North%20America%20West"
+    },
+    {
+      "name": "SCFI_종합",
+      "value": 2218.15,
+      "change_pct": 3.62,
+      "date": "2026-05-22",
+      "unit": "point",
+      "source": "Shanghai Shipping Exchange (via dashboard)",
+      "source_url": "https://en.sse.net.cn/indices/scfinew.jsp"
+    },
+    {
+      "name": "KCCI_종합",
+      "value": 2478,
+      "change_pct": 4.96,
+      "date": "2026-05-26",
+      "unit": "point",
+      "source": "KOBC (via dashboard)",
+      "source_url": "https://www.kobc.or.kr/index/kcci"
+    },
+    {
+      "name": "CCFI_종합",
+      "value": 1317.36,
+      "change_pct": 2.88,
+      "date": "2026-05-22",
+      "unit": "point",
+      "source": "Shanghai Shipping Exchange (via dashboard)",
+      "source_url": "https://en.sse.net.cn/indices/ccfinew.jsp"
+    },
+    {
+      "name": "WCI_종합",
+      "value": 20241,
+      "change_pct": 15,
+      "date": "2026-05-28",
+      "unit": "$/FEU",
+      "source": "Drewry WCI",
+      "source_url": "https://www.drewry.co.uk/supply-chain-advisors/supply-chain-expertise/world-container-index-assessed-by-drewry"
+    },
+    {
+      "name": "FBX_글로벌",
+      "value": null,
+      "change_pct": null,
+      "date": "2026-05-28",
+      "unit": "$/FEU",
+      "source": "Freightos FBX",
+      "source_url": "https://fbx.freightos.com/"
+    },
+    {
+      "grade": "VLSFO",
+      "port": "Singapore",
+      "priceUsd": 500,
+      "url": "https://shipandbunker.com/prices/apac/sg/sg-sin-singapore",
+      "date": "2026-05-28",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices/apac/sg/sg-sin-singapore"
+    },
+    {
+      "grade": "IFO380",
+      "port": "Singapore",
+      "priceUsd": 380,
+      "url": "https://shipandbunker.com/prices/apac/sg/sg-sin-singapore",
+      "date": "2026-05-28",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices/apac/sg/sg-sin-singapore"
+    },
+    {
+      "grade": "MGO",
+      "port": "Singapore",
+      "priceUsd": 500,
+      "url": "https://shipandbunker.com/prices/apac/sg/sg-sin-singapore",
+      "date": "2026-05-28",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices/apac/sg/sg-sin-singapore"
+    },
+    {
+      "grade": "VLSFO",
+      "port": "Rotterdam",
+      "priceUsd": 500,
+      "url": "https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam",
+      "date": "2026-05-28",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam"
+    },
+    {
+      "grade": "IFO380",
+      "port": "Rotterdam",
+      "priceUsd": 380,
+      "url": "https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam",
+      "date": "2026-05-28",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam"
+    },
+    {
+      "grade": "MGO",
+      "port": "Rotterdam",
+      "priceUsd": 500,
+      "url": "https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam",
+      "date": "2026-05-28",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam"
+    },
+    {
+      "region": "East Asia",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=East%20Asia"
+    },
+    {
+      "region": "Mediterranean",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=Mediterranean"
+    },
+    {
+      "region": "Northwest Europe",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=Northwest%20Europe"
+    },
+    {
+      "region": "Indian Subcontinent",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=Indian%20Subcontinent"
+    },
+    {
+      "region": "Middle East",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=Middle%20East"
+    },
+    {
+      "region": "North America East",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=North%20America%20East"
+    },
+    {
+      "region": "North America West",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=North%20America%20West"
+    },
+    {
+      "name": "SCFI_종합",
+      "value": 2218.15,
+      "change_pct": 3.62,
+      "date": "2026-05-22",
+      "unit": "point",
+      "source": "Shanghai Shipping Exchange (via dashboard)",
+      "source_url": "https://en.sse.net.cn/indices/scfinew.jsp"
+    },
+    {
+      "name": "KCCI_종합",
+      "value": 2478,
+      "change_pct": 4.96,
+      "date": "2026-05-26",
+      "unit": "point",
+      "source": "KOBC (via dashboard)",
+      "source_url": "https://www.kobc.or.kr/index/kcci"
+    },
+    {
+      "name": "CCFI_종합",
+      "value": 1317.36,
+      "change_pct": 2.88,
+      "date": "2026-05-22",
+      "unit": "point",
+      "source": "Shanghai Shipping Exchange (via dashboard)",
+      "source_url": "https://en.sse.net.cn/indices/ccfinew.jsp"
+    },
+    {
+      "name": "FBX_글로벌",
+      "value": null,
+      "change_pct": null,
+      "date": "2026-05-28",
+      "unit": "$/FEU",
+      "source": "Freightos FBX",
+      "source_url": "https://fbx.freightos.com/"
+    },
+    {
+      "grade": "VLSFO",
+      "port": "Singapore",
+      "priceUsd": 500,
+      "url": "https://shipandbunker.com/prices/apac/sg/sg-sin-singapore",
+      "date": "2026-05-28",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices/apac/sg/sg-sin-singapore"
+    },
+    {
+      "grade": "IFO380",
+      "port": "Singapore",
+      "priceUsd": 380,
+      "url": "https://shipandbunker.com/prices/apac/sg/sg-sin-singapore",
+      "date": "2026-05-28",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices/apac/sg/sg-sin-singapore"
+    },
+    {
+      "grade": "MGO",
+      "port": "Singapore",
+      "priceUsd": 500,
+      "url": "https://shipandbunker.com/prices/apac/sg/sg-sin-singapore",
+      "date": "2026-05-28",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices/apac/sg/sg-sin-singapore"
+    },
+    {
+      "grade": "VLSFO",
+      "port": "Rotterdam",
+      "priceUsd": 500,
+      "url": "https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam",
+      "date": "2026-05-28",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam"
+    },
+    {
+      "grade": "IFO380",
+      "port": "Rotterdam",
+      "priceUsd": 380,
+      "url": "https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam",
+      "date": "2026-05-28",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam"
+    },
+    {
+      "grade": "MGO",
+      "port": "Rotterdam",
+      "priceUsd": 500,
+      "url": "https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam",
+      "date": "2026-05-28",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam"
+    },
+    {
+      "region": "East Asia",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=East%20Asia"
+    },
+    {
+      "region": "Mediterranean",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=Mediterranean"
+    },
+    {
+      "region": "Northwest Europe",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=Northwest%20Europe"
+    },
+    {
+      "region": "Indian Subcontinent",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=Indian%20Subcontinent"
+    },
+    {
+      "region": "Middle East",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=Middle%20East"
+    },
+    {
+      "region": "North America East",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=North%20America%20East"
+    },
+    {
+      "region": "North America West",
+      "weeks_fetched": 169,
+      "latest_blank_pct": null,
+      "latest_week": "2026-06-22",
+      "source": "EconDB",
+      "source_url": "https://www.econdb.com/widgets/omissions-time-series/data/?region=North%20America%20West"
     }
   ],
   "rail": [
@@ -2168,6 +3057,336 @@
       "published_at": "2026-03-02T13:21:45.000Z",
       "summary_en": "",
       "source": "RailFreight Russia",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title_en": "Tokyo Trial debunks notorious Yasukuni Shrine's inverted narrative",
+      "title_cn": "",
+      "summary_en": "",
+      "url": "https://www.globaltimes.cn/page/202605/1360513.shtml",
+      "source": "Global Times BRI",
+      "section": "rail",
+      "language": "cn",
+      "category": "tcr_official"
+    },
+    {
+      "title_en": "DC gala shooting suspect voices grievances against US administration in writings to family: media reports",
+      "title_cn": "",
+      "summary_en": "",
+      "url": "https://www.globaltimes.cn/page/202604/1359873.shtml",
+      "source": "Global Times BRI",
+      "section": "rail",
+      "language": "cn",
+      "category": "tcr_official"
+    },
+    {
+      "title_en": "Local Insights: At the 13th Baku Global Forum, global participants look to China for new path of multilateralism and stability",
+      "title_cn": "",
+      "summary_en": "",
+      "url": "https://www.globaltimes.cn/page/202604/1358941.shtml",
+      "source": "Global Times BRI",
+      "section": "rail",
+      "language": "cn",
+      "category": "tcr_official"
+    },
+    {
+      "title_en": "Over 3,000 protests staged across US on one month of strikes against Iran, scale 'suggests mounting public dissatisfaction that risks more chaos': expert",
+      "title_cn": "",
+      "summary_en": "",
+      "url": "https://www.globaltimes.cn/page/202603/1357823.shtml",
+      "source": "Global Times BRI",
+      "section": "rail",
+      "language": "cn",
+      "category": "tcr_official"
+    },
+    {
+      "title_en": "China schedules next moonshot this year: developer",
+      "title_cn": "",
+      "summary_en": "",
+      "url": "https://www.globaltimes.cn/page/202603/1356805.shtml",
+      "source": "Global Times BRI",
+      "section": "rail",
+      "language": "cn",
+      "category": "tcr_official"
+    },
+    {
+      "title": "Ru",
+      "url": "https://www.fesco.ru/ru/press-center/news/?from_lang=en",
+      "published_at": "2026-05-27T10:57:37.811Z",
+      "summary_en": "",
+      "source": "FESCO News",
+      "section": "rail",
+      "language": "en",
+      "category": "rail_operator"
+    },
+    {
+      "title": "Information message",
+      "url": "https://www.fesco.com/en/press-center/news/information-message-dated-31-10-2023-/",
+      "published_at": "2026-05-27T10:57:37.811Z",
+      "summary_en": "",
+      "source": "FESCO News",
+      "section": "rail",
+      "language": "en",
+      "category": "rail_operator"
+    },
+    {
+      "title": "Privacy Policy",
+      "url": "https://www.fesco.com/en/privacy_policy/",
+      "published_at": "2026-05-27T10:57:37.811Z",
+      "summary_en": "",
+      "source": "FESCO News",
+      "section": "rail",
+      "language": "en",
+      "category": "rail_operator"
+    },
+    {
+      "title": "About FESCO",
+      "url": "https://www.fesco.com/en/about/",
+      "published_at": "2026-05-27T10:57:37.811Z",
+      "summary_en": "",
+      "source": "FESCO News",
+      "section": "rail",
+      "language": "en",
+      "category": "rail_operator"
+    },
+    {
+      "title": "Academy FESCO",
+      "url": "https://academy.fesco.ru/en",
+      "published_at": "2026-05-27T10:57:37.811Z",
+      "summary_en": "",
+      "source": "FESCO News",
+      "section": "rail",
+      "language": "en",
+      "category": "rail_operator"
+    },
+    {
+      "title_en": "DC gala shooting suspect voices grievances against US administration in writings to family: media reports",
+      "title_cn": "",
+      "summary_en": "",
+      "url": "https://www.globaltimes.cn/page/202604/1359873.shtml",
+      "source": "Global Times BRI",
+      "section": "rail",
+      "language": "cn",
+      "category": "tcr_official"
+    },
+    {
+      "title_en": "Chinese, Iranian diplomats meet before US-Iran nuclear talk; move reflects Teheran's willingness to seek intl support: Chinese expert",
+      "title_cn": "",
+      "summary_en": "",
+      "url": "https://www.globaltimes.cn/page/202602/1354898.shtml",
+      "source": "Global Times BRI",
+      "section": "rail",
+      "language": "cn",
+      "category": "tcr_official"
+    },
+    {
+      "title_en": "Shenzhou-20 taikonauts make 1st public appearance after safe return following debris incident, recounts details",
+      "title_cn": "",
+      "summary_en": "",
+      "url": "https://www.globaltimes.cn/page/202601/1353427.shtml",
+      "source": "Global Times BRI",
+      "section": "rail",
+      "language": "cn",
+      "category": "tcr_official"
+    },
+    {
+      "title_en": "Witnesses of Struggle: GT visits Hump Route crash site in Xizang, retracing enduring memory of wartime sacrifice and friendship",
+      "title_cn": "",
+      "summary_en": "",
+      "url": "https://www.globaltimes.cn/page/202512/1351918.shtml",
+      "source": "Global Times BRI",
+      "section": "rail",
+      "language": "cn",
+      "category": "tcr_official"
+    },
+    {
+      "title_en": "GT investigates: From political opportunist to militarist advocate: An expose of Japanese Prime Minister Sanae Takaichi's radical path",
+      "title_cn": "",
+      "summary_en": "",
+      "url": "https://www.globaltimes.cn/page/202511/1348619.shtml",
+      "source": "Global Times BRI",
+      "section": "rail",
+      "language": "cn",
+      "category": "tcr_official"
+    },
+    {
+      "title": "Medway unlocks 30 million euros in subsidies in Spain",
+      "url": "https://www.railfreight.com/business/2026/05/27/medway-unlocks-30-million-euros-in-subsidies-in-spain/",
+      "published_at": "2026-05-27T12:07:31.397Z",
+      "summary_en": "",
+      "source": "RailFreight",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Stability and predictability on the railways enable CargoBeamer to expand in France",
+      "url": "https://www.railfreight.com/railfreight/2026/05/27/stability-and-predictability-on-the-railways-enable-cargobeamer-to-expand/",
+      "published_at": "2026-05-27T12:07:31.397Z",
+      "summary_en": "",
+      "source": "RailFreight",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Kazakh Railways is not going to be &#8216;just&#8217; a rail operator",
+      "url": "https://www.railfreight.com/railfreight/2026/05/27/kazakh-railways-is-not-going-to-be-just-a-rail-operator/",
+      "published_at": "2026-05-27T12:07:31.397Z",
+      "summary_en": "",
+      "source": "RailFreight",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "‘Logistics wins wars’",
+      "url": "https://www.railfreight.com/in-depth/2026/05/27/logistics-wins-wars/",
+      "published_at": "2026-05-27T12:07:31.397Z",
+      "summary_en": "",
+      "source": "RailFreight",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Ukrainian shippers call on state to extend service life of rail wagons",
+      "url": "https://www.railfreight.com/railfreight/2026/05/27/ukrainian-shippers-call-on-state-to-extend-service-life-of-rail-wagons/",
+      "published_at": "2026-05-27T12:07:31.397Z",
+      "summary_en": "",
+      "source": "RailFreight",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Kazakh Railways is not going to be &#8216;just&#8217; a rail operator",
+      "url": "https://www.railfreight.com/railfreight/2026/05/27/kazakh-railways-is-not-going-to-be-just-a-rail-operator/",
+      "published_at": "2026-05-27T12:07:32.155Z",
+      "summary_en": "",
+      "source": "RailFreight BeltAndRoad",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Armenia now has a railway connection to the EU",
+      "url": "https://www.railfreight.com/railfreight/2026/05/26/armenia-now-has-a-railway-connection-to-the-eu/",
+      "published_at": "2026-05-27T12:07:32.155Z",
+      "summary_en": "",
+      "source": "RailFreight BeltAndRoad",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Russia and China agree to build new cross-border railway",
+      "url": "https://www.railfreight.com/railfreight/2026/05/22/russia-and-china-agree-to-build-new-cross-border-railway/",
+      "published_at": "2026-05-27T12:07:32.155Z",
+      "summary_en": "",
+      "source": "RailFreight BeltAndRoad",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Rohlig SUUS sees “strong potential in Central Asia” and expands into Uzbekistan",
+      "url": "https://www.railfreight.com/railfreight/2026/05/20/rohlig-suus-sees-strong-potential-in-central-asia-and-expands-into-uzbekistan/",
+      "published_at": "2026-05-27T12:07:32.155Z",
+      "summary_en": "",
+      "source": "RailFreight BeltAndRoad",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Turkmenistan modernises its railways to become a new Middle Corridor gateway",
+      "url": "https://www.railfreight.com/railfreight/2026/05/13/turkmenistan-modernises-its-railways-to-become-a-new-middle-corridor-gateway/",
+      "published_at": "2026-05-27T12:07:32.155Z",
+      "summary_en": "",
+      "source": "RailFreight BeltAndRoad",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Central Asia",
+      "url": "https://www.transportcorridors.com/category/regions/central-asia",
+      "published_at": "2026-05-27T12:07:47.628Z",
+      "summary_en": "",
+      "source": "TransportCorridors CentralAsia",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Intermodal",
+      "url": "https://www.transportcorridors.com/category/modalities/intermodal-en",
+      "published_at": "2026-05-27T12:07:47.628Z",
+      "summary_en": "",
+      "source": "TransportCorridors CentralAsia",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Kazakhstan and the EU discussed the development of the Trans-Caspian Route and the expansion of transport cooperation.",
+      "url": "https://www.transportcorridors.com/20889",
+      "published_at": "2026-05-27T12:07:47.628Z",
+      "summary_en": "",
+      "source": "TransportCorridors CentralAsia",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "27.05.2026",
+      "url": "https://www.transportcorridors.com/20889",
+      "published_at": "2026-05-27T12:07:47.628Z",
+      "summary_en": "",
+      "source": "TransportCorridors CentralAsia",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "China is expanding the use of the TIR system to accelerate transport between Asia and Europe.",
+      "url": "https://www.transportcorridors.com/20874",
+      "published_at": "2026-05-27T12:07:47.628Z",
+      "summary_en": "",
+      "source": "TransportCorridors CentralAsia",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Central Asia",
+      "url": "https://www.transportcorridors.com/category/regions/central-asia",
+      "published_at": "2026-05-27T12:07:48.579Z",
+      "summary_en": "",
+      "source": "TransportCorridors Rail",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "Construction of a major railway bridge across the Syr Darya continues on the Darbaza–Maktaaral line.",
+      "url": "https://www.transportcorridors.com/20848",
+      "published_at": "2026-05-27T12:07:48.579Z",
+      "summary_en": "",
+      "source": "TransportCorridors Rail",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "26.05.2026",
+      "url": "https://www.transportcorridors.com/20848",
+      "published_at": "2026-05-27T12:07:48.579Z",
+      "summary_en": "",
+      "source": "TransportCorridors Rail",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "WEC Lines has launched a new rail service between Spain and the Canary Islands.",
+      "url": "https://www.transportcorridors.com/20833",
+      "published_at": "2026-05-27T12:07:48.579Z",
+      "summary_en": "",
+      "source": "TransportCorridors Rail",
+      "section": "rail",
+      "language": "en"
+    },
+    {
+      "title": "25.05.2026",
+      "url": "https://www.transportcorridors.com/20833",
+      "published_at": "2026-05-27T12:07:48.579Z",
+      "summary_en": "",
+      "source": "TransportCorridors Rail",
       "section": "rail",
       "language": "en"
     }
@@ -3342,6 +4561,96 @@
       "source": "AirCargoNews",
       "section": "air",
       "language": "en"
+    },
+    {
+      "name": "Freightos Air Index",
+      "value": 8211,
+      "change_pct": null,
+      "unit": "$/kg",
+      "date": "2026-05-28",
+      "source": "Freightos Air Index",
+      "source_url": "https://fbx.freightos.com/air"
+    },
+    {
+      "name": "Jet Fuel (IATA)",
+      "value": 159.85,
+      "change_pct": null,
+      "unit": "$/gallon",
+      "date": "2026-05-28",
+      "source": "Jet Fuel (IATA)",
+      "source_url": "https://www.iata.org/en/publications/economics/fuel-monitor/"
+    },
+    {
+      "name": "Freightos Air Index",
+      "value": 8211,
+      "change_pct": null,
+      "unit": "$/kg",
+      "date": "2026-05-28",
+      "source": "Freightos Air Index",
+      "source_url": "https://fbx.freightos.com/air"
+    },
+    {
+      "name": "Jet Fuel (IATA)",
+      "value": 159.85,
+      "change_pct": null,
+      "unit": "$/gallon",
+      "date": "2026-05-28",
+      "source": "Jet Fuel (IATA)",
+      "source_url": "https://www.iata.org/en/publications/economics/fuel-monitor/"
+    },
+    {
+      "name": "Freightos Air Index",
+      "value": 8211,
+      "change_pct": null,
+      "unit": "$/kg",
+      "date": "2026-05-28",
+      "source": "Freightos Air Index",
+      "source_url": "https://fbx.freightos.com/air"
+    },
+    {
+      "name": "Jet Fuel (IATA)",
+      "value": 159.85,
+      "change_pct": null,
+      "unit": "$/gallon",
+      "date": "2026-05-28",
+      "source": "Jet Fuel (IATA)",
+      "source_url": "https://www.iata.org/en/publications/economics/fuel-monitor/"
+    },
+    {
+      "name": "Freightos Air Index",
+      "value": 8211,
+      "change_pct": null,
+      "unit": "$/kg",
+      "date": "2026-05-28",
+      "source": "Freightos Air Index",
+      "source_url": "https://fbx.freightos.com/air"
+    },
+    {
+      "name": "Jet Fuel (IATA)",
+      "value": 159.85,
+      "change_pct": null,
+      "unit": "$/gallon",
+      "date": "2026-05-28",
+      "source": "Jet Fuel (IATA)",
+      "source_url": "https://www.iata.org/en/publications/economics/fuel-monitor/"
+    },
+    {
+      "name": "Freightos Air Index",
+      "value": 8211,
+      "change_pct": null,
+      "unit": "$/kg",
+      "date": "2026-05-28",
+      "source": "Freightos Air Index",
+      "source_url": "https://fbx.freightos.com/air"
+    },
+    {
+      "name": "Jet Fuel (IATA)",
+      "value": 159.85,
+      "change_pct": null,
+      "unit": "$/gallon",
+      "date": "2026-05-28",
+      "source": "Jet Fuel (IATA)",
+      "source_url": "https://www.iata.org/en/publications/economics/fuel-monitor/"
     }
   ]
 }
