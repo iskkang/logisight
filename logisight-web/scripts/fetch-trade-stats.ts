@@ -82,9 +82,8 @@ async function fetchData(
   strtYymm: string,
   endYymm: string,
 ): Promise<{ items: ApiItem[]; rawXml: string }> {
-  // .env.local 키는 디코딩 형식(+, = 포함) → encodeURIComponent 적용
-  const key = encodeURIComponent(API_KEY);
-  const url = `${BASE_URL}?serviceKey=${key}&hsSgn=${hsSgn}&cntyCd=${cntyCd}&strtYymm=${strtYymm}&endYymm=${endYymm}`;
+  // .env.local의 키는 이미 인코딩된 형식(%2B, %3D 포함) → 그대로 사용
+  const url = `${BASE_URL}?serviceKey=${API_KEY}&hsSgn=${hsSgn}&cntyCd=${cntyCd}&strtYymm=${strtYymm}&endYymm=${endYymm}`;
 
   const res = await fetch(url, {
     headers: { 'User-Agent': 'Logisight/1.0 (logisight.mtlship.com; bot)' },

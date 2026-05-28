@@ -66,9 +66,8 @@ function featuredProps(polCd: string, podCd: string): { is_featured: boolean; di
 
 // ── API 호출 (XML 응답) ───────────────────────────────────────────────────────
 async function fetchPage(pageNo: number, fromDate: string, toDate: string): Promise<string> {
-  // .env.local 키는 디코딩 형식(+, = 포함) → encodeURIComponent 적용
-  const key = encodeURIComponent(API_KEY);
-  const url = `${BASE_URL}?serviceKey=${key}&pageNo=${pageNo}&numOfRows=50&annGb=v2&fermnDeFr=${fromDate}&fermnDeTo=${toDate}`;
+  // .env.local의 키는 이미 인코딩된 형식(%2B, %3D 포함) → 그대로 사용
+  const url = `${BASE_URL}?serviceKey=${API_KEY}&pageNo=${pageNo}&numOfRows=50&annGb=v2&fermnDeFr=${fromDate}&fermnDeTo=${toDate}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`HTTP ${res.status} — ${url}`);
   return res.text();
