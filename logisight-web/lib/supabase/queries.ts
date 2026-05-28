@@ -717,24 +717,26 @@ export interface TradeStatRow {
 }
 
 // Returns last ~14 months of per-country rows for the given HS codes.
-// aggregateTrade() in the page derives both totals and country breakdown from this.
+// Industry map uses 4-digit codes (8507), DB stores 6-digit codes (850710) →
+// use LIKE prefix matching. aggregateTrade() in the page handles aggregation.
 export async function getTradeStatsByIndustry(
   hsCodes: readonly string[],
 ): Promise<TradeStatRow[]> {
   if (!hasSupabase || hsCodes.length === 0) return [];
 
   const supabase = createServerClient();
-  // limit: 14 months × per HS code × 8 countries (COUNTRIES in the adapter)
-  const limit = 14 * Math.max(hsCodes.length, 1) * 8;
+  // e.g. ['8507','8703'] → 'hs_code.like.8507%,hs_code.like.8703%'
+  const orFilter = hsCodes.map(c => `hs_code.like.${c}%`).join(',');
   const { data, error } = await supabase
     .from('trade_statistics')
     .select('period, stat_type, hs_code, hs_name, country_code, country_name, export_usd, export_weight, import_usd, import_weight, trade_balance')
-    .in('hs_code', hsCodes as string[])
+    .or(orFilter)
     .eq('stat_type', 'item')
     .order('period', { ascending: false })
-    .limit(limit);
+    .limit(2000);
 
   if (error) console.error('[getTradeStatsByIndustry]', error);
+  console.log(`[getTradeStatsByIndustry] ${hsCodes.join(',')} → ${(data ?? []).length}행`);
   return (data ?? []) as TradeStatRow[];
 }
 
@@ -745,16 +747,17 @@ export async function getTradeTrend(
   if (!hasSupabase || hsCodes.length === 0) return [];
 
   const supabase = createServerClient();
-  const limit = months * Math.max(hsCodes.length, 1) * 8;
+  const orFilter = hsCodes.map(c => `hs_code.like.${c}%`).join(',');
   const { data, error } = await supabase
     .from('trade_statistics')
     .select('period, hs_code, country_code, export_usd, import_usd, trade_balance')
-    .in('hs_code', hsCodes as string[])
+    .or(orFilter)
     .eq('stat_type', 'item')
-    .order('period', { ascending: true })
-    .limit(limit);
+    .order('period', { ascending: false })
+    .limit(months * 20);  // 12개월 × sub-codes × countries 여유분
 
   if (error) console.error('[getTradeTrend]', error);
+  console.log(`[getTradeTrend] ${hsCodes.join(',')} → ${(data ?? []).length}행`);
   return (data ?? []) as TradeStatRow[];
 }
 
