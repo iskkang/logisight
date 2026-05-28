@@ -24,7 +24,13 @@
     "collect:ocean:weekly": "ts-node --project tsconfig.workers.json workers/collectors/index.ts ocean-weekly",
     "curate:rail":          "node scripts/curate-rail.js",
     "curate:ocean":         "node scripts/curate-ocean.js",
-    "newsletter:generate":  "node scripts/generate-newsletter.js"
+    "newsletter:generate":  "node scripts/generate-newsletter.js",
+    "article:rail":         "node scripts/generate-article-shipping.js --section=rail",
+    "article:ocean":        "node scripts/generate-article-shipping.js --section=ocean",
+    "article:corp":         "node scripts/generate-article-corp.js",
+    "article:brief":        "node scripts/generate-article-brief.js",
+    "article:weekly":       "node scripts/generate-article-brief.js --window=7",
+    "article:trend":        "node scripts/generate-article-brief.js --type=trend"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.24.0",
