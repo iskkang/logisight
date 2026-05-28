@@ -88,7 +88,9 @@ async function insertArticle({ markdownContent, canonicalUrl, agentType, default
     return null;
   }
 
-  const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
+  const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
+    realtime: { enabled: false },
+  });
   const row = {
     title,
     summary: subtitle ?? null,
