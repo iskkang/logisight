@@ -18,7 +18,6 @@ import {
   getEurasiaRoutes,
   getPolicyAlerts,
   getLastUpdated,
-  getBlankSailingsStat,
 } from '@/lib/supabase/queries';
 
 // Disable static caching — re-fetch on each request.
@@ -36,7 +35,6 @@ export default async function HomePage() {
     eurasiaRoutes,
     policyAlerts,
     lastUpdated,
-    blankCount,
   ] = await Promise.all([
     getLatestBriefing(),
     getIndices(),
@@ -46,13 +44,12 @@ export default async function HomePage() {
     getEurasiaRoutes(),
     getPolicyAlerts(),
     getLastUpdated(),
-    getBlankSailingsStat(),
   ]);
 
   return (
     <main className="min-h-screen flex flex-col">
       <Navigation />
-      <Hero blankCount={blankCount} indices={indices} />
+      <Hero indices={indices} />
       <IndexBar indices={indices} lastUpdated={lastUpdated} />
 
       <div className="flex-1 bg-slate-50 px-4 lg:px-8 py-6 lg:py-10">

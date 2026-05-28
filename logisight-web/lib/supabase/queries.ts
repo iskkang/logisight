@@ -77,7 +77,7 @@ export async function getLatestBriefing(): Promise<WeeklyBriefingData> {
 //   bunker_prices:   VLSFO Singapore              (별도 테이블)
 //   BAI:             air_indices DB 미저장 → 항상 '—'
 // ----------------------------------------------------------------------------
-const FREIGHT_CODES = ['WCI', 'FBX', 'BDI', 'SCFI', 'KCCI'];
+const FREIGHT_CODES = ['SCFI', 'CCFI', 'KCCI'];
 
 export async function getIndices(): Promise<IndexBarItem[]> {
   if (!hasSupabase) return mock.MOCK_INDICES;
@@ -142,12 +142,10 @@ export async function getIndices(): Promise<IndexBarItem[]> {
     : { name: 'VLSFO', value: '—', change_pct: null, change_sign: 'flat', source: 'Ship & Bunker' };
 
   return [
-    fromFreight('WCI'),
-    fromFreight('FBX'),
-    { name: 'BAI',  value: '—', change_pct: null, change_sign: 'flat', source: 'Baltic Exchange' },
-    vlsfoItem,
     fromFreight('SCFI'),
+    fromFreight('CCFI'),
     fromFreight('KCCI'),
+    vlsfoItem,
   ];
 }
 

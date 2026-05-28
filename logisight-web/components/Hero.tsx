@@ -9,11 +9,10 @@ function fmtChange(idx: IndexBarItem): string {
   return `${idx.change_pct > 0 ? '+' : ''}${idx.change_pct}% w/w`;
 }
 
-export function Hero({ blankCount, indices = [] }: { blankCount?: string; indices?: IndexBarItem[] }) {
+export function Hero({ indices = [] }: { indices?: IndexBarItem[] }) {
   const byName = new Map(indices.map((i) => [i.name, i]));
 
   const stats = MOCK_HERO_STATS.map((s) => {
-    if (s.label === '블랭크' && blankCount) return { ...s, value: blankCount };
     const idx = byName.get(s.label);
     if (!idx) return s;
     return {
@@ -52,8 +51,8 @@ export function Hero({ blankCount, indices = [] }: { blankCount?: string; indice
           </div>
         </div>
 
-        {/* 통계 카드 2×2 그리드 */}
-        <div className="grid grid-cols-2 gap-2 w-full lg:w-64 lg:flex-shrink-0">
+        {/* 통계 카드 3열 그리드 */}
+        <div className="grid grid-cols-3 gap-2 w-full lg:w-auto lg:flex-shrink-0">
           {stats.map((stat) => (
             <div
               key={stat.label}

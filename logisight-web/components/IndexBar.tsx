@@ -1,11 +1,7 @@
 import type { IndexBarItem } from '@/lib/types';
 
 function sourceLabel(idx: IndexBarItem): string | null {
-  const parts = [
-    idx.source,
-    idx.week_date ? idx.week_date.slice(5).replace('-', '/') : null,
-  ].filter(Boolean);
-  return parts.length ? parts.join(' · ') : null;
+  return idx.week_date ? idx.week_date.slice(5).replace('-', '/') : null;
 }
 
 export function IndexBar({

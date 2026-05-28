@@ -7,19 +7,16 @@ import type {
 } from './types';
 
 export const MOCK_INDICES: IndexBarItem[] = [
-  { name: 'WCI',   value: '$2,286',   change_pct: 3.1,  change_sign: 'up',   source: 'Drewry WCI' },
-  { name: 'FBX',   value: '$2,140',   change_pct: -1.2, change_sign: 'down', source: 'Freightos FBX' },
-  { name: 'BAI',   value: '—',        change_pct: null, change_sign: 'flat', source: 'Baltic Exchange' },
-  { name: 'VLSFO', value: '$812',     change_pct: null, change_sign: 'flat', source: 'Ship & Bunker' },
-  { name: 'SCFI',  value: '—',        change_pct: null, change_sign: 'flat', source: 'SSE' },
-  { name: 'KCCI',  value: '—',        change_pct: null, change_sign: 'flat', source: 'KOBC' },
+  { name: 'SCFI',  value: '—', change_pct: null, change_sign: 'flat', source: 'SSE' },
+  { name: 'CCFI',  value: '—', change_pct: null, change_sign: 'flat', source: 'SSE' },
+  { name: 'KCCI',  value: '—', change_pct: null, change_sign: 'flat', source: 'KOBC' },
+  { name: 'VLSFO', value: '—', change_pct: null, change_sign: 'flat', source: 'Ship & Bunker' },
 ];
 
 export const MOCK_HERO_STATS = [
-  { label: 'WCI',    value: '$2,286', change: '+3.1% w/w',   sign: 'up' as const,   source: 'Drewry' },
-  { label: 'SCFI',   value: '—',      change: '수집 예정',   sign: 'flat' as const, source: 'SSE' },
-  { label: '부산항', value: '2.4M',   change: 'TEU · 4월',  sign: 'flat' as const, source: '해수부' },
-  { label: '블랭크', value: '43편',   change: '미주 W20-24', sign: 'down' as const, source: 'EconDB' },
+  { label: 'SCFI', value: '—', change: '수집 예정', sign: 'flat' as const, source: 'SSE' },
+  { label: 'CCFI', value: '—', change: '수집 예정', sign: 'flat' as const, source: 'SSE' },
+  { label: 'KCCI', value: '—', change: '수집 예정', sign: 'flat' as const, source: 'KOBC' },
 ];
 
 // 편집부 톤 헤드라인 (인과 연결 없이 각자 독립)
