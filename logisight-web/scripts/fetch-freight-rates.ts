@@ -41,13 +41,8 @@ function normalizeContainerType(raw: string): string {
 
 // ── API 호출 ─────────────────────────────────────────────────────────────────
 async function fetchPage(pageNo: number, numOfRows: number): Promise<any> {
-  const params = new URLSearchParams({
-    serviceKey: API_KEY,
-    pageNo: String(pageNo),
-    numOfRows: String(numOfRows),
-    returnType: 'json',
-  });
-  const url = `${BASE_URL}?${params}`;
+  // serviceKey는 이미 인코딩된 상태로 발급되므로 raw string으로 직접 붙임
+  const url = `${BASE_URL}?serviceKey=${API_KEY}&pageNo=${pageNo}&numOfRows=${numOfRows}&returnType=json`;
 
   const res = await fetch(url);
   if (!res.ok) throw new Error(`HTTP ${res.status} — ${url}`);
