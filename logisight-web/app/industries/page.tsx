@@ -81,6 +81,13 @@ function NewsCard({ article }: { article: NewsArticle }) {
 }
 
 // ── 무역통계 집계 ─────────────────────────────────────────────────────────────
+interface TopCountry {
+  code: string;
+  name: string | null;
+  export_usd: number;
+  import_usd: number;
+}
+
 interface TradeSummary {
   latestPeriod: string;
   exportUsd: number;
@@ -89,6 +96,7 @@ interface TradeSummary {
   exportYoY: number | null;
   importYoY: number | null;
   trend: Array<{ period: string; export_usd: number | null; import_usd: number | null }>;
+  topCountries: TopCountry[];
 }
 
 function aggregateTrade(rows: TradeStatRow[]): TradeSummary | null {
@@ -123,6 +131,21 @@ function aggregateTrade(rows: TradeStatRow[]): TradeSummary | null {
     import_usd: byPeriod.get(p)!.import_usd,
   }));
 
+  // 상위 교역국: 최신월 기준, 수출액 내림차순 top 5
+  const byCountry = new Map<string, { name: string | null; export_usd: number; import_usd: number }>();
+  for (const row of rows) {
+    if (row.period !== latestPeriod || !row.country_code) continue;
+    const key = row.country_code;
+    if (!byCountry.has(key)) byCountry.set(key, { name: row.country_name ?? null, export_usd: 0, import_usd: 0 });
+    const acc = byCountry.get(key)!;
+    acc.export_usd += row.export_usd ?? 0;
+    acc.import_usd += row.import_usd ?? 0;
+  }
+  const topCountries: TopCountry[] = [...byCountry.entries()]
+    .map(([code, d]) => ({ code, name: d.name, export_usd: d.export_usd, import_usd: d.import_usd }))
+    .sort((a, b) => b.export_usd - a.export_usd)
+    .slice(0, 5);
+
   return {
     latestPeriod,
     exportUsd: latest.export_usd,
@@ -131,6 +154,7 @@ function aggregateTrade(rows: TradeStatRow[]): TradeSummary | null {
     exportYoY,
     importYoY,
     trend,
+    topCountries,
   };
 }
 
@@ -167,7 +191,7 @@ function TradeBlock({ summary }: { summary: TradeSummary | null }) {
 
       {!summary ? (
         <p className="text-[12px] text-slate-400 text-center py-4">
-          무역통계 수집 예정 — 관세청 API 어댑터 구축 후 표시됩니다.
+          관세청 데이터 수집 예정
         </p>
       ) : (
         <div className="flex flex-col gap-3">
@@ -195,6 +219,29 @@ function TradeBlock({ summary }: { summary: TradeSummary | null }) {
               <div className="text-[10px] text-slate-400">흑자/적자</div>
             </div>
           </div>
+
+          {/* 상위 교역국 */}
+          {summary.topCountries.length > 0 && (
+            <div>
+              <div className="text-[10px] text-slate-400 mb-1.5 uppercase tracking-[0.05em]">상위 교역국 (수출 기준)</div>
+              <div className="flex flex-col gap-1">
+                {summary.topCountries.map((c) => {
+                  const total = summary.exportUsd || 1;
+                  const pct = Math.round(c.export_usd / total * 100);
+                  return (
+                    <div key={c.code} className="flex items-center gap-2">
+                      <span className="text-[10px] text-slate-500 w-6 shrink-0">{c.code}</span>
+                      <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-cyan-500 rounded-full" style={{ width: `${pct}%` }} />
+                      </div>
+                      <span className="text-[10px] text-slate-600 w-16 text-right shrink-0">{fmtUsd(c.export_usd)}</span>
+                      <span className="text-[10px] text-slate-400 w-8 text-right shrink-0">{pct}%</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* 미니 차트 */}
           {summary.trend.length > 1 && (

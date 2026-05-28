@@ -3,19 +3,19 @@
 
 export const INDUSTRY_HS_MAP = {
   '배터리·전기차': {
-    hsCodes: ['8507', '850760'],         // 축전지, 리튬이온전지
+    hsCodes: ['8507'],                          // 축전지/이차전지 (4자리 기준)
     icon: 'bolt',
     label: '배터리·전기차',
     newsOnly: false,
   },
   '자동차': {
-    hsCodes: ['8703', '8704', '8708'],   // 승용차, 화물차, 부품
+    hsCodes: ['8703', '8708'],                  // 승용차, 자동차부품
     icon: 'car',
     label: '자동차',
     newsOnly: false,
   },
   '냉동냉장': {
-    hsCodes: ['0303', '0307', '0207', '2106'], // 냉동어류, 냉동연체동물, 냉동육류, 조제식료품
+    hsCodes: ['0303', '0202', '0203'],          // 냉동어류, 냉동쇠고기, 냉동돼지고기
     icon: 'snowflake',
     label: '냉동냉장 (콜드체인)',
     newsOnly: false,

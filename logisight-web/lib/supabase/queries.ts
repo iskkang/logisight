@@ -703,30 +703,36 @@ export async function getIndustriesNews(): Promise<IndustrySection[]> {
 // Trade Statistics — /industries 무역통계 블록
 // ----------------------------------------------------------------------------
 export interface TradeStatRow {
-  period: string;                // 'YYYYMM'
-  stat_type: string;
-  hs_code: string | null;
-  hs_name: string | null;
-  export_usd: number | null;
+  period:        string;       // 'YYYYMM'
+  stat_type:     string;
+  hs_code:       string | null;
+  hs_name:       string | null;
+  country_code:  string | null;
+  country_name:  string | null;
+  export_usd:    number | null;
   export_weight: number | null;
-  import_usd: number | null;
+  import_usd:    number | null;
   import_weight: number | null;
   trade_balance: number | null;
 }
 
+// Returns last ~14 months of per-country rows for the given HS codes.
+// aggregateTrade() in the page derives both totals and country breakdown from this.
 export async function getTradeStatsByIndustry(
   hsCodes: readonly string[],
 ): Promise<TradeStatRow[]> {
   if (!hasSupabase || hsCodes.length === 0) return [];
 
   const supabase = createServerClient();
+  // limit: 14 months × per HS code × 8 countries (COUNTRIES in the adapter)
+  const limit = 14 * Math.max(hsCodes.length, 1) * 8;
   const { data, error } = await supabase
     .from('trade_statistics')
-    .select('period, stat_type, hs_code, hs_name, export_usd, export_weight, import_usd, import_weight, trade_balance')
+    .select('period, stat_type, hs_code, hs_name, country_code, country_name, export_usd, export_weight, import_usd, import_weight, trade_balance')
     .in('hs_code', hsCodes as string[])
     .eq('stat_type', 'item')
     .order('period', { ascending: false })
-    .limit(12 * Math.max(hsCodes.length, 1));
+    .limit(limit);
 
   if (error) console.error('[getTradeStatsByIndustry]', error);
   return (data ?? []) as TradeStatRow[];
@@ -739,13 +745,14 @@ export async function getTradeTrend(
   if (!hasSupabase || hsCodes.length === 0) return [];
 
   const supabase = createServerClient();
+  const limit = months * Math.max(hsCodes.length, 1) * 8;
   const { data, error } = await supabase
     .from('trade_statistics')
-    .select('period, hs_code, export_usd, import_usd, trade_balance')
+    .select('period, hs_code, country_code, export_usd, import_usd, trade_balance')
     .in('hs_code', hsCodes as string[])
     .eq('stat_type', 'item')
     .order('period', { ascending: true })
-    .limit(months * Math.max(hsCodes.length, 1));
+    .limit(limit);
 
   if (error) console.error('[getTradeTrend]', error);
   return (data ?? []) as TradeStatRow[];

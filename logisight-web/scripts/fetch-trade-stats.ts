@@ -1,93 +1,90 @@
-/**
- * scripts/fetch-trade-stats.ts
- * 관세청 수출입무역통계 API 어댑터 — 스텁
- *
- * API 가이드 도착 후 채울 항목:
- *   - BASE_URL: 실제 엔드포인트
- *   - 응답 필드명 매핑 (row → TradeStatRow)
- *   - 파라미터명 확인 (기간, 품목코드 등)
- *
- * 사용법:
- *   ts-node scripts/fetch-trade-stats.ts           # 실제 수집 + upsert
- *   ts-node scripts/fetch-trade-stats.ts --probe   # API 연결 확인만 (DB 미저장)
- */
-
 import * as dotenv from 'dotenv';
-import * as path from 'path';
+dotenv.config({ path: '.env.local' });
+
+// scripts/fetch-trade-stats.ts
+// 관세청 품목별국가별 수출입실적 API → trade_statistics 테이블 upsert
+//
+// 실행: npx tsx scripts/fetch-trade-stats.ts
+// 탐색: npx tsx scripts/fetch-trade-stats.ts --probe    (HS8507×US 1개월, 원시 XML 출력)
+// 건조: npx tsx scripts/fetch-trade-stats.ts --dry-run  (조합 목록만, DB 미반영)
+//
+// 환경변수 (.env.local):
+//   NEXT_PUBLIC_SUPABASE_URL  또는 SUPABASE_URL
+//   SUPABASE_SERVICE_ROLE_KEY
+//   DATA_GO_KR_API_KEY
+
 import { createClient } from '@supabase/supabase-js';
+import { XMLParser } from 'fast-xml-parser';
 
-dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
+// ── 환경변수 ─────────────────────────────────────────────────────────────────
+const SUPABASE_URL = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
+const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
+const API_KEY      = process.env.DATA_GO_KR_API_KEY ?? '';
 
-const API_KEY    = process.env.DATA_GO_KR_API_KEY ?? '';
-const SUPA_URL   = process.env.SUPABASE_URL       ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
-const SUPA_KEY   = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
-const IS_PROBE   = process.argv.includes('--probe');
+const BASE_URL = 'https://apis.data.go.kr/1220000/nitemtrade/getNitemtradeList';
 
-if (!API_KEY) {
-  console.error('❌ DATA_GO_KR_API_KEY 환경변수 없음');
-  process.exit(1);
+const IS_PROBE = process.argv.includes('--probe');
+const IS_DRY   = process.argv.includes('--dry-run');
+
+// ── 대상 정의 ─────────────────────────────────────────────────────────────────
+const HS_CODES = {
+  battery: ['8507'],                    // 축전지/이차전지
+  auto:    ['8703', '8708'],            // 승용차, 자동차부품
+  cold:    ['0303', '0202', '0203'],    // 냉동어류, 냉동쇠고기, 냉동돼지고기
+};
+
+const COUNTRIES = ['US', 'CN', 'JP', 'DE', 'VN', 'IN', 'NL', 'HK'];
+
+// ── 날짜 범위 ─────────────────────────────────────────────────────────────────
+// 관세청 데이터는 1~2개월 지연 → endYymm = 2개월 전, strtYymm = 13개월 전
+function getDateRange(): { strtYymm: string; endYymm: string } {
+  const end = new Date();
+  end.setMonth(end.getMonth() - 2);
+  const endYymm = `${end.getFullYear()}${String(end.getMonth() + 1).padStart(2, '0')}`;
+
+  const start = new Date();
+  start.setMonth(start.getMonth() - 13);
+  const strtYymm = `${start.getFullYear()}${String(start.getMonth() + 1).padStart(2, '0')}`;
+
+  return { strtYymm, endYymm };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TODO: API 가이드 도착 후 채울 상수
-// ─────────────────────────────────────────────────────────────────────────────
-
-// TODO: 실제 엔드포인트로 교체
-const BASE_URL = 'https://unipass.customs.go.kr/cds/openapi/TODO_ENDPOINT';
-
-// TODO: 요청 파라미터 이름 확인 후 수정
-interface ApiParams {
-  serviceKey: string;
-  pageNo: number;
-  numOfRows: number;
-  // TODO: 기간 파라미터 (예: 'qryYYMM', 'yyyymm', etc.)
-  period?: string;
-  // TODO: HS코드 파라미터 (예: 'hsCd', 'hsCode', etc.)
-  hsCd?: string;
+// ── 기간 파싱 ─────────────────────────────────────────────────────────────────
+// "2026.01" → "202601",  "2026.1" → "202601",  "총계" → null
+function parsePeriod(yearStr: string): string | null {
+  const s = String(yearStr ?? '').trim();
+  if (!s || s === '총계' || s === '-') return null;
+  const m = s.match(/^(\d{4})\.(\d{1,2})$/);
+  if (!m) return null;
+  return `${m[1]}${m[2].padStart(2, '0')}`;
 }
 
-// TODO: 실제 API 응답 구조로 교체
-interface ApiResponseRow {
-  // TODO: 실제 필드명 매핑
-  // 예시 (가이드 도착 전까지 플레이스홀더):
-  period?: string;       // 기준연월 YYYYMM
-  hsCd?: string;         // HS코드
-  hsNm?: string;         // 품목명
-  expAmt?: string;       // 수출금액
-  expWgt?: string;       // 수출중량
-  impAmt?: string;       // 수입금액
-  impWgt?: string;       // 수입중량
+// ── XML 파서 ─────────────────────────────────────────────────────────────────
+const parser = new XMLParser({ ignoreAttributes: false, parseTagValue: true });
+
+interface ApiItem {
+  year?:   string | number;
+  hsCd?:   string | number;
+  hsNm?:   string;
+  statCd?: string | number;
+  statNm?: string;
+  expAmt?: string | number;
+  expWgt?: string | number;
+  impAmt?: string | number;
+  impWgt?: string | number;
   [key: string]: unknown;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DB 행 타입
-// ─────────────────────────────────────────────────────────────────────────────
-interface TradeStatRow {
-  period: string;
-  stat_type: string;
-  hs_code: string | null;
-  hs_name: string | null;
-  export_usd: number | null;
-  export_weight: number | null;
-  import_usd: number | null;
-  import_weight: number | null;
-  trade_balance: number | null;
-  data_source: string;
-  fetched_at: string;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// API 호출
-// ─────────────────────────────────────────────────────────────────────────────
-async function fetchPage(params: ApiParams): Promise<ApiResponseRow[]> {
-  const encodedKey = encodeURIComponent(API_KEY);
-  // TODO: 파라미터 조합 방식 확인 (URLSearchParams vs template literal)
-  const url = `${BASE_URL}?serviceKey=${encodedKey}`
-    + `&pageNo=${params.pageNo}`
-    + `&numOfRows=${params.numOfRows}`
-    + (params.period ? `&TODO_PERIOD_PARAM=${params.period}` : '')
-    + (params.hsCd   ? `&TODO_HSCODE_PARAM=${params.hsCd}` : '');
+// ── API 호출 ─────────────────────────────────────────────────────────────────
+async function fetchData(
+  hsSgn: string,
+  cntyCd: string,
+  strtYymm: string,
+  endYymm: string,
+): Promise<{ items: ApiItem[]; rawXml: string }> {
+  // .env.local 키는 디코딩 형식(+, = 포함) → encodeURIComponent 적용
+  const key = encodeURIComponent(API_KEY);
+  const url = `${BASE_URL}?serviceKey=${key}&hsSgn=${hsSgn}&cntyCd=${cntyCd}&strtYymm=${strtYymm}&endYymm=${endYymm}`;
 
   const res = await fetch(url, {
     headers: { 'User-Agent': 'Logisight/1.0 (logisight.mtlship.com; bot)' },
@@ -95,111 +92,206 @@ async function fetchPage(params: ApiParams): Promise<ApiResponseRow[]> {
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
 
-  // TODO: XML 또는 JSON 응답 파싱 확인
-  const text = await res.text();
-  console.log('[probe] 응답 앞 500자:', text.slice(0, 500));
+  const rawXml = await res.text();
 
-  // TODO: 응답 형식에 따라 파싱 로직 작성
-  // XML의 경우: import { XMLParser } from 'fast-xml-parser'
-  // JSON의 경우: JSON.parse(text)
-  return []; // placeholder
+  const obj  = parser.parse(rawXml);
+  const body = obj?.response?.body ?? obj?.body ?? {};
+  const raw  = body?.items?.item ?? [];
+  const items: ApiItem[] = Array.isArray(raw) ? raw : raw ? [raw] : [];
+
+  return { items, rawXml };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 응답 → DB 행 매핑
-// ─────────────────────────────────────────────────────────────────────────────
-function mapRow(raw: ApiResponseRow): TradeStatRow {
-  const now = new Date().toISOString();
-  // TODO: 실제 필드명으로 교체
-  const exportUsd  = raw.expAmt  ? parseFloat(String(raw.expAmt))  : null;
-  const importUsd  = raw.impAmt  ? parseFloat(String(raw.impAmt))  : null;
+// ── 행 타입 ──────────────────────────────────────────────────────────────────
+interface TradeStatRow {
+  period:        string;
+  stat_type:     string;
+  hs_code:       string;
+  hs_name:       string | null;
+  country_code:  string;
+  country_name:  string | null;
+  export_usd:    number | null;
+  export_weight: number | null;
+  import_usd:    number | null;
+  import_weight: number | null;
+  trade_balance: number | null;
+  data_source:   string;
+  fetched_at:    string;
+}
+
+// ── 숫자 변환 헬퍼 ────────────────────────────────────────────────────────────
+function toUsd(v: unknown): number | null {
+  if (v == null) return null;
+  const s = String(v).replace(/,/g, '').trim();
+  if (!s || s === '-') return null;
+  const n = Number(s);
+  // API 금액 단위: 천달러 → USD 변환
+  return isNaN(n) ? null : Math.round(n * 1000);
+}
+
+function toWeight(v: unknown): number | null {
+  if (v == null) return null;
+  const s = String(v).replace(/,/g, '').trim();
+  if (!s || s === '-') return null;
+  const n = Number(s);
+  return isNaN(n) ? null : n; // 단위: MT (metric ton)
+}
+
+// ── API 아이템 → DB 행 매핑 ──────────────────────────────────────────────────
+function mapItem(item: ApiItem, hsSgn: string, cntyCd: string): TradeStatRow | null {
+  const period = parsePeriod(String(item.year ?? ''));
+  if (!period) return null;
+
+  const hsCd   = String(item.hsCd  ?? hsSgn).trim();
+  const statCd = String(item.statCd ?? cntyCd).trim();
+  if (hsCd === '-' || statCd === '-') return null;
+
+  const exportUsd = toUsd(item.expAmt);
+  const importUsd = toUsd(item.impAmt);
+
   return {
-    period:        String(raw.period ?? ''),
+    period,
     stat_type:     'item',
-    hs_code:       raw.hsCd  ? String(raw.hsCd)  : null,
-    hs_name:       raw.hsNm  ? String(raw.hsNm)  : null,
+    hs_code:       hsCd,
+    hs_name:       item.hsNm  ? String(item.hsNm).trim()  || null : null,
+    country_code:  statCd,
+    country_name:  item.statNm ? String(item.statNm).trim() || null : null,
     export_usd:    exportUsd,
-    export_weight: raw.expWgt ? parseFloat(String(raw.expWgt)) : null,
+    export_weight: toWeight(item.expWgt),
     import_usd:    importUsd,
-    import_weight: raw.impWgt ? parseFloat(String(raw.impWgt)) : null,
+    import_weight: toWeight(item.impWgt),
     trade_balance: exportUsd !== null && importUsd !== null ? exportUsd - importUsd : null,
     data_source:   '관세청 수출입무역통계',
-    fetched_at:    now,
+    fetched_at:    new Date().toISOString(),
   };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Supabase upsert
-// ─────────────────────────────────────────────────────────────────────────────
-async function upsertRows(rows: TradeStatRow[]): Promise<void> {
-  if (!SUPA_URL || !SUPA_KEY) {
-    console.warn('⚠️ SUPABASE 환경변수 없음 — DB upsert 스킵');
+// ── main ─────────────────────────────────────────────────────────────────────
+async function main() {
+  if (!API_KEY) {
+    console.error('❌ DATA_GO_KR_API_KEY 환경변수가 없습니다.');
+    process.exit(1);
+  }
+
+  const { strtYymm, endYymm } = getDateRange();
+
+  // ── 1. 프로브 모드 ───────────────────────────────────────────────────────
+  if (IS_PROBE) {
+    console.log('🔍 --probe 모드: API 응답 구조 확인\n');
+    console.log(`   파라미터: hsSgn=8507, cntyCd=US, strtYymm=${endYymm}, endYymm=${endYymm}\n`);
+
+    const { items, rawXml } = await fetchData('8507', 'US', endYymm, endYymm);
+
+    console.log('=== 원본 XML (첫 800자) ===');
+    console.log(rawXml.slice(0, 800));
+    console.log(`\n총 ${items.length}개 아이템 파싱`);
+
+    if (items.length > 0) {
+      console.log('\n=== 첫 번째 아이템 ===');
+      console.log(JSON.stringify(items[0], null, 2));
+      if (items[1]) {
+        console.log('\n=== 두 번째 아이템 ===');
+        console.log(JSON.stringify(items[1], null, 2));
+      }
+    } else {
+      console.log('\n아이템 없음 — XML 전체:');
+      console.log(rawXml);
+    }
+
+    const mapped = items.map(i => mapItem(i, '8507', 'US')).filter(Boolean);
+    console.log(`\n=== 매핑 결과 (${mapped.length}행) ===`);
+    if (mapped.length > 0) console.log(JSON.stringify(mapped[0], null, 2));
     return;
   }
-  const supabase = createClient(SUPA_URL, SUPA_KEY);
-  const { error } = await supabase
-    .from('trade_statistics')
-    .upsert(rows, { onConflict: 'period,stat_type,hs_code,country_code', ignoreDuplicates: false });
-  if (error) throw new Error(`upsert 실패: ${error.message}`);
-  console.log(`✅ trade_statistics upsert ${rows.length}행`);
-}
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 메인
-// ─────────────────────────────────────────────────────────────────────────────
-
-// 대상 HS코드 (industry-hs-map.ts의 hsCodes와 동기화)
-const TARGET_HS_CODES = ['8507', '850760', '8703', '8704', '8708', '0303', '0307', '0207', '2106'];
-
-// TODO: 기준연월 계산 (전월 기준 등)
-const CURRENT_PERIOD = (() => {
-  const d = new Date();
-  d.setMonth(d.getMonth() - 1); // 전월 기준
-  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}`;
-})();
-
-async function main() {
-  console.log('🚀 관세청 수출입무역통계 수집 시작');
-  console.log(`   기준연월: ${CURRENT_PERIOD}`);
-  console.log(`   대상 HS코드: ${TARGET_HS_CODES.join(', ')}`);
-  if (IS_PROBE) console.log('   모드: --probe (DB 미저장)');
-
-  const allRows: TradeStatRow[] = [];
-
-  for (const hsCd of TARGET_HS_CODES) {
-    try {
-      console.log(`\n🔄 HS${hsCd} 수집 중...`);
-      const rawRows = await fetchPage({
-        serviceKey: API_KEY,
-        pageNo: 1,
-        numOfRows: 100,
-        period: CURRENT_PERIOD,
-        hsCd,
-      });
-      const mapped = rawRows.map(mapRow);
-      allRows.push(...mapped);
-      console.log(`   → ${mapped.length}행 파싱`);
-    } catch (e) {
-      console.warn(`   ⚠️ HS${hsCd} 실패: ${(e as Error).message}`);
+  // ── 2. 드라이런 모드 ─────────────────────────────────────────────────────
+  const allHsCodes = [...HS_CODES.battery, ...HS_CODES.auto, ...HS_CODES.cold];
+  const combinations: Array<{ hsCd: string; country: string }> = [];
+  for (const hsCd of allHsCodes) {
+    for (const country of COUNTRIES) {
+      combinations.push({ hsCd, country });
     }
   }
 
-  console.log(`\n총 ${allRows.length}행 수집`);
-
-  if (IS_PROBE) {
-    console.log('\n[probe 모드] DB 저장 스킵. 수집 완료.');
+  if (IS_DRY) {
+    console.log(`[--dry-run] 수집 대상: ${combinations.length}개 조합`);
+    console.log(`기간: ${strtYymm} ~ ${endYymm}`);
+    for (const c of combinations) {
+      console.log(`  HS${c.hsCd} × ${c.country}`);
+    }
     return;
   }
 
-  if (allRows.length > 0) {
-    await upsertRows(allRows);
-  } else {
-    console.warn('⚠️ 수집된 행 없음 — API 응답 구조 확인 필요');
+  // ── 3. 전체 수집 ─────────────────────────────────────────────────────────
+  if (!SUPABASE_URL || !SERVICE_KEY) {
+    console.error('❌ SUPABASE_URL 또는 SUPABASE_SERVICE_ROLE_KEY가 없습니다.');
     process.exit(1);
   }
+
+  console.log(`🚀 관세청 무역통계 수집 시작 (${strtYymm} ~ ${endYymm})`);
+  console.log(`   ${combinations.length}개 조합 수집 중...`);
+
+  const allRows: TradeStatRow[] = [];
+  let errCount = 0;
+
+  for (const { hsCd, country } of combinations) {
+    try {
+      const { items } = await fetchData(hsCd, country, strtYymm, endYymm);
+      const rows = items
+        .map(i => mapItem(i, hsCd, country))
+        .filter((r): r is TradeStatRow => r !== null);
+      allRows.push(...rows);
+      process.stdout.write('.');
+    } catch (e) {
+      process.stdout.write('x');
+      console.warn(`\n   ⚠️ HS${hsCd} × ${country}: ${(e as Error).message}`);
+      errCount++;
+    }
+    await new Promise(r => setTimeout(r, 100));
+  }
+
+  console.log(`\n\n수집 완료: ${allRows.length}행 (오류 ${errCount}건)`);
+
+  if (allRows.length === 0) {
+    console.warn('⚠️ 수집된 행이 없습니다. --probe로 응답 구조를 확인하세요.');
+    process.exit(1);
+  }
+
+  // ── 4. Supabase upsert ───────────────────────────────────────────────────
+  const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
+
+  const BATCH = 200;
+  let upserted = 0;
+  for (let i = 0; i < allRows.length; i += BATCH) {
+    const batch = allRows.slice(i, i + BATCH);
+    const { error } = await supabase
+      .from('trade_statistics')
+      .upsert(batch, {
+        onConflict: 'period,hs_code,country_code',
+        ignoreDuplicates: false,
+      });
+    if (error) {
+      console.error(`❌ upsert 실패 (batch ${i}~${i + BATCH}):`, error.message);
+      process.exit(1);
+    }
+    upserted += batch.length;
+  }
+
+  console.log(`✅ trade_statistics upsert: ${upserted}행`);
+
+  // ── 5. data_updates 로그 ────────────────────────────────────────────────
+  const today = new Date().toISOString().slice(0, 10);
+  await supabase.from('data_updates').insert({
+    dataset:      'trade_statistics/customs.go.kr',
+    record_count: upserted,
+    status:       'success',
+    notes:        `${today} 수집 (${strtYymm}~${endYymm}, ${combinations.length}조합)`,
+  });
+
+  console.log('✅ data_updates 기록 완료');
 }
 
-main().catch((e) => {
-  console.error('❌ 치명적 오류:', (e as Error).message);
+main().catch(e => {
+  console.error('❌ fetch-trade-stats 실패:', (e as Error).message);
   process.exit(1);
 });
