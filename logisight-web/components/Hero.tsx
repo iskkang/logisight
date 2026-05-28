@@ -1,0 +1,60 @@
+import { Brain, ArrowRight } from 'lucide-react';
+import { MOCK_HERO_STATS } from '@/lib/mock-data';
+
+export function Hero({ blankCount }: { blankCount?: string }) {
+  const stats = MOCK_HERO_STATS.map((s) =>
+    s.label === '블랭크' && blankCount ? { ...s, value: blankCount } : s
+  );
+
+  return (
+    <section className="bg-gradient-to-b from-navy-900 to-navy-700 px-6 py-9">
+      <div className="max-w-page mx-auto flex items-center gap-8">
+        <div className="flex-1 min-w-0">
+          <div className="text-[10px] font-medium text-cyan uppercase tracking-[0.12em] mb-3">
+            Logistics Intelligence Platform
+          </div>
+          <h1 className="text-[30px] font-medium text-white leading-[1.2] -tracking-[0.6px] mb-3 keep-all">
+            물류를 읽는<br />
+            <span className="text-cyan">새로운 시선</span>
+          </h1>
+          <p className="text-[13px] text-white/65 leading-[1.7] mb-[18px] max-w-md keep-all">
+            운임 지수와 시장 뉴스, 정책 변화. 흩어진 정보를 매주 한 편의 분석으로 정리합니다.
+          </p>
+          <div className="flex gap-2">
+            <button className="bg-cyan text-navy-900 text-xs font-medium px-4 py-2 rounded-md flex items-center gap-1.5 hover:brightness-110 transition">
+              <Brain size={14} />
+              이번 주 분석 보기
+            </button>
+            <button className="bg-transparent text-white text-xs font-medium px-4 py-2 rounded-md border border-white/25 flex items-center gap-1.5 hover:bg-white/5 transition">
+              운임 대시보드
+              <ArrowRight size={13} />
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 w-60 flex-shrink-0">
+          {stats.map((stat) => (
+            <div
+              key={stat.label}
+              className="bg-white/5 border border-white/10 rounded-lg px-3 py-2.5"
+            >
+              <div className="text-[9px] font-medium text-white/50 tracking-[0.06em] uppercase mb-1">
+                {stat.label}
+              </div>
+              <div className="text-[17px] font-medium text-white leading-tight">
+                {stat.value}
+              </div>
+              <div className={`text-[10px] mt-0.5 ${
+                stat.sign === 'up'   ? 'text-success' :
+                stat.sign === 'down' ? 'text-danger'  :
+                'text-white/40'
+              }`}>
+                {stat.change}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
