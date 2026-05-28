@@ -6,6 +6,7 @@ dotenv.config({ path: '.env.local' });
 //
 // 실행: npx tsx scripts/fetch-freight-rates.ts
 // 탐색: npx tsx scripts/fetch-freight-rates.ts --probe  (API 응답 필드 확인용)
+// 건조: npx tsx scripts/fetch-freight-rates.ts --dry-run
 //
 // 환경변수 (.env.local):
 //   NEXT_PUBLIC_SUPABASE_URL      또는 SUPABASE_URL
@@ -13,6 +14,7 @@ dotenv.config({ path: '.env.local' });
 //   DATA_GO_KR_API_KEY
 
 import { createClient } from '@supabase/supabase-js';
+import { XMLParser } from 'fast-xml-parser';
 
 // ── 환경변수 ─────────────────────────────────────────────────────────────────
 const SUPABASE_URL =
@@ -20,82 +22,108 @@ const SUPABASE_URL =
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
 const API_KEY = process.env.DATA_GO_KR_API_KEY ?? '';
 
-const BASE_URL =
-  'https://apis.data.go.kr/1192000/BulkFreightFeeInfoService/getBulkFreightFeeList';
+const BASE_URL = 'https://apis.data.go.kr/1192000/CychgFrghtOut4/Info4';
 
 const IS_PROBE = process.argv.includes('--probe');
 const IS_DRY   = process.argv.includes('--dry-run');
 
-// ── 컨테이너 타입 정규화 ────────────────────────────────────────────────────
-function normalizeContainerType(raw: string): string {
-  const s = (raw ?? '').toUpperCase().replace(/\s/g, '');
-  if (s.includes('20') && s.includes('DRY'))  return '20DRY';
-  if (s.includes('40') && s.includes('HC'))   return '40HC';
-  if (s.includes('40') && s.includes('DRY'))  return '40DRY';
-  if (s.includes('20') && s.includes('RF'))   return '20RF';
-  if (s.includes('40') && s.includes('RF'))   return '40RF';
-  if (s === '20' || s === '20GP')             return '20DRY';
-  if (s === '40' || s === '40GP')             return '40DRY';
-  return s.slice(0, 10);
+// ── 날짜 헬퍼 ─────────────────────────────────────────────────────────────────
+function toYYYYMMDD(date: Date): string {
+  return date.toISOString().slice(0, 10).replace(/-/g, '');
 }
 
-// ── API 호출 ─────────────────────────────────────────────────────────────────
-async function fetchPage(pageNo: number, numOfRows: number): Promise<any> {
-  // serviceKey는 이미 인코딩된 상태로 발급되므로 raw string으로 직접 붙임
-  const url = `${BASE_URL}?serviceKey=${API_KEY}&pageNo=${pageNo}&numOfRows=${numOfRows}&returnType=json`;
+function yyyymmddToDate(s: string): string {
+  // '20260515' → '2026-05-15'
+  if (/^\d{8}$/.test(s)) return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
+  return s;
+}
 
+// ── 컨테이너 타입 변환 ────────────────────────────────────────────────────────
+function resolveContainerType(cnd: string | number, std: string | number): string {
+  const c = String(cnd).trim();
+  const s = String(std).trim();
+  if (c === '1' && s === '1') return '20DRY';
+  if (c === '1' && s === '2') return '40DRY';
+  if (c === '1' && s === '3') return '40HC';
+  if (c === '3' && s === '1') return '20RF';
+  if (c === '3' && s === '2') return '40RF';
+  return `${c}_${s}`;
+}
+
+// ── is_featured 판별 ──────────────────────────────────────────────────────────
+const FEATURED_POL = new Set(['KRPUS', 'KRICN']);
+const FEATURED_POD_ORDER: Record<string, number> = {
+  USLAX: 1, USNYC: 2, DEHAM: 3, NLRTM: 4,
+  CNSHA: 5, CNNGB: 6, JPOSA: 7, VNSGN: 8,
+};
+
+function featuredProps(polCd: string, podCd: string): { is_featured: boolean; display_order: number } {
+  if (FEATURED_POL.has(polCd) && podCd in FEATURED_POD_ORDER) {
+    return { is_featured: true, display_order: FEATURED_POD_ORDER[podCd] };
+  }
+  return { is_featured: false, display_order: 0 };
+}
+
+// ── API 호출 (XML 응답) ───────────────────────────────────────────────────────
+async function fetchPage(pageNo: number, fromDate: string, toDate: string): Promise<string> {
+  // serviceKey는 이미 퍼센트 인코딩된 상태로 발급 → raw string으로 직접 붙임
+  const url = `${BASE_URL}?serviceKey=${API_KEY}&pageNo=${pageNo}&numOfRows=50&annGb=v2&fermnDeFr=${fromDate}&fermnDeTo=${toDate}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`HTTP ${res.status} — ${url}`);
-  return res.json();
+  return res.text();
 }
 
-// ── API 응답에서 아이템 배열 추출 ─────────────────────────────────────────────
-function extractItems(json: any): any[] {
-  // data.go.kr 공통 응답 구조
-  const body = json?.response?.body ?? json?.body ?? json;
-  const items = body?.items?.item ?? body?.items ?? body?.item ?? [];
-  return Array.isArray(items) ? items : items ? [items] : [];
+// ── XML 파싱 → 아이템 배열 ────────────────────────────────────────────────────
+const parser = new XMLParser({ ignoreAttributes: false, parseTagValue: true });
+
+function parseItems(xml: string): { items: any[]; totalCount: number } {
+  const obj = parser.parse(xml);
+  const body = obj?.response?.body ?? obj?.body ?? {};
+  const totalCount = Number(body?.totalCount ?? 0);
+  const raw = body?.items?.item ?? [];
+  const items = Array.isArray(raw) ? raw : raw ? [raw] : [];
+  return { items, totalCount };
 }
 
 // ── 아이템 → freight_rates 행 매핑 ──────────────────────────────────────────
-// ⚠️ 필드명은 --probe 결과로 확인 후 수정 필요.
-//    data.go.kr API 서비스마다 필드명이 다를 수 있음.
 function mapItem(item: any, today: string): Record<string, any> | null {
-  // 가능한 필드명 후보로 순서대로 시도
-  const polNm  = item.polNm  ?? item.departNm  ?? item.polName  ?? item.deptNm  ?? '';
-  const polCd  = item.polCd  ?? item.departCd  ?? item.polCode  ?? item.deptCd  ?? 'UNKNOWN';
-  const podNm  = item.podNm  ?? item.destNm    ?? item.podName  ?? item.destName ?? '';
-  const podCd  = item.podCd  ?? item.destCd    ?? item.podCode  ?? item.destCd   ?? 'UNKNOWN';
-  const cntrRaw= item.cntnrKndCd ?? item.cntnrTpCd ?? item.cntKndCd ?? item.cntrType ?? item.containerType ?? '40DRY';
-  const rateRaw= item.frachtFeeAmt ?? item.freightFee ?? item.shprtFee ?? item.feeAmt ?? item.rate ?? null;
-  const carrier= item.shrpNm ?? item.carNm ?? item.shippingNm ?? item.carrierNm ?? null;
-  const baseDt = item.basYm  ?? item.basYmd  ?? item.baseYm   ?? item.baseDt   ?? today;
-
-  const rate = rateRaw !== null ? Number(String(rateRaw).replace(/,/g, '')) : null;
-  const containerType = normalizeContainerType(cntrRaw);
-
+  const polCd   = String(item.shipngPrtCd ?? '').trim().toUpperCase();
+  const podCd   = String(item.landngPrtCd ?? '').trim().toUpperCase();
   if (!polCd || !podCd) return null;
 
-  // baseDt가 YYYYMM(6자리)이면 월 말로 변환
-  let validFrom = baseDt;
-  if (validFrom && /^\d{6}$/.test(validFrom)) {
-    validFrom = `${validFrom.slice(0, 4)}-${validFrom.slice(4, 6)}-01`;
-  } else if (validFrom && /^\d{8}$/.test(validFrom)) {
-    validFrom = `${validFrom.slice(0, 4)}-${validFrom.slice(4, 6)}-${validFrom.slice(6, 8)}`;
-  }
+  const polNm   = String(item.shipngPrtNm ?? '').trim() || null;
+  const podNm   = String(item.landngPrtNm ?? '').trim() || null;
+  const carrier = String(item.entrpsNm    ?? '').trim() || null;
+
+  const containerType = resolveContainerType(
+    item.contnCnd ?? '1',
+    item.contnStdStndrd ?? '2',
+  );
+
+  const rateRaw  = item.cychgOf ?? null;
+  const rate     = rateRaw !== null ? Number(String(rateRaw).replace(/,/g, '')) : null;
+
+  const validFrom = item.fermnDe
+    ? yyyymmddToDate(String(item.fermnDe))
+    : today;
+
+  const sourceUpdatedAt = item.annDe
+    ? yyyymmddToDate(String(item.annDe))
+    : null;
 
   return {
-    pol_code: polCd.trim().toUpperCase(),
-    pol_name: polNm.trim() || null,
-    pod_code: podCd.trim().toUpperCase(),
-    pod_name: podNm.trim() || null,
-    container_type: containerType,
-    rate_usd: rate,
-    currency: 'USD',
-    carrier: carrier?.trim() || null,
-    data_source: 'data.go.kr/해양수산부',
-    valid_from: validFrom || today,
-    display_order: 0,
+    pol_code:          polCd,
+    pol_name:          polNm,
+    pod_code:          podCd,
+    pod_name:          podNm,
+    container_type:    containerType,
+    rate_usd:          rate,
+    currency:          'USD',
+    carrier:           carrier,
+    data_source:       'data.go.kr 화물운임공표',
+    valid_from:        validFrom,
+    source_updated_at: sourceUpdatedAt,
+    ...featuredProps(polCd, podCd),
   };
 }
 
@@ -103,59 +131,61 @@ function mapItem(item: any, today: string): Record<string, any> | null {
 async function main() {
   if (!API_KEY) {
     console.error('❌ DATA_GO_KR_API_KEY 환경변수가 없습니다.');
-    console.error('   .env.local에 DATA_GO_KR_API_KEY=발급받은키 추가 후 재실행하세요.');
     process.exit(1);
   }
-
   if (!SUPABASE_URL || !SERVICE_KEY) {
     console.error('❌ SUPABASE_URL 또는 SUPABASE_SERVICE_ROLE_KEY가 없습니다.');
     process.exit(1);
   }
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today    = new Date().toISOString().slice(0, 10);
+  const toDate   = toYYYYMMDD(new Date());
+  const fromDate = toYYYYMMDD(new Date(Date.now() - 90 * 86_400_000));
 
-  // ── 1. 프로브 모드: 첫 번째 아이템의 키 출력 후 종료 ─────────────────────
+  // ── 1. 프로브 모드 ───────────────────────────────────────────────────────
   if (IS_PROBE) {
     console.log('🔍 --probe 모드: API 응답 구조 확인\n');
-    const json = await fetchPage(1, 3);
-    console.log('=== 전체 응답 구조 (depth 1) ===');
-    console.log(JSON.stringify(Object.keys(json), null, 2));
+    const xml = await fetchPage(1, fromDate, toDate);
+    console.log('=== 원본 XML (첫 500자) ===');
+    console.log(xml.slice(0, 500));
 
-    const items = extractItems(json);
+    const { items, totalCount } = parseItems(xml);
+    console.log(`\n총 레코드 수: ${totalCount}`);
     if (items.length > 0) {
-      console.log('\n=== 첫 번째 아이템 필드 ===');
+      console.log('\n=== 첫 번째 아이템 ===');
       console.log(JSON.stringify(items[0], null, 2));
+      if (items[1]) {
+        console.log('\n=== 두 번째 아이템 ===');
+        console.log(JSON.stringify(items[1], null, 2));
+      }
     } else {
-      console.log('\n=== 아이템 없음 — 전체 응답 ===');
-      console.log(JSON.stringify(json, null, 2));
+      console.log('\n아이템 없음 — XML 전체:');
+      console.log(xml);
     }
-    console.log('\n→ 필드명 확인 후 scripts/fetch-freight-rates.ts의 mapItem() 함수를 수정하세요.');
     return;
   }
 
-  // ── 2. 전체 데이터 수집 ───────────────────────────────────────────────────
-  console.log('📥 data.go.kr 화물운임 수집 시작...');
+  // ── 2. 전체 데이터 수집 ──────────────────────────────────────────────────
+  console.log(`📥 data.go.kr 화물운임 수집 시작 (${fromDate} ~ ${toDate})...`);
 
-  const firstPage = await fetchPage(1, 100);
-  const totalCount: number =
-    firstPage?.response?.body?.totalCount ??
-    firstPage?.body?.totalCount ??
-    firstPage?.totalCount ?? 0;
-  const numOfRows = 100;
+  const firstXml = await fetchPage(1, fromDate, toDate);
+  const { items: firstItems, totalCount } = parseItems(firstXml);
+
+  const numOfRows  = 50;
   const totalPages = Math.ceil(totalCount / numOfRows) || 1;
-
   console.log(`   총 ${totalCount}건, ${totalPages}페이지`);
 
-  const allItems: any[] = extractItems(firstPage);
+  const allItems: any[] = [...firstItems];
   for (let page = 2; page <= totalPages; page++) {
-    const pageJson = await fetchPage(page, numOfRows);
-    allItems.push(...extractItems(pageJson));
-    await new Promise((r) => setTimeout(r, 200)); // rate limit
+    const xml = await fetchPage(page, fromDate, toDate);
+    const { items } = parseItems(xml);
+    allItems.push(...items);
+    await new Promise((r) => setTimeout(r, 200));
   }
 
   console.log(`   수집 완료: ${allItems.length}건`);
 
-  // ── 3. 매핑 ──────────────────────────────────────────────────────────────
+  // ── 3. 매핑 ─────────────────────────────────────────────────────────────
   const rows = allItems
     .map((item) => mapItem(item, today))
     .filter((r): r is Record<string, any> => r !== null);
@@ -172,29 +202,34 @@ async function main() {
     return;
   }
 
-  // ── 4. Supabase upsert ────────────────────────────────────────────────────
+  // ── 4. Supabase upsert ───────────────────────────────────────────────────
   const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 
-  const { error: upsertErr } = await supabase
-    .from('freight_rates')
-    .upsert(rows, {
-      onConflict: 'pol_code,pod_code,container_type,data_source',
-      ignoreDuplicates: false,
-    });
-
-  if (upsertErr) {
-    console.error('❌ upsert 실패:', upsertErr.message);
-    process.exit(1);
+  const BATCH = 200;
+  let upserted = 0;
+  for (let i = 0; i < rows.length; i += BATCH) {
+    const batch = rows.slice(i, i + BATCH);
+    const { error } = await supabase
+      .from('freight_rates')
+      .upsert(batch, {
+        onConflict: 'pol_code,pod_code,container_type,carrier,valid_from',
+        ignoreDuplicates: false,
+      });
+    if (error) {
+      console.error(`❌ upsert 실패 (batch ${i}~${i + BATCH}):`, error.message);
+      process.exit(1);
+    }
+    upserted += batch.length;
   }
 
-  console.log(`✅ freight_rates upsert 완료: ${rows.length}건`);
+  console.log(`✅ freight_rates upsert 완료: ${upserted}건`);
 
-  // ── 5. data_updates 로그 ─────────────────────────────────────────────────
+  // ── 5. data_updates 로그 ────────────────────────────────────────────────
   await supabase.from('data_updates').insert({
     dataset: 'freight_rates/data.go.kr',
-    record_count: rows.length,
+    record_count: upserted,
     status: 'success',
-    notes: `${today} 수집`,
+    notes: `${today} 수집 (${fromDate}~${toDate})`,
   });
 
   console.log('✅ data_updates 기록 완료');
