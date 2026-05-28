@@ -63,15 +63,16 @@ function parsePeriod(yearStr: string): string | null {
 const parser = new XMLParser({ ignoreAttributes: false, parseTagValue: true });
 
 interface ApiItem {
-  year?:   string | number;
-  hsCd?:   string | number;
-  hsNm?:   string;
-  statCd?: string | number;
-  statNm?: string;
-  expAmt?: string | number;
-  expWgt?: string | number;
-  impAmt?: string | number;
-  impWgt?: string | number;
+  year?:            string | number;
+  hsCd?:            string | number;
+  statKor?:         string;          // hs_name
+  statCd?:          string | number;
+  statCdCntnKor1?:  string;          // country_name
+  expDlr?:          string | number; // export_usd (달러)
+  expWgt?:          string | number; // export_weight (MT)
+  impDlr?:          string | number; // import_usd (달러)
+  impWgt?:          string | number; // import_weight (MT)
+  balPayments?:     string | number; // trade_balance (달러)
   [key: string]: unknown;
 }
 
@@ -119,21 +120,13 @@ interface TradeStatRow {
 }
 
 // ── 숫자 변환 헬퍼 ────────────────────────────────────────────────────────────
-function toUsd(v: unknown): number | null {
+// fast-xml-parser가 숫자를 문자열로 반환하는 경우 대비
+function toNum(v: unknown): number | null {
   if (v == null) return null;
   const s = String(v).replace(/,/g, '').trim();
   if (!s || s === '-') return null;
   const n = Number(s);
-  // API 금액 단위: 천달러 → USD 변환
-  return isNaN(n) ? null : Math.round(n * 1000);
-}
-
-function toWeight(v: unknown): number | null {
-  if (v == null) return null;
-  const s = String(v).replace(/,/g, '').trim();
-  if (!s || s === '-') return null;
-  const n = Number(s);
-  return isNaN(n) ? null : n; // 단위: MT (metric ton)
+  return isNaN(n) ? null : n;
 }
 
 // ── API 아이템 → DB 행 매핑 ──────────────────────────────────────────────────
@@ -145,21 +138,18 @@ function mapItem(item: ApiItem, hsSgn: string, cntyCd: string): TradeStatRow | n
   const statCd = String(item.statCd ?? cntyCd).trim();
   if (hsCd === '-' || statCd === '-') return null;
 
-  const exportUsd = toUsd(item.expAmt);
-  const importUsd = toUsd(item.impAmt);
-
   return {
     period,
     stat_type:     'item',
     hs_code:       hsCd,
-    hs_name:       item.hsNm  ? String(item.hsNm).trim()  || null : null,
+    hs_name:       item.statKor        ? String(item.statKor).trim()        || null : null,
     country_code:  statCd,
-    country_name:  item.statNm ? String(item.statNm).trim() || null : null,
-    export_usd:    exportUsd,
-    export_weight: toWeight(item.expWgt),
-    import_usd:    importUsd,
-    import_weight: toWeight(item.impWgt),
-    trade_balance: exportUsd !== null && importUsd !== null ? exportUsd - importUsd : null,
+    country_name:  item.statCdCntnKor1 ? String(item.statCdCntnKor1).trim() || null : null,
+    export_usd:    toNum(item.expDlr),
+    export_weight: toNum(item.expWgt),
+    import_usd:    toNum(item.impDlr),
+    import_weight: toNum(item.impWgt),
+    trade_balance: toNum(item.balPayments),
     data_source:   '관세청 수출입무역통계',
     fetched_at:    new Date().toISOString(),
   };
