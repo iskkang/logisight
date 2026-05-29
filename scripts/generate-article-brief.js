@@ -103,7 +103,8 @@ async function generateBriefArticle(items, imageUrl, keyword) {
   각 항목: [지역]: [기업명], [핵심 행위] + 2~4문장 요약 + (출처)
   마무리: 이번 주 핵심 키워드 #태그1 #태그2 #태그3`;
 
-  const categoryLabel = ARTICLE_TYPE === 'trend' ? '트렌드분석' : '브리핑';
+  // category는 항상 '물류' (VALID_CATEGORIES 통과). 기사 유형은 article_type 필드로 구분.
+  const categoryLabel = '물류';
 
   const prompt = `당신은 글로벌 물류 시장 브리핑·트렌드 분석 전문 기자입니다. 코리아쉬핑가제트(KSG) 스타일로 기사를 작성합니다.
 독자: 한국 화주·포워더 (한국 관련 → 중국 → 미주 → 러시아 → CIS 순으로 중요도 적용)

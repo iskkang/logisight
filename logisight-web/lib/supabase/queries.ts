@@ -194,15 +194,12 @@ export async function getNewsGrid(limit: number = 4): Promise<NewsArticle[]> {
   if (!hasSupabase) return mock.MOCK_NEWS_GRID;
 
   const supabase = createServerClient();
+  // v_maritime_articles: agent_type IN (shipping,corp,brief,weekly_brief), content >= 400자 뷰
   const { data, error } = await supabase
-    .from('maritime_news')
+    .from('v_maritime_articles')
     .select('id, title, summary, url, source, lang, category, agent_type, is_hero, image_url, tags, published_at, slug')
-    .or('is_hero.is.null,is_hero.eq.false')
     .eq('lang', 'ko')
     .not('category', 'is', null)
-    .neq('agent_type', 'daily_card')
-    .neq('agent_type', 'external')
-    .not('content', 'is', null)
     .order('published_at', { ascending: false })
     .limit(limit);
 
@@ -483,14 +480,12 @@ export async function getNewsList({
   }
 
   const supabase = createServerClient();
+  // v_maritime_articles: agent_type IN (shipping,corp,brief,weekly_brief), content >= 400자 뷰
   let query = supabase
-    .from('maritime_news')
+    .from('v_maritime_articles')
     .select('id, title, summary, url, source, lang, category, agent_type, image_url, published_at, slug')
     .eq('lang', 'ko')
     .not('category', 'is', null)
-    .neq('agent_type', 'daily_card')
-    .neq('agent_type', 'external')
-    .not('content', 'is', null)
     .order('published_at', { ascending: false })
     .limit(limit + 1);
 
@@ -619,13 +614,10 @@ export async function getPolicyNews(limit = 8): Promise<NewsArticle[]> {
 
   const supabase = createServerClient();
   const { data, error } = await supabase
-    .from('maritime_news')
+    .from('v_maritime_articles')
     .select('id, title, summary, url, source, lang, category, agent_type, image_url, published_at, slug')
     .eq('lang', 'ko')
     .or(`category.eq.무역,tags.ov.{${POLICY_TAGS.join(',')}}`)
-    .neq('agent_type', 'daily_card')
-    .neq('agent_type', 'external')
-    .not('content', 'is', null)
     .order('published_at', { ascending: false })
     .limit(limit);
 
@@ -691,13 +683,10 @@ export async function getIndustriesNews(): Promise<IndustrySection[]> {
   const results = await Promise.all(
     INDUSTRY_DEFS.map(async (def) => {
       const { data, error } = await supabase
-        .from('maritime_news')
+        .from('v_maritime_articles')
         .select('id, title, summary, url, source, lang, category, agent_type, image_url, published_at, slug')
         .eq('lang', 'ko')
         .overlaps('tags', def.tags as unknown as string[])
-        .neq('agent_type', 'daily_card')
-        .neq('agent_type', 'external')
-        .not('content', 'is', null)
         .order('published_at', { ascending: false })
         .limit(3);
 
@@ -793,20 +782,15 @@ export async function getArticleBySlug(slug: string): Promise<ArticleDetail | nu
   if (!hasSupabase) return null;
 
   const supabase = createServerClient();
+  // v_maritime_articles: daily_card·external·content<400 자동 제외
   const { data, error } = await supabase
-    .from('maritime_news')
+    .from('v_maritime_articles')
     .select('id, title, summary, content, category, source, url, image_url, tags, published_at, slug')
     .eq('slug', slug)
     .maybeSingle();
 
   if (error) console.error('[getArticleBySlug]', error);
   if (!data) return null;
-
-  // 브리핑 카드(daily_card)나 외부 링크(external)는 내부 기사 페이지 미지원
-  if (data.agent_type === 'daily_card' || data.agent_type === 'external') return null;
-
-  // content가 없거나 너무 짧으면 기사 페이지로 표시하지 않음 (200자 미만)
-  if (!data.content || data.content.length < 200) return null;
 
   return {
     id: String(data.id),

@@ -118,8 +118,9 @@ export default async function NewsPage({
             {/* Main: article list */}
             <div>
               {articles.length === 0 ? (
-                <div className="bg-white rounded-lg border border-slate-200 p-8 text-center text-slate-400 text-sm">
-                  해당 카테고리 기사가 없습니다.
+                <div className="bg-white rounded-lg border border-slate-200 p-8 text-center text-slate-400 text-sm leading-relaxed">
+                  현재 이 카테고리의 최신 기사가 없습니다.<br />
+                  새로운 인사이트가 확인되는 대로 업데이트됩니다.
                 </div>
               ) : (
                 <div className="flex flex-col gap-3">
