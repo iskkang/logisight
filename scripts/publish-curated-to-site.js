@@ -35,20 +35,35 @@ const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY ?? '';
 
 const CATEGORY_MAP = { rail: '철도', ocean: '해상' };
 
-// og:image 또는 twitter:image 추출. 실패 시 null (절대 throw 금지)
+// og:image 또는 twitter:image 추출. 상대경로 → 절대경로 변환. 실패 시 null
 async function fetchOgImage(url) {
   try {
+    const origin = new URL(url).origin;
     const res = await fetch(url, {
       signal: AbortSignal.timeout(8000),
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Logisight/1.0)' },
     });
     const html = await res.text();
-    const m =
-      html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ||
-      html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i) ||
-      html.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i) ||
-      html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']twitter:image["']/i);
-    return m?.[1] ?? null;
+
+    const patterns = [
+      /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i,
+      /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i,
+      /<meta[^>]+name=["']twitter:image(?::src)?["'][^>]+content=["']([^"']+)["']/i,
+      /<meta[^>]+content=["']([^"']+)["'][^>]+name=["']twitter:image/i,
+    ];
+
+    for (const pattern of patterns) {
+      const match = html.match(pattern);
+      if (match?.[1]) {
+        const img = match[1].trim();
+        if (!img || img === 'null') continue;
+        if (img.startsWith('http')) return img;
+        if (img.startsWith('//'))   return `https:${img}`;
+        if (img.startsWith('/'))    return `${origin}${img}`;
+        return `${origin}/${img}`;
+      }
+    }
+    return null;
   } catch { return null; }
 }
 
@@ -103,6 +118,13 @@ ${articleText}`,
   }
 }
 
+// 웹 기사 본문 생성. checkpoint는 뉴스레터 전용이므로 제외
+function buildContent(main) {
+  return [main.what, main.why_now]
+    .filter(Boolean)
+    .join('\n\n');
+}
+
 // slug 생성: "{date}-{title_ko 공백→하이픈, 60자 제한}"
 function makeSlug(date, titleKo) {
   const slugified = titleKo
@@ -124,19 +146,7 @@ async function upsertMain(supabase, curated) {
 
   const category   = CATEGORY_MAP[section] ?? '물류';
   const imageUrl   = await fetchOgImage(main.url);
-  const content    = [
-    '## 무슨 일인가',
-    '',
-    main.what,
-    '',
-    '## 왜 지금 중요한가',
-    '',
-    main.why_now,
-    '',
-    '## 💡 체크포인트',
-    '',
-    main.checkpoint,
-  ].join('\n');
+  const content    = buildContent(main);
 
   const row = {
     title:        main.title_ko,
@@ -169,9 +179,10 @@ async function upsertMain(supabase, curated) {
 // link 기사 upsert
 async function upsertLink(supabase, link, section, date) {
   const category   = CATEGORY_MAP[section] ?? '물류';
-  const imageUrl   = await fetchOgImage(link.url);
-  const articleText = await fetchArticleText(link.url);
-  const summary    = articleText.length >= 100 ? await summarizeKorean(articleText) : null;
+  const imageUrl        = await fetchOgImage(link.url);
+  const articleText     = await fetchArticleText(link.url);
+  const translatedSummary = articleText.length >= 100 ? await summarizeKorean(articleText) : null;
+  const summary         = translatedSummary || link.title_ko || null;
 
   const row = {
     title:        link.title_ko,
@@ -228,6 +239,15 @@ async function processSection(supabase, filename) {
   console.log(`✅ [${section}] 완료 (links: ${links.length}건)`);
 }
 
+async function cleanStaleData(supabase) {
+  const { error } = await supabase
+    .from('maritime_news')
+    .update({ summary: null })
+    .like('summary', '기사 본문 내용이 CSS%');
+  if (error) console.error('cleanup error:', error.message);
+  else console.log('🧹 오염 데이터 정리 완료');
+}
+
 async function main() {
   if (!SUPABASE_URL || !SERVICE_KEY) {
     console.error('❌ SUPABASE_URL 또는 SUPABASE_SERVICE_ROLE_KEY 없음');
@@ -238,6 +258,7 @@ async function main() {
     realtime: { enabled: false },
   });
 
+  await cleanStaleData(supabase);
   await processSection(supabase, 'curated-rail.json');
   await processSection(supabase, 'curated-ocean.json');
 
