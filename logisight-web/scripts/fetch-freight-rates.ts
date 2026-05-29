@@ -1,6 +1,9 @@
 import * as dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
 
+import ws from 'ws';
+(globalThis as any).WebSocket = ws;
+
 // scripts/fetch-freight-rates.ts
 // 해양수산부 컨테이너 화물운임 공표정보 → freight_rates 테이블 upsert
 //
