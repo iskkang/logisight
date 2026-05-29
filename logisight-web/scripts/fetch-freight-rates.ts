@@ -100,9 +100,7 @@ function parseItems(xml: string): { items: any[]; totalCount: number } {
 
 // ── 아이템 → freight_rates 행 매핑 ──────────────────────────────────────────
 function mapItem(item: any, today: string): Record<string, any> | null {
-  // 수출(1)만 수집
-  const imxprtSe = String(item.imxprtSe ?? '').trim();
-  if (imxprtSe && imxprtSe !== '1') return null;
+  const imxprtSe = String(item.imxprtSe ?? '').trim() || null;
 
   const polCd   = String(item.shipngPrtCd ?? '').trim().toUpperCase();
   const podCd   = String(item.landngPrtCd ?? '').trim().toUpperCase();
@@ -143,6 +141,7 @@ function mapItem(item: any, today: string): Record<string, any> | null {
     valid_from:        validFrom,
     source_updated_at: sourceUpdatedAt,
     ann_no:            annNo,
+    imxprt_se:         imxprtSe,
     ...featuredProps(polCd, podCd),
   };
 }
@@ -211,10 +210,19 @@ async function main() {
 
   console.log(`   수집 완료: ${allItems.length}건`);
 
-  // ── 3. 매핑 ─────────────────────────────────────────────────────────────
-  const rows = allItems
+  // ── 3. 매핑 + 중복 제거 ──────────────────────────────────────────────────
+  const mapped = allItems
     .map((item) => mapItem(item, today))
     .filter((r): r is Record<string, any> => r !== null);
+
+  // 같은 onConflict 키가 배치 내에 2개 이상이면 "affect row twice" 에러 → Map으로 제거
+  const dedupKey = (r: Record<string, any>) =>
+    `${r.ann_no ?? ''}|${r.imxprt_se ?? ''}|${r.pod_code}|${r.container_type}`;
+  const dedupMap = new Map<string, Record<string, any>>();
+  for (const r of mapped) dedupMap.set(dedupKey(r), r);
+  const rows = [...dedupMap.values()];
+
+  console.log(`   매핑: ${mapped.length}건 → 중복 제거 후 ${rows.length}건`);
 
   if (IS_DRY) {
     console.log(`\n[--dry-run] upsert할 행 샘플 (최대 5건):`);
@@ -238,7 +246,7 @@ async function main() {
     const { error } = await supabase
       .from('freight_rates')
       .upsert(batch, {
-        onConflict: 'ann_no,container_type',
+        onConflict: 'ann_no,imxprt_se,pod_code,container_type',
         ignoreDuplicates: false,
       });
     if (error) {
