@@ -60,10 +60,21 @@ async function fetchArticleText(url) {
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Logisight/1.0)' },
     });
     const html = await res.text();
-    const texts = [...html.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)]
+
+    // style/script 블록 먼저 제거
+    const cleaned = html
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+
+    const texts = [...cleaned.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)]
       .map(m => m[1].replace(/<[^>]+>/g, '').trim())
       .filter(t => t.length > 40);
-    return texts.join(' ').slice(0, 3000);
+
+    const result = texts.join(' ').slice(0, 3000);
+
+    // CSS처럼 보이면 빈 문자열 반환
+    const looksLikeCss = (result.match(/[{};]/g) || []).length > 10;
+    return looksLikeCss ? '' : result;
   } catch { return ''; }
 }
 
@@ -77,14 +88,15 @@ async function summarizeKorean(articleText) {
       max_tokens: 300,
       messages: [{
         role: 'user',
-        content: `다음 영어 물류 기사를 한국어로 2문장 이내로 요약하라.
-독자: 한국 화주·포워더. 핵심 사실과 실무 영향 중심.
-한국어 요약 텍스트만 출력 (다른 텍스트 없이):
+        content: `다음 텍스트가 CSS나 HTML 코드이면 "SKIP"이라고만 답해라.
+실제 기사라면 한국어 2문장 이내 요약. 화주·포워더 시각. 요약 텍스트만 출력:
 
 ${articleText}`,
       }],
     });
-    return msg.content[0].text.trim() || null;
+    const response = msg.content[0].text.trim();
+    if (!response || response === 'SKIP' || response.includes('CSS')) return null;
+    return response;
   } catch (e) {
     console.error('⚠️ Claude 요약 실패:', e.message);
     return null;
