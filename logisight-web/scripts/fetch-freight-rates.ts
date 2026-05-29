@@ -27,6 +27,11 @@ const BASE_URL = 'https://apis.data.go.kr/1192000/CychgFrghtOut4/Info4';
 const IS_PROBE = process.argv.includes('--probe');
 const IS_DRY   = process.argv.includes('--dry-run');
 
+// 한국 POL 목록 (부산, 인천, 광양)
+const KR_POLS = ['KRPUS', 'KRICN', 'KRGMP'];
+
+const NUM_OF_ROWS = 1000;
+
 // ── 날짜 헬퍼 ─────────────────────────────────────────────────────────────────
 function toYYYYMMDD(date: Date): string {
   return date.toISOString().slice(0, 10).replace(/-/g, '');
@@ -45,8 +50,8 @@ function resolveContainerType(cnd: string | number, std: string | number): strin
   if (c === '1' && s === '1') return '20DRY';
   if (c === '1' && s === '2') return '40DRY';
   if (c === '1' && s === '3') return '40HC';
-  if (c === '3' && s === '1') return '20RF';
-  if (c === '3' && s === '2') return '40RF';
+  if ((c === '2' || c === '3') && s === '1') return '20RF';
+  if ((c === '2' || c === '3') && s === '2') return '40RF';
   return `${c}_${s}`;
 }
 
@@ -64,10 +69,15 @@ function featuredProps(polCd: string, podCd: string): { is_featured: boolean; di
   return { is_featured: false, display_order: 0 };
 }
 
-// ── API 호출 (XML 응답) ───────────────────────────────────────────────────────
-async function fetchPage(pageNo: number, fromDate: string, toDate: string): Promise<string> {
+// ── API 호출 (POL별, XML 응답) ────────────────────────────────────────────────
+async function fetchPage(
+  pol: string,
+  pageNo: number,
+  fromDate: string,
+  toDate: string,
+): Promise<string> {
   // .env.local의 키는 이미 인코딩된 형식(%2B, %3D 포함) → 그대로 사용
-  const url = `${BASE_URL}?serviceKey=${API_KEY}&pageNo=${pageNo}&numOfRows=50&annGb=v2&fermnDeFr=${fromDate}&fermnDeTo=${toDate}`;
+  const url = `${BASE_URL}?serviceKey=${API_KEY}&shipngPrtCd=${pol}&pageNo=${pageNo}&numOfRows=${NUM_OF_ROWS}&annGb=v2&fermnDeFr=${fromDate}&fermnDeTo=${toDate}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`HTTP ${res.status} — ${url}`);
   return res.text();
@@ -87,6 +97,10 @@ function parseItems(xml: string): { items: any[]; totalCount: number } {
 
 // ── 아이템 → freight_rates 행 매핑 ──────────────────────────────────────────
 function mapItem(item: any, today: string): Record<string, any> | null {
+  // 수출(1)만 수집
+  const imxprtSe = String(item.imxprtSe ?? '').trim();
+  if (imxprtSe && imxprtSe !== '1') return null;
+
   const polCd   = String(item.shipngPrtCd ?? '').trim().toUpperCase();
   const podCd   = String(item.landngPrtCd ?? '').trim().toUpperCase();
   if (!polCd || !podCd) return null;
@@ -144,8 +158,8 @@ async function main() {
 
   // ── 1. 프로브 모드 ───────────────────────────────────────────────────────
   if (IS_PROBE) {
-    console.log('🔍 --probe 모드: API 응답 구조 확인\n');
-    const xml = await fetchPage(1, fromDate, toDate);
+    console.log('🔍 --probe 모드: API 응답 구조 확인 (POL: KRPUS)\n');
+    const xml = await fetchPage('KRPUS', 1, fromDate, toDate);
     console.log('=== 원본 XML (첫 500자) ===');
     console.log(xml.slice(0, 500));
 
@@ -165,22 +179,28 @@ async function main() {
     return;
   }
 
-  // ── 2. 전체 데이터 수집 ──────────────────────────────────────────────────
+  // ── 2. POL별 데이터 수집 ─────────────────────────────────────────────────
   console.log(`📥 data.go.kr 화물운임 수집 시작 (${fromDate} ~ ${toDate})...`);
+  console.log(`   대상 POL: ${KR_POLS.join(', ')}`);
 
-  const firstXml = await fetchPage(1, fromDate, toDate);
-  const { items: firstItems, totalCount } = parseItems(firstXml);
+  const allItems: any[] = [];
 
-  const numOfRows  = 50;
-  const totalPages = Math.ceil(totalCount / numOfRows) || 1;
-  console.log(`   총 ${totalCount}건, ${totalPages}페이지`);
+  for (const pol of KR_POLS) {
+    const firstXml = await fetchPage(pol, 1, fromDate, toDate);
+    const { items: firstItems, totalCount } = parseItems(firstXml);
 
-  const allItems: any[] = [...firstItems];
-  for (let page = 2; page <= totalPages; page++) {
-    const xml = await fetchPage(page, fromDate, toDate);
-    const { items } = parseItems(xml);
-    allItems.push(...items);
-    await new Promise((r) => setTimeout(r, 200));
+    const totalPages = Math.ceil(totalCount / NUM_OF_ROWS) || 1;
+    console.log(`   ${pol}: 총 ${totalCount}건, ${totalPages}페이지`);
+
+    allItems.push(...firstItems);
+
+    for (let page = 2; page <= totalPages; page++) {
+      const xml = await fetchPage(pol, page, fromDate, toDate);
+      const { items } = parseItems(xml);
+      allItems.push(...items);
+      console.log(`   ${pol}: 페이지 ${page}/${totalPages} (누적 ${allItems.length}건)`);
+      await new Promise((r) => setTimeout(r, 200));
+    }
   }
 
   console.log(`   수집 완료: ${allItems.length}건`);
@@ -229,7 +249,7 @@ async function main() {
     dataset: 'freight_rates/data.go.kr',
     record_count: upserted,
     status: 'success',
-    notes: `${today} 수집 (${fromDate}~${toDate})`,
+    notes: `${today} 수집 (${fromDate}~${toDate}), POL: ${KR_POLS.join('+')}`,
   });
 
   console.log('✅ data_updates 기록 완료');
