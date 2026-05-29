@@ -56,37 +56,35 @@ export default async function ArticlePage({
             </p>
           )}
 
-          {/* 이미지 */}
+          {/* 이미지 — 로드 실패 시 숨김 처리 */}
           {article.image_url && (
             <div className="mb-6 rounded-xl overflow-hidden">
               <img
                 src={article.image_url}
                 alt={article.title}
                 className="w-full h-56 lg:h-72 object-cover"
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
               />
             </div>
           )}
 
-          {/* 본문 */}
-          {article.content ? (
+          {/* 본문 — content가 없으면 원문 링크만 표시 (placeholder 텍스트 없음) */}
+          {article.content && article.content.length >= 200 ? (
             <div className="prose prose-slate max-w-none text-[14px] lg:text-[15px] leading-[1.85] keep-all">
               <ReactMarkdown>{article.content}</ReactMarkdown>
             </div>
-          ) : (
+          ) : article.source_url ? (
             <div className="bg-white rounded-xl border border-slate-200 p-8 text-center">
-              <p className="text-slate-400 text-sm mb-3">본문이 아직 저장되지 않았습니다.</p>
-              {article.source_url && (
-                <a
-                  href={article.source_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-cyan-600 text-sm hover:underline"
-                >
-                  원문 보기 →
-                </a>
-              )}
+              <a
+                href={article.source_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-cyan-600 text-sm hover:underline"
+              >
+                원문 보기 →
+              </a>
             </div>
-          )}
+          ) : null}
 
           {/* 태그 */}
           {article.tags && article.tags.length > 0 && (

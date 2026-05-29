@@ -68,10 +68,5 @@ jobs:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           SEND_TO: ${{ secrets.INTERNAL_EMAIL }}
 
-      - name: Generate website articles
-        run: node scripts/generate-article-shipping.js
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
+      # 웹사이트 기사 생성은 daily-web-articles.yml에서 별도 실행
+      # (이메일 뉴스레터와 웹사이트 기사를 분리)
