@@ -128,6 +128,8 @@ function mapItem(item: any, today: string): Record<string, any> | null {
     ? yyyymmddToDate(String(item.annDe))
     : null;
 
+  const annNo = item.annNo != null ? String(item.annNo).trim() || null : null;
+
   return {
     pol_code:          polCd,
     pol_name:          polNm,
@@ -140,6 +142,7 @@ function mapItem(item: any, today: string): Record<string, any> | null {
     data_source:       'data.go.kr 화물운임공표',
     valid_from:        validFrom,
     source_updated_at: sourceUpdatedAt,
+    ann_no:            annNo,
     ...featuredProps(polCd, podCd),
   };
 }
@@ -235,7 +238,7 @@ async function main() {
     const { error } = await supabase
       .from('freight_rates')
       .upsert(batch, {
-        onConflict: 'pol_code,pod_code,container_type,carrier,valid_from',
+        onConflict: 'ann_no,container_type',
         ignoreDuplicates: false,
       });
     if (error) {
