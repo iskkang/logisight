@@ -35,7 +35,7 @@ const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY ?? '';
 
 const CATEGORY_MAP = { rail: '철도', ocean: '해상' };
 
-// og:image 또는 twitter:image 추출. 상대경로 → 절대경로 변환. 실패 시 null
+// og:image / twitter:image 추출, 없으면 첫 <img> fallback. 상대경로 → 절대경로 변환
 async function fetchOgImage(url) {
   try {
     const origin = new URL(url).origin;
@@ -45,26 +45,42 @@ async function fetchOgImage(url) {
     });
     const html = await res.text();
 
-    const patterns = [
+    const toAbsolute = (img) => {
+      if (!img || img === 'null') return null;
+      if (img.startsWith('http')) return img;
+      if (img.startsWith('//'))   return `https:${img}`;
+      if (img.startsWith('/'))    return `${origin}${img}`;
+      return `${origin}/${img}`;
+    };
+
+    const metaPatterns = [
       /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i,
       /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i,
       /<meta[^>]+name=["']twitter:image(?::src)?["'][^>]+content=["']([^"']+)["']/i,
       /<meta[^>]+content=["']([^"']+)["'][^>]+name=["']twitter:image/i,
     ];
 
-    for (const pattern of patterns) {
+    for (const pattern of metaPatterns) {
       const match = html.match(pattern);
       if (match?.[1]) {
-        const img = match[1].trim();
-        if (!img || img === 'null') continue;
-        if (img.startsWith('http')) return img;
-        if (img.startsWith('//'))   return `https:${img}`;
-        if (img.startsWith('/'))    return `${origin}${img}`;
-        return `${origin}/${img}`;
+        const result = toAbsolute(match[1].trim());
+        if (result) return result;
       }
     }
+
+    // fallback: 첫 번째 <img src>
+    const imgMatch = html.match(/<img[^>]+src=["']([^"']+\.(?:jpg|jpeg|png|webp)(?:[^"']*)?)["']/i);
+    if (imgMatch?.[1]) {
+      const result = toAbsolute(imgMatch[1].trim());
+      if (result) return result;
+    }
+
+    console.log(`ℹ️  og:image 없음: ${url.slice(0, 80)}`);
     return null;
-  } catch { return null; }
+  } catch (e) {
+    console.log(`ℹ️  og:image fetch 실패 (${url.slice(0, 60)}): ${e.message}`);
+    return null;
+  }
 }
 
 // 본문 텍스트 추출 (번역용). 실패 시 "" 반환
@@ -143,10 +159,14 @@ async function upsertMain(supabase, curated) {
     console.log(`⏭️  [${section}] main 기사 스킵 (importance_score=${main?.importance_score})`);
     return;
   }
+  if (!main.title_ko || !main.source) {
+    console.warn(`⚠️  [${section}] main 스킵 — title_ko 또는 source 누락`);
+    return;
+  }
 
-  const category   = CATEGORY_MAP[section] ?? '물류';
-  const imageUrl   = await fetchOgImage(main.url);
-  const content    = buildContent(main);
+  const category = CATEGORY_MAP[section] ?? '물류';
+  const imageUrl = await fetchOgImage(main.url);
+  const content  = buildContent(main);
 
   const row = {
     title:        main.title_ko,
@@ -161,9 +181,10 @@ async function upsertMain(supabase, curated) {
     tags:         [section],
     slug:         makeSlug(date, main.title_ko),
     published_at: new Date().toISOString(),
-    image_url:    imageUrl,
     fetched_at:   new Date().toISOString(),
   };
+  // 기존 image_url을 null로 덮어쓰지 않음
+  if (imageUrl) row.image_url = imageUrl;
 
   const { error } = await supabase
     .from('maritime_news')
@@ -178,28 +199,48 @@ async function upsertMain(supabase, curated) {
 
 // link 기사 upsert
 async function upsertLink(supabase, link, section, date) {
-  const category   = CATEGORY_MAP[section] ?? '물류';
-  const imageUrl        = await fetchOgImage(link.url);
-  const articleText     = await fetchArticleText(link.url);
+  // 필수 필드 검증
+  if (!link.title_ko || !link.url || !link.source) {
+    console.warn(`⏭️  [${section}] link 스킵 — 필수 필드 누락 (title/url/source)`);
+    return;
+  }
+
+  const category = CATEGORY_MAP[section] ?? '물류';
+
+  const imageUrl = await fetchOgImage(link.url);
+  // fetchOgImage 내부에서 null 시 이미 로그 출력
+
+  const articleText = await fetchArticleText(link.url);
+  if (!articleText) {
+    console.log(`ℹ️  [${section}] 본문 없음 (JS 렌더링 또는 접근 불가): ${link.url.slice(0, 60)}`);
+  }
+
   const translatedSummary = articleText.length >= 100 ? await summarizeKorean(articleText) : null;
-  const summary         = translatedSummary || link.title_ko || null;
+
+  // content: Claude 요약 우선, 없으면 원문 텍스트 앞 1000자
+  const content = translatedSummary || (articleText.length >= 100 ? articleText.slice(0, 1000) : null);
+  const summary = translatedSummary || link.title_ko;
+
+  // content가 없으면 내부 기사 페이지 생성 안 함 (slug=null, agent_type=external)
+  const isInternal = content !== null;
 
   const row = {
     title:        link.title_ko,
     summary,
-    content:      null,
+    content,
     url:          link.url,
     source:       link.source,
     category,
     lang:         'ko',
     is_hero:      false,
-    agent_type:   'brief',
+    agent_type:   isInternal ? 'brief' : 'external',
     tags:         [section],
-    slug:         makeSlug(date, link.title_ko),
+    slug:         isInternal ? makeSlug(date, link.title_ko) : null,
     published_at: new Date().toISOString(),
-    image_url:    imageUrl,
     fetched_at:   new Date().toISOString(),
   };
+  // 기존 image_url을 null로 덮어쓰지 않음
+  if (imageUrl) row.image_url = imageUrl;
 
   const { error } = await supabase
     .from('maritime_news')
@@ -208,7 +249,8 @@ async function upsertLink(supabase, link, section, date) {
   if (error) {
     console.error(`❌ [${section}] link upsert 실패 (${link.url}):`, error.message);
   } else {
-    console.log(`✅ [${section}] link 저장: ${link.title_ko.slice(0, 40)}`);
+    const mode = isInternal ? '내부기사' : '외부링크';
+    console.log(`✅ [${section}][${mode}] link 저장: ${link.title_ko.slice(0, 40)}`);
   }
 }
 
