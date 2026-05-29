@@ -30,7 +30,8 @@
     "article:corp": "node scripts/generate-article-corp.js",
     "article:brief": "node scripts/generate-article-brief.js",
     "article:weekly": "node scripts/generate-article-brief.js --window=7",
-    "article:trend": "node scripts/generate-article-brief.js --type=trend"
+    "article:trend": "node scripts/generate-article-brief.js --type=trend",
+    "publish:curated": "node scripts/publish-curated-to-site.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.24.0",
