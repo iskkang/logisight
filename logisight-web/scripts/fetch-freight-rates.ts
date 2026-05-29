@@ -100,7 +100,7 @@ function parseItems(xml: string): { items: any[]; totalCount: number } {
 
 // ── 아이템 → freight_rates 행 매핑 ──────────────────────────────────────────
 function mapItem(item: any, today: string): Record<string, any> | null {
-  const imxprtSe = String(item.imxprtSe ?? '').trim() || null;
+  const imxprtSe = String(item.imxprtSe ?? '').trim();
 
   const polCd   = String(item.shipngPrtCd ?? '').trim().toUpperCase();
   const podCd   = String(item.landngPrtCd ?? '').trim().toUpperCase();
@@ -126,7 +126,7 @@ function mapItem(item: any, today: string): Record<string, any> | null {
     ? yyyymmddToDate(String(item.annDe))
     : null;
 
-  const annNo = item.annNo != null ? String(item.annNo).trim() || null : null;
+  const annNo = String(item.annNo ?? '').trim();
 
   return {
     pol_code:          polCd,
