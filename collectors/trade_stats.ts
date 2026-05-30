@@ -1,8 +1,8 @@
 // collectors/trade_stats.ts
-// 관세청 공공데이터포털 OpenAPI — 한국 무역통계 수집기
-// 대상 테이블: trade_statistics
-// 소스 A: 국가별 수출입실적 (kcustomsCtntTradeCountry)
-// 소스 B: 품목별 수출입실적 (nitemtrade)
+// 관세청 공공데이터포털 OpenAPI — 한국 국가별 무역통계 수집기
+// 엔드포인트: https://apis.data.go.kr/1220000/nationtrade/getNationtradeList
+// 응답 형식: XML (type 파라미터 없음)
+// 대상 테이블: trade_statistics (stat_type='country' 고정)
 
 import fs from 'fs';
 import path from 'path';
@@ -25,7 +25,7 @@ function loadEnvLocal() {
 }
 loadEnvLocal();
 
-const API_BASE = 'http://apis.data.go.kr';
+const API_URL = 'https://apis.data.go.kr/1220000/nationtrade/getNationtradeList';
 const DELAY_MS = 200; // data.go.kr 개발계정 레이트 리밋 준수
 
 // 한국 주요 교역 상대국 (ISO 3166-1 alpha-2)
@@ -48,24 +48,12 @@ const TARGET_COUNTRIES = [
   { code: 'KZ', name: '카자흐스탄' },
 ];
 
-// 주요 HS 2단위 품목
-const TARGET_HS_CHAPTERS = [
-  { code: '84', name: '원자로·기계류' },
-  { code: '85', name: '전기기기·전자제품' },
-  { code: '87', name: '자동차·부품' },
-  { code: '72', name: '철강' },
-  { code: '39', name: '플라스틱' },
-  { code: '27', name: '광물성 연료·오일' },
-  { code: '29', name: '유기화학품' },
-  { code: '90', name: '광학기기·의료기기' },
-];
-
 interface TradeRow {
   period: string;
-  stat_type: 'country' | 'item';
-  hs_code: string | null;
-  hs_name: string | null;
-  country_code: string | null;
+  stat_type: 'country';
+  hs_code: null;
+  hs_name: null;
+  country_code: string;
   country_name: string | null;
   export_usd: number | null;
   export_weight: number | null;
@@ -79,7 +67,6 @@ function sleep(ms: number) {
   return new Promise<void>(resolve => setTimeout(resolve, ms));
 }
 
-// 전월 YYYYMM 계산
 function getPrevPeriod(): string {
   const d = new Date();
   d.setDate(1);
@@ -87,7 +74,6 @@ function getPrevPeriod(): string {
   return `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
 }
 
-// CLI 인수 파싱: --period=YYYYMM
 function parsePeriodArg(): string {
   const arg = process.argv.find(a => a.startsWith('--period='));
   if (arg) {
@@ -98,73 +84,96 @@ function parsePeriodArg(): string {
   return getPrevPeriod();
 }
 
-// API 응답에서 items 배열 추출 (data.go.kr 두 가지 응답 구조 대응)
-function extractItems(body: Record<string, unknown>): unknown[] {
-  const items = (body as Record<string, unknown>)['items'];
-  if (!items) return [];
-  if (Array.isArray(items)) return items;
-  // { item: [...] } 또는 { item: {...} } 구조
-  const item = (items as Record<string, unknown>)['item'];
-  if (Array.isArray(item)) return item;
-  if (item && typeof item === 'object') return [item];
-  return [];
-}
-
-function toNum(val: unknown): number | null {
-  if (val === null || val === undefined || val === '') return null;
-  const n = Number(String(val).replace(/,/g, ''));
+function toNum(val: string | undefined): number | null {
+  if (!val || val.trim() === '') return null;
+  const n = Number(val.replace(/,/g, ''));
   return isNaN(n) ? null : n;
 }
 
-// ── 소스 A: 국가별 수출입실적 ─────────────────────────────────────────
-async function fetchCountryStats(
+// ── XML 파싱 헬퍼 (외부 의존성 없음) ────────────────────────────────────
+function xmlTagValue(xml: string, tag: string): string {
+  const m = xml.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`));
+  return m ? m[1].trim() : '';
+}
+
+function parseXmlItems(xmlText: string): Record<string, string>[] {
+  const itemsBlock = xmlTagValue(xmlText, 'items');
+  if (!itemsBlock) return [];
+  const items: Record<string, string>[] = [];
+  for (const m of itemsBlock.matchAll(/<item>([\s\S]*?)<\/item>/g)) {
+    const obj: Record<string, string> = {};
+    for (const t of m[1].matchAll(/<([^/>\s]+)[^>]*>([^<]*)<\/[^>]+>/g)) {
+      obj[t[1]] = t[2].trim();
+    }
+    items.push(obj);
+  }
+  return items;
+}
+
+// ── API 단일 호출 (imexTpcd: '1'=수출, '2'=수입) ─────────────────────
+async function fetchNationTrade(
   yr: string,
   mt: string,
-  countryCd: string,
+  cntyCd: string,
+  imexTpcd: '1' | '2',
   apiKey: string
-): Promise<TradeRow | null> {
-  const url = new URL(`${API_BASE}/1220000/kcustomsCtntTradeCountry/getKcustomsCtntTradeCountryList`);
+): Promise<Record<string, string> | null> {
+  const url = new URL(API_URL);
   url.searchParams.set('serviceKey', apiKey);
-  url.searchParams.set('type', 'json');
   url.searchParams.set('strtYr', yr);
   url.searchParams.set('strtMt', mt);
   url.searchParams.set('endYr', yr);
   url.searchParams.set('endMt', mt);
-  url.searchParams.set('cntyCd', countryCd);
-  url.searchParams.set('numOfRows', '10');
+  url.searchParams.set('cntyCd', cntyCd);
+  url.searchParams.set('imexTpcd', imexTpcd);
+  url.searchParams.set('numOfRows', '5');
 
   const res = await fetch(url.toString(), { signal: AbortSignal.timeout(15000) });
   if (!res.ok) {
     const body = await res.text();
-    console.error(`[trade_stats] HTTP ${res.status} (country/${countryCd}):\n${body}`);
+    const label = imexTpcd === '1' ? '수출' : '수입';
+    console.error(`[trade_stats] HTTP ${res.status} (${cntyCd} ${label}):\n${body}`);
     throw new Error(`HTTP ${res.status}`);
   }
-  const json = await res.json() as { response?: { body?: unknown } };
 
-  const body = json?.response?.body as Record<string, unknown> | undefined;
-  if (!body) return null;
+  const xmlText = await res.text();
+  const items = parseXmlItems(xmlText);
+  return items.length > 0 ? items[0] : null;
+}
 
-  const items = extractItems(body);
-  if (items.length === 0) return null;
+// ── 국가 1개에 대해 수출+수입 호출 후 하나의 TradeRow로 합산 ────────────
+async function fetchCountryRow(
+  yr: string,
+  mt: string,
+  cntyCd: string,
+  countryName: string,
+  apiKey: string
+): Promise<TradeRow | null> {
+  const [expRaw, impRaw] = await Promise.all([
+    fetchNationTrade(yr, mt, cntyCd, '1', apiKey),
+    fetchNationTrade(yr, mt, cntyCd, '2', apiKey),
+  ]);
 
-  // 첫 번째 항목으로 필드명 확인 (디버그 — API 버전에 따라 필드명 다를 수 있음)
-  const raw = items[0] as Record<string, unknown>;
+  if (!expRaw && !impRaw) return null;
 
-  // 응답 필드명 후보 처리 (expDlr / expAmt 두 가지 버전 대응)
-  const expUsd = toNum(raw['expDlr'] ?? raw['expAmt'] ?? raw['exportAmt']);
-  const impUsd = toNum(raw['impDlr'] ?? raw['impAmt'] ?? raw['importAmt']);
-  const expKg  = toNum(raw['expWgt'] ?? raw['exportWgt']);
-  const impKg  = toNum(raw['impWgt'] ?? raw['importWgt']);
-  const name   = String(raw['cntyKrNm'] ?? raw['cntyNm'] ?? raw['cntyEnNm'] ?? countryCd);
+  // 응답 필드명 후보 (API 버전에 따라 다를 수 있음)
+  const expUsd = toNum(expRaw?.['expDlr'] ?? expRaw?.['expAmt'] ?? expRaw?.['tradeAmt']);
+  const expKg  = toNum(expRaw?.['expWgt'] ?? expRaw?.['tradeWgt']);
+  const impUsd = toNum(impRaw?.['impDlr'] ?? impRaw?.['impAmt'] ?? impRaw?.['tradeAmt']);
+  const impKg  = toNum(impRaw?.['impWgt'] ?? impRaw?.['tradeWgt']);
+
+  // 국가명: 수출 응답 우선, 없으면 수입 응답
+  const raw = expRaw ?? impRaw!;
+  const resolvedName = raw['cntyCdNm'] ?? raw['cntyNm'] ?? raw['cntyKrNm'] ?? countryName;
+
   const period = `${yr}-${mt}`;
-
   return {
     period,
     stat_type: 'country',
     hs_code: null,
     hs_name: null,
-    country_code: countryCd,
-    country_name: name,
+    country_code: cntyCd,
+    country_name: resolvedName,
     export_usd: expUsd,
     export_weight: expKg,
     import_usd: impUsd,
@@ -174,63 +183,7 @@ async function fetchCountryStats(
   };
 }
 
-// ── 소스 B: 품목별 수출입실적 ─────────────────────────────────────────
-async function fetchItemStats(
-  yr: string,
-  mt: string,
-  hsCd: string,
-  apiKey: string
-): Promise<TradeRow | null> {
-  const url = new URL(`${API_BASE}/1220000/nitemtrade/getNitemtradeList`);
-  url.searchParams.set('serviceKey', apiKey);
-  url.searchParams.set('type', 'json');
-  url.searchParams.set('strtYr', yr);
-  url.searchParams.set('strtMt', mt);
-  url.searchParams.set('endYr', yr);
-  url.searchParams.set('endMt', mt);
-  url.searchParams.set('hsCd', hsCd);
-  url.searchParams.set('imxprtSe', 'A'); // A = 수출입 합산
-  url.searchParams.set('numOfRows', '10');
-
-  const res = await fetch(url.toString(), { signal: AbortSignal.timeout(15000) });
-  if (!res.ok) {
-    const body = await res.text();
-    console.error(`[trade_stats] HTTP ${res.status} (item/hs${hsCd}):\n${body}`);
-    throw new Error(`HTTP ${res.status}`);
-  }
-  const json = await res.json() as { response?: { body?: unknown } };
-
-  const body = json?.response?.body as Record<string, unknown> | undefined;
-  if (!body) return null;
-
-  const items = extractItems(body);
-  if (items.length === 0) return null;
-
-  const raw = items[0] as Record<string, unknown>;
-  const expUsd = toNum(raw['expDlr'] ?? raw['expAmt'] ?? raw['exportAmt']);
-  const impUsd = toNum(raw['impDlr'] ?? raw['impAmt'] ?? raw['importAmt']);
-  const expKg  = toNum(raw['expWgt'] ?? raw['expKg'] ?? raw['exportWgt']);
-  const impKg  = toNum(raw['impWgt'] ?? raw['impKg'] ?? raw['importWgt']);
-  const hsName = String(raw['hsKrNm'] ?? raw['itemNm'] ?? raw['hsCdNm'] ?? '');
-  const period = `${yr}-${mt}`;
-
-  return {
-    period,
-    stat_type: 'item',
-    hs_code: hsCd,
-    hs_name: hsName || null,
-    country_code: null,
-    country_name: null,
-    export_usd: expUsd,
-    export_weight: expKg,
-    import_usd: impUsd,
-    import_weight: impKg,
-    trade_balance: expUsd !== null && impUsd !== null ? expUsd - impUsd : null,
-    data_source: '관세청 공공데이터포털',
-  };
-}
-
-// ── Supabase 클라이언트 (trade_stats 전용 — NULL 포함 delete 처리) ──
+// ── Supabase — delete-then-insert (NULL 포함 UNIQUE 제약 우회) ─────────
 function getSupabase() {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -238,12 +191,7 @@ function getSupabase() {
   return createClient(url, key, { auth: { persistSession: false } });
 }
 
-// NULL 컬럼이 포함된 UNIQUE 제약 우회: 기간+유형 단위로 먼저 삭제 후 삽입
-async function deleteAndInsert(
-  rows: TradeRow[],
-  period: string,
-  statType: 'country' | 'item'
-): Promise<void> {
+async function deleteAndInsert(rows: TradeRow[], period: string): Promise<void> {
   const sb = getSupabase();
   if (!sb) {
     console.warn('[db] env missing — trade_statistics 저장 스킵');
@@ -253,15 +201,15 @@ async function deleteAndInsert(
     .from('trade_statistics')
     .delete()
     .eq('period', period)
-    .eq('stat_type', statType);
-  if (delErr) console.warn(`[db] delete ${statType} rows:`, delErr.message);
+    .eq('stat_type', 'country');
+  if (delErr) console.warn('[db] delete country rows:', delErr.message);
 
   const { error: insErr } = await sb.from('trade_statistics').insert(rows as never[]);
   if (insErr) throw new Error(`[db] trade_statistics insert failed: ${insErr.message}`);
-  console.log(`[db] trade_statistics ← ${rows.length} ${statType} rows (${period})`);
+  console.log(`[db] trade_statistics ← ${rows.length} country rows (${period})`);
 }
 
-// ── 메인 collect 함수 ─────────────────────────────────────────────────
+// ── 메인 ─────────────────────────────────────────────────────────────
 export async function collect(): Promise<CollectorResult> {
   const result: CollectorResult = { section: 'trade', data: [] };
   const apiKey = process.env.DATA_GO_KR_API_KEY;
@@ -281,16 +229,14 @@ export async function collect(): Promise<CollectorResult> {
   const period = `${yr}-${mt}`;
   console.log(`[trade_stats] 수집 기간: ${period}`);
 
-  const countryRows: TradeRow[] = [];
-  const itemRows:    TradeRow[] = [];
+  const rows: TradeRow[] = [];
 
-  // ── A: 국가별 수집 ────────────────────────────────────────────────
   for (const country of TARGET_COUNTRIES) {
     await sleep(DELAY_MS);
     try {
-      const row = await fetchCountryStats(yr, mt, country.code, apiKey);
+      const row = await fetchCountryRow(yr, mt, country.code, country.name, apiKey);
       if (row) {
-        countryRows.push(row);
+        rows.push(row);
         result.data.push({
           data_type: 'trade_stat', data_key: `country_${country.code}_${periodStr}`,
           data_value: row, source: '관세청 공공데이터포털', is_complete: true,
@@ -314,45 +260,9 @@ export async function collect(): Promise<CollectorResult> {
     }
   }
 
-  // ── B: 품목별 수집 ────────────────────────────────────────────────
-  for (const hs of TARGET_HS_CHAPTERS) {
-    await sleep(DELAY_MS);
-    try {
-      const row = await fetchItemStats(yr, mt, hs.code, apiKey);
-      if (row) {
-        itemRows.push(row);
-        result.data.push({
-          data_type: 'trade_stat', data_key: `item_hs${hs.code}_${periodStr}`,
-          data_value: row, source: '관세청 공공데이터포털', is_complete: true,
-        });
-        const exp = row.export_usd !== null ? `$${(row.export_usd / 1e6).toFixed(0)}M` : 'N/A';
-        console.log(`  ✅ HS${hs.code} ${hs.name}: 수출 ${exp}`);
-      } else {
-        console.log(`  ⚠️ HS${hs.code} ${hs.name}: 데이터 없음`);
-        result.data.push({
-          data_type: 'trade_stat', data_key: `item_hs${hs.code}_${periodStr}`,
-          data_value: {}, source: '관세청', is_complete: false, error_message: 'no data',
-        });
-      }
-    } catch (e) {
-      const msg = (e as Error).message;
-      console.log(`  ⚠️ HS${hs.code} 실패: ${msg}`);
-      result.data.push({
-        data_type: 'trade_stat', data_key: `item_hs${hs.code}_error`,
-        data_value: {}, source: '관세청', is_complete: false, error_message: msg,
-      });
-    }
-  }
-
-  // ── DB 저장 ──────────────────────────────────────────────────────
-  if (countryRows.length > 0) {
-    await deleteAndInsert(countryRows, period, 'country').catch(e =>
-      console.warn('[trade_stats] country 저장 실패:', (e as Error).message)
-    );
-  }
-  if (itemRows.length > 0) {
-    await deleteAndInsert(itemRows, period, 'item').catch(e =>
-      console.warn('[trade_stats] item 저장 실패:', (e as Error).message)
+  if (rows.length > 0) {
+    await deleteAndInsert(rows, period).catch(e =>
+      console.warn('[trade_stats] 저장 실패:', (e as Error).message)
     );
   }
 
