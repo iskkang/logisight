@@ -12,7 +12,7 @@ const fs      = require('fs');
 const path    = require('path');
 const https   = require('https');
 const Anthropic = require('@anthropic-ai/sdk').default;
-const { insertArticle } = require('./lib/supabase-insert');
+const { insertArticle } = require('../../lib/supabase-insert');
 
 const TODAY      = new Date().toISOString().slice(0, 10);
 const NEWS_PATH  = path.resolve(__dirname, '../content/drafts/latest-news.json');
