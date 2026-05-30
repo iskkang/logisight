@@ -1,6 +1,6 @@
-// workers/collectors/news_rail.ts
-// CIS·러시아·철도 뉴스 수집기
-// 대상: PortNews(EN), RailFreight, TransportCorridors, Deliver-2, Vgudok
+﻿// collectors/news_rail.ts
+// CISÂ·ëŸ¬ì‹œì•„Â·ì² ë„ ë‰´ìŠ¤ ìˆ˜ì§‘ê¸°
+// ëŒ€ìƒ: PortNews(EN), RailFreight, TransportCorridors, Deliver-2, Vgudok
 
 import { chromium, type Browser, type Page } from 'playwright';
 import { rateLimited } from './utils/rate_limiter';
@@ -60,8 +60,8 @@ async function parseRss(url: string, sourceName: string): Promise<NewsItem[]> {
     const title = (b.match(/<title><!\[CDATA\[(.*?)\]\]>/)?.[1] || b.match(/<title>(.*?)<\/title>/)?.[1] || '').trim();
     const link = (b.match(/<link>(.*?)<\/link>/)?.[1] || '').trim();
     if (title && link) {
-      // 수집 시점을 published_at으로 사용 — RSS pubDate는 과거 날짜일 수 있어
-      // 큐레이션 window 필터를 통과하려면 항상 오늘 날짜여야 함
+      // ìˆ˜ì§‘ ì‹œì ì„ published_atìœ¼ë¡œ ì‚¬ìš© â€” RSS pubDateëŠ” ê³¼ê±° ë‚ ì§œì¼ ìˆ˜ ìžˆì–´
+      // íë ˆì´ì…˜ window í•„í„°ë¥¼ í†µê³¼í•˜ë ¤ë©´ í•­ìƒ ì˜¤ëŠ˜ ë‚ ì§œì—¬ì•¼ í•¨
       items.push({
         title, url: link,
         published_at: new Date().toISOString(),
@@ -110,7 +110,7 @@ export async function collect(): Promise<CollectorResult> {
   let browser: Browser | null = null;
 
   try {
-    // 1. RSS 수집
+    // 1. RSS ìˆ˜ì§‘
     for (const src of RSS_SOURCES) {
       try {
         const items = await rateLimited(src.rss, () => parseRss(src.rss, src.name));
@@ -124,9 +124,9 @@ export async function collect(): Promise<CollectorResult> {
             is_complete: true,
           });
         }
-        console.log(`✅ ${src.name}: ${items.length}건`);
+        console.log(`âœ… ${src.name}: ${items.length}ê±´`);
       } catch (e) {
-        console.error(`❌ ${src.name}:`, (e as Error).message);
+        console.error(`âŒ ${src.name}:`, (e as Error).message);
         result.data.push({
           data_type: 'news', data_key: `${src.name}_error`, data_value: {},
           source: src.name, source_url: src.rss, is_complete: false,
@@ -135,7 +135,7 @@ export async function collect(): Promise<CollectorResult> {
       }
     }
 
-    // 2. 스크래핑
+    // 2. ìŠ¤í¬ëž˜í•‘
     browser = await chromium.launch({ headless: true });
     const page = await browser.newPage();
     await page.setExtraHTTPHeaders({
@@ -155,9 +155,9 @@ export async function collect(): Promise<CollectorResult> {
             is_complete: true,
           });
         }
-        console.log(`✅ ${src.name}: ${items.length}건`);
+        console.log(`âœ… ${src.name}: ${items.length}ê±´`);
       } catch (e) {
-        console.error(`❌ ${src.name}:`, (e as Error).message);
+        console.error(`âŒ ${src.name}:`, (e as Error).message);
         result.data.push({
           data_type: 'news', data_key: `${src.name}_error`, data_value: {},
           source: src.name, source_url: src.url, is_complete: false,

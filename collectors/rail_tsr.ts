@@ -1,6 +1,6 @@
-// workers/collectors/rail_tsr.ts
-// 시베리아 횡단철도 (TSR) 뉴스 수집기
-// 대상: RZD Partner, PortNews, Vgudok, RailFreight Russia
+﻿// collectors/rail_tsr.ts
+// ì‹œë² ë¦¬ì•„ íš¡ë‹¨ì² ë„ (TSR) ë‰´ìŠ¤ ìˆ˜ì§‘ê¸°
+// ëŒ€ìƒ: RZD Partner, PortNews, Vgudok, RailFreight Russia
 
 import { rateLimited } from './utils/rate_limiter';
 import { snapshotWriter } from './utils/snapshot_writer';
@@ -51,18 +51,18 @@ async function parseRss(url: string, sourceName: string): Promise<NewsItem[]> {
   return items;
 }
 
-// RZD Partner — 러시아 철도 전문 매체
+// RZD Partner â€” ëŸ¬ì‹œì•„ ì² ë„ ì „ë¬¸ ë§¤ì²´
 async function fetchRZDPartner(): Promise<NewsItem[]> {
   const url = 'https://www.rzd-partner.com/rss/';
   try {
     return await parseRss(url, 'RZD Partner');
   } catch {
-    // RSS 실패 시 빈 배열 (사이트 접근 불안정)
+    // RSS ì‹¤íŒ¨ ì‹œ ë¹ˆ ë°°ì—´ (ì‚¬ì´íŠ¸ ì ‘ê·¼ ë¶ˆì•ˆì •)
     return [];
   }
 }
 
-// Deliver-2 — 중앙아시아 물류 뉴스
+// Deliver-2 â€” ì¤‘ì•™ì•„ì‹œì•„ ë¬¼ë¥˜ ë‰´ìŠ¤
 async function fetchDeliver2(): Promise<NewsItem[]> {
   const url = 'https://deliver-2.com/feed/';
   try {
@@ -75,7 +75,7 @@ async function fetchDeliver2(): Promise<NewsItem[]> {
 export async function collect(): Promise<CollectorResult> {
   const result: CollectorResult = { section: 'rail', data: [] };
 
-  // RSS 기반 수집
+  // RSS ê¸°ë°˜ ìˆ˜ì§‘
   for (const src of RSS_SOURCES) {
     try {
       const items = await rateLimited(src.rss, () => parseRss(src.rss, src.name));
@@ -89,9 +89,9 @@ export async function collect(): Promise<CollectorResult> {
           is_complete: true,
         });
       }
-      console.log(`✅ ${src.name}: ${items.length}건`);
+      console.log(`âœ… ${src.name}: ${items.length}ê±´`);
     } catch (e) {
-      console.error(`❌ ${src.name}:`, (e as Error).message);
+      console.error(`âŒ ${src.name}:`, (e as Error).message);
       result.data.push({
         data_type: 'news',
         data_key: `${src.name}_error`,
@@ -117,9 +117,9 @@ export async function collect(): Promise<CollectorResult> {
         is_complete: true,
       });
     }
-    if (items.length > 0) console.log(`✅ RZD Partner: ${items.length}건`);
+    if (items.length > 0) console.log(`âœ… RZD Partner: ${items.length}ê±´`);
   } catch (e) {
-    console.error('❌ RZD Partner:', (e as Error).message);
+    console.error('âŒ RZD Partner:', (e as Error).message);
   }
 
   // Deliver-2
@@ -135,9 +135,9 @@ export async function collect(): Promise<CollectorResult> {
         is_complete: true,
       });
     }
-    if (items.length > 0) console.log(`✅ Deliver-2: ${items.length}건`);
+    if (items.length > 0) console.log(`âœ… Deliver-2: ${items.length}ê±´`);
   } catch (e) {
-    console.error('❌ Deliver-2:', (e as Error).message);
+    console.error('âŒ Deliver-2:', (e as Error).message);
   }
 
   return result;

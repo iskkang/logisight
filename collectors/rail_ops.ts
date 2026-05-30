@@ -1,6 +1,6 @@
-// workers/collectors/rail_ops.ts
-// 러시아/CIS 운영사 뉴스 수집기 (fetch/RSS 기반, Playwright 미사용)
-// 소스: RZD, RZD Logistics, FESCO, TransContainer, Delo, PortNews, SeaNews, KTZ, UTLC, Index1520
+﻿// collectors/rail_ops.ts
+// ëŸ¬ì‹œì•„/CIS ìš´ì˜ì‚¬ ë‰´ìŠ¤ ìˆ˜ì§‘ê¸° (fetch/RSS ê¸°ë°˜, Playwright ë¯¸ì‚¬ìš©)
+// ì†ŒìŠ¤: RZD, RZD Logistics, FESCO, TransContainer, Delo, PortNews, SeaNews, KTZ, UTLC, Index1520
 
 import { rateLimited } from './utils/rate_limiter';
 import { snapshotWriter } from './utils/snapshot_writer';
@@ -81,7 +81,7 @@ export async function collect(opts: { frequency: 'daily' | 'weekly' } = { freque
     const src = sources[i];
     const res = settled[i];
     if (res.status === 'rejected') {
-      console.log(`⚠️ ${src.name} 실패: ${(res.reason as Error).message}`);
+      console.log(`âš ï¸ ${src.name} ì‹¤íŒ¨: ${(res.reason as Error).message}`);
       result.data.push({ data_type: 'news', data_key: `${src.name}_error`, data_value: {}, source: src.name, source_url: src.url, is_complete: false, error_message: (res.reason as Error).message });
       continue;
     }
@@ -93,11 +93,11 @@ export async function collect(opts: { frequency: 'daily' | 'weekly' } = { freque
         source: src.name, source_url: src.url, is_complete: true,
       });
     }
-    console.log(`✅ ${src.name}: ${res.value.length}건`);
+    console.log(`âœ… ${src.name}: ${res.value.length}ê±´`);
   }
 
   const success = result.data.filter(d => d.is_complete).length;
-  console.log(`\n✅ rail_ops [${opts.frequency}]: ${success}건 수집 완료`);
+  console.log(`\nâœ… rail_ops [${opts.frequency}]: ${success}ê±´ ìˆ˜ì§‘ ì™„ë£Œ`);
   return result;
 }
 

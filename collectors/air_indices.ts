@@ -1,12 +1,12 @@
-// workers/collectors/air_indices.ts
-// 항공 화물 운임 지수 수집기
-// 대상: Baltic Air Freight Index (BAI), Freightos Air Index (FAX), Jet Fuel
+﻿// collectors/air_indices.ts
+// í•­ê³µ í™”ë¬¼ ìš´ìž„ ì§€ìˆ˜ ìˆ˜ì§‘ê¸°
+// ëŒ€ìƒ: Baltic Air Freight Index (BAI), Freightos Air Index (FAX), Jet Fuel
 
 import { rateLimited } from './utils/rate_limiter';
 import { snapshotWriter } from './utils/snapshot_writer';
 import type { CollectorResult } from './types';
 
-// ── Baltic Air Freight Index (BAI) ──────────────────────────────
+// â”€â”€ Baltic Air Freight Index (BAI) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function fetchBAI(): Promise<{ value: number | null; change: number | null }> {
   const url = 'https://www.balticexchange.com/en/data/market-data/air.html';
   try {
@@ -24,7 +24,7 @@ async function fetchBAI(): Promise<{ value: number | null; change: number | null
   }
 }
 
-// ── Freightos Air Index (FAX) ────────────────────────────────────
+// â”€â”€ Freightos Air Index (FAX) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function fetchFAX(): Promise<{ value: number | null; change: number | null }> {
   const url = 'https://fbx.freightos.com/air';
   try {
@@ -43,7 +43,7 @@ async function fetchFAX(): Promise<{ value: number | null; change: number | null
   }
 }
 
-// ── Jet Fuel (IATA) ──────────────────────────────────────────────
+// â”€â”€ Jet Fuel (IATA) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function fetchJetFuel(): Promise<{ value: number | null; change: number | null }> {
   const url = 'https://www.iata.org/en/publications/economics/fuel-monitor/';
   try {
@@ -51,7 +51,7 @@ async function fetchJetFuel(): Promise<{ value: number | null; change: number | 
       headers: { 'User-Agent': 'Logisight/1.0 (logisight.mtlship.com; bot)' },
     });
     const html = await res.text();
-    // IATA 연료 모니터: $/gallon 또는 $/barrel 수치 추출
+    // IATA ì—°ë£Œ ëª¨ë‹ˆí„°: $/gallon ë˜ëŠ” $/barrel ìˆ˜ì¹˜ ì¶”ì¶œ
     const match = html.match(/([\d.]+)\s*(?:USD\s*)?\/\s*(?:gallon|gal|bbl)/i);
     return {
       value: match ? parseFloat(match[1]) : null,
@@ -107,7 +107,7 @@ export async function collect(): Promise<CollectorResult> {
         source: idx.name,
         source_url: idx.source_url,
         is_complete: data.value !== null,
-        error_message: data.value === null ? '데이터 파싱 실패' : undefined,
+        error_message: data.value === null ? 'ë°ì´í„° íŒŒì‹± ì‹¤íŒ¨' : undefined,
       });
     } catch (error) {
       result.data.push({
@@ -123,7 +123,7 @@ export async function collect(): Promise<CollectorResult> {
   }
 
   const success = result.data.filter(d => d.is_complete).length;
-  console.log(`✅ air_indices: ${success}/${result.data.length}개 수집`);
+  console.log(`âœ… air_indices: ${success}/${result.data.length}ê°œ ìˆ˜ì§‘`);
 
   return result;
 }

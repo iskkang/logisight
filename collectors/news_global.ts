@@ -1,6 +1,6 @@
-// workers/collectors/news_global.ts
-// 글로벌 물류 뉴스 수집기
-// 대상: FreightWaves, AirCargoNews, SupplyChainDive, TTNews, CNBC, The Loadstar, Splash247
+﻿// collectors/news_global.ts
+// ê¸€ë¡œë²Œ ë¬¼ë¥˜ ë‰´ìŠ¤ ìˆ˜ì§‘ê¸°
+// ëŒ€ìƒ: FreightWaves, AirCargoNews, SupplyChainDive, TTNews, CNBC, The Loadstar, Splash247
 
 import { rateLimited } from './utils/rate_limiter';
 import { snapshotWriter } from './utils/snapshot_writer';
@@ -13,7 +13,7 @@ const SOURCES = [
   { name: 'SupplyChainDive', rss: 'https://www.supplychaindive.com/feeds/news/',              section: 'trade'    as const, language: 'en' },
   { name: 'TTNews',          rss: 'https://www.ttnews.com/rss.xml',                           section: 'trade'    as const, language: 'en' },
   { name: 'FreightWaves',    rss: 'https://www.freightwaves.com/feed',                        section: 'shipping' as const, language: 'en' },
-  // 신규 추가
+  // ì‹ ê·œ ì¶”ê°€
   { name: 'The Loadstar',    rss: 'https://theloadstar.com/feed/',                            section: 'shipping' as const, language: 'en' },
   { name: 'Splash247',       rss: 'https://splash247.com/feed/',                              section: 'shipping' as const, language: 'en' },
 ];
@@ -49,7 +49,7 @@ async function parseRssFeed(url: string): Promise<NewsItem[]> {
   return items;
 }
 
-// Supabase 영구 저장 + 30일 이전 정리
+// Supabase ì˜êµ¬ ì €ìž¥ + 30ì¼ ì´ì „ ì •ë¦¬
 async function persistMaritimeNews(result: CollectorResult): Promise<void> {
   const rows: Record<string, unknown>[] = [];
   for (const d of result.data) {
@@ -67,7 +67,7 @@ async function persistMaritimeNews(result: CollectorResult): Promise<void> {
   }
   await dbUpsert('maritime_news', rows, 'url');
 
-  // 30일 롤링 정리
+  // 30ì¼ ë¡¤ë§ ì •ë¦¬
   const cutoff = new Date(Date.now() - 30 * 86_400_000).toISOString();
   await dbDeleteBefore('maritime_news', 'published_at', cutoff);
 }
@@ -97,9 +97,9 @@ export async function collect(): Promise<CollectorResult> {
           is_complete: true,
         });
       }
-      console.log(`✅ ${source.name}: ${items.length}건 수집`);
+      console.log(`âœ… ${source.name}: ${items.length}ê±´ ìˆ˜ì§‘`);
     } catch (error) {
-      console.error(`❌ ${source.name} 수집 실패:`, (error as Error).message);
+      console.error(`âŒ ${source.name} ìˆ˜ì§‘ ì‹¤íŒ¨:`, (error as Error).message);
       result.data.push({
         data_type: 'news', data_key: `${source.name}_error`, data_value: {},
         source: source.name, source_url: source.rss, is_complete: false,

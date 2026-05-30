@@ -1,21 +1,27 @@
-// scripts/generate-article-shipping.js
-// 운임·시황 KSG 기사 생성
+// generators/web/generate-article-shipping.js
+// 운임·시황 KSG 기사 생성 (agent_type = 'shipping')
 // 입력: content/drafts/curated-rail.json 또는 curated-ocean.json
-// 출력: content/articles/{YYYY-MM-DD}-{section}-article.md
+// 출력: content/articles/{YYYY-MM-DD}-{section}-article.md + maritime_news upsert
 //
 // 사용법:
-//   node scripts/generate-article-shipping.js --section=rail
-//   node scripts/generate-article-shipping.js --section=ocean
+//   node generators/web/generate-article-shipping.js --section=rail
+//   node generators/web/generate-article-shipping.js --section=ocean
 
-const fs      = require('fs');
-const path    = require('path');
-const https   = require('https');
+const fs        = require('fs');
+const path      = require('path');
+const https     = require('https');
 const Anthropic = require('@anthropic-ai/sdk').default;
-const { insertArticle } = require('./lib/supabase-insert');
+const { insertArticle } = require('../../lib/supabase-insert');
 
-const TODAY      = new Date().toISOString().slice(0, 10);
-const DRAFTS_DIR = path.resolve(__dirname, '../content/drafts');
-const ARTICLES_DIR = path.resolve(__dirname, '../content/articles');
+const TODAY        = new Date().toISOString().slice(0, 10);
+const DRAFTS_DIR   = path.resolve(__dirname, '../../content/drafts');
+const ARTICLES_DIR = path.resolve(__dirname, '../../content/articles');
+
+// ── 스타일 가이드 로드 (시스템 프롬프트 주입용) ──────────────────────────
+const STYLE_GUIDE = fs.readFileSync(
+  path.resolve(__dirname, 'WEB_ARTICLE_STYLE.md'),
+  'utf-8'
+);
 
 const sectionArg = process.argv.find(a => a.startsWith('--section='));
 const SECTION    = sectionArg ? sectionArg.split('=')[1] : 'rail'; // rail | ocean
@@ -65,12 +71,18 @@ async function generateArticle(curated, imageUrl, imageKeyword) {
     .map(l => `- [${l.source}] ${l.title_ko || l.title} — ${l.url}`)
     .join('\n');
 
-  const sectionLabel = SECTION === 'rail' ? '철도' : '해운·항공';
-  const category     = SECTION === 'rail' ? '철도' : '해운';
+  const sectionLabel = SECTION === 'rail' ? '철도' : '해운';
+  const category     = SECTION === 'rail' ? '철도' : '해상';
 
-  const prompt = `당신은 15년 경력의 물류 전문 기자입니다. 코리아쉬핑가제트(KSG)·카고뉴스 스타일로 ${sectionLabel} 운임·시황 기사를 작성합니다.
+  // ── 시스템 프롬프트: 스타일 가이드 전체 주입 ──────────────────────────
+  const systemPrompt = `당신은 15년 경력의 해운·물류 전문 기자입니다.
+아래 스타일 가이드를 반드시 따라 기사를 작성하십시오.
 
-## 입력 데이터
+${STYLE_GUIDE}`;
+
+  // ── 유저 프롬프트: 입력 데이터 + 출력 형식만 ─────────────────────────
+  const userPrompt = `## 입력 데이터 (${sectionLabel} 섹션)
+
 메인 기사:
   제목(영): ${curated.main.title}
   제목(한): ${curated.main.title_ko}
@@ -83,34 +95,25 @@ async function generateArticle(curated, imageUrl, imageKeyword) {
 관련 기사:
 ${linksText || '(없음)'}
 
-## 작성 요령
-- 제목: [항로명 또는 카테고리]/ [핵심 내용]
-- 부제: [세부 수치 또는 배경]
-- 본문 4단 구성: ① 현황 리드 → ② 노선별 상세 수치 → ③ 원인 분석 → ④ 전망
-- 분량: 600~900자 (최소 400자)
-- 수치는 한자 혼용: 4000弗, 1만4000TEU
-- 추측은 "~전망이다" "~분석이다"로 표기
-- 출처 없는 수치 금지
-
-## 이미지 정보
+## 이미지
 image_url: ${imageUrl || 'null'}
 image_keyword: ${imageKeyword}
-image_credit: Photo: Unsplash
 
-## 출력 형식 (YAML front-matter + 마크다운 본문만 출력, 다른 설명 없이)
+## 출력 형식 (YAML front-matter + 마크다운 본문만, 다른 설명 없이)
 
 \`\`\`markdown
 ---
-title: "제목"
-subtitle: "부제"
+title: "제목 (명사형 종결, 25~35자, 키워드 앞 15자 이내)"
+subtitle: "부제 (title 보완, 70~80자, SEO 메타용)"
 category: "${category}"
-tags: ["태그1", "태그2"]
+tags: ["태그1", "태그2", "태그3"]
 author: "Logisight 편집팀"
 date: ${TODAY}
 sources: ["출처1", "출처2"]
 image_url: "${imageUrl || ''}"
 image_keyword: "${imageKeyword}"
 image_credit: "Photo: Unsplash"
+agent_type: "shipping"
 status: draft
 ---
 
@@ -120,7 +123,7 @@ status: draft
 ![제목](${imageUrl || ''})
 *Photo: Unsplash*
 
-{기사 본문 — 4단 구성}
+{기사 본문 — 4단 구성, 600~1000자, H2 소제목 2~3개}
 
 ---
 *출처: 출처1, 출처2*
@@ -129,11 +132,11 @@ status: draft
   const msg = await client.messages.create({
     model: 'claude-sonnet-4-6',
     max_tokens: 3000,
-    messages: [{ role: 'user', content: prompt }],
+    system: systemPrompt,
+    messages: [{ role: 'user', content: userPrompt }],
   });
 
-  const raw = msg.content[0].text.trim();
-  // 마크다운 코드블록 제거
+  const raw     = msg.content[0].text.trim();
   const mdMatch = raw.match(/```markdown\n([\s\S]*?)```/) || raw.match(/```\n([\s\S]*?)```/);
   return mdMatch ? mdMatch[1].trim() : raw;
 }
@@ -162,16 +165,15 @@ async function main() {
     process.exit(0);
   }
 
-  const keyword   = DEFAULT_KEYWORD[SECTION];
+  const keyword  = DEFAULT_KEYWORD[SECTION];
   console.log(`🖼️  Unsplash 이미지 수집 (keyword: ${keyword})`);
-  const imageUrl  = await fetchUnsplashImage(keyword);
+  const imageUrl = await fetchUnsplashImage(keyword);
   if (imageUrl) console.log(`   → ${imageUrl.slice(0, 60)}...`);
   else          console.log('   → 이미지 없음 (null)');
 
-  console.log(`✍️  Claude 기사 생성 중...`);
+  console.log(`✍️  Claude 기사 생성 중... (스타일 가이드 주입됨)`);
   const article = await generateArticle(curated, imageUrl, keyword);
 
-  // 저장
   if (!fs.existsSync(ARTICLES_DIR)) fs.mkdirSync(ARTICLES_DIR, { recursive: true });
 
   const slug     = makeSlug(curated.main.title_ko || curated.main.title);
@@ -182,7 +184,7 @@ async function main() {
   console.log(`✅ 기사 저장: content/articles/${filename}`);
 
   // maritime_news upsert
-  const canonicalUrl = `https://logisight.mtlship.com/article/${TODAY}-${SECTION}-${slug}`;
+  const canonicalUrl    = `https://logisight.mtlship.com/article/${TODAY}-${SECTION}-${slug}`;
   const defaultCategory = SECTION === 'rail' ? '철도' : '해상';
   await insertArticle({
     markdownContent: article,

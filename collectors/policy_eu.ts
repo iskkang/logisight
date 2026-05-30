@@ -1,6 +1,6 @@
-// workers/collectors/policy_eu.ts
-// EU 무역·환경 정책 수집기
-// 대상: EU CBAM, ETS, 유럽의회 보도자료
+﻿// collectors/policy_eu.ts
+// EU ë¬´ì—­Â·í™˜ê²½ ì •ì±… ìˆ˜ì§‘ê¸°
+// ëŒ€ìƒ: EU CBAM, ETS, ìœ ëŸ½ì˜íšŒ ë³´ë„ìžë£Œ
 
 import { rateLimited } from './utils/rate_limiter';
 import { snapshotWriter } from './utils/snapshot_writer';
@@ -54,7 +54,7 @@ async function parseRss(url: string, sourceName: string): Promise<NewsItem[]> {
   return items;
 }
 
-// EU CBAM 공식 페이지 RSS fallback
+// EU CBAM ê³µì‹ íŽ˜ì´ì§€ RSS fallback
 async function fetchEUCBAMNews(): Promise<NewsItem[]> {
   const url = 'https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism_en';
   try {
@@ -64,7 +64,7 @@ async function fetchEUCBAMNews(): Promise<NewsItem[]> {
     const html = await res.text();
     const items: NewsItem[] = [];
 
-    // 뉴스 링크 추출
+    // ë‰´ìŠ¤ ë§í¬ ì¶”ì¶œ
     const linkMatches = html.matchAll(/<a[^>]+href="([^"]+cbam[^"]*)"[^>]*>([\s\S]*?)<\/a>/gi);
     for (const m of linkMatches) {
       const url = m[1].startsWith('http') ? m[1] : `https://taxation-customs.ec.europa.eu${m[1]}`;
@@ -102,11 +102,11 @@ export async function collect(): Promise<CollectorResult> {
           is_complete: true,
         });
       }
-      console.log(`✅ ${src.name}: ${items.length}건`);
+      console.log(`âœ… ${src.name}: ${items.length}ê±´`);
     } catch (e) {
-      console.error(`❌ ${src.name}:`, (e as Error).message);
+      console.error(`âŒ ${src.name}:`, (e as Error).message);
 
-      // RSS 실패 시 CBAM 직접 페이지 시도
+      // RSS ì‹¤íŒ¨ ì‹œ CBAM ì§ì ‘ íŽ˜ì´ì§€ ì‹œë„
       try {
         const cbamItems = await rateLimited('https://taxation-customs.ec.europa.eu', () => fetchEUCBAMNews());
         for (const item of cbamItems) {
@@ -119,7 +119,7 @@ export async function collect(): Promise<CollectorResult> {
             is_complete: true,
           });
         }
-        if (cbamItems.length > 0) console.log(`✅ EU CBAM fallback: ${cbamItems.length}건`);
+        if (cbamItems.length > 0) console.log(`âœ… EU CBAM fallback: ${cbamItems.length}ê±´`);
       } catch {}
     }
   }

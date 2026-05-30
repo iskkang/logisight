@@ -207,6 +207,7 @@ async function main() {
     canonicalUrl,
     agentType: 'brief',
     defaultCategory: '물류',
+    forcedCategory: '물류',
   });
 }
 

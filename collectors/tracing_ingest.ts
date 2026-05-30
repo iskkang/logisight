@@ -1,4 +1,4 @@
-// workers/collectors/tracing_ingest.ts
+﻿// collectors/tracing_ingest.ts
 // Reads xlsx files from data/samples/, parses milestones, upserts to Supabase.
 // Run: npm run collect:tracing
 // Idempotent: UNIQUE constraints on (shipment_ref, milestone) and (lane_id, week_iso, milestone).
@@ -28,7 +28,7 @@ function getSupabase() {
 
 async function main() {
   if (!fs.existsSync(SAMPLES_DIR)) {
-    console.error(`❌ data/samples/ 디렉터리가 없습니다. 생성 후 xlsx 파일을 추가해주세요.`);
+    console.error(`âŒ data/samples/ ë””ë ‰í„°ë¦¬ê°€ ì—†ìŠµë‹ˆë‹¤. ìƒì„± í›„ xlsx íŒŒì¼ì„ ì¶”ê°€í•´ì£¼ì„¸ìš”.`);
     process.exit(1);
   }
 
@@ -36,46 +36,46 @@ async function main() {
     .filter(f => f.endsWith('.xlsx') || f.endsWith('.xls'));
 
   if (xlsxFiles.length === 0) {
-    console.warn('⚠️  data/samples/에 xlsx 파일이 없습니다. 스킵합니다.');
+    console.warn('âš ï¸  data/samples/ì— xlsx íŒŒì¼ì´ ì—†ìŠµë‹ˆë‹¤. ìŠ¤í‚µí•©ë‹ˆë‹¤.');
     return;
   }
 
-  console.log(`📂 ${xlsxFiles.length}개 파일: ${xlsxFiles.join(', ')}`);
+  console.log(`ðŸ“‚ ${xlsxFiles.length}ê°œ íŒŒì¼: ${xlsxFiles.join(', ')}`);
 
   const supabase = getSupabase();
   let totalShipments = 0;
   let totalFlags = 0;
 
-  // ── 1. Parse ───────────────────────────────────────────────────────────────
+  // â”€â”€ 1. Parse â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const allShipments = xlsxFiles.flatMap(file => {
     const filePath = path.join(SAMPLES_DIR, file);
-    console.log(`\n📄 파싱: ${file}`);
+    console.log(`\nðŸ“„ íŒŒì‹±: ${file}`);
     try {
       const shipments = parseXlsx(filePath);
-      console.log(`  → ${shipments.length}건`);
+      console.log(`  â†’ ${shipments.length}ê±´`);
       totalShipments += shipments.length;
 
       for (const s of shipments) {
         for (const m of s.milestones) {
           if (m.flag) {
-            console.warn(`  ⚠️  플래그 [${s.shipmentRef}] ${m.milestone}: ${m.flag}`);
+            console.warn(`  âš ï¸  í”Œëž˜ê·¸ [${s.shipmentRef}] ${m.milestone}: ${m.flag}`);
             totalFlags++;
           }
         }
       }
       return shipments;
     } catch (err) {
-      console.error(`  ❌ 파싱 실패: ${(err as Error).message}`);
+      console.error(`  âŒ íŒŒì‹± ì‹¤íŒ¨: ${(err as Error).message}`);
       return [];
     }
   });
 
   if (allShipments.length === 0) {
-    console.warn('⚠️  유효한 화물 데이터 없음.');
+    console.warn('âš ï¸  ìœ íš¨í•œ í™”ë¬¼ ë°ì´í„° ì—†ìŒ.');
     return;
   }
 
-  // ── 2. Upsert shipment_legs ────────────────────────────────────────────────
+  // â”€â”€ 2. Upsert shipment_legs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const legRows = allShipments.flatMap(s =>
     s.milestones.map(m => ({
       lane_id:       s.laneId,
@@ -93,18 +93,18 @@ async function main() {
     }))
   );
 
-  console.log(`\n💾 shipment_legs upsert: ${legRows.length}건`);
+  console.log(`\nðŸ’¾ shipment_legs upsert: ${legRows.length}ê±´`);
   const { error: legError } = await supabase
     .from('shipment_legs')
     .upsert(legRows, { onConflict: 'shipment_ref,milestone', ignoreDuplicates: false });
 
   if (legError) {
-    console.error('❌ shipment_legs upsert 실패:', legError.message);
+    console.error('âŒ shipment_legs upsert ì‹¤íŒ¨:', legError.message);
     process.exit(1);
   }
-  console.log('✅ shipment_legs upsert 완료');
+  console.log('âœ… shipment_legs upsert ì™„ë£Œ');
 
-  // ── 3. Aggregate → delay_index_weekly ─────────────────────────────────────
+  // â”€â”€ 3. Aggregate â†’ delay_index_weekly â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const buckets = aggregateWeekly(allShipments);
   const indexRows: Array<{
     lane_id:       string;
@@ -137,29 +137,29 @@ async function main() {
     });
   }
 
-  console.log(`\n📊 delay_index_weekly upsert: ${indexRows.length}건`);
+  console.log(`\nðŸ“Š delay_index_weekly upsert: ${indexRows.length}ê±´`);
   const { error: idxError } = await supabase
     .from('delay_index_weekly')
     .upsert(indexRows, { onConflict: 'lane_id,week_iso,milestone', ignoreDuplicates: false });
 
   if (idxError) {
-    console.error('❌ delay_index_weekly upsert 실패:', idxError.message);
+    console.error('âŒ delay_index_weekly upsert ì‹¤íŒ¨:', idxError.message);
     process.exit(1);
   }
-  console.log('✅ delay_index_weekly upsert 완료');
+  console.log('âœ… delay_index_weekly upsert ì™„ë£Œ');
 
   console.log(`
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📦 CADI 트레이싱 인제스트 완료
-  파일       : ${xlsxFiles.length}개
-  화물 건수  : ${totalShipments}건
-  플래그     : ${totalFlags}건
-  집계 레코드: ${indexRows.length}건
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
+ðŸ“¦ CADI íŠ¸ë ˆì´ì‹± ì¸ì œìŠ¤íŠ¸ ì™„ë£Œ
+  íŒŒì¼       : ${xlsxFiles.length}ê°œ
+  í™”ë¬¼ ê±´ìˆ˜  : ${totalShipments}ê±´
+  í”Œëž˜ê·¸     : ${totalFlags}ê±´
+  ì§‘ê³„ ë ˆì½”ë“œ: ${indexRows.length}ê±´
+â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
 `);
 }
 
 main().catch(err => {
-  console.error('❌ tracing_ingest 실패:', err);
+  console.error('âŒ tracing_ingest ì‹¤íŒ¨:', err);
   process.exit(1);
 });

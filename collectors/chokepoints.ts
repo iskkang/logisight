@@ -1,5 +1,5 @@
-// workers/collectors/chokepoints.ts
-// 항로 리스크 수집기 — UKMTO(daily), Panama/Suez/BIMCO(weekly)
+﻿// collectors/chokepoints.ts
+// í•­ë¡œ ë¦¬ìŠ¤í¬ ìˆ˜ì§‘ê¸° â€” UKMTO(daily), Panama/Suez/BIMCO(weekly)
 
 import { rateLimited } from './utils/rate_limiter';
 import { snapshotWriter } from './utils/snapshot_writer';
@@ -66,7 +66,7 @@ async function fetchHtmlLinks(url: string, sourceName: string): Promise<NewsItem
 export async function collect(opts: { frequency: 'daily' | 'weekly' } = { frequency: 'daily' }): Promise<CollectorResult> {
   const result: CollectorResult = { section: 'risk', data: [] };
 
-  // UKMTO — daily
+  // UKMTO â€” daily
   try {
     const items = await rateLimited('https://www.ukmto.org', () => fetchUKMTO());
     for (const item of items) {
@@ -77,9 +77,9 @@ export async function collect(opts: { frequency: 'daily' | 'weekly' } = { freque
         source: 'UKMTO', source_url: 'https://www.ukmto.org/recent-incidents', is_complete: true,
       });
     }
-    console.log(`✅ UKMTO: ${items.length}건`);
+    console.log(`âœ… UKMTO: ${items.length}ê±´`);
   } catch (e) {
-    console.log(`⚠️ UKMTO 실패: ${(e as Error).message}`);
+    console.log(`âš ï¸ UKMTO ì‹¤íŒ¨: ${(e as Error).message}`);
   }
 
   if (opts.frequency === 'weekly') {
@@ -98,15 +98,15 @@ export async function collect(opts: { frequency: 'daily' | 'weekly' } = { freque
             source: src.name, source_url: src.url, is_complete: true,
           });
         }
-        console.log(`✅ ${src.name}: ${items.length}건`);
+        console.log(`âœ… ${src.name}: ${items.length}ê±´`);
       } catch (e) {
-        console.log(`⚠️ ${src.name} 실패: ${(e as Error).message}`);
+        console.log(`âš ï¸ ${src.name} ì‹¤íŒ¨: ${(e as Error).message}`);
       }
     }
   }
 
   const success = result.data.filter(d => d.is_complete).length;
-  console.log(`\n✅ chokepoints [${opts.frequency}]: ${success}건 수집 완료`);
+  console.log(`\nâœ… chokepoints [${opts.frequency}]: ${success}ê±´ ìˆ˜ì§‘ ì™„ë£Œ`);
   return result;
 }
 

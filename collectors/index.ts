@@ -1,6 +1,6 @@
-// workers/collectors/index.ts
-// 마스터 dispatcher — 모든 collector 순차/병렬 실행
-// 사용법: ts-node index.ts [all|shipping|news|rail|policy]
+﻿// collectors/index.ts
+// ë§ˆìŠ¤í„° dispatcher â€” ëª¨ë“  collector ìˆœì°¨/ë³‘ë ¬ ì‹¤í–‰
+// ì‚¬ìš©ë²•: npx tsx index.ts [all|shipping|news|rail|policy]
 
 import * as dotenv from 'dotenv';
 import * as path from 'path';
@@ -30,7 +30,7 @@ import { collect as collectPortStats }         from './port_stats';
 
 const GROUPS = [
   {
-    name: '운임 지수',
+    name: 'ìš´ìž„ ì§€ìˆ˜',
     collectors: [
       { name: 'shipping_indices', fn: collectShipping },
       { name: 'bunker',           fn: collectBunker },
@@ -39,7 +39,7 @@ const GROUPS = [
     ],
   },
   {
-    name: '뉴스',
+    name: 'ë‰´ìŠ¤',
     collectors: [
       { name: 'news_global',   fn: collectNewsGlobal },
       { name: 'news_korea',    fn: collectNewsKorea },
@@ -48,14 +48,14 @@ const GROUPS = [
     ],
   },
   {
-    name: '철도',
+    name: 'ì² ë„',
     collectors: [
       { name: 'rail_tcr', fn: collectRailTCR },
       { name: 'rail_tsr', fn: collectRailTSR },
     ],
   },
   {
-    name: '정책',
+    name: 'ì •ì±…',
     collectors: [
       { name: 'policy_us',  fn: collectPolicyUS },
       { name: 'policy_eu',  fn: collectPolicyEU },
@@ -73,7 +73,7 @@ const GROUPS = [
   {
     name: 'rail-weekly',
     collectors: [
-      { name: 'news_rail',       fn: collectNewsRail },                         // weekly도 최신 기사 포함
+      { name: 'news_rail',       fn: collectNewsRail },                         // weeklyë„ ìµœì‹  ê¸°ì‚¬ í¬í•¨
       { name: 'rail_cn_weekly',  fn: () => collectRailCN({ frequency: 'weekly' }) },
       { name: 'rail_ops_weekly', fn: () => collectRailOps({ frequency: 'weekly' }) },
     ],
@@ -98,10 +98,10 @@ const GROUPS = [
 ];
 
 const GROUP_MAP: Record<string, string> = {
-  shipping:      '운임 지수',
-  news:          '뉴스',
-  rail:          '철도',
-  policy:        '정책',
+  shipping:      'ìš´ìž„ ì§€ìˆ˜',
+  news:          'ë‰´ìŠ¤',
+  rail:          'ì² ë„',
+  policy:        'ì •ì±…',
   'rail-daily':  'rail-daily',
   'rail-weekly': 'rail-weekly',
   'ocean-daily': 'ocean-daily',
@@ -109,17 +109,17 @@ const GROUP_MAP: Record<string, string> = {
 };
 
 async function runCollector(name: string, fn: () => Promise<CollectorResult>) {
-  console.log(`\n🔄 ${name} 수집 시작...`);
+  console.log(`\nðŸ”„ ${name} ìˆ˜ì§‘ ì‹œìž‘...`);
   try {
     const result = await fn();
     const total   = result.data.length;
     const success = result.data.filter(d => d.is_complete).length;
     const failed  = total - success;
     await snapshotWriter(result);
-    console.log(`✅ ${name} 완료: ${success}건 성공 / ${failed}건 실패`);
+    console.log(`âœ… ${name} ì™„ë£Œ: ${success}ê±´ ì„±ê³µ / ${failed}ê±´ ì‹¤íŒ¨`);
     return { name, success: true, total, failed };
   } catch (error) {
-    console.error(`❌ ${name} 전체 실패:`, (error as Error).message);
+    console.error(`âŒ ${name} ì „ì²´ ì‹¤íŒ¨:`, (error as Error).message);
     return { name, success: false, total: 0, failed: 1 };
   }
 }
@@ -129,20 +129,20 @@ async function main() {
   const targetName = groupArg ? GROUP_MAP[groupArg] : undefined;
 
   if (groupArg && !targetName) {
-    console.error(`❌ 알 수 없는 그룹: "${groupArg}". 가능한 값: ${Object.keys(GROUP_MAP).join(', ')}, all`);
+    console.error(`âŒ ì•Œ ìˆ˜ ì—†ëŠ” ê·¸ë£¹: "${groupArg}". ê°€ëŠ¥í•œ ê°’: ${Object.keys(GROUP_MAP).join(', ')}, all`);
     process.exit(1);
   }
 
   const activeGroups = targetName ? GROUPS.filter(g => g.name === targetName) : GROUPS;
 
   const startTime = Date.now();
-  console.log(`🚀 Logisight 데이터 수집 시작 (group: ${groupArg ?? 'all'})\n`);
-  console.log(`📅 수집 시각: ${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })} KST`);
+  console.log(`ðŸš€ Logisight ë°ì´í„° ìˆ˜ì§‘ ì‹œìž‘ (group: ${groupArg ?? 'all'})\n`);
+  console.log(`ðŸ“… ìˆ˜ì§‘ ì‹œê°: ${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })} KST`);
 
   const summary: Array<{ name: string; success: boolean; total: number; failed: number }> = [];
 
   for (const group of activeGroups) {
-    console.log(`\n━━━ ${group.name} 그룹 ━━━`);
+    console.log(`\nâ”â”â” ${group.name} ê·¸ë£¹ â”â”â”`);
     const results = await Promise.allSettled(
       group.collectors.map(c => runCollector(c.name, c.fn))
     );
@@ -159,22 +159,22 @@ async function main() {
   const totalSuccess = summary.filter(s => s.success).length;
   const totalFailed  = summary.filter(s => !s.success).length;
 
-  console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log(`📊 수집 완료 요약`);
-  console.log(`   성공: ${totalSuccess}개 collector`);
-  console.log(`   실패: ${totalFailed}개 collector`);
-  console.log(`   소요 시간: ${elapsed}초`);
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+  console.log('\nâ”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”');
+  console.log(`ðŸ“Š ìˆ˜ì§‘ ì™„ë£Œ ìš”ì•½`);
+  console.log(`   ì„±ê³µ: ${totalSuccess}ê°œ collector`);
+  console.log(`   ì‹¤íŒ¨: ${totalFailed}ê°œ collector`);
+  console.log(`   ì†Œìš” ì‹œê°„: ${elapsed}ì´ˆ`);
+  console.log('â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n');
 
   if (totalFailed > 0) {
-    console.log('⚠️ 실패한 collector:');
+    console.log('âš ï¸ ì‹¤íŒ¨í•œ collector:');
     summary.filter(s => !s.success).forEach(s => console.log(`  - ${s.name}`));
   }
 
-  // 전체 collector가 모두 실패한 경우에만 exit(1)
-  // 일부 실패는 허용 (HTTP 403, 사이트 차단 등 외부 요인 정상)
+  // ì „ì²´ collectorê°€ ëª¨ë‘ ì‹¤íŒ¨í•œ ê²½ìš°ì—ë§Œ exit(1)
+  // ì¼ë¶€ ì‹¤íŒ¨ëŠ” í—ˆìš© (HTTP 403, ì‚¬ì´íŠ¸ ì°¨ë‹¨ ë“± ì™¸ë¶€ ìš”ì¸ ì •ìƒ)
   if (totalSuccess === 0) {
-    console.error('❌ 모든 collector 실패 — exit(1)');
+    console.error('âŒ ëª¨ë“  collector ì‹¤íŒ¨ â€” exit(1)');
     process.exit(1);
   }
 }

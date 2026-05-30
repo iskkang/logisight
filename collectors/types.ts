@@ -1,4 +1,4 @@
-// workers/collectors/types.ts
+﻿// collectors/types.ts
 
 export interface NewsItem {
   title: string;
@@ -6,9 +6,9 @@ export interface NewsItem {
   published_at: string;
   summary_en: string;
   source: string;
-  og_image?: string;       // OG image URL (있으면 뉴스레터 이미지로 사용)
-  importance_score?: number; // 0~10, AI 평가
-  translated_ko?: string;  // AI 번역 결과
+  og_image?: string;       // OG image URL (ìžˆìœ¼ë©´ ë‰´ìŠ¤ë ˆí„° ì´ë¯¸ì§€ë¡œ ì‚¬ìš©)
+  importance_score?: number; // 0~10, AI í‰ê°€
+  translated_ko?: string;  // AI ë²ˆì—­ ê²°ê³¼
 }
 
 export interface CollectorData {

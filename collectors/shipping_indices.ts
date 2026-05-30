@@ -1,6 +1,6 @@
-// workers/collectors/shipping_indices.ts
-// 컨테이너 운임 지수 수집기 — fetch 기반 (Playwright 미사용)
-// 대상: BDI (stooq), WCI (Drewry), FBX (Freightos), SCFI/KCCI/CCFI (dashboard-data API)
+﻿// collectors/shipping_indices.ts
+// ì»¨í…Œì´ë„ˆ ìš´ìž„ ì§€ìˆ˜ ìˆ˜ì§‘ê¸° â€” fetch ê¸°ë°˜ (Playwright ë¯¸ì‚¬ìš©)
+// ëŒ€ìƒ: BDI (stooq), WCI (Drewry), FBX (Freightos), SCFI/KCCI/CCFI (dashboard-data API)
 
 import { rateLimited } from './utils/rate_limiter';
 import { snapshotWriter } from './utils/snapshot_writer';
@@ -25,13 +25,13 @@ const DASHBOARD_URL = 'https://zidkckbabtajpgkhxmfm.supabase.co/functions/v1/das
 // Converts any date string to the Monday of its ISO week (YYYY-MM-DD)
 function toMonday(dateStr: string): string {
   const d = new Date(dateStr);
-  const day = d.getUTCDay();                   // 0=Sun … 6=Sat
+  const day = d.getUTCDay();                   // 0=Sun â€¦ 6=Sat
   const diff = day === 0 ? -6 : 1 - day;      // distance back to Monday
   d.setUTCDate(d.getUTCDate() + diff);
   return d.toISOString().slice(0, 10);
 }
 
-// ── BDI (Baltic Dry Index) — stooq.com 무료 CSV ─────────────────
+// â”€â”€ BDI (Baltic Dry Index) â€” stooq.com ë¬´ë£Œ CSV â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function fetchBDI(): Promise<IndexData[]> {
   const url = 'https://stooq.com/q/l/?s=^bdi&f=sd2t2ohlcv&e=csv';
   const res = await fetch(url, {
@@ -49,7 +49,7 @@ async function fetchBDI(): Promise<IndexData[]> {
   const close   = parts[5]?.trim();
   if (!close || close === 'N/D' || !dateStr) throw new Error('BDI: N/D or missing');
   return [{
-    name: 'BDI_종합',
+    name: 'BDI_ì¢…í•©',
     value: parseFloat(close),
     change_pct: null,
     date: dateStr,
@@ -59,7 +59,7 @@ async function fetchBDI(): Promise<IndexData[]> {
   }];
 }
 
-// ── WCI (Drewry) — 무료 공개 헤드라인 ────────────────────────────
+// â”€â”€ WCI (Drewry) â€” ë¬´ë£Œ ê³µê°œ í—¤ë“œë¼ì¸ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function fetchWCI(): Promise<IndexData[]> {
   const url = 'https://www.drewry.co.uk/supply-chain-advisors/supply-chain-expertise/world-container-index-assessed-by-drewry';
   const res = await fetch(url, {
@@ -74,10 +74,10 @@ async function fetchWCI(): Promise<IndexData[]> {
   const html = await res.text();
 
   // Drewry HTML format: "$2,711.77 per FEU" (not "/FEU")
-  // WCI_Index_20241.png 같은 이미지 파일명을 잘못 잡지 않도록 per/slash FEU만 허용
+  // WCI_Index_20241.png ê°™ì€ ì´ë¯¸ì§€ íŒŒì¼ëª…ì„ ìž˜ëª» ìž¡ì§€ ì•Šë„ë¡ per/slash FEUë§Œ í—ˆìš©
   const valuePats = [
     /\$\s*([\d,]+(?:\.\d+)?)\s+per\s+(?:FEU|40')/i,  // $2,711.77 per FEU
-    /\$\s*([\d,]+(?:\.\d+)?)\s*\/\s*FEU/i,            // $2,712/FEU (슬래시형)
+    /\$\s*([\d,]+(?:\.\d+)?)\s*\/\s*FEU/i,            // $2,712/FEU (ìŠ¬ëž˜ì‹œí˜•)
     /composite[^<$]{0,120}\$([\d,]+(?:\.\d+)?)/i,     // composite ... $2,712
     /"composite"\s*:\s*([\d.]+)/i,                     // JSON "composite": 2711.77
   ];
@@ -100,11 +100,11 @@ async function fetchWCI(): Promise<IndexData[]> {
   }
 
   if (value === null) {
-    console.log('[WCI] 파싱 실패 — HTML 앞 500자:', html.slice(0, 500));
+    console.log('[WCI] íŒŒì‹± ì‹¤íŒ¨ â€” HTML ì•ž 500ìž:', html.slice(0, 500));
   }
 
   return [{
-    name: 'WCI_종합',
+    name: 'WCI_ì¢…í•©',
     value,
     change_pct,
     date: TODAY,
@@ -114,7 +114,7 @@ async function fetchWCI(): Promise<IndexData[]> {
   }];
 }
 
-// ── FBX (Freightos) — 공개 데이터 ────────────────────────────────
+// â”€â”€ FBX (Freightos) â€” ê³µê°œ ë°ì´í„° â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function fetchFBX(): Promise<IndexData[]> {
   const url = 'https://fbx.freightos.com/';
   try {
@@ -125,7 +125,7 @@ async function fetchFBX(): Promise<IndexData[]> {
     const html = await res.text();
     const match = html.match(/FBX.*?([\d,]+(?:\.\d+)?)/i);
     return [{
-      name: 'FBX_글로벌',
+      name: 'FBX_ê¸€ë¡œë²Œ',
       value: match ? parseFloat(match[1].replace(/,/g, '')) : null,
       change_pct: null,
       date: TODAY,
@@ -134,12 +134,12 @@ async function fetchFBX(): Promise<IndexData[]> {
       source_url: url,
     }];
   } catch {
-    return [{ name: 'FBX_글로벌', value: null, change_pct: null, date: TODAY, unit: '$/FEU', source: 'Freightos FBX', source_url: url }];
+    return [{ name: 'FBX_ê¸€ë¡œë²Œ', value: null, change_pct: null, date: TODAY, unit: '$/FEU', source: 'Freightos FBX', source_url: url }];
   }
 }
 
-// ── SCFI / KCCI / CCFI — dashboard-data API ───────────────────────
-// DASHBOARD_ANON_KEY: zidkckbabtajpgkhxmfm 프로젝트 anon key (공개키)
+// â”€â”€ SCFI / KCCI / CCFI â€” dashboard-data API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// DASHBOARD_ANON_KEY: zidkckbabtajpgkhxmfm í”„ë¡œì íŠ¸ anon key (ê³µê°œí‚¤)
 interface DashboardResponse {
   kcci: { current: number; weeklyGrowth: number; date: string } | null;
   scfi: { current: number; weeklyGrowth: number; date: string } | null;
@@ -150,17 +150,17 @@ interface DashboardResponse {
 async function fetchDashboardData(): Promise<IndexData[]> {
   const key = process.env.DASHBOARD_ANON_KEY;
   if (!key) {
-    console.log('⚠️ DASHBOARD_ANON_KEY 미설정 — SCFI/KCCI/CCFI 수집 스킵');
+    console.log('âš ï¸ DASHBOARD_ANON_KEY ë¯¸ì„¤ì • â€” SCFI/KCCI/CCFI ìˆ˜ì§‘ ìŠ¤í‚µ');
     return [
-      { name: 'SCFI_종합', value: null, change_pct: null, date: TODAY, unit: 'point',
+      { name: 'SCFI_ì¢…í•©', value: null, change_pct: null, date: TODAY, unit: 'point',
         source: 'Shanghai Shipping Exchange', source_url: 'https://en.sse.net.cn/indices/scfinew.jsp',
-        note: 'DASHBOARD_ANON_KEY 미설정' },
-      { name: 'KCCI_종합', value: null, change_pct: null, date: TODAY, unit: 'point',
+        note: 'DASHBOARD_ANON_KEY ë¯¸ì„¤ì •' },
+      { name: 'KCCI_ì¢…í•©', value: null, change_pct: null, date: TODAY, unit: 'point',
         source: 'KOBC', source_url: 'https://www.kobc.or.kr/index/kcci',
-        note: 'DASHBOARD_ANON_KEY 미설정' },
-      { name: 'CCFI_종합', value: null, change_pct: null, date: TODAY, unit: 'point',
+        note: 'DASHBOARD_ANON_KEY ë¯¸ì„¤ì •' },
+      { name: 'CCFI_ì¢…í•©', value: null, change_pct: null, date: TODAY, unit: 'point',
         source: 'Shanghai Shipping Exchange', source_url: 'https://en.sse.net.cn/indices/ccfinew.jsp',
-        note: 'DASHBOARD_ANON_KEY 미설정' },
+        note: 'DASHBOARD_ANON_KEY ë¯¸ì„¤ì •' },
     ];
   }
   const res = await fetch(DASHBOARD_URL, {
@@ -172,7 +172,7 @@ async function fetchDashboardData(): Promise<IndexData[]> {
 
   return [
     {
-      name: 'SCFI_종합',
+      name: 'SCFI_ì¢…í•©',
       value: data.scfi?.current ?? null,
       change_pct: data.scfi?.weeklyGrowth ?? null,
       date: data.scfi?.date ?? TODAY,
@@ -181,7 +181,7 @@ async function fetchDashboardData(): Promise<IndexData[]> {
       source_url: 'https://en.sse.net.cn/indices/scfinew.jsp',
     },
     {
-      name: 'KCCI_종합',
+      name: 'KCCI_ì¢…í•©',
       value: data.kcci?.current ?? null,
       change_pct: data.kcci?.weeklyGrowth ?? null,
       date: data.kcci?.date ?? TODAY,
@@ -190,7 +190,7 @@ async function fetchDashboardData(): Promise<IndexData[]> {
       source_url: 'https://www.kobc.or.kr/index/kcci',
     },
     {
-      name: 'CCFI_종합',
+      name: 'CCFI_ì¢…í•©',
       value: data.ccfi?.current ?? null,
       change_pct: data.ccfi?.weeklyGrowth ?? null,
       date: data.ccfi?.date ?? TODAY,
@@ -201,13 +201,13 @@ async function fetchDashboardData(): Promise<IndexData[]> {
   ];
 }
 
-// ── Supabase 영구 저장 ────────────────────────────────────────────
+// â”€â”€ Supabase ì˜êµ¬ ì €ìž¥ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function persistFreightIndices(result: CollectorResult): Promise<void> {
   const rows: Record<string, unknown>[] = [];
   for (const d of result.data) {
     const v = d.data_value as IndexData;
-    if (v.value == null) continue;                     // null → 저장 안 함
-    const code = v.name.split('_')[0];                 // 'BDI_종합' → 'BDI'
+    if (v.value == null) continue;                     // null â†’ ì €ìž¥ ì•ˆ í•¨
+    const code = v.name.split('_')[0];                 // 'BDI_ì¢…í•©' â†’ 'BDI'
     rows.push({
       index_code: code,
       value:      v.value,
@@ -217,12 +217,12 @@ async function persistFreightIndices(result: CollectorResult): Promise<void> {
       source_url: v.source_url ?? null,
     });
   }
-  // Sanity check: WCI/FBX historical range ~800–8000 $/FEU
+  // Sanity check: WCI/FBX historical range ~800â€“8000 $/FEU
   const sanitized = rows.filter(r => {
     const code = String(r.index_code);
     const val  = Number(r.value);
     if ((code === 'WCI' || code === 'FBX') && (val < 500 || val > 15000)) {
-      console.warn(`[freight_indices] ${code} 값 범위 초과 → 스킵 (${val})`);
+      console.warn(`[freight_indices] ${code} ê°’ ë²”ìœ„ ì´ˆê³¼ â†’ ìŠ¤í‚µ (${val})`);
       return false;
     }
     return true;
@@ -233,7 +233,7 @@ async function persistFreightIndices(result: CollectorResult): Promise<void> {
 export async function collect(): Promise<CollectorResult> {
   const result: CollectorResult = { section: 'shipping', data: [] };
 
-  // SCFI + KCCI + CCFI — dashboard-data API (병렬 중 첫 번째)
+  // SCFI + KCCI + CCFI â€” dashboard-data API (ë³‘ë ¬ ì¤‘ ì²« ë²ˆì§¸)
   const [dashRes, bdiRes, wciRes, fbxRes] = await Promise.allSettled([
     rateLimited(DASHBOARD_URL, () => fetchDashboardData()),
     rateLimited('https://stooq.com',          () => fetchBDI()),
@@ -241,11 +241,11 @@ export async function collect(): Promise<CollectorResult> {
     rateLimited('https://fbx.freightos.com',  () => fetchFBX()),
   ]);
 
-  // dashboard 결과 먼저 처리
+  // dashboard ê²°ê³¼ ë¨¼ì € ì²˜ë¦¬
   if (dashRes.status === 'rejected') {
-    console.warn(`⚠️ dashboard-data 실패: ${(dashRes.reason as Error).message}`);
-    // 실패 시 null 항목으로 기록
-    for (const name of ['SCFI_종합', 'KCCI_종합', 'CCFI_종합']) {
+    console.warn(`âš ï¸ dashboard-data ì‹¤íŒ¨: ${(dashRes.reason as Error).message}`);
+    // ì‹¤íŒ¨ ì‹œ null í•­ëª©ìœ¼ë¡œ ê¸°ë¡
+    for (const name of ['SCFI_ì¢…í•©', 'KCCI_ì¢…í•©', 'CCFI_ì¢…í•©']) {
       result.data.push({
         data_type: 'index', data_key: name,
         data_value: { name, value: null, change_pct: null, date: TODAY, unit: 'point', source: 'dashboard-data', source_url: DASHBOARD_URL },
@@ -259,28 +259,28 @@ export async function collect(): Promise<CollectorResult> {
         data_type: 'index', data_key: d.name, data_value: d,
         source: d.source, source_url: d.source_url,
         is_complete: d.value !== null,
-        error_message: d.value === null ? (d.note ?? '데이터 없음') : undefined,
+        error_message: d.value === null ? (d.note ?? 'ë°ì´í„° ì—†ìŒ') : undefined,
       });
     }
   }
 
-  // BDI + WCI + FBX 결과 처리
+  // BDI + WCI + FBX ê²°ê³¼ ì²˜ë¦¬
   for (const [label, res] of [['BDI', bdiRes], ['WCI', wciRes], ['FBX', fbxRes]] as const) {
     if (res.status === 'rejected') {
-      console.log(`⚠️ ${label} 실패: ${(res.reason as Error).message}`);
+      console.log(`âš ï¸ ${label} ì‹¤íŒ¨: ${(res.reason as Error).message}`);
       continue;
     }
     for (const d of res.value as IndexData[]) {
       result.data.push({ data_type: 'index', data_key: d.name, data_value: d,
         source: d.source, source_url: d.source_url, is_complete: d.value !== null,
-        error_message: d.value === null ? '데이터 파싱 실패' : undefined });
+        error_message: d.value === null ? 'ë°ì´í„° íŒŒì‹± ì‹¤íŒ¨' : undefined });
     }
   }
 
   const success = result.data.filter(d => d.is_complete).length;
-  console.log(`✅ shipping_indices: ${success}/${result.data.length}개 수집 완료`);
+  console.log(`âœ… shipping_indices: ${success}/${result.data.length}ê°œ ìˆ˜ì§‘ ì™„ë£Œ`);
 
-  // Supabase persist (에러가 발생해도 snapshotWriter 경로는 영향 없음)
+  // Supabase persist (ì—ëŸ¬ê°€ ë°œìƒí•´ë„ snapshotWriter ê²½ë¡œëŠ” ì˜í–¥ ì—†ìŒ)
   await persistFreightIndices(result).catch(e =>
     console.warn('[freight_indices] Supabase persist skipped:', (e as Error).message)
   );

@@ -1,4 +1,4 @@
-// workers/collectors/utils/snapshot_writer.ts
+﻿// collectors/utils/snapshot_writer.ts
 // Phase 1: writes CollectorResult to content/drafts/latest-news.json.
 // Phase 2 (Supabase): replace the fs block with a Supabase upsert.
 
@@ -23,7 +23,7 @@ function loadExisting(): NewsOutput {
     try {
       return JSON.parse(fs.readFileSync(OUTPUT_PATH, 'utf-8'));
     } catch {
-      // corrupted — start fresh
+      // corrupted â€” start fresh
     }
   }
   return { date: '', shipping: [], air: [], rail: [], trade: [], carrier_advisory: [], risk: [] };
@@ -48,5 +48,5 @@ export async function snapshotWriter(result: CollectorResult): Promise<void> {
 
   const ok = result.data.filter(d => d.is_complete).length;
   const total = result.data.length;
-  console.log(`\n📦 snapshot [${result.section}] — ${ok}/${total} 성공, +${added}건 → latest-news.json`);
+  console.log(`\nðŸ“¦ snapshot [${result.section}] â€” ${ok}/${total} ì„±ê³µ, +${added}ê±´ â†’ latest-news.json`);
 }

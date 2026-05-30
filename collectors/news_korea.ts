@@ -1,6 +1,6 @@
-// workers/collectors/news_korea.ts
-// 한국 물류 뉴스 수집기 — RSS + fetch 기반 (Playwright 미사용)
-// 대상: 카고뉴스, 쉬핑뉴스넷, 쉬핑데일리, 카고프레스, KL뉴스, 마리타임프레스
+﻿// collectors/news_korea.ts
+// í•œêµ­ ë¬¼ë¥˜ ë‰´ìŠ¤ ìˆ˜ì§‘ê¸° â€” RSS + fetch ê¸°ë°˜ (Playwright ë¯¸ì‚¬ìš©)
+// ëŒ€ìƒ: ì¹´ê³ ë‰´ìŠ¤, ì‰¬í•‘ë‰´ìŠ¤ë„·, ì‰¬í•‘ë°ì¼ë¦¬, ì¹´ê³ í”„ë ˆìŠ¤, KLë‰´ìŠ¤, ë§ˆë¦¬íƒ€ìž„í”„ë ˆìŠ¤
 
 import { rateLimited } from './utils/rate_limiter';
 import { snapshotWriter } from './utils/snapshot_writer';
@@ -8,13 +8,13 @@ import type { CollectorResult, NewsItem } from './types';
 
 const SOURCES = [
   {
-    name: '카고뉴스',
+    name: 'ì¹´ê³ ë‰´ìŠ¤',
     url: 'https://www.cargonews.co.kr/',
     rss: ['https://www.cargonews.co.kr/rss/allArticle.xml'],
     section: 'shipping' as const,
   },
   {
-    name: '쉬핑뉴스넷',
+    name: 'ì‰¬í•‘ë‰´ìŠ¤ë„·',
     url: 'https://www.shippingnewsnet.com/',
     rss: [
       'https://www.shippingnewsnet.com/feed',
@@ -24,7 +24,7 @@ const SOURCES = [
     section: 'shipping' as const,
   },
   {
-    name: '쉬핑데일리',
+    name: 'ì‰¬í•‘ë°ì¼ë¦¬',
     url: 'https://www.shippingdaily.co.kr/index.php',
     rss: [
       'https://www.shippingdaily.co.kr/feed',
@@ -34,19 +34,19 @@ const SOURCES = [
     section: 'shipping' as const,
   },
   {
-    name: '카고프레스',
+    name: 'ì¹´ê³ í”„ë ˆìŠ¤',
     url: 'https://www.cargopress.co.kr/korean/news.php',
     rss: null,
     section: 'shipping' as const,
   },
   {
-    name: 'KL뉴스',
+    name: 'KLë‰´ìŠ¤',
     url: 'https://www.klnews.co.kr/',
     rss: null,
     section: 'shipping' as const,
   },
   {
-    name: '마리타임프레스',
+    name: 'ë§ˆë¦¬íƒ€ìž„í”„ë ˆìŠ¤',
     url: 'http://www.maritimepress.co.kr/',
     rss: null,
     section: 'shipping' as const,
@@ -100,7 +100,7 @@ async function tryRssFallbacks(urls: string[], sourceName: string): Promise<News
       // try next
     }
   }
-  throw new Error(`RSS 모든 후보 실패: ${urls.join(', ')}`);
+  throw new Error(`RSS ëª¨ë“  í›„ë³´ ì‹¤íŒ¨: ${urls.join(', ')}`);
 }
 
 async function fetchAndParseHtml(pageUrl: string, sourceName: string): Promise<NewsItem[]> {
@@ -158,9 +158,9 @@ export async function collect(): Promise<CollectorResult> {
           is_complete: true,
         });
       }
-      console.log(`✅ ${source.name}: ${items.length}건 수집`);
+      console.log(`âœ… ${source.name}: ${items.length}ê±´ ìˆ˜ì§‘`);
     } catch (error) {
-      console.error(`❌ ${source.name} 수집 실패:`, (error as Error).message);
+      console.error(`âŒ ${source.name} ìˆ˜ì§‘ ì‹¤íŒ¨:`, (error as Error).message);
       result.data.push({
         data_type: 'news',
         data_key: `${source.name}_error`,
@@ -179,7 +179,7 @@ export async function collect(): Promise<CollectorResult> {
 if (require.main === module) {
   collect().then(r => {
     const success = r.data.filter(d => d.is_complete).length;
-    console.log(`\n총 ${r.data.length}건 중 ${success}건 수집 완료`);
+    console.log(`\nì´ ${r.data.length}ê±´ ì¤‘ ${success}ê±´ ìˆ˜ì§‘ ì™„ë£Œ`);
     return snapshotWriter(r);
   }).catch(console.error);
 }

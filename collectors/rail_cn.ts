@@ -1,6 +1,6 @@
-// workers/collectors/rail_cn.ts
-// 중국어 공식 철도 소스 수집기
-// 소스: China Railway, 95306, CRCT, Xi'an, Chengdu, BRI Portal (weekly)
+﻿// collectors/rail_cn.ts
+// ì¤‘êµ­ì–´ ê³µì‹ ì² ë„ ì†ŒìŠ¤ ìˆ˜ì§‘ê¸°
+// ì†ŒìŠ¤: China Railway, 95306, CRCT, Xi'an, Chengdu, BRI Portal (weekly)
 //       Global Times BRI RSS, Xinhua English RSS (daily)
 
 import Anthropic from '@anthropic-ai/sdk';
@@ -13,16 +13,16 @@ const BOT_HEADERS = {
   'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
 };
 
-// ── 소스 정의 ────────────────────────────────────────────────────
+// â”€â”€ ì†ŒìŠ¤ ì •ì˜ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 interface CnSource {
   name: string;
   url: string;
   type: 'rss' | 'html';
   frequency: 'daily' | 'weekly';
-  useKeywordFilter?: boolean;  // 일반 뉴스 피드는 물류 키워드 필터 적용
+  useKeywordFilter?: boolean;  // ì¼ë°˜ ë‰´ìŠ¤ í”¼ë“œëŠ” ë¬¼ë¥˜ í‚¤ì›Œë“œ í•„í„° ì ìš©
 }
 
-// 물류/철도/무역 관련 키워드 — 이 중 하나라도 없으면 일반 뉴스 피드 기사 드롭
+// ë¬¼ë¥˜/ì² ë„/ë¬´ì—­ ê´€ë ¨ í‚¤ì›Œë“œ â€” ì´ ì¤‘ í•˜ë‚˜ë¼ë„ ì—†ìœ¼ë©´ ì¼ë°˜ ë‰´ìŠ¤ í”¼ë“œ ê¸°ì‚¬ ë“œë¡­
 const RAIL_LOGISTICS_KEYWORDS = [
   'rail', 'railway', 'freight', 'cargo', 'logistics', 'container', 'teu',
   'corridor', 'route', 'belt road', 'belt and road', 'bri', 'silk road',
@@ -31,7 +31,7 @@ const RAIL_LOGISTICS_KEYWORDS = [
   'central asia', 'kazakh', 'uzbek', 'kyrgyz', 'tajik', 'azerbaijan',
   'china-europe', 'china europe', 'eurasian', 'trans-siberian',
   'supply chain', 'trade route', 'import', 'export', 'tariff', 'border',
-  '铁路', '班列', '物流', '货运', '集装箱', '一带一路', '通道', '运输',
+  'é“è·¯', 'ç­åˆ—', 'ç‰©æµ', 'è´§è¿', 'é›†è£…ç®±', 'ä¸€å¸¦ä¸€è·¯', 'é€šé“', 'è¿è¾“',
 ];
 
 function passesRailFilter(title: string): boolean {
@@ -40,7 +40,7 @@ function passesRailFilter(title: string): boolean {
 }
 
 const CN_SOURCES: CnSource[] = [
-  // Global Times / Xinhua는 일반 뉴스 피드 → 물류 키워드 필터 필수
+  // Global Times / XinhuaëŠ” ì¼ë°˜ ë‰´ìŠ¤ í”¼ë“œ â†’ ë¬¼ë¥˜ í‚¤ì›Œë“œ í•„í„° í•„ìˆ˜
   { name: 'Global Times BRI',  url: 'https://www.globaltimes.cn/rss/outbrain.xml',                                          type: 'rss',  frequency: 'daily',  useKeywordFilter: true  },
   { name: 'Xinhua English',    url: 'https://english.news.cn/rss/world.xml',                                                type: 'rss',  frequency: 'daily',  useKeywordFilter: true  },
   { name: 'China Railway',     url: 'https://www.china-railway.com.cn/xwzx/zhxw/',                                         type: 'html', frequency: 'weekly' },
@@ -51,7 +51,7 @@ const CN_SOURCES: CnSource[] = [
   { name: 'BRI Portal',        url: 'https://www.yidaiyilu.gov.cn/',                                                       type: 'html', frequency: 'weekly' },
 ];
 
-// ── RSS 파싱 ─────────────────────────────────────────────────────
+// â”€â”€ RSS íŒŒì‹± â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function parseRss(src: CnSource): Promise<NewsItem[]> {
   const res = await fetch(src.url, {
     headers: BOT_HEADERS,
@@ -66,7 +66,7 @@ async function parseRss(src: CnSource): Promise<NewsItem[]> {
     const link  = (b.match(/<link>(.*?)<\/link>/)?.[1] || '').trim();
     const pubDate = b.match(/<pubDate>(.*?)<\/pubDate>/)?.[1] || '';
     if (!title || !link) continue;
-    // 일반 뉴스 피드는 물류 키워드 필터 적용
+    // ì¼ë°˜ ë‰´ìŠ¤ í”¼ë“œëŠ” ë¬¼ë¥˜ í‚¤ì›Œë“œ í•„í„° ì ìš©
     if (src.useKeywordFilter && !passesRailFilter(title)) continue;
     items.push({ title, url: link, published_at: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(), summary_en: '', source: src.name });
     if (items.length >= 5) break;
@@ -74,7 +74,7 @@ async function parseRss(src: CnSource): Promise<NewsItem[]> {
   return items;
 }
 
-// ── HTML 링크 파싱 ───────────────────────────────────────────────
+// â”€â”€ HTML ë§í¬ íŒŒì‹± â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function fetchHtmlLinks(src: CnSource): Promise<NewsItem[]> {
   const res = await fetch(src.url, {
     headers: BOT_HEADERS,
@@ -99,7 +99,7 @@ async function fetchHtmlLinks(src: CnSource): Promise<NewsItem[]> {
   return items;
 }
 
-// ── Claude 번역 (중국어 제목 배치 처리) ─────────────────────────
+// â”€â”€ Claude ë²ˆì—­ (ì¤‘êµ­ì–´ ì œëª© ë°°ì¹˜ ì²˜ë¦¬) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 interface TranslatedItem {
   title_en: string;
   title_cn: string;
@@ -109,15 +109,15 @@ interface TranslatedItem {
 }
 
 async function translateBatch(items: NewsItem[]): Promise<TranslatedItem[]> {
-  const chineseItems = items.filter(i => /[一-鿿]/.test(i.title));
+  const chineseItems = items.filter(i => /[ä¸€-é¿¿]/.test(i.title));
   if (chineseItems.length === 0) {
     return items.map(i => ({ title_en: i.title, title_cn: '', summary_en: i.summary_en, url: i.url, source: i.source }));
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    console.warn('⚠️ ANTHROPIC_API_KEY 미설정 — 번역 스킵');
-    return items.map(i => ({ title_en: i.title, title_cn: /[一-鿿]/.test(i.title) ? i.title : '', summary_en: '', url: i.url, source: i.source } as TranslatedItem));
+    console.warn('âš ï¸ ANTHROPIC_API_KEY ë¯¸ì„¤ì • â€” ë²ˆì—­ ìŠ¤í‚µ');
+    return items.map(i => ({ title_en: i.title, title_cn: /[ä¸€-é¿¿]/.test(i.title) ? i.title : '', summary_en: '', url: i.url, source: i.source } as TranslatedItem));
   }
 
   const client = new Anthropic({ apiKey });
@@ -129,35 +129,35 @@ async function translateBatch(items: NewsItem[]): Promise<TranslatedItem[]> {
       max_tokens: 2048,
       messages: [{
         role: 'user',
-        content: `아래 중국어 물류·철도 뉴스 제목을 영어로 번역하고 한 줄 요약을 추가하세요.
-반드시 JSON 배열로만 응답하세요. 다른 텍스트 없이 JSON만.
+        content: `ì•„ëž˜ ì¤‘êµ­ì–´ ë¬¼ë¥˜Â·ì² ë„ ë‰´ìŠ¤ ì œëª©ì„ ì˜ì–´ë¡œ ë²ˆì—­í•˜ê³  í•œ ì¤„ ìš”ì•½ì„ ì¶”ê°€í•˜ì„¸ìš”.
+ë°˜ë“œì‹œ JSON ë°°ì—´ë¡œë§Œ ì‘ë‹µí•˜ì„¸ìš”. ë‹¤ë¥¸ í…ìŠ¤íŠ¸ ì—†ì´ JSONë§Œ.
 
-입력:
+ìž…ë ¥:
 ${inputJson}
 
-출력 형식:
-[{"title_en": "...", "title_cn": "원문", "summary_en": "1-sentence summary in English", "url": "...", "source": "..."}]`,
+ì¶œë ¥ í˜•ì‹:
+[{"title_en": "...", "title_cn": "ì›ë¬¸", "summary_en": "1-sentence summary in English", "url": "...", "source": "..."}]`,
       }],
     });
 
     const raw = (msg.content[0] as { type: string; text: string }).text.trim();
     const jsonMatch = raw.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) throw new Error('JSON 파싱 실패');
+    if (!jsonMatch) throw new Error('JSON íŒŒì‹± ì‹¤íŒ¨');
     const translated = JSON.parse(jsonMatch[0]) as TranslatedItem[];
 
-    // 비중국어 아이템은 그대로 merge
+    // ë¹„ì¤‘êµ­ì–´ ì•„ì´í…œì€ ê·¸ëŒ€ë¡œ merge
     const nonChinese = items
-      .filter(i => !/[一-鿿]/.test(i.title))
+      .filter(i => !/[ä¸€-é¿¿]/.test(i.title))
       .map(i => ({ title_en: i.title, title_cn: '', summary_en: i.summary_en, url: i.url, source: i.source }));
 
     return [...translated, ...nonChinese];
   } catch (e) {
-    console.warn(`⚠️ 번역 실패: ${(e as Error).message} — 원문 사용`);
-    return items.map(i => ({ title_en: i.title, title_cn: /[一-鿿]/.test(i.title) ? i.title : '', summary_en: '', url: i.url, source: i.source }));
+    console.warn(`âš ï¸ ë²ˆì—­ ì‹¤íŒ¨: ${(e as Error).message} â€” ì›ë¬¸ ì‚¬ìš©`);
+    return items.map(i => ({ title_en: i.title, title_cn: /[ä¸€-é¿¿]/.test(i.title) ? i.title : '', summary_en: '', url: i.url, source: i.source }));
   }
 }
 
-// ── 메인 collect ─────────────────────────────────────────────────
+// â”€â”€ ë©”ì¸ collect â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export async function collect(opts: { frequency: 'daily' | 'weekly' } = { frequency: 'daily' }): Promise<CollectorResult> {
   const result: CollectorResult = { section: 'rail', data: [] };
   const sources = CN_SOURCES.filter(s => s.frequency === opts.frequency);
@@ -169,9 +169,9 @@ export async function collect(opts: { frequency: 'daily' | 'weekly' } = { freque
         src.type === 'rss' ? parseRss(src) : fetchHtmlLinks(src)
       );
       rawItems.push(...items);
-      console.log(`✅ ${src.name}: ${items.length}건`);
+      console.log(`âœ… ${src.name}: ${items.length}ê±´`);
     } catch (e) {
-      console.log(`⚠️ ${src.name} 실패: ${(e as Error).message}`);
+      console.log(`âš ï¸ ${src.name} ì‹¤íŒ¨: ${(e as Error).message}`);
       result.data.push({
         data_type: 'news', data_key: `${src.name}_error`, data_value: {},
         source: src.name, source_url: src.url, is_complete: false,
@@ -194,7 +194,7 @@ export async function collect(opts: { frequency: 'daily' | 'weekly' } = { freque
   }
 
   const success = result.data.filter(d => d.is_complete).length;
-  console.log(`\n✅ rail_cn [${opts.frequency}]: ${success}건 수집 완료`);
+  console.log(`\nâœ… rail_cn [${opts.frequency}]: ${success}ê±´ ìˆ˜ì§‘ ì™„ë£Œ`);
   return result;
 }
 

@@ -1,8 +1,8 @@
-// workers/collectors/utils/supabase_writer.ts
+﻿// collectors/utils/supabase_writer.ts
 // Shared Supabase write helpers for all collectors.
 // Returns silently if SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY are not set.
 import ws from 'ws';
-// @ts-ignore — Node 20 lacks a native WebSocket; Supabase Realtime requires it
+// @ts-ignore â€” Node 20 lacks a native WebSocket; Supabase Realtime requires it
 globalThis.WebSocket = ws as never;
 
 import { createClient } from '@supabase/supabase-js';
@@ -29,12 +29,12 @@ export async function dbUpsert(
   if (!rows.length) return;
   const sb = getClient();
   if (!sb) {
-    console.warn(`[db] env missing — skipping ${table} upsert (${rows.length} rows)`);
+    console.warn(`[db] env missing â€” skipping ${table} upsert (${rows.length} rows)`);
     return;
   }
   const { error } = await sb.from(table).upsert(rows as never[], { onConflict });
   if (error) throw new Error(`[db] ${table} upsert failed: ${error.message}`);
-  console.log(`[db] ${table} ← ${rows.length} rows upserted`);
+  console.log(`[db] ${table} â† ${rows.length} rows upserted`);
 }
 
 export async function dbDeleteBefore(
