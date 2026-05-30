@@ -110,63 +110,56 @@ function parseXmlItems(xmlText: string): Record<string, string>[] {
   return items;
 }
 
-// ── API 단일 호출 (imexTpcd: '1'=수출, '2'=수입) ─────────────────────
+// ── API 단일 호출 (수출+수입 통합 응답) ──────────────────────────────────
+// nationtrade API: strtYymm/endYymm (YYYYMM), cntyCd optional — imexTpcd 없음
 async function fetchNationTrade(
-  yr: string,
-  mt: string,
+  yymm: string,
   cntyCd: string,
-  imexTpcd: '1' | '2',
   apiKey: string
 ): Promise<Record<string, string> | null> {
-  // data.go.kr 키는 이미 URL인코딩된 상태 — searchParams.set()이 재인코딩하므로
-  // serviceKey만 raw 문자열로 직접 붙임 (나머지는 searchParams로 안전하게 처리)
+  // data.go.kr 키는 이미 URL인코딩된 상태 — serviceKey만 raw로 붙임
   const params = new URLSearchParams({
-    strtYr: yr, strtMt: mt, endYr: yr, endMt: mt,
-    cntyCd, imexTpcd, numOfRows: '5',
+    strtYymm: yymm, endYymm: yymm,
+    cntyCd, numOfRows: '5',
   });
   const urlStr = `${API_URL}?serviceKey=${apiKey}&${params.toString()}`;
 
   const res = await fetch(urlStr, { signal: AbortSignal.timeout(15000) });
   if (!res.ok) {
     const body = await res.text();
-    const label = imexTpcd === '1' ? '수출' : '수입';
-    console.error(`[trade_stats] HTTP ${res.status} (${cntyCd} ${label}):\n${body}`);
+    console.error(`[trade_stats] HTTP ${res.status} (${cntyCd}):\n${body}`);
     throw new Error(`HTTP ${res.status}`);
   }
 
   const xmlText = await res.text();
   const items = parseXmlItems(xmlText);
+  if (items.length === 0 && cntyCd === 'CN') {
+    console.log(`[trade_stats] raw XML (CN, first 3000 chars):\n${xmlText.slice(0, 3000)}`);
+  }
   return items.length > 0 ? items[0] : null;
 }
 
-// ── 국가 1개에 대해 수출+수입 호출 후 하나의 TradeRow로 합산 ────────────
+// ── 국가 1개 — 단일 호출로 수출+수입 동시 취득 ────────────────────────────
 async function fetchCountryRow(
-  yr: string,
-  mt: string,
+  yymm: string,
   cntyCd: string,
   countryName: string,
   apiKey: string
 ): Promise<TradeRow | null> {
-  const [expRaw, impRaw] = await Promise.all([
-    fetchNationTrade(yr, mt, cntyCd, '1', apiKey),
-    fetchNationTrade(yr, mt, cntyCd, '2', apiKey),
-  ]);
-
-  if (!expRaw && !impRaw) return null;
+  const raw = await fetchNationTrade(yymm, cntyCd, apiKey);
+  if (!raw) return null;
 
   // 응답 필드명 후보 (API 버전에 따라 다를 수 있음)
-  const expUsd = toNum(expRaw?.['expDlr'] ?? expRaw?.['expAmt'] ?? expRaw?.['tradeAmt']);
-  const expKg  = toNum(expRaw?.['expWgt'] ?? expRaw?.['tradeWgt']);
-  const impUsd = toNum(impRaw?.['impDlr'] ?? impRaw?.['impAmt'] ?? impRaw?.['tradeAmt']);
-  const impKg  = toNum(impRaw?.['impWgt'] ?? impRaw?.['tradeWgt']);
-
-  // 국가명: 수출 응답 우선, 없으면 수입 응답
-  const raw = expRaw ?? impRaw!;
+  const expUsd = toNum(raw['expDlr'] ?? raw['expAmt']);
+  const expKg  = toNum(raw['expWgt'] ?? raw['expWeight']);
+  const impUsd = toNum(raw['impDlr'] ?? raw['impAmt']);
+  const impKg  = toNum(raw['impWgt'] ?? raw['impWeight']);
   const resolvedName = raw['cntyCdNm'] ?? raw['cntyNm'] ?? raw['cntyKrNm'] ?? countryName;
 
-  const period = `${yr}-${mt}`;
+  const yr = yymm.slice(0, 4);
+  const mt = yymm.slice(4, 6);
   return {
-    period,
+    period: `${yr}-${mt}`,
     stat_type: 'country',
     hs_code: null,
     hs_name: null,
@@ -221,10 +214,8 @@ export async function collect(): Promise<CollectorResult> {
     return result;
   }
 
-  const periodStr = parsePeriodArg();
-  const yr = periodStr.slice(0, 4);
-  const mt = periodStr.slice(4, 6);
-  const period = `${yr}-${mt}`;
+  const periodStr = parsePeriodArg();  // YYYYMM
+  const period = `${periodStr.slice(0, 4)}-${periodStr.slice(4, 6)}`;
   console.log(`[trade_stats] 수집 기간: ${period}`);
 
   const rows: TradeRow[] = [];
@@ -232,7 +223,7 @@ export async function collect(): Promise<CollectorResult> {
   for (const country of TARGET_COUNTRIES) {
     await sleep(DELAY_MS);
     try {
-      const row = await fetchCountryRow(yr, mt, country.code, country.name, apiKey);
+      const row = await fetchCountryRow(periodStr, country.code, country.name, apiKey);
       if (row) {
         rows.push(row);
         result.data.push({

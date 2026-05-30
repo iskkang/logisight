@@ -1,0 +1,60 @@
+name: Decadal Trade Statistics (10-day provisional)
+
+on:
+  schedule:
+    # 매월 1, 11, 21일 02:30 KST (UTC 17:30 전일)
+    # 1일: 전월 01~말일 확정 / 11일: 당월 01~10 / 21일: 당월 01~20
+    - cron: '30 17 1,11,21 * *'
+  workflow_dispatch:
+    inputs:
+      period:
+        description: '수집 기간 (YYYYMM, 비워두면 당월 자동)'
+        required: false
+        default: ''
+
+jobs:
+  fetch-provisional:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Fetch 10-day provisional trade stats
+        run: |
+          PERIOD_ARG=""
+          if [ -n "${{ github.event.inputs.period }}" ]; then
+            PERIOD_ARG="--period=${{ github.event.inputs.period }}"
+          fi
+          npx tsx collectors/trade_provisional.ts $PERIOD_ARG
+        env:
+          DATA_GO_KR_API_KEY:        ${{ secrets.DATA_GO_KR_API_KEY }}
+          SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Log to data_updates
+        if: always()
+        run: |
+          node -e "
+          const { createClient } = require('@supabase/supabase-js');
+          const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+          const status = process.env.JOB_STATUS === 'success' ? 'ok' : 'error';
+          const notes = 'decadal-trade-stats workflow, period: ' + (process.env.INPUT_PERIOD || 'auto');
+          sb.from('data_updates')
+            .insert({ dataset: 'trade_provisional', status, notes })
+            .then(r => { console.log('data_updates logged:', r.error ? r.error.message : 'ok'); process.exit(0); })
+            .catch(e => { console.error(e.message); process.exit(0); });
+          "
+        env:
+          JOB_STATUS:                ${{ job.status }}
+          INPUT_PERIOD:              ${{ github.event.inputs.period }}
+          SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
