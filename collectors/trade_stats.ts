@@ -134,7 +134,11 @@ async function fetchCountryStats(
   url.searchParams.set('numOfRows', '10');
 
   const res = await fetch(url.toString(), { signal: AbortSignal.timeout(15000) });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  if (!res.ok) {
+    const body = await res.text();
+    console.error(`[trade_stats] HTTP ${res.status} (country/${countryCd}):\n${body}`);
+    throw new Error(`HTTP ${res.status}`);
+  }
   const json = await res.json() as { response?: { body?: unknown } };
 
   const body = json?.response?.body as Record<string, unknown> | undefined;
@@ -189,7 +193,11 @@ async function fetchItemStats(
   url.searchParams.set('numOfRows', '10');
 
   const res = await fetch(url.toString(), { signal: AbortSignal.timeout(15000) });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  if (!res.ok) {
+    const body = await res.text();
+    console.error(`[trade_stats] HTTP ${res.status} (item/hs${hsCd}):\n${body}`);
+    throw new Error(`HTTP ${res.status}`);
+  }
   const json = await res.json() as { response?: { body?: unknown } };
 
   const body = json?.response?.body as Record<string, unknown> | undefined;
