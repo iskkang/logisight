@@ -23,7 +23,7 @@
 | maritime_news | 009,013,015 | pipeline/generators/web | Lovable /news | ✅ | agent_type으로 웹/이메일 구분 |
 | weekly_briefings | 018 | pipeline/generators/email | Lovable /news | ✅ | |
 | weekly_briefing_points | 018 | pipeline/generators/email | Lovable /news | ✅ | |
-| trade_statistics | 017 | pipeline/collectors | Lovable (지도) | ✅ | 관세청/해수부 공공데이터 |
+| trade_statistics | 017 | collectors/trade_stats.ts (월간 cron) | Lovable (지도) | ✅ | 관세청 공공데이터포털 OpenAPI |
 | policy_alerts | 019 | 수동 or pipeline | Lovable /policy | ✅ | CBAM, EU ETS 등 |
 | newsletter_subscribers | 020 | Lovable (구독 폼) | pipeline/publishers | ❌ | 개인정보 — service_role만 |
 | user_roles | 021 | Lovable (auth) | Lovable | 인증만 | app_role enum |

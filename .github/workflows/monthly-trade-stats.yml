@@ -1,13 +1,17 @@
 name: Monthly Trade Statistics
-# DISABLED: logisight-web 제거로 scripts/fetch-trade-stats.ts 삭제됨.
-# 재구현 필요: 관세청 API 호출 로직을 collectors/ 로 이전 후 활성화.
 
 on:
-  workflow_dispatch:   # 수동 트리거만 허용 (schedule 비활성화)
+  schedule:
+    - cron: '0 17 16 * *'  # 매월 16일 02:00 KST (관세청 15일 확정치 발표 다음 날)
+  workflow_dispatch:
+    inputs:
+      period:
+        description: '수집 기간 (YYYYMM, 비워두면 전월 자동)'
+        required: false
+        default: ''
 
 jobs:
   fetch-trade-stats:
-    if: false   # disabled until re-implemented in collectors/
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -23,8 +27,30 @@ jobs:
         run: npm ci
 
       - name: Fetch customs trade statistics
-        run: echo "TODO - re-implement fetch-trade-stats in collectors/"
+        run: |
+          PERIOD_ARG=""
+          if [ -n "${{ github.event.inputs.period }}" ]; then
+            PERIOD_ARG="--period=${{ github.event.inputs.period }}"
+          fi
+          npx tsx collectors/trade_stats.ts $PERIOD_ARG
         env:
           DATA_GO_KR_API_KEY:        ${{ secrets.DATA_GO_KR_API_KEY }}
           SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Log to data_updates
+        if: always()
+        run: |
+          node -e "
+          const { createClient } = require('@supabase/supabase-js');
+          const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+          const status = process.env.JOB_STATUS === 'success' ? 'ok' : 'error';
+          sb.from('data_updates')
+            .insert({ dataset: 'trade_statistics', status, notes: 'monthly-trade-stats workflow' })
+            .then(r => { console.log('data_updates logged:', r.error ? r.error.message : 'ok'); process.exit(0); })
+            .catch(e => { console.error(e.message); process.exit(0); });
+          "
+        env:
+          JOB_STATUS:               ${{ job.status }}
+          SUPABASE_URL:             ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
