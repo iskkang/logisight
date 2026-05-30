@@ -21,12 +21,6 @@ const RSS_SOURCES = [
 
 const SCRAPE_SOURCES = [
   {
-    name: 'PortNews EN',
-    url: 'https://en.portnews.ru/news/',
-    section: 'shipping' as const,
-    listSelector: '.news-list__item a, .news-item a, h2 a, h3 a',
-  },
-  {
     name: 'TransportCorridors CentralAsia',
     url: 'https://www.transportcorridors.com/category/regions/central-asia',
     section: 'rail' as const,

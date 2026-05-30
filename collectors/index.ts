@@ -84,6 +84,7 @@ const GROUPS = [
       { name: 'carrier_advisories',  fn: collectCarrierAdvisories },
       { name: 'ocean_news_daily',    fn: () => collectOceanNews({ frequency: 'daily' }) },
       { name: 'chokepoints_daily',   fn: () => collectChokepoints({ frequency: 'daily' }) },
+      { name: 'news_global',         fn: collectNewsGlobal },
     ],
   },
   {

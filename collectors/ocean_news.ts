@@ -38,7 +38,7 @@ const OCEAN_NEWS_SOURCES: OceanNewsSource[] = [
   { name: 'Container News',      url: 'https://container-news.com/feed/',                    type: 'rss',  frequency: 'daily',  useKeywordFilter: false },
   { name: 'Hellenic Shipping',   url: 'https://www.hellenicshippingnews.com/feed/',           type: 'rss',  frequency: 'daily',  useKeywordFilter: true  },
   { name: 'Seatrade Maritime',   url: 'https://www.seatrade-maritime.com/feed',               type: 'rss',  frequency: 'daily',  useKeywordFilter: true  },
-  { name: 'Maritime Executive',  url: 'https://maritime-executive.com/feed',                  type: 'rss',  frequency: 'daily',  useKeywordFilter: true  },
+  { name: 'Maritime Executive',  url: 'https://the-maritime-executive.com/feed',              type: 'rss',  frequency: 'daily',  useKeywordFilter: true  },
   { name: 'gCaptain',           url: 'https://gcaptain.com/feed/',                           type: 'rss',  frequency: 'daily',  useKeywordFilter: true  },
   { name: 'Sea-Intelligence',    url: 'https://www.sea-intelligence.com/press-room',          type: 'html', frequency: 'weekly', useKeywordFilter: false },
 ];

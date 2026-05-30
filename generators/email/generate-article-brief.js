@@ -15,8 +15,8 @@ const Anthropic = require('@anthropic-ai/sdk').default;
 const { insertArticle } = require('../../lib/supabase-insert');
 
 const TODAY      = new Date().toISOString().slice(0, 10);
-const NEWS_PATH  = path.resolve(__dirname, '../content/drafts/latest-news.json');
-const ARTICLES_DIR = path.resolve(__dirname, '../content/articles');
+const NEWS_PATH  = path.resolve(__dirname, '../../content/drafts/latest-news.json');
+const ARTICLES_DIR = path.resolve(__dirname, '../../content/articles');
 
 const windowArg  = process.argv.find(a => a.startsWith('--window='));
 const windowDays = windowArg ? parseInt(windowArg.split('=')[1]) : 3;

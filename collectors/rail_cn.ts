@@ -43,7 +43,7 @@ function passesRailFilter(title: string): boolean {
 const CN_SOURCES: CnSource[] = [
   // Global Times / Xinhua는 일반 뉴스 피드 → 물류 키워드 필터 필수
   { name: 'Global Times BRI',  url: 'https://www.globaltimes.cn/rss/outbrain.xml',                                          type: 'rss',  frequency: 'daily',  useKeywordFilter: true  },
-  { name: 'Xinhua English',    url: 'https://english.news.cn/rss/home.xml',                                                 type: 'rss',  frequency: 'daily',  useKeywordFilter: true  },
+  { name: 'CGTN English',      url: 'https://www.cgtn.com/subscribe/rss/section/business.xml',                          type: 'rss',  frequency: 'daily',  useKeywordFilter: true  },
   { name: 'China Railway',     url: 'https://www.china-railway.com.cn/xwzx/zhxw/',                                         type: 'html', frequency: 'weekly' },
   { name: '95306',             url: 'https://www.95306.cn/',                                                                type: 'html', frequency: 'weekly' },
   { name: 'CRCT',              url: 'https://www.crct.com/index.php?m=content&c=index&a=lists&catid=34',                    type: 'html', frequency: 'weekly' },

@@ -7,8 +7,8 @@ const fs      = require('fs');
 const path    = require('path');
 const Anthropic = require('@anthropic-ai/sdk').default;
 
-const NEWS_PATH   = path.resolve(__dirname, '../content/drafts/latest-news.json');
-const OUT_PATH    = path.resolve(__dirname, '../content/drafts/curated-rail.json');
+const NEWS_PATH   = path.resolve(__dirname, '../../content/drafts/latest-news.json');
+const OUT_PATH    = path.resolve(__dirname, '../../content/drafts/curated-rail.json');
 const TODAY       = new Date().toISOString().slice(0, 10);
 
 // --window=7d 인수 확인

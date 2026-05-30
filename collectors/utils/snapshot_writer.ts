@@ -6,7 +6,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { CollectorResult } from '../types';
 
-const OUTPUT_PATH = path.resolve(__dirname, '../../../content/drafts/latest-news.json');
+const OUTPUT_PATH = path.resolve(__dirname, '../../content/drafts/latest-news.json');
 
 interface NewsOutput {
   date: string;

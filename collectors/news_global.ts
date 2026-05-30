@@ -18,10 +18,14 @@ const SOURCES = [
   { name: 'Splash247',       rss: 'https://splash247.com/feed/',                              section: 'shipping' as const, language: 'en' },
 ];
 
+const BROWSER_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+  'Accept': 'application/rss+xml, application/xml, text/xml, */*;q=0.8',
+  'Accept-Language': 'en-US,en;q=0.9',
+};
+
 async function parseRssFeed(url: string): Promise<NewsItem[]> {
-  const res = await fetch(url, {
-    headers: { 'User-Agent': 'Logisight/1.0 (logisight.mtlship.com; news-bot)' },
-  });
+  const res = await fetch(url, { headers: BROWSER_HEADERS });
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
   const text = await res.text();
   const items: NewsItem[] = [];
