@@ -118,17 +118,15 @@ async function fetchNationTrade(
   imexTpcd: '1' | '2',
   apiKey: string
 ): Promise<Record<string, string> | null> {
-  const url = new URL(API_URL);
-  url.searchParams.set('serviceKey', apiKey);
-  url.searchParams.set('strtYr', yr);
-  url.searchParams.set('strtMt', mt);
-  url.searchParams.set('endYr', yr);
-  url.searchParams.set('endMt', mt);
-  url.searchParams.set('cntyCd', cntyCd);
-  url.searchParams.set('imexTpcd', imexTpcd);
-  url.searchParams.set('numOfRows', '5');
+  // data.go.kr 키는 이미 URL인코딩된 상태 — searchParams.set()이 재인코딩하므로
+  // serviceKey만 raw 문자열로 직접 붙임 (나머지는 searchParams로 안전하게 처리)
+  const params = new URLSearchParams({
+    strtYr: yr, strtMt: mt, endYr: yr, endMt: mt,
+    cntyCd, imexTpcd, numOfRows: '5',
+  });
+  const urlStr = `${API_URL}?serviceKey=${apiKey}&${params.toString()}`;
 
-  const res = await fetch(url.toString(), { signal: AbortSignal.timeout(15000) });
+  const res = await fetch(urlStr, { signal: AbortSignal.timeout(15000) });
   if (!res.ok) {
     const body = await res.text();
     const label = imexTpcd === '1' ? '수출' : '수입';
