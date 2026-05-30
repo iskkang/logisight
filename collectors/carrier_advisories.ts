@@ -1,13 +1,13 @@
-﻿// collectors/carrier_advisories.ts
-// ì„ ì‚¬ Customer Advisory ìˆ˜ì§‘ê¸° â€” Playwright headless
-// ëŒ€ìƒ: Maersk, MSC, CMA CGM, Hapag-Lloyd, ONE, HMM, COSCO, Yang Ming
+// collectors/carrier_advisories.ts
+// 선사 Customer Advisory 수집기 — Playwright headless
+// 대상: Maersk, MSC, CMA CGM, Hapag-Lloyd, ONE, HMM, COSCO, Yang Ming
 
 import { chromium, type Browser } from 'playwright';
 import { rateLimited } from './utils/rate_limiter';
 import { snapshotWriter } from './utils/snapshot_writer';
 import type { CollectorResult, NewsItem } from './types';
 
-// ì„ ì‚¬ advisory í‚¤ì›Œë“œ â€” ì´ í‚¤ì›Œë“œê°€ ìžˆìœ¼ë©´ importance_hint: 'high'
+// 선사 advisory 키워드 — 이 키워드가 있으면 importance_hint: 'high'
 const HIGH_IMPORTANCE_KEYWORDS = [
   'blank sailing', 'void sailing', 'service suspension', 'port omission',
   'surcharge', 'gri', 'pss', 'efs', 'war risk', 'red sea', 'disruption',
@@ -17,7 +17,7 @@ const HIGH_IMPORTANCE_KEYWORDS = [
 interface CarrierSource {
   name: string;
   url: string;
-  selectors: string[];  // ìˆœì„œëŒ€ë¡œ ì‹œë„, ì²« ë²ˆì§¸ ì„±ê³µ ì‚¬ìš©
+  selectors: string[];  // 순서대로 시도, 첫 번째 성공 사용
 }
 
 const CARRIERS: CarrierSource[] = [
@@ -73,7 +73,7 @@ async function scrapeCarrier(browser: Browser, carrier: CarrierSource): Promise<
   try {
     await page.goto(carrier.url, { waitUntil: 'domcontentloaded', timeout: 20000 });
 
-    // ê° ì…€ë ‰í„°ë¥¼ ìˆœì„œëŒ€ë¡œ ì‹œë„
+    // 각 셀렉터를 순서대로 시도
     for (const selector of carrier.selectors) {
       const items = await page.evaluate((sel) => {
         const links = Array.from(document.querySelectorAll(sel));
@@ -105,7 +105,7 @@ async function scrapeCarrier(browser: Browser, carrier: CarrierSource): Promise<
     }
     return [];
   } catch (e) {
-    console.log(`âš ï¸ ${carrier.name} scrape ì‹¤íŒ¨: ${(e as Error).message}`);
+    console.log(`⚠️ ${carrier.name} scrape 실패: ${(e as Error).message}`);
     return [];
   } finally {
     await page.close();
@@ -133,9 +133,9 @@ export async function collect(): Promise<CollectorResult> {
             is_complete: true,
           });
         }
-        console.log(`âœ… ${carrier.name}: ${items.length}ê±´ (high: ${items.filter(i => detectImportance(i.title) === 'high').length}ê±´)`);
+        console.log(`✅ ${carrier.name}: ${items.length}건 (high: ${items.filter(i => detectImportance(i.title) === 'high').length}건)`);
       } catch (e) {
-        console.log(`âš ï¸ ${carrier.name} ì „ì²´ ì‹¤íŒ¨: ${(e as Error).message}`);
+        console.log(`⚠️ ${carrier.name} 전체 실패: ${(e as Error).message}`);
         result.data.push({ data_type: 'news', data_key: `${carrier.name}_error`, data_value: {}, source: carrier.name, source_url: carrier.url, is_complete: false, error_message: (e as Error).message });
       }
     }
@@ -144,7 +144,7 @@ export async function collect(): Promise<CollectorResult> {
   }
 
   const success = result.data.filter(d => d.is_complete).length;
-  console.log(`\nâœ… carrier_advisories: ${success}ê±´ ìˆ˜ì§‘ ì™„ë£Œ`);
+  console.log(`\n✅ carrier_advisories: ${success}건 수집 완료`);
   return result;
 }
 

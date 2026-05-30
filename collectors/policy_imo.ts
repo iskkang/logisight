@@ -1,6 +1,6 @@
-﻿// collectors/policy_imo.ts
-// IMO í•´ì‚¬ ì •ì±… ìˆ˜ì§‘ê¸°
-// ëŒ€ìƒ: IMO ê³µì‹ ë‰´ìŠ¤, MEPC ê²°ì •ì‚¬í•­
+// collectors/policy_imo.ts
+// IMO 해사 정책 수집기
+// 대상: IMO 공식 뉴스, MEPC 결정사항
 
 import { rateLimited } from './utils/rate_limiter';
 import { snapshotWriter } from './utils/snapshot_writer';
@@ -23,7 +23,7 @@ async function parseRss(url: string, sourceName: string): Promise<NewsItem[]> {
   const text = await res.text();
   const items: NewsItem[] = [];
 
-  // RSS ë˜ëŠ” Atom í˜•ì‹ ëª¨ë‘ ì²˜ë¦¬
+  // RSS 또는 Atom 형식 모두 처리
   const itemMatches = text.matchAll(/<item>([\s\S]*?)<\/item>|<entry>([\s\S]*?)<\/entry>/g);
 
   for (const m of itemMatches) {
@@ -55,7 +55,7 @@ async function parseRss(url: string, sourceName: string): Promise<NewsItem[]> {
   return items;
 }
 
-// IMO ë‰´ìŠ¤ íŽ˜ì´ì§€ fallback (RSS ì‹¤íŒ¨ ì‹œ)
+// IMO 뉴스 페이지 fallback (RSS 실패 시)
 async function fetchIMONewsPage(): Promise<NewsItem[]> {
   const url = 'https://www.imo.org/en/MediaCentre/Pages/WhatsNew.aspx';
   try {
@@ -105,7 +105,7 @@ export async function collect(): Promise<CollectorResult> {
             is_complete: true,
           });
         }
-        console.log(`âœ… IMO (fallback): ${pageItems.length}ê±´`);
+        console.log(`✅ IMO (fallback): ${pageItems.length}건`);
       } else {
         for (const item of items) {
           result.data.push({
@@ -117,11 +117,11 @@ export async function collect(): Promise<CollectorResult> {
             is_complete: true,
           });
         }
-        console.log(`âœ… ${src.name}: ${items.length}ê±´`);
+        console.log(`✅ ${src.name}: ${items.length}건`);
       }
 
     } catch (e) {
-      console.error(`âŒ ${src.name}:`, (e as Error).message);
+      console.error(`❌ ${src.name}:`, (e as Error).message);
       result.data.push({
         data_type: 'policy_news',
         data_key: `${src.name}_error`,

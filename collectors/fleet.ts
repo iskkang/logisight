@@ -1,6 +1,6 @@
-﻿// collectors/fleet.ts
-// ì»¨í…Œì´ë„ˆ ì„ ì‚¬ ì„ ë³µëŸ‰ ìˆ˜ì§‘ê¸°
-// ëŒ€ìƒ: Alphaliner Top 12 (ë¬´ë£Œ ê³µê°œ í—¤ë“œë¼ì¸)
+// collectors/fleet.ts
+// 컨테이너 선사 선복량 수집기
+// 대상: Alphaliner Top 12 (무료 공개 헤드라인)
 
 import { rateLimited } from './utils/rate_limiter';
 import { snapshotWriter } from './utils/snapshot_writer';
@@ -15,7 +15,7 @@ async function fetchAlphalinerTop12() {
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const html = await res.text();
 
-  // Top 12 ì„ ì‚¬ íŒŒì‹± (í…Œì´ë¸” êµ¬ì¡°)
+  // Top 12 선사 파싱 (테이블 구조)
   const carriers: Array<{ rank: number; name: string; teu: number | null; share: number | null }> = [];
   const rows = html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi);
 
@@ -62,15 +62,15 @@ export async function collect(): Promise<CollectorResult> {
         source: 'Alphaliner',
         source_url: ALPHALINER_URL,
         is_complete: carriers.length >= 5,
-        error_message: carriers.length < 5 ? `ì„ ì‚¬ ${carriers.length}ê°œë§Œ íŒŒì‹±ë¨` : undefined,
+        error_message: carriers.length < 5 ? `선사 ${carriers.length}개만 파싱됨` : undefined,
       });
-      console.log(`âœ… fleet: Top ${carriers.length}ê°œ ì„ ì‚¬ ìˆ˜ì§‘`);
+      console.log(`✅ fleet: Top ${carriers.length}개 선사 수집`);
     } else {
-      throw new Error('ì„ ì‚¬ ë°ì´í„° ì—†ìŒ â€” íŽ˜ì´ì§€ êµ¬ì¡° ë³€ê²½ ê°€ëŠ¥ì„±');
+      throw new Error('선사 데이터 없음 — 페이지 구조 변경 가능성');
     }
 
   } catch (error) {
-    console.error('âŒ fleet ìˆ˜ì§‘ ì‹¤íŒ¨:', (error as Error).message);
+    console.error('❌ fleet 수집 실패:', (error as Error).message);
     result.data.push({
       data_type: 'fleet',
       data_key: 'ALPHALINER_TOP12',

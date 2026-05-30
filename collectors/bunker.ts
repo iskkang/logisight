@@ -1,6 +1,6 @@
-﻿// collectors/bunker.ts
-// ë²™ì»¤ìœ  ê°€ê²© ìˆ˜ì§‘ê¸° â€” Ship & Bunker í•­êµ¬ë³„ íŽ˜ì´ì§€ fetch + regex íŒŒì‹±
-// ëŒ€ìƒ: Singapore Â· Rotterdam Â· Fujairah (VLSFO Â· IFO380 Â· MGO)
+// collectors/bunker.ts
+// 벙커유 가격 수집기 — Ship & Bunker 항구별 페이지 fetch + regex 파싱
+// 대상: Singapore · Rotterdam · Fujairah (VLSFO · IFO380 · MGO)
 
 import { rateLimited } from './utils/rate_limiter';
 import { snapshotWriter } from './utils/snapshot_writer';
@@ -14,7 +14,7 @@ const PORTS = [
 ] as const;
 
 // Fuel grade patterns: capture first 3-4 digit number after the grade label.
-// Prices are typically 200-1500 USD/MT â€” sanity-checked below.
+// Prices are typically 200-1500 USD/MT — sanity-checked below.
 const FUEL_PATTERNS = [
   { grade: 'VLSFO',  re: /VLSFO[\s\S]{0,300}?(\d{3,4}(?:\.\d{1,2})?)/i },
   { grade: 'IFO380', re: /IFO[\s-]?380[\s\S]{0,300}?(\d{3,4}(?:\.\d{1,2})?)/i },
@@ -39,7 +39,7 @@ async function fetchPortPrices(port: string, url: string): Promise<BunkerRow[]> 
   return FUEL_PATTERNS.map(({ grade, re }) => {
     const m = html.match(re);
     const raw = m ? parseFloat(m[1]) : null;
-    // Sanity check: bunker prices are 200â€“1500 USD/MT
+    // Sanity check: bunker prices are 200–1500 USD/MT
     const valid = raw != null && raw >= 200 && raw <= 1500;
     return { grade, port, priceUsd: valid ? raw : null, url };
   });
@@ -77,13 +77,13 @@ export async function collect(): Promise<CollectorResult> {
           source:     'Ship & Bunker',
           source_url: r.url,
           is_complete: r.priceUsd !== null,
-          error_message: r.priceUsd === null ? 'ê°€ê²© íŒŒì‹± ì‹¤íŒ¨' : undefined,
+          error_message: r.priceUsd === null ? '가격 파싱 실패' : undefined,
         });
       }
       const ok = rows.filter(r => r.priceUsd !== null).length;
-      console.log(`âœ… bunker [${port}]: ${ok}/${rows.length}ê°œ ìˆ˜ì§‘`);
+      console.log(`✅ bunker [${port}]: ${ok}/${rows.length}개 수집`);
     } catch (e) {
-      console.warn(`âš ï¸ bunker [${port}] ì‹¤íŒ¨: ${(e as Error).message}`);
+      console.warn(`⚠️ bunker [${port}] 실패: ${(e as Error).message}`);
       for (const { grade } of FUEL_PATTERNS) {
         result.data.push({
           data_type: 'bunker', data_key: `BUNKER_${grade}_${port.toUpperCase()}`,
@@ -99,7 +99,7 @@ export async function collect(): Promise<CollectorResult> {
   );
 
   const success = result.data.filter(d => d.is_complete).length;
-  console.log(`âœ… bunker: ${success}/${result.data.length}ê°œ ìˆ˜ì§‘ ì™„ë£Œ`);
+  console.log(`✅ bunker: ${success}/${result.data.length}개 수집 완료`);
   return result;
 }
 

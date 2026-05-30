@@ -1,21 +1,21 @@
-﻿// collectors/tracing_fesco.ts
-// Phase 2 ETL â€” TSR/FESCO tracking API (GET, no-auth currently)
+// collectors/tracing_fesco.ts
+// Phase 2 ETL — TSR/FESCO tracking API (GET, no-auth currently)
 //
 // Run: npm run collect:tsr
 //
 // Security: container_number + order_number stripped (SHA-256 anonymized).
-//           No customer name fields present in FESCO API â€” nothing to strip.
+//           No customer name fields present in FESCO API — nothing to strip.
 //
 // Design (CLAUDE.md Karpathy):
-//  - route_pattern = 'tsr' ALWAYS â€” fixed per source, never inferred from destination
-//  - Planned/actual dates: SEA segment (Busanâ†’Vladivostok) has reliable dates;
-//    final RR segment dates are null in current dataset â†’ use SEA leg for delay calc
-//  - Bottleneck detection: display_location_text contains VMTP/Vladivostok â†’ SEA_TS_ARR
+//  - route_pattern = 'tsr' ALWAYS — fixed per source, never inferred from destination
+//  - Planned/actual dates: SEA segment (Busan→Vladivostok) has reliable dates;
+//    final RR segment dates are null in current dataset → use SEA leg for delay calc
+//  - Bottleneck detection: display_location_text contains VMTP/Vladivostok → SEA_TS_ARR
 //  - Failure recorded as is_complete=false (not dropped silently)
 
 import { createHash } from 'crypto';
 
-// Supabase REST helpers â€” no Realtime dependency (Node 20 compat, no ws needed)
+// Supabase REST helpers — no Realtime dependency (Node 20 compat, no ws needed)
 const SUPABASE_URL = process.env.SUPABASE_URL ?? '';
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
 
@@ -38,15 +38,15 @@ async function sbUpsert(
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Supabase REST ${table} upsert failed: ${res.status} â€” ${text}`);
+    throw new Error(`Supabase REST ${table} upsert failed: ${res.status} — ${text}`);
   }
 }
 
 const API_URL   = 'https://mtl-link.vercel.app/api/fesco/containers?limit=500';
 const API_TOKEN = process.env.TRACKING_API_TOKEN ?? '';  // empty = no auth (current state)
 
-// â”€â”€â”€ Lane derivation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// origin_city = "Busan" â†’ prefix KR; others treated as CN
+// ─── Lane derivation ──────────────────────────────────────────────────────────
+// origin_city = "Busan" → prefix KR; others treated as CN
 function deriveLane(originCity: string, destinationCity: string): string | null {
   const dest = (destinationCity ?? '').toLowerCase().trim();
   const orig = (originCity ?? '').toLowerCase().trim();
@@ -61,13 +61,13 @@ function deriveLane(originCity: string, destinationCity: string): string | null 
   if (dest.includes('bishkek'))                                return `${prefix}-BISHKEK`;
   if (dest.includes('chukursay') || dest.includes('chukursaj')) return `${prefix}-CHUKURSAY`;
   if (dest.includes('almaty'))                                 return `${prefix}-ALMATY`;
-  if (dest.includes('maÅ‚a') || dest.includes('malaszewicze')) return `${prefix}-MALASZEWICZE`;
+  if (dest.includes('mała') || dest.includes('malaszewicze')) return `${prefix}-MALASZEWICZE`;
   if (dest.includes('tashkent') || dest.includes('toshkent')) return `${prefix}-TASHKENT`;
   return null;
 }
 
-// â”€â”€â”€ Milestone derivation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// TSR-specific: Vladivostok/VMTP = SEAâ†’rail handoff point (primary bottleneck)
+// ─── Milestone derivation ─────────────────────────────────────────────────────
+// TSR-specific: Vladivostok/VMTP = SEA→rail handoff point (primary bottleneck)
 function deriveCurrentMilestone(
   displayLoc: string | null,
   operationalStatus: string | null,
@@ -87,12 +87,12 @@ function deriveCurrentMilestone(
   return 'DEST_ARR';  // default bucket for T/T aggregation
 }
 
-// â”€â”€â”€ Week ISO from a date string â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Week ISO from a date string ──────────────────────────────────────────────
 // ISO 8601: week 1 = the week containing the first Thursday of the year (Mon start).
 function toWeekIso(dateStr: string | null): string {
   const d = dateStr ? new Date(dateStr) : new Date();
   if (isNaN(d.getTime())) return toWeekIso(null);
-  const day      = d.getUTCDay() === 0 ? 7 : d.getUTCDay(); // 1=Mon â€¦ 7=Sun
+  const day      = d.getUTCDay() === 0 ? 7 : d.getUTCDay(); // 1=Mon … 7=Sun
   const thursday = new Date(d);
   thursday.setUTCDate(d.getUTCDate() + 4 - day);            // Thursday of same ISO week
   const yearStart = new Date(Date.UTC(thursday.getUTCFullYear(), 0, 1));
@@ -100,7 +100,7 @@ function toWeekIso(dateStr: string | null): string {
   return `${thursday.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
 }
 
-// â”€â”€â”€ Stats helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Stats helpers ────────────────────────────────────────────────────────────
 function median(v: number[]): number {
   const s = [...v].sort((a, b) => a - b);
   const m = Math.floor(s.length / 2);
@@ -114,7 +114,7 @@ function dataQuality(n: number): 'confirmed' | 'provisional' | 'indicative' {
   return n >= 5 ? 'confirmed' : n >= 2 ? 'provisional' : 'indicative';
 }
 
-// â”€â”€â”€ Raw API types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Raw API types ────────────────────────────────────────────────────────────
 interface FescoSegment {
   id:                    string;
   segmentType:           string;   // 'SEA' | 'RR' | etc.
@@ -127,12 +127,12 @@ interface FescoSegment {
   planingDestinationDate: string | null;       // planned arrival at segment dest
   destinationLocationEn: string | null;
   departureLocationEn:   string | null;
-  containerNumber:       string;               // â›” STRIP â€” same as container_number
+  containerNumber:       string;               // ⛔ STRIP — same as container_number
 }
 
 interface FescoContainer {
-  container_number:    string;        // â›” STRIP â€” anonymize via SHA-256
-  order_number:        string;        // â›” STRIP â€” internal only
+  container_number:    string;        // ⛔ STRIP — anonymize via SHA-256
+  order_number:        string;        // ⛔ STRIP — internal only
   operational_status:  string | null;
   origin_city:         string;
   destination_city:    string;
@@ -155,27 +155,27 @@ interface ApiResponse {
   data:  FescoContainer[];
 }
 
-// â”€â”€â”€ Main â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Main ─────────────────────────────────────────────────────────────────────
 async function main() {
   if (!SUPABASE_URL || !SUPABASE_KEY) {
     console.error('SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY env missing.');
     process.exit(1);
   }
 
-  // â”€â”€ 1. Fetch FESCO API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── 1. Fetch FESCO API ──────────────────────────────────────────────────────
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (API_TOKEN) headers['Authorization'] = `Bearer ${API_TOKEN}`;
 
   console.log(`Fetching ${API_URL} ...`);
   const res = await fetch(API_URL, { headers });
-  if (!res.ok) throw new Error(`API HTTP ${res.status} â€” ${await res.text()}`);
+  if (!res.ok) throw new Error(`API HTTP ${res.status} — ${await res.text()}`);
 
   const payload = await res.json() as ApiResponse;
   if (!payload.ok) throw new Error(`API returned ok=false`);
   const containers = payload.data ?? [];
   console.log(`${containers.length} containers received (API total: ${payload.total})`);
 
-  // â”€â”€ 2. Map â†’ shipment_legs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── 2. Map → shipment_legs ─────────────────────────────────────────────────
   let skipped = 0;
   const legRows: Record<string, unknown>[] = [];
 
@@ -200,18 +200,18 @@ async function main() {
     const plannedDate = seaSeg?.planingDestinationDate ?? null;   // planned VVO arrival
     const actualDate  = seaSeg?.destinationDate ?? null;          // actual VVO arrival
 
-    // Delay calculation (hours) â€” measures sea-leg punctuality (Vladivostok handoff)
+    // Delay calculation (hours) — measures sea-leg punctuality (Vladivostok handoff)
     let delayHours: number | null = null;
     if (plannedDate && actualDate) {
-      // Completed sea leg: actual âˆ’ planned
+      // Completed sea leg: actual − planned
       delayHours = (new Date(actualDate).getTime() - new Date(plannedDate).getTime()) / 3_600_000;
     } else if (plannedDate && !actualDate && c.signal === 'red') {
-      // Overdue: now âˆ’ planned VVO arrival
+      // Overdue: now − planned VVO arrival
       const overdueMsec = Date.now() - new Date(plannedDate).getTime();
       if (overdueMsec > 0) delayHours = overdueMsec / 3_600_000;
     }
 
-    // Week ISO â€” use actual VVO date if available, else planned, else current week
+    // Week ISO — use actual VVO date if available, else planned, else current week
     const weekIso = toWeekIso(actualDate ?? plannedDate);
 
     const milestone = deriveCurrentMilestone(c.display_location_text, c.operational_status, arrived);
@@ -223,7 +223,7 @@ async function main() {
       lane_id:       laneId,
       shipment_ref:  anonRef,
       week_iso:      weekIso,
-      route_pattern: 'tsr',           // ALWAYS tsr â€” fixed per source (FESCO = TSR)
+      route_pattern: 'tsr',           // ALWAYS tsr — fixed per source (FESCO = TSR)
       destination:   c.destination_city,
       milestone:     milestone,
       planned_at:    plannedDate ? new Date(plannedDate).toISOString() : null,
@@ -234,8 +234,8 @@ async function main() {
       transport_mode: c.current_segment_type,
       load_type:     null,
       data_source:   'tracing',  // 'fesco' is not an allowed value; route_pattern='tsr' distinguishes TSR legs
-      // â›” container_number NOT stored (SHA-256 anonymized above)
-      // â›” order_number NOT stored (internal only)
+      // ⛔ container_number NOT stored (SHA-256 anonymized above)
+      // ⛔ order_number NOT stored (internal only)
       // Memory-only flag: sea leg actual date received (not upserted to DB)
       _is_completed: actualDate !== null,
     });
@@ -246,7 +246,7 @@ async function main() {
   // Strip memory-only fields before DB upsert
   const legRowsForDb = legRows.map(({ _is_completed: _unused, ...rest }) => rest);
 
-  // â”€â”€ 3. Fetch valid lane IDs from DB (guard against FK violation) â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── 3. Fetch valid lane IDs from DB (guard against FK violation) ─────────
   const lanesRes = await fetch(`${SUPABASE_URL}/rest/v1/lanes?select=id`, {
     headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
   });
@@ -260,7 +260,7 @@ async function main() {
   // filteredLegs retains _is_completed for aggregation gate; filteredLegsForDb is sent to DB
   const filteredLegs = legRows.filter(leg => {
     if (!validLanes.has(leg.lane_id as string)) {
-      console.warn(`  lane "${leg.lane_id}" not in DB â€” skipping row`);
+      console.warn(`  lane "${leg.lane_id}" not in DB — skipping row`);
       return false;
     }
     return true;
@@ -268,11 +268,11 @@ async function main() {
   const filteredLegsForDb = legRowsForDb.filter(leg => validLanes.has(leg.lane_id as string));
   console.log(`DB lane filter: ${filteredLegsForDb.length} rows kept (${legRows.length - filteredLegsForDb.length} excluded)`);
 
-  // â”€â”€ Upsert shipment_legs (service-role only) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Upsert shipment_legs (service-role only) ──────────────────────────────
   await sbUpsert('shipment_legs', filteredLegsForDb, 'shipment_ref,milestone');
   console.log(`shipment_legs upsert done (${filteredLegsForDb.length} rows)`);
 
-  // â”€â”€ 4. Aggregate â†’ delay_index_weekly â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── 4. Aggregate → delay_index_weekly ────────────────────────────────────
   // Key = lane_id|week_iso. route_pattern = 'tsr' always.
   type Bucket = { laneId: string; weekIso: string; delays: number[] };
   const buckets = new Map<string, Bucket>();
@@ -321,13 +321,13 @@ async function main() {
     console.log('delay_index_weekly: no buckets with delay data (all dates null in current dataset)');
   }
 
-  // â”€â”€ 5. Print snapshot â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  console.log('\n' + 'â”'.repeat(66));
-  console.log(`CADI FESCO/TSR Snapshot â€” ${containers.length} containers processed`);
-  console.log('â”'.repeat(66));
+  // ── 5. Print snapshot ─────────────────────────────────────────────────────
+  console.log('\n' + '━'.repeat(66));
+  console.log(`CADI FESCO/TSR Snapshot — ${containers.length} containers processed`);
+  console.log('━'.repeat(66));
   if (indexRows.length > 0) {
     console.log(`${'Lane'.padEnd(22)} ${'Week'.padEnd(9)} ${'n'.padStart(3)} ${'Med(d)'.padStart(8)} ${'P90(d)'.padStart(8)} ${'OTP%'.padStart(6)}  Quality`);
-    console.log('â”€'.repeat(72));
+    console.log('─'.repeat(72));
     for (const r of indexRows.sort((a, b) => String(a.lane_id).localeCompare(String(b.lane_id)))) {
       const med  = ((r.median_delay_h as number) / 24).toFixed(1);
       const p90v = ((r.p90_delay_h    as number) / 24).toFixed(1);
@@ -357,7 +357,7 @@ async function main() {
   [...bySignal.entries()].sort((a, b) => b[1] - a[1])
     .forEach(([sig, cnt]) => console.log(`   signal=${sig.padEnd(8)} ${cnt} containers`));
 
-  console.log('â”'.repeat(66));
+  console.log('━'.repeat(66));
   console.log('Security: container_number SHA-256 anonymized. order_number not stored.');
 }
 

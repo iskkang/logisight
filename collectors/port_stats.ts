@@ -1,6 +1,6 @@
-﻿// collectors/port_stats.ts
-// í•­ë§Œ ì›”ê°„ TEU í†µê³„ ìˆ˜ì§‘ê¸° â€” Supabase port_throughput í…Œì´ë¸”ì— ì§ì ‘ ì €ìž¥
-// ì†ŒìŠ¤: Port of LA, Port of LB (HTML íŒŒì‹±), Singapore (CSV)
+// collectors/port_stats.ts
+// 항만 월간 TEU 통계 수집기 — Supabase port_throughput 테이블에 직접 저장
+// 소스: Port of LA, Port of LB (HTML 파싱), Singapore (CSV)
 
 import { rateLimited } from './utils/rate_limiter';
 import { dbUpsert } from './utils/supabase_writer';
@@ -20,19 +20,19 @@ interface PortRow {
   source_url: string;
 }
 
-// â”€â”€ Port of LA â€” HTML í…Œì´ë¸”ì—ì„œ ìµœì‹  TEU íŒŒì‹± â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Port of LA — HTML 테이블에서 최신 TEU 파싱 ─────────────────────
 async function fetchPortLA(): Promise<PortRow | null> {
   const url = 'https://portoflosangeles.org/business/statistics/container-statistics';
   const res = await fetch(url, { headers: BOT_HEADERS, signal: AbortSignal.timeout(15000) });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const html = await res.text();
-  // ìµœì‹  ì—°ë„ TEU ìˆ«ìž íŒ¨í„´ (ì˜ˆ: "1,234,567")
+  // 최신 연도 TEU 숫자 패턴 (예: "1,234,567")
   const match = html.match(/(\d{1,3}(?:,\d{3})+)\s*(?:TEU|teu)/i);
   const teu = match ? parseInt(match[1].replace(/,/g, ''), 10) : null;
   return { port_code: 'LA', year: YEAR, month: MONTH - 1 || 12, teu, source: 'Port of LA', source_url: url };
 }
 
-// â”€â”€ Port of Long Beach â€” HTML íŒŒì‹± â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Port of Long Beach — HTML 파싱 ────────────────────────────────
 async function fetchPortLB(): Promise<PortRow | null> {
   const url = 'https://polb.com/business/port-statistics/';
   const res = await fetch(url, { headers: BOT_HEADERS, signal: AbortSignal.timeout(15000) });
@@ -43,14 +43,14 @@ async function fetchPortLB(): Promise<PortRow | null> {
   return { port_code: 'LB', year: YEAR, month: MONTH - 1 || 12, teu, source: 'Port of Long Beach', source_url: url };
 }
 
-// â”€â”€ Singapore MPA â€” data.gov.sg CSV â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Singapore MPA — data.gov.sg CSV ───────────────────────────────
 async function fetchSingapore(): Promise<PortRow | null> {
   const url = 'https://data.gov.sg/datasets/d_da030f7028200d19ffcbe4a2d71af39c/view';
   try {
     const res = await fetch(url, { headers: BOT_HEADERS, signal: AbortSignal.timeout(15000) });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const text = await res.text();
-    // CSV: ìµœì‹  í–‰ì—ì„œ TEU ì¶”ì¶œ
+    // CSV: 최신 행에서 TEU 추출
     const lines = text.trim().split('\n').filter(l => l.trim());
     const lastLine = lines[lines.length - 1];
     const parts = lastLine.split(',');
@@ -77,13 +77,13 @@ export async function collect(): Promise<CollectorResult> {
       if (row && row.teu !== null) {
         rows.push(row);
         result.data.push({ data_type: 'port_stat', data_key: `PORT_${row.port_code}`, data_value: row, source: row.source, source_url: row.source_url, is_complete: true });
-        console.log(`âœ… ${f.name}: ${row.teu?.toLocaleString()} TEU (${row.year}-${String(row.month).padStart(2, '0')})`);
+        console.log(`✅ ${f.name}: ${row.teu?.toLocaleString()} TEU (${row.year}-${String(row.month).padStart(2, '0')})`);
       } else {
-        console.log(`âš ï¸ ${f.name}: TEU íŒŒì‹± ì‹¤íŒ¨`);
-        result.data.push({ data_type: 'port_stat', data_key: `PORT_${f.name}_error`, data_value: {}, source: f.name, source_url: '', is_complete: false, error_message: 'TEU íŒŒì‹± ì‹¤íŒ¨' });
+        console.log(`⚠️ ${f.name}: TEU 파싱 실패`);
+        result.data.push({ data_type: 'port_stat', data_key: `PORT_${f.name}_error`, data_value: {}, source: f.name, source_url: '', is_complete: false, error_message: 'TEU 파싱 실패' });
       }
     } catch (e) {
-      console.log(`âš ï¸ ${f.name} ì‹¤íŒ¨: ${(e as Error).message}`);
+      console.log(`⚠️ ${f.name} 실패: ${(e as Error).message}`);
       result.data.push({ data_type: 'port_stat', data_key: `PORT_${f.name}_error`, data_value: {}, source: f.name, source_url: '', is_complete: false, error_message: (e as Error).message });
     }
   }
@@ -95,7 +95,7 @@ export async function collect(): Promise<CollectorResult> {
   }
 
   const success = result.data.filter(d => d.is_complete).length;
-  console.log(`\nâœ… port_stats: ${success}/${result.data.length}ê°œ ìˆ˜ì§‘ ì™„ë£Œ`);
+  console.log(`\n✅ port_stats: ${success}/${result.data.length}개 수집 완료`);
   return result;
 }
 

@@ -1,6 +1,6 @@
-﻿// collectors/news_industry.ts
-// ì—…ê³„Â·ì •ë¶€Â·ê¸°ê´€ ë‰´ìŠ¤ ìˆ˜ì§‘ê¸°
-// ëŒ€ìƒ: Maersk, DHL, SCANGL, KITA, NLIC, KOTRA, Tradlinx
+// collectors/news_industry.ts
+// 업계·정부·기관 뉴스 수집기
+// 대상: Maersk, DHL, SCANGL, KITA, NLIC, KOTRA, Tradlinx
 
 import { chromium, type Browser, type Page } from 'playwright';
 import { rateLimited } from './utils/rate_limiter';
@@ -43,7 +43,7 @@ const SOURCES = [
     language: 'ko',
   },
   {
-    name: 'KOTRA ë¬¼ë¥˜',
+    name: 'KOTRA 물류',
     url: 'https://dream.kotra.or.kr/kotranews/cms/com/index.do?MENU_ID=70',
     selector: '.list-title a, .tit a, td a',
     section: 'trade' as const,
@@ -61,8 +61,8 @@ const SOURCES = [
 async function scrapePage(page: Page, source: typeof SOURCES[0]): Promise<NewsItem[]> {
   await page.goto(source.url, { waitUntil: 'domcontentloaded', timeout: 25000 });
 
-  // ì •ë¶€ ì‚¬ì´íŠ¸ëŠ” ë¡œë”©ì´ ëŠë¦´ ìˆ˜ ìžˆìœ¼ë¯€ë¡œ ì¶”ê°€ ëŒ€ê¸°
-  if (source.name === 'KITA' || source.name === 'NLIC' || source.name === 'KOTRA ë¬¼ë¥˜') {
+  // 정부 사이트는 로딩이 느릴 수 있으므로 추가 대기
+  if (source.name === 'KITA' || source.name === 'NLIC' || source.name === 'KOTRA 물류') {
     await page.waitForTimeout(2000);
   }
 
@@ -120,9 +120,9 @@ export async function collect(): Promise<CollectorResult> {
           });
         }
 
-        console.log(`âœ… ${source.name}: ${items.length}ê±´`);
+        console.log(`✅ ${source.name}: ${items.length}건`);
       } catch (error) {
-        console.error(`âŒ ${source.name}:`, (error as Error).message);
+        console.error(`❌ ${source.name}:`, (error as Error).message);
         result.data.push({
           data_type: 'news',
           data_key: `${source.name}_error`,

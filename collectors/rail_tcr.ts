@@ -1,6 +1,6 @@
-﻿// collectors/rail_tcr.ts
-// ì¤‘êµ­-ìœ ëŸ½ ì² ë„ (TCR/BRI) ìˆ˜ì§‘ê¸° â€” fetch+RSS ê¸°ë°˜, PlaywrightëŠ” TransportCorridorsë§Œ
-// ëŒ€ìƒ: RailFreight BRI RSS, Silk Road Briefing, Kazakhstan Today,
+// collectors/rail_tcr.ts
+// 중국-유럽 철도 (TCR/BRI) 수집기 — fetch+RSS 기반, Playwright는 TransportCorridors만
+// 대상: RailFreight BRI RSS, Silk Road Briefing, Kazakhstan Today,
 //       China Daily RSS, Global Times RSS, TransportCorridors (Playwright)
 
 import { chromium, type Browser } from 'playwright';
@@ -13,7 +13,7 @@ const BOT_HEADERS = {
   'Accept-Language': 'en-US,en;q=0.9',
 };
 
-// â”€â”€ ê³µí†µ: RSS íŒŒì‹± â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── 공통: RSS 파싱 ───────────────────────────────────────────────
 async function parseRss(
   rssUrl: string,
   sourceName: string,
@@ -55,7 +55,7 @@ async function parseRss(
   return items;
 }
 
-// â”€â”€ ê³µí†µ: fetch HTML ë§í¬ íŒŒì‹± â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── 공통: fetch HTML 링크 파싱 ──────────────────────────────────
 async function fetchHtmlLinks(pageUrl: string, sourceName: string, max = 5): Promise<NewsItem[]> {
   const res = await fetch(pageUrl, {
     headers: BOT_HEADERS,
@@ -90,7 +90,7 @@ async function fetchHtmlLinks(pageUrl: string, sourceName: string, max = 5): Pro
   return items;
 }
 
-// â”€â”€ TransportCorridors (Playwright ìœ ì§€) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── TransportCorridors (Playwright 유지) ───────────────────────
 async function fetchTransportCorridors(browser: Browser): Promise<NewsItem[]> {
   const url = 'https://www.transportcorridors.com/category/regions/central-asia';
   const page = await browser.newPage();
@@ -122,7 +122,7 @@ async function fetchTransportCorridors(browser: Browser): Promise<NewsItem[]> {
       source: 'TransportCorridors',
     }));
   } catch (e) {
-    console.log(`âš ï¸ TransportCorridors ì‹¤íŒ¨: ${(e as Error).message}`);
+    console.log(`⚠️ TransportCorridors 실패: ${(e as Error).message}`);
     return [];
   } finally {
     await page.close();
@@ -132,7 +132,7 @@ async function fetchTransportCorridors(browser: Browser): Promise<NewsItem[]> {
 export async function collect(): Promise<CollectorResult> {
   const result: CollectorResult = { section: 'rail', data: [] };
 
-  // â”€â”€ 1. fetch/RSS ì†ŒìŠ¤ ë³‘ë ¬ ìˆ˜ì§‘ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── 1. fetch/RSS 소스 병렬 수집 ────────────────────────────────
   const FETCH_SOURCES = [
     {
       label: 'RailFreight BRI',
@@ -187,7 +187,7 @@ export async function collect(): Promise<CollectorResult> {
     const src = FETCH_SOURCES[i];
     const res = settled[i];
     if (res.status === 'rejected') {
-      console.log(`âš ï¸ ${src.label} ì‹¤íŒ¨: ${(res.reason as Error).message}`);
+      console.log(`⚠️ ${src.label} 실패: ${(res.reason as Error).message}`);
       continue;
     }
     for (const item of res.value) {
@@ -200,10 +200,10 @@ export async function collect(): Promise<CollectorResult> {
         is_complete: true,
       });
     }
-    console.log(`âœ… ${src.label}: ${res.value.length}ê±´`);
+    console.log(`✅ ${src.label}: ${res.value.length}건`);
   }
 
-  // â”€â”€ 2. TransportCorridors (Playwright) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── 2. TransportCorridors (Playwright) ────────────────────────
   let browser: Browser | null = null;
   try {
     browser = await chromium.launch({ headless: true });
@@ -221,15 +221,15 @@ export async function collect(): Promise<CollectorResult> {
         is_complete: true,
       });
     }
-    console.log(`âœ… TransportCorridors: ${items.length}ê±´`);
+    console.log(`✅ TransportCorridors: ${items.length}건`);
   } catch (e) {
-    console.error('âŒ TransportCorridors:', (e as Error).message);
+    console.error('❌ TransportCorridors:', (e as Error).message);
   } finally {
     if (browser) await browser.close();
   }
 
   const success = result.data.filter(d => d.is_complete).length;
-  console.log(`\nâœ… rail_tcr: ì´ ${result.data.length}ê±´ ì¤‘ ${success}ê±´ ìˆ˜ì§‘ ì™„ë£Œ`);
+  console.log(`\n✅ rail_tcr: 총 ${result.data.length}건 중 ${success}건 수집 완료`);
 
   return result;
 }

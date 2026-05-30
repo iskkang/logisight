@@ -1,5 +1,5 @@
-﻿// collectors/utils/rate_limiter.ts
-// Per-domain rate limiter â€” prevents hammering the same host repeatedly.
+// collectors/utils/rate_limiter.ts
+// Per-domain rate limiter — prevents hammering the same host repeatedly.
 // Usage: await rateLimited('https://example.com/feed', () => fetch(...))
 
 const lastRequestAt = new Map<string, number>();

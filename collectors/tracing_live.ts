@@ -1,20 +1,20 @@
-﻿// collectors/tracing_live.ts
-// Phase 2 ETL â€” 1ì°¨ ì†ŒìŠ¤: MTL Link live tracking API (GET, no-auth currently)
+// collectors/tracing_live.ts
+// Phase 2 ETL — 1차 소스: MTL Link live tracking API (GET, no-auth currently)
 //
 // Run: npm run collect:live
 //
-// âš ï¸ ë³´ì•ˆ ì£¼ì˜: í˜„ìž¬ API ë¬´ì¸ì¦ â†’ customer_list ë“± PII ë¯¸ì €ìž¥ ì²˜ë¦¬.
-//    MTL Link íŒ€ì— read í† í° ì ìš© ê¶Œê³ . ì ìš© ì‹œ TRACKING_API_TOKEN env ì‚¬ìš©.
+// ⚠️ 보안 주의: 현재 API 무인증 → customer_list 등 PII 미저장 처리.
+//    MTL Link 팀에 read 토큰 적용 권고. 적용 시 TRACKING_API_TOKEN env 사용.
 //
-// ì„¤ê³„ ì›ì¹™ (CLAUDE.md Karpathy):
-//  - ì†ŒìŠ¤ ì–´ëŒ‘í„° ì¶”ìƒí™” ê¸ˆì§€ â€” ì´ APIë§Œ ì§ì ‘ fetch
-//  - ì €ìž¥ ê¸ˆì§€: customer_list, í™”ë¬¼ ë©”ëª¨
-//  - container_no = ë‚´ë¶€ upsert í‚¤ (service-role RLS â†’ ì™¸ë¶€ ë¯¸ë…¸ì¶œ)
-//  - ë°œí–‰ê°’ = ì§‘ê³„ì¹˜ë§Œ (delay_index_weekly)
+// 설계 원칙 (CLAUDE.md Karpathy):
+//  - 소스 어댑터 추상화 금지 — 이 API만 직접 fetch
+//  - 저장 금지: customer_list, 화물 메모
+//  - container_no = 내부 upsert 키 (service-role RLS → 외부 미노출)
+//  - 발행값 = 집계치만 (delay_index_weekly)
 
 import { createHash } from 'crypto';
 
-// Supabase REST helpers â€” no Realtime dependency (Node 20 compat, no ws needed)
+// Supabase REST helpers — no Realtime dependency (Node 20 compat, no ws needed)
 const SUPABASE_URL = process.env.SUPABASE_URL ?? '';
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
 
@@ -37,15 +37,15 @@ async function sbUpsert(
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Supabase REST ${table} upsert failed: ${res.status} â€” ${text}`);
+    throw new Error(`Supabase REST ${table} upsert failed: ${res.status} — ${text}`);
   }
 }
 
 const API_URL   = process.env.TRACKING_API_URL   ?? 'https://link.mtlship.com/api/tcr?action=list';
 const API_TOKEN = process.env.TRACKING_API_TOKEN ?? '';  // empty = no auth (current state)
 
-// â”€â”€â”€ Lane derivation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Maps (origin_city, destination_city) â†’ lane_id matching DB seed (migration 003)
+// ─── Lane derivation ─────────────────────────────────────────────────────────
+// Maps (origin_city, destination_city) → lane_id matching DB seed (migration 003)
 function deriveLane(origin: string, destination: string): string | null {
   const dest = (destination ?? '').toLowerCase().trim();
   const orig = (origin ?? '').toLowerCase().trim();
@@ -61,12 +61,12 @@ function deriveLane(origin: string, destination: string): string | null {
   if (dest.includes('bishkek'))                                 return `${prefix}-BISHKEK`;
   if (dest.includes('chukursay'))                               return `${prefix}-CHUKURSAY`;
   if (dest.includes('almaty'))                                  return `${prefix}-ALMATY`;
-  if (dest.includes('maÅ‚a') || dest.includes('malaszewicze'))   return `${prefix}-MALASZEWICZE`;
+  if (dest.includes('mała') || dest.includes('malaszewicze'))   return `${prefix}-MALASZEWICZE`;
   if (dest.includes('tashkent') || dest.includes('toshkent'))  return `${prefix}-TASHKENT`;   // future lane
   return null;
 }
 
-// â”€â”€â”€ Route pattern derivation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Route pattern derivation ────────────────────────────────────────────────
 // Derived from current_segment_name (priority), then destination, then location.
 // enum: kashi | khorgos | northern | tsr
 function deriveRoutePattern(
@@ -80,13 +80,13 @@ function deriveRoutePattern(
 
   // Kashi pattern signals
   if (seg.includes('kashgar') || seg.includes('kashi')    ||
-      seg.includes('â†’ andijan') || seg.includes('â†’ osh')  ||
-      seg.includes('â†’ bishkek') || loc.includes('kashgar') ||
+      seg.includes('→ andijan') || seg.includes('→ osh')  ||
+      seg.includes('→ bishkek') || loc.includes('kashgar') ||
       loc.includes('kashi'))  return 'kashi';
 
-  // Northern pattern: Dostyk / Kartaly / Brest / MaÅ‚aszewicze
+  // Northern pattern: Dostyk / Kartaly / Brest / Małaszewicze
   if (seg.includes('dostyk')  || seg.includes('kartaly')  ||
-      seg.includes('brest')   || seg.includes('maÅ‚a')      ||
+      seg.includes('brest')   || seg.includes('mała')      ||
       loc.includes('dostuk')  || loc.includes('dostyk'))   return 'northern';
 
   // Khorgos pattern
@@ -100,12 +100,12 @@ function deriveRoutePattern(
   if (dest.includes('andijan') || dest.includes('osh') || dest.includes('bishkek') ||
       dest.includes('chukursay') || dest.includes('tashkent')) return 'kashi';
   if (dest.includes('almaty'))                             return 'khorgos';
-  if (dest.includes('maÅ‚a') || dest.includes('malaszewicze')) return 'northern';
+  if (dest.includes('mała') || dest.includes('malaszewicze')) return 'northern';
 
   return null;
 }
 
-// â”€â”€â”€ Milestone derivation from current position â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Milestone derivation from current position ───────────────────────────────
 // Single milestone per container (current state), primary key = DEST_ARR for aggregation
 function deriveCurrentMilestone(
   segmentName: string | null,
@@ -117,24 +117,24 @@ function deriveCurrentMilestone(
   const seg = (segmentName ?? '').toLowerCase();
   const loc = (currentLoc  ?? '').toLowerCase();
 
-  if (seg.includes('korea â†’') || seg.includes('incheon â†’') || loc.includes('incheon')) return 'ORIGIN_DEP';
-  if (seg.includes('â†’ qingdao') || seg.includes('â†’ lianyungang') || loc.includes('qingdao')) return 'SEA_TS_ARR';
-  if (seg.includes('qingdao â†’') || seg.includes('lianyungang â†’')) return 'RAIL_DEP_CN';
-  if (seg.includes('kashgar â†’') && seg.includes('â†’ andijan')) return 'KG_UZ_BORDER';
-  if (seg.includes('kashgar â†’') && seg.includes('â†’ osh'))     return 'KG_UZ_BORDER';
+  if (seg.includes('korea →') || seg.includes('incheon →') || loc.includes('incheon')) return 'ORIGIN_DEP';
+  if (seg.includes('→ qingdao') || seg.includes('→ lianyungang') || loc.includes('qingdao')) return 'SEA_TS_ARR';
+  if (seg.includes('qingdao →') || seg.includes('lianyungang →')) return 'RAIL_DEP_CN';
+  if (seg.includes('kashgar →') && seg.includes('→ andijan')) return 'KG_UZ_BORDER';
+  if (seg.includes('kashgar →') && seg.includes('→ osh'))     return 'KG_UZ_BORDER';
   if (loc.includes('kashgar') || loc.includes('kashi'))        return 'KASHI_ARR';
   if (loc.includes('osh'))                                      return 'KG_UZ_BORDER';
   if (loc.includes('dostuk') || loc.includes('dostyk'))         return 'CN_BORDER';
   if (loc.includes('khorgos') || loc.includes('horgos'))        return 'CN_BORDER';
-  return 'DEST_ARR';  // in transit, milestone unclear â†’ use total T/T
+  return 'DEST_ARR';  // in transit, milestone unclear → use total T/T
 }
 
-// â”€â”€â”€ Week ISO from a date string â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Week ISO from a date string ──────────────────────────────────────────────
 // ISO 8601: week 1 = the week containing the first Thursday of the year (Mon start).
 function toWeekIso(dateStr: string | null): string {
   const d = dateStr ? new Date(dateStr) : new Date();
   if (isNaN(d.getTime())) return toWeekIso(null);
-  const day      = d.getUTCDay() === 0 ? 7 : d.getUTCDay(); // 1=Mon â€¦ 7=Sun
+  const day      = d.getUTCDay() === 0 ? 7 : d.getUTCDay(); // 1=Mon … 7=Sun
   const thursday = new Date(d);
   thursday.setUTCDate(d.getUTCDate() + 4 - day);            // Thursday of same ISO week
   const yearStart = new Date(Date.UTC(thursday.getUTCFullYear(), 0, 1));
@@ -142,7 +142,7 @@ function toWeekIso(dateStr: string | null): string {
   return `${thursday.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
 }
 
-// â”€â”€â”€ Stats helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Stats helpers ────────────────────────────────────────────────────────────
 function median(v: number[]): number {
   const s = [...v].sort((a, b) => a - b);
   const m = Math.floor(s.length / 2);
@@ -156,10 +156,10 @@ function dataQuality(n: number): 'confirmed' | 'provisional' | 'indicative' {
   return n >= 5 ? 'confirmed' : n >= 2 ? 'provisional' : 'indicative';
 }
 
-// â”€â”€â”€ Raw API type â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Raw API type ─────────────────────────────────────────────────────────────
 interface RawContainer {
-  container_no:         string;   // internal key â€” NOT stored in published columns
-  customer_list:        string;   // â›” STRIP â€” never store
+  container_no:         string;   // internal key — NOT stored in published columns
+  customer_list:        string;   // ⛔ STRIP — never store
   origin:               string;
   destination:          string;
   current_location:     string | null;
@@ -179,26 +179,26 @@ interface ApiResponse {
   total:      number;
 }
 
-// â”€â”€â”€ Main â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Main ─────────────────────────────────────────────────────────────────────
 async function main() {
   if (!SUPABASE_URL || !SUPABASE_KEY) {
-    console.error('âŒ SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY í™˜ê²½ë³€ìˆ˜ ì—†ìŒ.');
+    console.error('❌ SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY 환경변수 없음.');
     process.exit(1);
   }
 
-  // â”€â”€ 1. Fetch live API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── 1. Fetch live API ───────────────────────────────────────────────────────
   const headers: Record<string, string> = { 'Accept': 'application/json' };
   if (API_TOKEN) headers['Authorization'] = `Bearer ${API_TOKEN}`;
 
-  console.log(`ðŸŒ Fetching ${API_URL} â€¦`);
+  console.log(`🌐 Fetching ${API_URL} …`);
   const res = await fetch(API_URL, { headers });
-  if (!res.ok) throw new Error(`API HTTP ${res.status} â€” ${await res.text()}`);
+  if (!res.ok) throw new Error(`API HTTP ${res.status} — ${await res.text()}`);
 
   const payload = await res.json() as ApiResponse;
   const containers = payload.containers ?? [];
-  console.log(`ðŸ“¦ ${containers.length}ê±´ ìˆ˜ì‹  (API total: ${payload.total})`);
+  console.log(`📦 ${containers.length}건 수신 (API total: ${payload.total})`);
 
-  // â”€â”€ 2. Map â†’ shipment_legs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── 2. Map → shipment_legs ─────────────────────────────────────────────────
   let skipped = 0;
   const legRows: Record<string, unknown>[] = [];
 
@@ -208,7 +208,7 @@ async function main() {
 
     const laneId       = deriveLane(c.origin, c.destination);
     if (!laneId) {
-      console.warn(`  âš ï¸  lane ë¯¸ê°ì§€: ${c.origin} â†’ ${c.destination}`);
+      console.warn(`  ⚠️  lane 미감지: ${c.origin} → ${c.destination}`);
       skipped++;
       continue;
     }
@@ -219,15 +219,15 @@ async function main() {
     // Delay calculation (hours)
     let delayHours: number | null = null;
     if (c.eta_final && c.ata_final) {
-      // Completed: actual âˆ’ planned
+      // Completed: actual − planned
       delayHours = (new Date(c.ata_final).getTime() - new Date(c.eta_final).getTime()) / 3_600_000;
     } else if (c.eta_final && !c.ata_final && c.signal === 'red') {
-      // In-transit overdue: now âˆ’ ETA
+      // In-transit overdue: now − ETA
       const overdueMsec = Date.now() - new Date(c.eta_final).getTime();
       if (overdueMsec > 0) delayHours = overdueMsec / 3_600_000;
     }
 
-    // Week ISO â€” use ETA week for completed, current week for in-transit
+    // Week ISO — use ETA week for completed, current week for in-transit
     const weekIso = toWeekIso(c.ata_final ?? c.eta_final);
 
     // Anonymize container_no: SHA-256 first 12 hex chars (not reversible)
@@ -248,13 +248,13 @@ async function main() {
       transport_mode: c.transport_mode,
       load_type:     c.load_type,
       data_source:   'tracing',
-      // â›” customer_list NOT stored (PII stripped)
+      // ⛔ customer_list NOT stored (PII stripped)
     });
   }
 
-  console.log(`âœ… ${legRows.length}ê±´ ë§¤í•‘ / ${skipped}ê±´ ìŠ¤í‚µ`);
+  console.log(`✅ ${legRows.length}건 매핑 / ${skipped}건 스킵`);
 
-  // â”€â”€ 3. Fetch valid lane IDs from DB (guard against FK violation) â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── 3. Fetch valid lane IDs from DB (guard against FK violation) ─────────
   const lanesRes = await fetch(`${SUPABASE_URL}/rest/v1/lanes?select=id`, {
     headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
   });
@@ -267,19 +267,19 @@ async function main() {
 
   const filteredLegs = legRows.filter(leg => {
     if (!validLanes.has(leg.lane_id as string)) {
-      console.warn(`  âš ï¸  lane "${leg.lane_id}" not in DB â€” skipping row`);
+      console.warn(`  ⚠️  lane "${leg.lane_id}" not in DB — skipping row`);
       return false;
     }
     return true;
   });
-  console.log(`ðŸ” DB lane í•„í„°ë§ í›„: ${filteredLegs.length}ê±´ (ì œì™¸ ${legRows.length - filteredLegs.length}ê±´)`);
+  console.log(`🔍 DB lane 필터링 후: ${filteredLegs.length}건 (제외 ${legRows.length - filteredLegs.length}건)`);
 
-  // â”€â”€ Upsert shipment_legs (service-role only) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Upsert shipment_legs (service-role only) ───────────────────────────────
   await sbUpsert('shipment_legs', filteredLegs, 'shipment_ref,milestone');
-  console.log(`ðŸ’¾ shipment_legs upsert ì™„ë£Œ (${filteredLegs.length}ê±´)`);
+  console.log(`💾 shipment_legs upsert 완료 (${filteredLegs.length}건)`);
 
-  // â”€â”€ 4. Aggregate â†’ delay_index_weekly â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // Key = lane_id|week_iso â€” must match unique constraint (lane_id, week_iso, milestone).
+  // ── 4. Aggregate → delay_index_weekly ─────────────────────────────────────
+  // Key = lane_id|week_iso — must match unique constraint (lane_id, week_iso, milestone).
   // route_pattern stored as the most-frequent value within the bucket (not part of PK).
   type Bucket = { laneId: string; weekIso: string; delays: number[]; routeCounts: Map<string, number> };
   const buckets = new Map<string, Bucket>();
@@ -334,15 +334,15 @@ async function main() {
 
   if (indexRows.length > 0) {
     await sbUpsert('delay_index_weekly', indexRows, 'lane_id,week_iso,milestone');
-    console.log(`ðŸ“Š delay_index_weekly upsert ì™„ë£Œ (${indexRows.length}ê±´)`);
+    console.log(`📊 delay_index_weekly upsert 완료 (${indexRows.length}건)`);
   }
 
-  // â”€â”€ 5. Print snapshot â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  console.log('\nâ”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”');
-  console.log(`ðŸ“Š CADI Live Snapshot â€” ${containers.length}ê±´ processed`);
-  console.log('â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”');
+  // ── 5. Print snapshot ──────────────────────────────────────────────────────
+  console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log(`📊 CADI Live Snapshot — ${containers.length}건 processed`);
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log(`${'Lane'.padEnd(22)} ${'Week'.padEnd(9)} ${'n'.padStart(3)} ${'Med(d)'.padStart(8)} ${'P90(d)'.padStart(8)} ${'OTP%'.padStart(6)}  Quality`);
-  console.log('â”€'.repeat(72));
+  console.log('─'.repeat(72));
 
   for (const r of indexRows.sort((a, b) => String(a.lane_id).localeCompare(String(b.lane_id)))) {
     const med  = ((r.median_delay_h as number) / 24).toFixed(1);
@@ -358,9 +358,9 @@ async function main() {
     );
   }
 
-  // ðŸ”´ Bottleneck hotspot
+  // 🔴 Bottleneck hotspot
   const red = filteredLegs.filter(l => l.signal === 'red');
-  console.log(`\nðŸ”´ Red-signal ì»¨í…Œì´ë„ˆ: ${red.length}ê±´ (ë³‘ëª© í•«ìŠ¤íŒŸ)`);
+  console.log(`\n🔴 Red-signal 컨테이너: ${red.length}건 (병목 핫스팟)`);
   const hotspot = new Map<string, number>();
   for (const r of red) {
     const loc = String(r.current_loc ?? 'unknown');
@@ -369,10 +369,10 @@ async function main() {
   [...hotspot.entries()]
     .sort((a, b) => b[1] - a[1])
     .slice(0, 7)
-    .forEach(([loc, cnt]) => console.log(`   ${loc.padEnd(20)} ${cnt}ê±´`));
+    .forEach(([loc, cnt]) => console.log(`   ${loc.padEnd(20)} ${cnt}건`));
 
-  console.log('â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”');
-  console.log(`âš ï¸  ë³´ì•ˆ: customer_list ì €ìž¥ ì•ˆë¨. MTL Link read í† í° ì ìš© ê¶Œê³ .`);
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log(`⚠️  보안: customer_list 저장 안됨. MTL Link read 토큰 적용 권고.`);
 }
 
-main().catch(err => { console.error('âŒ tracing_live ì‹¤íŒ¨:', err); process.exit(1); });
+main().catch(err => { console.error('❌ tracing_live 실패:', err); process.exit(1); });

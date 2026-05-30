@@ -1,6 +1,6 @@
-﻿// collectors/policy_us.ts
-// ë¯¸êµ­ ë¬´ì—­ì •ì±… ìˆ˜ì§‘ê¸°
-// ëŒ€ìƒ: USTR, CBP, Federal Register (ê´€ì„¸Â·ë¬´ì—­ ê´€ë ¨)
+// collectors/policy_us.ts
+// 미국 무역정책 수집기
+// 대상: USTR, CBP, Federal Register (관세·무역 관련)
 
 import { rateLimited } from './utils/rate_limiter';
 import { snapshotWriter } from './utils/snapshot_writer';
@@ -39,7 +39,7 @@ async function parseRss(url: string, sourceName: string): Promise<NewsItem[]> {
     const link = (b.match(/<link>(.*?)<\/link>/)?.[1] || '').trim();
     const pubDate = b.match(/<pubDate>(.*?)<\/pubDate>/)?.[1] || '';
 
-    // ê´€ì„¸Â·ë¬´ì—­ ê´€ë ¨ í‚¤ì›Œë“œ í•„í„°
+    // 관세·무역 관련 키워드 필터
     const tradeKeywords = /tariff|customs|trade|import|export|section 301|section 232|ieepa|duty|freight/i;
     if (title && link && tradeKeywords.test(title)) {
       items.push({
@@ -71,9 +71,9 @@ export async function collect(): Promise<CollectorResult> {
           is_complete: true,
         });
       }
-      console.log(`âœ… ${src.name}: ${items.length}ê±´`);
+      console.log(`✅ ${src.name}: ${items.length}건`);
     } catch (e) {
-      console.error(`âŒ ${src.name}:`, (e as Error).message);
+      console.error(`❌ ${src.name}:`, (e as Error).message);
       result.data.push({
         data_type: 'policy_news',
         data_key: `${src.name}_error`,

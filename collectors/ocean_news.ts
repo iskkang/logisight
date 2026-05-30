@@ -1,6 +1,6 @@
-﻿// collectors/ocean_news.ts
-// í•´ìƒ ì „ë¬¸ë‰´ìŠ¤ ìˆ˜ì§‘ê¸° â€” RSS ê¸°ë°˜ (news_global.tsì— ì—†ëŠ” ì†ŒìŠ¤)
-// ì†ŒìŠ¤: Container News, Hellenic, Seatrade, Maritime Executive, gCaptain (daily)
+// collectors/ocean_news.ts
+// 해상 전문뉴스 수집기 — RSS 기반 (news_global.ts에 없는 소스)
+// 소스: Container News, Hellenic, Seatrade, Maritime Executive, gCaptain (daily)
 //       Sea-Intelligence (weekly, HTML)
 
 import { rateLimited } from './utils/rate_limiter';
@@ -9,14 +9,14 @@ import type { CollectorResult, NewsItem } from './types';
 
 const BOT_HEADERS = { 'User-Agent': 'Logisight/1.0 (logisight.mtlship.com; news-bot)' };
 
-// í‚¤ì›Œë“œ í•„í„° â€” ì—†ëŠ” ê¸°ì‚¬ ë“œë¡­ (ë…¸ì´ì¦ˆ ê°ì†Œ)
-// í•´ìš´Â·ë¬¼ë¥˜ ì§ê²° í‚¤ì›Œë“œ + í•´ì–‘ ì•ˆë³´(í•­ë¡œ ì˜í–¥ ìžˆëŠ” ê²½ìš°)
+// 키워드 필터 — 없는 기사 드롭 (노이즈 감소)
+// 해운·물류 직결 키워드 + 해양 안보(항로 영향 있는 경우)
 const SHIPPING_KEYWORDS = [
-  // í•µì‹¬ í•´ìš´
+  // 핵심 해운
   'container', 'blank sailing', 'surcharge', 'congestion', 'port',
   'gri', 'void', 'omission', 'freight rate', 'schedule', 'carrier',
   'shipping', 'disruption', 'vessel', 'terminal', 'throughput',
-  // í•´ì–‘ ì•ˆë³´Â·í•­ë¡œ
+  // 해양 안보·항로
   'tanker', 'cargo ship', 'red sea', 'suez', 'hormuz', 'canal',
   'strait', 'piracy', 'hijack', 'incident report', 'ukmto',
   'transit', 'chokepoint', 'diversion', 'rerouting',
@@ -95,7 +95,7 @@ export async function collect(opts: { frequency: 'daily' | 'weekly' } = { freque
     const src = sources[i];
     const res = settled[i];
     if (res.status === 'rejected') {
-      console.log(`âš ï¸ ${src.name} ì‹¤íŒ¨: ${(res.reason as Error).message}`);
+      console.log(`⚠️ ${src.name} 실패: ${(res.reason as Error).message}`);
       continue;
     }
     for (const item of res.value) {
@@ -106,11 +106,11 @@ export async function collect(opts: { frequency: 'daily' | 'weekly' } = { freque
         source: src.name, source_url: src.url, is_complete: true,
       });
     }
-    console.log(`âœ… ${src.name}: ${res.value.length}ê±´`);
+    console.log(`✅ ${src.name}: ${res.value.length}건`);
   }
 
   const success = result.data.filter(d => d.is_complete).length;
-  console.log(`\nâœ… ocean_news [${opts.frequency}]: ${success}ê±´ ìˆ˜ì§‘ ì™„ë£Œ`);
+  console.log(`\n✅ ocean_news [${opts.frequency}]: ${success}건 수집 완료`);
   return result;
 }
 

@@ -1,6 +1,6 @@
-﻿// collectors/blank_sailing.ts
-// ë¸”ëž­í¬ ì„¸ì¼ë§ ìˆ˜ì§‘ê¸° â€” EconDB omissions-time-series JSON API
-// ì´ì „ êµ¬í˜„ (Playwright + Drewry) ëŒ€ì²´: EconDBê°€ ë¬´ë£Œ JSON ì œê³µ, Playwright ë¶ˆí•„ìš”
+// collectors/blank_sailing.ts
+// 블랭크 세일링 수집기 — EconDB omissions-time-series JSON API
+// 이전 구현 (Playwright + Drewry) 대체: EconDB가 무료 JSON 제공, Playwright 불필요
 
 import { rateLimited } from './utils/rate_limiter';
 import { snapshotWriter } from './utils/snapshot_writer';
@@ -111,11 +111,11 @@ export async function collect(): Promise<CollectorResult> {
         source:     'EconDB',
         source_url: `${ECONDB_BASE}?region=${encodeURIComponent(region)}`,
         is_complete: rows.length > 0,
-        error_message: rows.length === 0 ? 'ë°ì´í„° ì—†ìŒ' : undefined,
+        error_message: rows.length === 0 ? '데이터 없음' : undefined,
       });
-      console.log(`âœ… blank_sailing [${region}]: ${rows.length}ì£¼ ìˆ˜ì§‘ (latest blank_pct: ${latest?.blank_pct ?? 'n/a'}%)`);
+      console.log(`✅ blank_sailing [${region}]: ${rows.length}주 수집 (latest blank_pct: ${latest?.blank_pct ?? 'n/a'}%)`);
     } catch (e) {
-      console.warn(`âš ï¸ blank_sailing [${region}] ì‹¤íŒ¨: ${(e as Error).message}`);
+      console.warn(`⚠️ blank_sailing [${region}] 실패: ${(e as Error).message}`);
       result.data.push({
         data_type: 'blank_sailing',
         data_key:  `BLANK_${region.replace(/ /g, '_').toUpperCase()}`,
@@ -131,7 +131,7 @@ export async function collect(): Promise<CollectorResult> {
   );
 
   const success = result.data.filter(d => d.is_complete).length;
-  console.log(`âœ… blank_sailing: ${success}/${result.data.length}ê°œ ìˆ˜ì§‘ ì™„ë£Œ`);
+  console.log(`✅ blank_sailing: ${success}/${result.data.length}개 수집 완료`);
   return result;
 }
 
