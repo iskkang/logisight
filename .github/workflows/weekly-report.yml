@@ -56,10 +56,10 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
       - name: Convert to PDF
-        run: node scripts/generate-pdf.js
+        run: node generators/report/generate-pdf.js
 
       - name: Send newsletter
-        run: node scripts/send-newsletter.js
+        run: node generators/email/send-newsletter.js
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           SEND_TO: ${{ secrets.NEWSLETTER_EMAIL }}

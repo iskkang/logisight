@@ -1,12 +1,13 @@
 name: Monthly Trade Statistics
+# DISABLED: logisight-web 제거로 scripts/fetch-trade-stats.ts 삭제됨.
+# 재구현 필요: 관세청 API 호출 로직을 collectors/ 로 이전 후 활성화.
 
 on:
-  schedule:
-    - cron: '0 0 15 * *'   # 매월 15일 00:00 UTC (09:00 KST), 전월 데이터 수집
-  workflow_dispatch:        # 수동 트리거도 허용
+  workflow_dispatch:   # 수동 트리거만 허용 (schedule 비활성화)
 
 jobs:
   fetch-trade-stats:
+    if: false   # disabled until re-implemented in collectors/
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -15,18 +16,15 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
-          cache-dependency-path: logisight-web/package-lock.json
 
       - name: Install deps
-        working-directory: logisight-web
         run: npm ci
 
       - name: Fetch customs trade statistics
-        working-directory: logisight-web
-        run: npx tsx scripts/fetch-trade-stats.ts
+        run: echo "TODO - re-implement fetch-trade-stats in collectors/"
         env:
           DATA_GO_KR_API_KEY:        ${{ secrets.DATA_GO_KR_API_KEY }}
-          NEXT_PUBLIC_SUPABASE_URL:  ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

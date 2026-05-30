@@ -1,62 +1,75 @@
-# Logisight — MTL Shipping Agency
+# Logisight Pipeline
 
-> 한국·CIS·중앙아시아 특화 Logistics Intelligence Platform
+MTL Shipping Agency 물류 인텔리전스 플랫폼의 데이터 파이프라인.
 
----
+## 역할
 
-## 개요
+- 글로벌 물류 뉴스 수집 및 Anthropic Claude 기반 번역·가공
+- Supabase DB 적재 (`maritime_news`, `freight_indices`, `trade_statistics` 등)
+- 일간/주간 이메일 뉴스레터 발송 (Resend)
+- 웹 기사 생성 → Supabase → 공개 사이트 표시
 
-Logisight는 MTL Shipping Agency가 운영하는 외부 공개 물류 인텔리전스 사이트입니다. 컨테이너 운임 트래킹, 시장 분석, AI 보고서 자동 생성, HS-Code 검색 기능을 제공합니다.
+## 공개 사이트
 
-## 주요 기능
+https://logisight.mtlship.com (Lovable → Vercel 호스팅, 이 레포와 별도 관리)
 
-- 📊 **Market Intelligence Hub** — SCFI, WCI, KCCI, FBX 운임 지수 실시간 대시보드
-- 🚢 **컨테이너 트래킹** — 10대 선사 통합 추적
-- 🚂 **TCR/TSR Land Bridge Hub** — CIS·중앙아시아 철도 노선 특화
-- 🔢 **HS-Code 검색** — 5개국 관세율 비교
-- 🤖 **AI 보고서 자동 생성** — 격주 시장 보고서 자동화
-
-## 기술 스택
+## 데이터 흐름
 
 ```
-Frontend  : React 18 + TypeScript + Vite + Tailwind CSS
-Backend   : Supabase (PostgreSQL + Edge Functions)
-AI        : Claude Sonnet (Anthropic)
-Scraping  : Playwright + GitHub Actions
-Deploy    : Vercel
-i18n      : 6개국어 (ko/en/zh/ru/uz/ja)
+collectors/ → generators/{web,email,report}/ → Supabase
+                                              ↓
+                          Lovable(읽기 전용) · 이메일 발송
 ```
 
-## 프로젝트 구조
+## 디렉토리
 
 ```
-logisight/
-├── src/              # React 프론트엔드
-├── supabase/         # DB 마이그레이션 + Edge Functions
-├── workers/          # 데이터 수집기 (14개 collector)
-├── content/          # 블로그/뉴스레터 콘텐츠
-├── scripts/          # PDF 생성, 이메일 발송
-├── .claude/          # Claude Code AI agent 정의
-└── .github/          # CI/CD + 자동화 워크플로우
+collectors/           수집기 (RSS, 크롤러, 공공API, 운임 지수)
+  utils/              playwright_pool, rate_limiter, snapshot_writer 등
+generators/
+  web/                웹 기사 생성 (maritime_news, agent_type='shipping')
+  email/              이메일 daily/weekly (agent_type='daily_card','brief')
+  report/             CADI 리포트, PDF 생성
+lib/                  공유 유틸 (supabase-insert.js)
+scripts/              로컬 유틸 (cadi-demo-snapshot.ts 등)
+supabase/
+  migrations/         DB 스키마 (파이프라인이 단일 소스)
+  functions/          Edge Functions (Deno)
+.github/workflows/    자동화 크론
 ```
 
-## 로드맵
+## 환경변수
 
-| Phase | 내용 | 상태 |
-|-------|------|------|
-| 0 | 레포 구조 세팅 | 🚧 진행 중 |
-| 1 | 콘텐츠 자동화 (블로그/뉴스레터) | ⬜ 예정 |
-| 2 | 데이터 수집기 14개 | ⬜ 예정 |
-| 3 | React 프론트엔드 | ⬜ 예정 |
-| 4 | Supabase 백엔드 | ⬜ 예정 |
-| 5 | 완전 자동화 | ⬜ 예정 |
+`.env.example` 참고. `.env.local` 에 실제 값 입력 (git 커밋 금지).
 
-## 개발 시작
+## 개발 명령
 
 ```bash
-npm install
-npm run dev
+# 수집
+npm run collect:rail:daily    # 철도 뉴스 일간 수집
+npm run collect:ocean:daily   # 해운 뉴스 일간 수집
+npm run collect:all           # 전체 수집기 실행
+
+# 큐레이션 & 기사 생성
+npm run curate:rail           # 철도 큐레이션
+npm run curate:ocean          # 해운 큐레이션
+npm run generate:article:rail   # 철도 웹 기사 생성
+npm run generate:article:ocean  # 해운 웹 기사 생성
+npm run generate:article:brief  # 브리프 기사 생성
+
+# 뉴스레터
+npm run newsletter:generate   # HTML 뉴스레터 생성
+
+# 전체 파이프라인
+npm run daily:email   # 수집 → 큐레이션 → 뉴스레터
+npm run daily:cards   # 수집 → 큐레이션 → 브리핑 카드 발행
 ```
+
+## Supabase 원칙
+
+- 스키마 변경: `supabase/migrations/` 에 새 파일 추가만 (기존 수정 금지)
+- Lovable/프론트: anon key + RLS 읽기 전용
+- 파이프라인: service_role key 쓰기 전용
 
 ## 라이선스
 
