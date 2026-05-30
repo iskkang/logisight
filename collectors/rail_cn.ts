@@ -9,7 +9,8 @@ import { snapshotWriter } from './utils/snapshot_writer';
 import type { CollectorResult, NewsItem } from './types';
 
 const BOT_HEADERS = {
-  'User-Agent': 'Logisight/1.0 (logisight.mtlship.com; bot)',
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+  'Accept': 'application/rss+xml, application/xml, text/xml, */*;q=0.8',
   'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
 };
 
@@ -42,7 +43,7 @@ function passesRailFilter(title: string): boolean {
 const CN_SOURCES: CnSource[] = [
   // Global Times / Xinhua는 일반 뉴스 피드 → 물류 키워드 필터 필수
   { name: 'Global Times BRI',  url: 'https://www.globaltimes.cn/rss/outbrain.xml',                                          type: 'rss',  frequency: 'daily',  useKeywordFilter: true  },
-  { name: 'Xinhua English',    url: 'https://english.news.cn/rss/world.xml',                                                type: 'rss',  frequency: 'daily',  useKeywordFilter: true  },
+  { name: 'Xinhua English',    url: 'https://english.news.cn/rss/home.xml',                                                 type: 'rss',  frequency: 'daily',  useKeywordFilter: true  },
   { name: 'China Railway',     url: 'https://www.china-railway.com.cn/xwzx/zhxw/',                                         type: 'html', frequency: 'weekly' },
   { name: '95306',             url: 'https://www.95306.cn/',                                                                type: 'html', frequency: 'weekly' },
   { name: 'CRCT',              url: 'https://www.crct.com/index.php?m=content&c=index&a=lists&catid=34',                    type: 'html', frequency: 'weekly' },

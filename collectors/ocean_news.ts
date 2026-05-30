@@ -7,7 +7,11 @@ import { rateLimited } from './utils/rate_limiter';
 import { snapshotWriter } from './utils/snapshot_writer';
 import type { CollectorResult, NewsItem } from './types';
 
-const BOT_HEADERS = { 'User-Agent': 'Logisight/1.0 (logisight.mtlship.com; news-bot)' };
+const BOT_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+  'Accept': 'application/rss+xml, application/xml, text/xml, */*;q=0.8',
+  'Accept-Language': 'en-US,en;q=0.9',
+};
 
 // 키워드 필터 — 없는 기사 드롭 (노이즈 감소)
 // 해운·물류 직결 키워드 + 해양 안보(항로 영향 있는 경우)
@@ -33,8 +37,8 @@ interface OceanNewsSource {
 const OCEAN_NEWS_SOURCES: OceanNewsSource[] = [
   { name: 'Container News',      url: 'https://container-news.com/feed/',                    type: 'rss',  frequency: 'daily',  useKeywordFilter: false },
   { name: 'Hellenic Shipping',   url: 'https://www.hellenicshippingnews.com/feed/',           type: 'rss',  frequency: 'daily',  useKeywordFilter: true  },
-  { name: 'Seatrade Maritime',   url: 'https://www.seatrade-maritime.com/feed/',              type: 'rss',  frequency: 'daily',  useKeywordFilter: true  },
-  { name: 'Maritime Executive',  url: 'https://maritime-executive.com/feed/',                 type: 'rss',  frequency: 'daily',  useKeywordFilter: true  },
+  { name: 'Seatrade Maritime',   url: 'https://www.seatrade-maritime.com/feed',               type: 'rss',  frequency: 'daily',  useKeywordFilter: true  },
+  { name: 'Maritime Executive',  url: 'https://maritime-executive.com/feed',                  type: 'rss',  frequency: 'daily',  useKeywordFilter: true  },
   { name: 'gCaptain',           url: 'https://gcaptain.com/feed/',                           type: 'rss',  frequency: 'daily',  useKeywordFilter: true  },
   { name: 'Sea-Intelligence',    url: 'https://www.sea-intelligence.com/press-room',          type: 'html', frequency: 'weekly', useKeywordFilter: false },
 ];
