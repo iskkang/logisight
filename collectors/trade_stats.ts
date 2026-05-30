@@ -4,12 +4,26 @@
 // 소스 A: 국가별 수출입실적 (kcustomsCtntTradeCountry)
 // 소스 B: 품목별 수출입실적 (nitemtrade)
 
+import fs from 'fs';
+import path from 'path';
 import ws from 'ws';
 // @ts-ignore — Node 20 lacks a native WebSocket
 globalThis.WebSocket = ws as never;
 
 import { createClient } from '@supabase/supabase-js';
 import type { CollectorResult } from './types';
+
+// .env.local 로드 (로컬 실행 시; CI는 환경변수 주입이므로 덮어쓰지 않음)
+function loadEnvLocal() {
+  const envPath = path.resolve(__dirname, '../.env.local');
+  if (!fs.existsSync(envPath)) return;
+  const lines = fs.readFileSync(envPath, 'utf-8').split(/\r?\n/);
+  for (const line of lines) {
+    const m = line.match(/^([A-Z_][A-Z0-9_]*)=(.*)$/);
+    if (m && !process.env[m[1]]) process.env[m[1]] = m[2].trim();
+  }
+}
+loadEnvLocal();
 
 const API_BASE = 'http://apis.data.go.kr';
 const DELAY_MS = 200; // data.go.kr 개발계정 레이트 리밋 준수
