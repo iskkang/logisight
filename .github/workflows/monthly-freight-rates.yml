@@ -1,13 +1,12 @@
 name: Monthly Freight Rates
-# DISABLED: logisight-web 제거로 scripts/fetch-freight-rates.ts 삭제됨.
-# 재구현 필요: 관세청 API 호출 로직을 collectors/ 로 이전 후 활성화.
 
 on:
-  workflow_dispatch:   # 수동 트리거만 허용 (schedule 비활성화)
+  schedule:
+    - cron: '0 18 1 * *'   # 매월 1일 03:00 KST (해수부 월초 공표 다음 날)
+  workflow_dispatch:
 
 jobs:
   fetch-freight-rates:
-    if: false   # disabled until re-implemented in collectors/
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -23,8 +22,25 @@ jobs:
         run: npm ci
 
       - name: Fetch freight rates (KR POL)
-        run: echo "TODO - re-implement fetch-freight-rates in collectors/"
+        run: npx tsx collectors/freight_rates.ts
         env:
           DATA_GO_KR_API_KEY:        ${{ secrets.DATA_GO_KR_API_KEY }}
+          SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Log to data_updates
+        if: always()
+        run: |
+          node -e "
+          const { createClient } = require('@supabase/supabase-js');
+          const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+          const status = process.env.JOB_STATUS === 'success' ? 'ok' : 'error';
+          sb.from('data_updates')
+            .insert({ dataset: 'freight_rates', status, notes: 'monthly-freight-rates workflow' })
+            .then(r => { console.log('data_updates logged:', r.error ? r.error.message : 'ok'); process.exit(0); })
+            .catch(e => { console.error(e.message); process.exit(0); });
+          "
+        env:
+          JOB_STATUS:                ${{ job.status }}
           SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
