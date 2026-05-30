@@ -29,7 +29,7 @@
 | user_roles | 021 | Lovable (auth) | Lovable | 인증만 | app_role enum |
 | data_updates | 022 | pipeline | 모니터링 | ✅ | 수집 상태 추적 |
 | tcr_snapshots | 011 | pipeline/collectors | Lovable /eurasia | ✅ | |
-| port_throughput | 010 | pipeline/collectors | Lovable (지도) | ✅ | |
+| port_throughput | 010 | pipeline/collectors | Lovable (지도) | ✅ | 소스: LA·LB·SGP + KOSIS(해양수산부) KRPUS/KRICN/KRGMP 등 한국 항만 TEU |
 
 ## trade_statistics.stat_type 값 목록
 

@@ -1,6 +1,6 @@
 // collectors/port_stats.ts
 // 항만 월간 TEU 통계 수집기 — Supabase port_throughput 테이블에 직접 저장
-// 소스: Port of LA, Port of LB (HTML 파싱), Singapore (CSV)
+// 소스: Port of LA, Port of LB (HTML 파싱), Singapore (CSV), KOSIS 해양수산부 (한국 항만)
 
 import { rateLimited } from './utils/rate_limiter';
 import { dbUpsert } from './utils/supabase_writer';
@@ -18,6 +18,48 @@ interface PortRow {
   teu: number | null;
   source: string;
   source_url: string;
+}
+
+// ── KOSIS 해양수산부 — 한국 항만별 컨테이너 처리실적 ──────────────────
+const KOSIS_PORT_MAP: Record<string, string> = {
+  '합 계':  'KR_ALL',
+  '부산':   'KRPUS',
+  '인천':   'KRICN',
+  '광양':   'KRGMP',
+  '평택':   'KRPTK',
+  '울산':   'KRULS',
+  '포항':   'KRPOH',
+  '마산':   'KRMTN',
+  '군산':   'KRKUN',
+  '목포':   'KRMOK',
+};
+
+async function fetchKoreanPorts(): Promise<PortRow[]> {
+  const url =
+    'https://kosis.kr/openapi/Param/statisticsParameterData.do' +
+    '?method=getList&apiKey=&itmId=T002+T004+T005+&objL1=ALL' +
+    '&format=json&jsonVD=Y&prdSe=M&newEstPrdCnt=13&orgId=134&tblId=DT_134001_002';
+
+  const res = await fetch(url, { headers: BOT_HEADERS, signal: AbortSignal.timeout(15000) });
+  if (!res.ok) throw new Error(`KOSIS HTTP ${res.status}`);
+  const data: Array<{ C1_NM: string; ITM_ID: string; PRD_DE: string; DT?: string }> = await res.json();
+
+  const map = new Map<string, PortRow>();
+  for (const item of data) {
+    const portCode = KOSIS_PORT_MAP[item.C1_NM];
+    if (!portCode) continue;
+    const year  = parseInt(item.PRD_DE.slice(0, 4), 10);
+    const month = parseInt(item.PRD_DE.slice(4, 6), 10);
+    const teu   = parseInt((item.DT ?? '0').replace(/,/g, ''), 10);
+    const mapKey = `${portCode}_${year}_${month}`;
+    const existing = map.get(mapKey);
+    if (existing) {
+      existing.teu = (existing.teu ?? 0) + teu;
+    } else {
+      map.set(mapKey, { port_code: portCode, year, month, teu, source: 'KOSIS 해양수산부', source_url: 'https://kosis.kr' });
+    }
+  }
+  return [...map.values()];
 }
 
 // ── Port of LA — HTML 테이블에서 최신 TEU 파싱 ─────────────────────
@@ -92,6 +134,19 @@ export async function collect(): Promise<CollectorResult> {
     await dbUpsert('port_throughput', rows as unknown as Record<string, unknown>[], 'port_code,year,month').catch(e =>
       console.warn('[port_throughput] Supabase persist skipped:', (e as Error).message)
     );
+  }
+
+  // KOSIS 한국 항만 데이터 수집
+  try {
+    const krRows = await fetchKoreanPorts();
+    if (krRows.length > 0) {
+      await dbUpsert('port_throughput', krRows as unknown as Record<string, unknown>[], 'port_code,year,month');
+      console.log(`✅ 한국 항만: ${krRows.length}건 저장`);
+      result.data.push({ data_type: 'port_stat', data_key: 'PORT_KR_KOSIS', data_value: { count: krRows.length }, source: 'KOSIS 해양수산부', source_url: 'https://kosis.kr', is_complete: true });
+    }
+  } catch (e) {
+    console.warn(`⚠️ KOSIS 한국 항만 실패: ${(e as Error).message}`);
+    result.data.push({ data_type: 'port_stat', data_key: 'PORT_KR_KOSIS_error', data_value: {}, source: 'KOSIS 해양수산부', source_url: 'https://kosis.kr', is_complete: false, error_message: (e as Error).message });
   }
 
   const success = result.data.filter(d => d.is_complete).length;
