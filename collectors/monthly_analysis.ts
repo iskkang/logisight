@@ -17,7 +17,7 @@ const BOT_HEADERS = {
   'Accept-Language': 'en-US,en;q=0.9',
 };
 
-const BAD_TITLE = /\| RailFreight\.com|^Asia-Europe$|^Belt and Road$|^RailFreight$|^SeaNews$|^Global Times$/i;
+const BAD_TITLE = /\| RailFreight\.com|^Asia-Europe$|^Belt and Road$|^Russia$|^RailFreight$|^SeaNews$|^Global Times$/i;
 
 interface MonthlySource {
   name: string;
@@ -109,6 +109,8 @@ const MONTHLY_SOURCES: MonthlySource[] = [
   // ── 철도 (TCR/TSR/CIS) — 영문 전용 3개, 번역 불필요 ──
   // RailFreight: 본문 skip(부분 유료벽). SeaNews·Global Times: 본문 발췌 양호.
   { name: 'RailFreight BeltAndRoad', url: 'https://www.railfreight.com/category/beltandroad/feed/',
+    type: 'rss', section: 'rail', category: 'deep_analysis' },
+  { name: 'RailFreight Russia', url: 'https://www.railfreight.com/tag/russia/feed/',
     type: 'rss', section: 'rail', category: 'deep_analysis' },
   { name: 'SeaNews EN', url: 'https://seanews.ru/en/feed/',
     type: 'rss', section: 'rail', category: 'deep_analysis' },
@@ -278,7 +280,7 @@ export async function collect(): Promise<CollectorResult> {
       continue;
     }
     // Linerlytica는 fetchLinerlytica가 이미 인트로를 summary_en에 넣었으므로 본문 skip(유료벽)
-    const SKIP_BODY = new Set(['Linerlytica Market Pulse', 'RailFreight BeltAndRoad']);
+    const SKIP_BODY = new Set(['Linerlytica Market Pulse', 'RailFreight BeltAndRoad', 'RailFreight Russia']);
     for (const item of res.value) {
       let content = '';
       if (!SKIP_BODY.has(src.name) && item.url?.startsWith('http')) {
