@@ -1,6 +1,9 @@
 'use strict';
 const fs   = require('fs');
 const path = require('path');
+// Node 20 lacks native WebSocket; Supabase Realtime requires it
+const ws = require('ws');
+globalThis.WebSocket = ws;
 const { createClient } = require('@supabase/supabase-js');
 
 const NEWS_PATH = path.resolve(__dirname, '../../../content/drafts/latest-news.json');
@@ -10,6 +13,10 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabase = (SUPABASE_URL && SUPABASE_KEY)
   ? createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: false } })
   : null;
+
+// lane_causal 항목 관련성 필터 — topicFilter 추가 전 스냅샷 잔재(비운임 기사) 차단
+// gCaptain에서 수집된 군사·사고·해군 뉴스 등 운임과 무관한 항목 제거
+const LANE_CAUSAL_RELEVANCE = /freight rate|container rate|ocean rate|shipping rate|carrier earn|TEU|FEU|SCFI|WCI|FBX|shipper|blank sailing|capacity|bunker|surcharge|GRI|peak season|Hormuz.*shipping|shipping.*Hormuz|Red Sea.*shipping|shipping.*disruption|port congestion|trade lane|vessel supply|market pulse/i;
 
 // ── (기존) 뉴스 아이템 로더 — run-section.js 호환 유지 ──
 // TASK 4 (옵션 A): category 필터 제거 + air/risk 섹션 추가 → air/rail/policy 섹션 입력 확보
@@ -25,7 +32,14 @@ function loadAllMonthlyItems() {
     ...(data.rail     || []),
     ...(data.trade    || []),
     ...(data.risk     || []),
-  ].filter(i => i.source && i.url && i.title && i.title.length >= 10);
+  ].filter(i => {
+    if (!i.source || !i.url || !i.title || i.title.length < 10) return false;
+    // lane_causal 항목은 운임 관련성 재확인 — 스냅샷 잔재 비운임 기사 차단
+    if (i.category === 'lane_causal') {
+      return LANE_CAUSAL_RELEVANCE.test(`${i.title} ${i.summary_en || ''}`);
+    }
+    return true;
+  });
 
   const seen = new Set();
   return all.filter(i => {
@@ -96,15 +110,11 @@ async function loadIndexFactsheet() {
   return rows;
 }
 
-function arrow(p) {
+// null이면 단일 "—", 값이 있으면 "▲ +3.2%" 형태로 반환
+function fmtChg(p) {
   if (p == null) return '—';
-  if (p > 0.05)  return '▲';
-  if (p < -0.05) return '▼';
-  return '-';
-}
-function fpct(p) {
-  if (p == null) return '—';
-  return `${p > 0 ? '+' : ''}${p.toFixed(1)}%`;
+  const dir = p > 0.05 ? '▲ ' : p < -0.05 ? '▼ ' : '';
+  return `${dir}${p > 0 ? '+' : ''}${p.toFixed(1)}%`;
 }
 
 function buildIndexTable(rows) {
@@ -128,10 +138,10 @@ function buildIndexTable(rows) {
       ? `$${Math.round(r.value).toLocaleString()}/FEU`
       : `${Math.round(r.value).toLocaleString()}p`;
     lines.push(
-      `| ${LABEL[r.code] || r.code} | ${v} | ${r.week_date} | ${arrow(r.wow)} ${fpct(r.wow)} | ${arrow(r.mom)} ${fpct(r.mom)} |`
+      `| ${LABEL[r.code] || r.code} | ${v} | ${r.week_date} | ${fmtChg(r.wow)} | ${fmtChg(r.mom)} |`
     );
     facts.push(
-      `${LABEL[r.code] || r.code} ${v} (기준주 ${r.week_date}, WoW ${fpct(r.wow)}, MoM ${fpct(r.mom)})`
+      `${LABEL[r.code] || r.code} ${v} (기준주 ${r.week_date}, WoW ${fmtChg(r.wow)}, MoM ${fmtChg(r.mom)})`
     );
   }
   lines.push('');
