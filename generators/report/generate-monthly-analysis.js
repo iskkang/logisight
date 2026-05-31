@@ -199,6 +199,39 @@ ${styleGuide}
 *본 리포트는 공개 출처 기반 분석이며, 운임 구체 수치는 Logisight 지표 대시보드를 참조 바람. 무단 전재 금지.*`;
 }
 
+// [이번 달 핵심] 줄을 단일 이슈 1문장으로 보정한다.
+// 규칙 1: … 2개 이상 → 첫 … 앞까지 잘라냄 ("현상…원인…전망" 3단 나열 차단)
+// 규칙 2: ", ~항로" / "~가운데, ~항로" 등 쉼표 병렬 이슈 나열 → 첫 쉼표 절에서 자름
+//          단, 숫자 뒤 쉼표(천단위 구분)는 자르지 않는다.
+function trimHeadline(text) {
+  return text.replace(/\*\*\[이번 달 핵심\]\*\*[^\n]*/, (line) => {
+    // 규칙 1: … 2개 이상
+    const ellipses = (line.match(/…/g) || []).length;
+    if (ellipses >= 2) {
+      const cut = line.indexOf('…');
+      const trimmed = line.slice(0, cut).trimEnd();
+      console.log(`✂️  [이번 달 핵심] …${ellipses}개 → 첫 … 앞 잘라냄`);
+      return trimmed;
+    }
+
+    // 규칙 2: 쉼표 뒤에 다른 항로·이슈 절이 이어지는 패턴 감지
+    // "~가운데, 아시아-유럽 항로는~" / "~유지되는 가운데, B항로는~" 등
+    const commaIssue = line.match(/^(\*\*\[이번 달 핵심\]\*\*\s*.+?),\s*(아시아|미국|인트라|유럽|중동|북미|독일|캐나다)/);
+    if (commaIssue) {
+      // 연결어(~는 가운데 / ~인 가운데 / ~된 가운데)로 끝나면 명사형으로 교체
+      let trimmed = commaIssue[1].trimEnd()
+        .replace(/([가-힣]+)하는\s*가운데$/, '$1함')
+        .replace(/([가-힣]+)되는\s*가운데$/, '$1됨')
+        .replace(/([가-힣]+)인\s*가운데$/, '$1임')
+        .replace(/\s*가운데$/, '');
+      console.log(`✂️  [이번 달 핵심] 쉼표 병렬 이슈 → 첫 절 잘라냄`);
+      return trimmed;
+    }
+
+    return line;
+  });
+}
+
 async function main() {
   const items = loadMonthlyItems();
   if (items.length === 0) {
@@ -231,11 +264,12 @@ async function main() {
     messages: [{ role: 'user', content: userPrompt }],
   });
 
-  const text = msg.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
-  if (!text) {
+  const raw = msg.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
+  if (!raw) {
     console.error('❌ Claude 응답이 비어 있습니다.');
     process.exit(1);
   }
+  const text = trimHeadline(raw);
 
   const header = [
     `<!-- generated: ${new Date().toISOString()} by generate-monthly-analysis.js -->`,
