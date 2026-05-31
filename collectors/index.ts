@@ -27,6 +27,7 @@ import { collect as collectCarrierAdvisories } from './carrier_advisories';
 import { collect as collectOceanNews }         from './ocean_news';
 import { collect as collectChokepoints }       from './chokepoints';
 import { collect as collectPortStats }         from './port_stats';
+import { collect as collectMonthlyAnalysis }   from './monthly_analysis';
 
 const GROUPS = [
   {
@@ -96,6 +97,12 @@ const GROUPS = [
       { name: 'port_stats',          fn: collectPortStats },
     ],
   },
+  {
+    name: 'monthly-analysis',
+    collectors: [
+      { name: 'monthly_analysis', fn: collectMonthlyAnalysis },
+    ],
+  },
 ];
 
 const GROUP_MAP: Record<string, string> = {
@@ -106,7 +113,8 @@ const GROUP_MAP: Record<string, string> = {
   'rail-daily':  'rail-daily',
   'rail-weekly': 'rail-weekly',
   'ocean-daily': 'ocean-daily',
-  'ocean-weekly':'ocean-weekly',
+  'ocean-weekly':       'ocean-weekly',
+  'monthly-analysis':   'monthly-analysis',
 };
 
 async function runCollector(name: string, fn: () => Promise<CollectorResult>) {

@@ -1,43 +1,30 @@
 // collectors/news_rail.ts
-// CIS·러시아·철도 뉴스 수집기
-// 대상: PortNews(EN), RailFreight, TransportCorridors, Deliver-2, Vgudok
+// CIS·러시아·중국·철도 뉴스 수집기
+// 대상: RailFreight, RZD-Partner, Vgudok, TASS (RSS) + TransportCorridors, Deliver-2, 一带一路, PortNews (스크래핑)
 
 import { chromium, type Browser, type Page } from 'playwright';
 import { rateLimited } from './utils/rate_limiter';
 import type { CollectorResult, NewsItem } from './types';
 
 const RSS_SOURCES = [
-  {
-    name: 'RailFreight',
-    rss: 'https://www.railfreight.com/feed/',
-    section: 'rail' as const,
-  },
-  {
-    name: 'RailFreight BeltAndRoad',
-    rss: 'https://www.railfreight.com/category/beltandroad/feed/',
-    section: 'rail' as const,
-  },
+  // 기존
+  { name: 'RailFreight',             rss: 'https://www.railfreight.com/feed/',                    section: 'rail' as const },
+  { name: 'RailFreight BeltAndRoad', rss: 'https://www.railfreight.com/category/beltandroad/feed/', section: 'rail' as const },
+  // 신규: 러시아 철도 (RSS 검증 완료)
+  { name: 'RZD-Partner',  rss: 'https://www.rzd-partner.ru/news/xml.php', section: 'rail' as const },
+  { name: 'Vgudok',       rss: 'https://vgudok.com/rss.xml',              section: 'rail' as const },
+  { name: 'TASS Economy', rss: 'https://tass.com/rss/v2.xml',             section: 'rail' as const },
 ];
 
 const SCRAPE_SOURCES = [
-  {
-    name: 'TransportCorridors CentralAsia',
-    url: 'https://www.transportcorridors.com/category/regions/central-asia',
-    section: 'rail' as const,
-    listSelector: 'article a, .post-title a, h2 a',
-  },
-  {
-    name: 'TransportCorridors Rail',
-    url: 'https://www.transportcorridors.com/category/modalities/rail-freight-en',
-    section: 'rail' as const,
-    listSelector: 'article a, .post-title a, h2 a',
-  },
-  {
-    name: 'Deliver-2',
-    url: 'https://deliver-2.com/news/',
-    section: 'rail' as const,
-    listSelector: '.news-item a, article a, h2 a, h3 a',
-  },
+  // 기존
+  { name: 'TransportCorridors CentralAsia', url: 'https://www.transportcorridors.com/category/regions/central-asia',        section: 'rail' as const, listSelector: 'article a, .post-title a, h2 a' },
+  { name: 'TransportCorridors Rail',        url: 'https://www.transportcorridors.com/category/modalities/rail-freight-en', section: 'rail' as const, listSelector: 'article a, .post-title a, h2 a' },
+  { name: 'Deliver-2',                      url: 'https://deliver-2.com/news/',                                            section: 'rail' as const, listSelector: '.news-item a, article a, h2 a, h3 a' },
+  // 신규: 중국 철도 (nra.gov.cn / rail.people.com.cn 은 robots 차단 → 일대일로 포털로 대체)
+  { name: '一带一路 中欧班列', url: 'https://www.yidaiyilu.gov.cn/news', section: 'rail' as const, listSelector: 'a' },
+  // 신규: 러시아 해운·철도 영문판
+  { name: 'PortNews EN',       url: 'https://en.portnews.ru/news/',      section: 'rail' as const, listSelector: 'a.news-list__link, article a, h2 a, h3 a' },
 ];
 
 const BROWSER_HEADERS = {

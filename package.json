@@ -40,6 +40,7 @@
     "generate:article:corp": "node generators/web/generate-article-corp.js",
     "generate:article:air": "echo '항공 기사 파이프라인 미구현 — collect:air:daily 수집 소스 준비 후 활성화'",
     "generate:article:trade": "echo '무역 기사 파이프라인 미구현 — collect:trade:daily 수집 소스 준비 후 활성화'",
+    "collect:monthly": "npx tsx collectors/index.ts monthly-analysis",
     "lint": "eslint collectors generators scripts --ext ts,js"
   },
   "dependencies": {

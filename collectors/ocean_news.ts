@@ -1,6 +1,7 @@
 // collectors/ocean_news.ts
 // 해상 전문뉴스 수집기 — RSS 기반 (news_global.ts에 없는 소스)
 // 소스: Container News, Hellenic, Seatrade, Maritime Executive, gCaptain (daily)
+//       SeaSearch(shipshipship.uk), Linerlytica (daily, HTML)
 //       Sea-Intelligence (weekly, HTML)
 
 import { rateLimited } from './utils/rate_limiter';
@@ -40,6 +41,9 @@ const OCEAN_NEWS_SOURCES: OceanNewsSource[] = [
   { name: 'Seatrade Maritime',   url: 'https://www.seatrade-maritime.com/feed',               type: 'rss',  frequency: 'daily',  useKeywordFilter: true  },
   { name: 'Maritime Executive',  url: 'https://the-maritime-executive.com/feed',              type: 'rss',  frequency: 'daily',  useKeywordFilter: true  },
   { name: 'gCaptain',           url: 'https://gcaptain.com/feed/',                           type: 'rss',  frequency: 'daily',  useKeywordFilter: true  },
+  // 신규: 차단 매체(theloadstar/guardian) 우회 — shipshipship.uk 애그리게이터 (원문 링크 그대로 노출)
+  { name: 'SeaSearch Containers', url: 'https://www.shipshipship.uk/category/6/',             type: 'html', frequency: 'daily',  useKeywordFilter: false },
+  { name: 'Linerlytica',          url: 'https://www.linerlytica.com/blog/',                  type: 'html', frequency: 'daily',  useKeywordFilter: true  },
   { name: 'Sea-Intelligence',    url: 'https://www.sea-intelligence.com/press-room',          type: 'html', frequency: 'weekly', useKeywordFilter: false },
 ];
 

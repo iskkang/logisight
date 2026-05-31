@@ -1,6 +1,6 @@
 // collectors/news_korea.ts
 // 한국 물류 뉴스 수집기 — RSS + fetch 기반 (Playwright 미사용)
-// 대상: 카고뉴스, 쉬핑뉴스넷, 쉬핑데일리, 카고프레스, KL뉴스, 마리타임프레스
+// 대상: 카고뉴스, 쉬핑뉴스넷, 쉬핑데일리, 카고프레스, KL뉴스, 마리타임프레스, 코리아쉬핑가제트
 
 import { rateLimited } from './utils/rate_limiter';
 import { snapshotWriter } from './utils/snapshot_writer';
@@ -49,6 +49,16 @@ const SOURCES = [
     name: '마리타임프레스',
     url: 'http://www.maritimepress.co.kr/',
     rss: null,
+    section: 'shipping' as const,
+  },
+  // 신규: 코리아쉬핑가제트 (한러·한중 항로 특화, RSS 경로 불확실하여 fallback 배열 사용)
+  {
+    name: '코리아쉬핑가제트',
+    url: 'https://www.ksg.co.kr/news/main_news.jsp',
+    rss: [
+      'https://www.ksg.co.kr/rss/news.jsp',
+      'https://www.ksg.co.kr/rss/allArticle.xml',
+    ],
     section: 'shipping' as const,
   },
 ];
