@@ -58,6 +58,8 @@ ${styleGuide}
 7. 확정 운임 지수 표(시스템 주입, oneksa 검증치)와 기사 본문 수치는 구분할 것. 본문 수치는 서사에서 출처와 함께 인용(예: "Drewry 기준 상하이-로테르담 $2,147/FEU (gCaptain, 2026-04-24)").
 8. 관영·국가계 매체(Global Times, SeaNews, TASS 등)는 운행 편수·물동량·국경 통과량 등 '검증 가능한 수치·사실'만 인용할 것. 정치적 평가·체제 우월성 주장·일방적 논평은 인용하지 말 것. 인용 시 출처(매체명) 명기하여 1차 주장임을 명확히 할 것.
 9. 철도 운임·물동량 수치는 출처가 통계 기관(RZD·China Railway·KTZ 등)인 경우 신뢰하되, 매체의 해석은 [Logisight 분석]과 구분.
+10. "MTL Link 실측 정시 데이터"의 수치(정시율·지연·P90)는 주어진 값만 사용. 보간·추정 금지. 인용 시 "MTL Link TCR-Tracking 실측"으로 출처 명기.
+11. MTL 실측 수치와 뉴스(공개 매체) 수치를 혼동하지 말 것. 실측=내부 데이터, 뉴스=출처 매체 병기. 음수 지연은 "예정 대비 조기 도착"으로 해석.
 
 # 어휘 원칙
 - "트랜스퍼시픽" → "아시아-북미 항로"
@@ -66,12 +68,18 @@ ${styleGuide}
 - "스페이스" → "선적 공간" 또는 "선복"`;
 }
 
-function buildSectionUserPrompt(title, items, month, indexFactText) {
+function buildSectionUserPrompt(title, items, month, indexFactText, railFactText) {
   const lines = [`분석 기준월: ${month}`, ''];
 
   if (indexFactText) {
     lines.push('## 확정 운임 지수 (이 수치만 사용, 다른 숫자 생성 금지)');
     lines.push(indexFactText);
+    lines.push('');
+  }
+
+  if (railFactText) {
+    lines.push('## MTL Link 실측 정시 데이터 (이 수치만 사용, 다른 숫자 생성 금지)');
+    lines.push(railFactText);
     lines.push('');
   }
 
@@ -160,14 +168,15 @@ function buildCritiqueUserPrompt(draft) {
 // ── Core 2-pass engine ───────────────────────────────────────────────────────
 
 async function runSection({ client, sectionConfig, items, styleGuide, month,
-                            indexTable = null, indexFactText = null }) {
+                            indexTable = null, indexFactText = null,
+                            railTable = null, railFactText = null }) {
   if (items.length === 0) {
     console.log(`⚠️  [${sectionConfig.id}] 관련 기사 없음 → status: no-data`);
     return { status: 'no-data', text: '', pass1Tokens: 0, pass2Tokens: 0 };
   }
 
   const systemPrompt = buildSectionSystemPrompt(styleGuide, sectionConfig.focus);
-  const userPrompt   = buildSectionUserPrompt(sectionConfig.title, items, month, indexFactText);
+  const userPrompt   = buildSectionUserPrompt(sectionConfig.title, items, month, indexFactText, railFactText);
 
   // PASS 1: 초안 생성
   console.log(`⏳ [${sectionConfig.id}] PASS 1 — 초안 생성...`);
@@ -216,6 +225,20 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
       } else {
         revised = `## 운임 지수 동향\n\n${indexTable}\n\n${revised}`;
       }
+    }
+  }
+
+  // rail 실측 표 삽입 — 04-3 소제목 아래
+  if (railTable) {
+    const anchor =
+      revised.match(/#{2,3}[^\n]*04-3[^\n]*/) ||
+      revised.match(/#{2,3}[^\n]*(?:회랑|정시)[^\n]*/);
+    if (anchor) {
+      revised = revised.replace(anchor[0], `${anchor[0]}\n\n${railTable}\n`);
+    } else {
+      const before04_4 = revised.match(/#{2,3}[^\n]*04-4[^\n]*/);
+      if (before04_4) revised = revised.replace(before04_4[0], `${railTable}\n\n${before04_4[0]}`);
+      else revised += `\n\n### 04-3. 유라시아 회랑별 정시 성과 (MTL 실측)\n\n${railTable}\n`;
     }
   }
 
