@@ -60,13 +60,12 @@ window.__chartsReady = true;
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 @page{size:A4;margin:18mm 20mm 14mm}
-body{font-family:'Noto Sans KR',sans-serif;background:#fff;color:#1a1a2e;font-size:10pt;line-height:1.7}
+body{font-family:'Pretendard Variable','Pretendard',-apple-system,'Apple SD Gothic Neo',sans-serif;background:#fff;color:#1a1a2e;font-size:10pt;line-height:1.7;-webkit-font-smoothing:antialiased}
 
 /* ── Report header strip ── */
 .rh{
@@ -83,7 +82,7 @@ h1{font-size:17pt;font-weight:900;color:#1E3A5F;margin:0 0 7mm;
 h2{font-size:12.5pt;font-weight:700;color:#1E3A5F;margin:8mm 0 3mm;
    padding-bottom:1.5mm;border-bottom:2px solid #2E86AB;display:inline-block}
 h3{font-size:10.5pt;font-weight:700;color:#2E86AB;margin:5mm 0 2mm}
-p{font-size:9.5pt;line-height:1.85;color:#2c3e50;margin-bottom:3mm}
+p{font-size:10pt;line-height:1.95;color:#2c3e50;margin:0 0 4.5mm;letter-spacing:-0.1px}
 ul,ol{padding-left:5mm;margin-bottom:3mm}
 li{font-size:9pt;line-height:1.75;color:#2c3e50;margin-bottom:1mm}
 strong{color:#1E3A5F;font-weight:700}
@@ -179,7 +178,7 @@ async function main() {
   try {
     const page = await browser.newPage();
     await page.setViewport({ width: 794, height: 1123, deviceScaleFactor: 1 });
-    console.log('⏳ 페이지 로드 중 (Noto Sans KR CDN, Chart.js)...');
+    console.log('⏳ 페이지 로드 중 (Pretendard CDN, Chart.js)...');
     await page.setContent(html, { waitUntil: 'networkidle0', timeout: 30000 });
 
     // 차트 렌더 대기
@@ -191,6 +190,7 @@ async function main() {
       await new Promise(r => setTimeout(r, 400));  // 캔버스 페인트 여유
     }
 
+    await page.evaluate(() => document.fonts.ready);
     fs.mkdirSync(OUT_DIR, { recursive: true });
     await page.pdf({
       path:            OUT_PATH,
