@@ -116,6 +116,9 @@ tbody tr:nth-child(even) td{background:#f4f8fb}
 .up{color:#d32f2f;font-weight:700}
 .down{color:#1565c0;font-weight:700}
 
+/* ── Page break ── */
+.page-break{page-break-before:always}
+
 /* ── Chart box ── */
 .chart-box{height:62mm;margin:4mm 0 6mm;page-break-inside:avoid}
 .chart-box canvas{max-width:100%}

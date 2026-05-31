@@ -14,6 +14,8 @@ function buildFrontmatter(meta) {
 }
 
 function parseFrontmatter(content) {
+  // BOM 제거 + CRLF→LF 정규화 (PowerShell 편집·인코딩으로 인한 누출 방지)
+  content = String(content).replace(/^﻿/, '').replace(/\r\n/g, '\n');
   const match = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
   if (!match) return { meta: {}, body: content };
   const meta = {};
@@ -33,16 +35,21 @@ function bodyOf(i) {
 }
 
 function buildSectionSystemPrompt(styleGuide, focus) {
-  return `당신은 Logisight(MTL Shipping Agency)의 글로벌 해운·물류 시장 수석 분석가입니다.
-독자: 한국 화주·포워더·MTL 영업팀 및 경영진.
+  return `당신은 Logisight의 글로벌 해운·물류 시장 수석 분석가입니다.
+이 리포트는 **외부 고객(화주·포워더·물류 실무자 및 경영진) 열람용**입니다.
 분석 초점: ${focus}
 
 # 문체·구조 규약 (반드시 준수)
 ① 명사형 객관체 종결(~함/됨/임/전망/예상) — 경어체("습니다")·평서체("이다/했다") 금지
 ② 정량 비교(WoW/MoM/YoY + ▲▼) — 수치엔 항상 단위·비교 기준
-③ 현상→원인→배경→전망 4단 논리 — 사실 나열로 끝내지 말 것
-④ 각 분석 블록 끝에 ☞ 또는 ➔ 시사점(So what)으로 마무리
-⑤ 모든 수치·인용에 출처(기관/날짜) 명기
+③ 현상에서 원인·배경·전망으로 자연스럽게 이어지는 **연결된 산문**으로 작성.
+   ★★ [현상]·[원인]·[배경]·[전망] 같은 대괄호 라벨·머리표·구획 표지를 출력에 절대 쓰지 말 것.
+   논리 전개는 문단의 흐름으로만 드러내고, 한 문단에서 다음 문단으로 매끄럽게 이어지게 작성.
+④ 각 분석은 **객관적 시장 전망**으로 마무리.
+   ★★ 특정 기업(MTL 등) 언급, 영업 권유, "MTL 영업팀은…", "☞/➔ 권고", "한국 화주는 …하라/검토하라" 식
+   독자 행동 지시·영업 시사점(So what)을 출력에 절대 포함하지 말 것 — 외부 중립 리포트.
+   분석은 시장 자체의 방향성·리스크·전망으로 끝낼 것(독자에게 행동을 지시하지 않음).
+⑤ 모든 수치·인용에 출처(기관/날짜) 명기.
 
 --- 스타일 가이드 시작 ---
 ${styleGuide}
@@ -50,20 +57,20 @@ ${styleGuide}
 
 # 데이터 사용 원칙 (환각 방지 — 최우선)
 1. 제공된 기사 제목·요약·본문에 명시된 사실만 사용. 출처에 없는 수치 절대 생성 금지.
-2. 운임 수치는 입력의 '확정 운임 지수' 블록 값만 인용. 그 외 숫자 생성 금지. 표는 시스템이 삽입하므로 본문엔 표를 그리지 말 것.
-3. 근거가 약한 내용은 [Logisight 분석] 마커 + (추정) 표기.
+2. 운임 수치는 입력의 '확정 운임 지수' 블록 값만 인용. 표·차트는 시스템이 삽입하므로 본문에 표를 그리지 말 것.
+3. 근거가 약한 내용은 [Logisight 분석] + (추정) 표기.
 4. 물류·해운·공급망과 무관한 기사는 제외.
 5. 입력 기사가 적으면 무리하게 분량 늘리지 말 것.
-6. 기사 "본문"에 담긴 구체 수치·인용·항로 정보를 적극 활용해 분석 깊이를 높일 것. 단 본문에서 인용한 수치·사실은 반드시 출처(매체명, 날짜)를 병기.
-7. 확정 운임 지수 표(시스템 주입, oneksa 검증치)와 기사 본문 수치는 구분할 것. 본문 수치는 서사에서 출처와 함께 인용(예: "Drewry 기준 상하이-로테르담 $2,147/FEU (gCaptain, 2026-04-24)").
-8. 관영·국가계 매체(Global Times, SeaNews, TASS 등)는 운행 편수·물동량·국경 통과량 등 '검증 가능한 수치·사실'만 인용할 것. 정치적 평가·체제 우월성 주장·일방적 논평은 인용하지 말 것. 인용 시 출처(매체명) 명기하여 1차 주장임을 명확히 할 것.
-9. 철도 운임·물동량 수치는 출처가 통계 기관(RZD·China Railway·KTZ 등)인 경우 신뢰하되, 매체의 해석은 [Logisight 분석]과 구분.
-10. "MTL Link 실측 정시 데이터"의 수치(정시율·지연·P90)는 주어진 값만 사용. 보간·추정 금지. 인용 시 "MTL Link TCR-Tracking 실측"으로 출처 명기.
-11. MTL 실측 수치와 뉴스(공개 매체) 수치를 혼동하지 말 것. 실측=내부 데이터, 뉴스=출처 매체 병기. 음수 지연은 "예정 대비 조기 도착"으로 해석.
+6. 기사 본문의 구체 수치·인용을 적극 활용하되 출처(매체·날짜) 병기.
+7. 확정 지수 표(시스템 주입)와 기사 본문 수치는 구분해 인용.
+8. 관영·국가계 매체는 검증 가능한 수치·사실만 인용(정치 평가·체제 주장 배제), 출처 명기.
+9. 철도 통계 기관 수치는 신뢰하되 매체 해석은 [Logisight 분석]과 구분.
+10. 실측 정시 데이터(정시율·지연·P90)는 주어진 값만 사용, 보간·추정 금지, 출처 명기.
+11. 실측 수치와 공개 매체 수치를 혼동 금지. 음수 지연=예정 대비 조기 도착.
 
 # 어휘 원칙
 - "트랜스퍼시픽" → "아시아-북미 항로"
-- "벙커비" / "벙커연료비" → "벙커유 가격" / "벙커유 상승" / "벙커유 급등"
+- "벙커비"/"벙커연료비" → "벙커유 가격"/"벙커유 상승"/"벙커유 급등"
 - "하방 경직성" → "하락 방어" 또는 "하방 지지"
 - "스페이스" → "선적 공간" 또는 "선복"`;
 }
@@ -151,14 +158,13 @@ ${styleGuide}
 - [ ] 모든 문장이 명사형(~함/됨/임/전망)으로 끝나는가?
 - [ ] '확정 운임 지수' 블록 외 운임 수치를 생성하지 않았는가? (환각 방지 — 최우선)
 - [ ] 본문 안에 Markdown 표를 그리지 않았는가? (표는 시스템 삽입)
-- [ ] 각 분석 블록이 현상→원인→배경→전망 4단 구조인가?
-- [ ] 분석 블록 끝에 ☞/➔ 시사점이 있는가?
+- [ ] [현상]·[원인]·[배경]·[전망] 등 대괄호 라벨·머리표가 본문에 전혀 없는가? — 있으면 제거하고 자연스러운 산문으로 재서술
+- [ ] MTL·영업팀 언급, "☞/➔ 권고", "한국 화주는 …하라/검토하라" 식 독자 행동 지시·영업 시사점이 전혀 없는가? — 있으면 삭제하고 객관적 시장 전망으로 대체 (외부 중립 리포트)
+- [ ] 분석이 독자 행동 지시 없이 시장 전망으로 마무리되는가?
 - [ ] 수치에 ▲▼과 비교 기준(WoW/MoM/YoY)이 붙어 있는가?
 - [ ] 출처(기관명·날짜)가 명기됐는가?
-- [ ] "~입니다/합니다" 경어체가 없는가?
-- [ ] "~이다/했다" 평서체가 없는가?
-- [ ] 벙커비/벙커연료비 → 벙커유 가격/상승/급등으로 교체됐는가?
-- [ ] 트랜스퍼시픽 → 아시아-북미 항로로 교체됐는가?`;
+- [ ] "~입니다/합니다" 경어체가 없는가? "~이다/했다" 평서체가 없는가?
+- [ ] 벙커비/벙커연료비 → 벙커유로, 트랜스퍼시픽 → 아시아-북미 항로로 교체됐는가?`;
 }
 
 function buildCritiqueUserPrompt(draft) {
@@ -169,7 +175,8 @@ function buildCritiqueUserPrompt(draft) {
 
 async function runSection({ client, sectionConfig, items, styleGuide, month,
                             indexTable = null, indexFactText = null,
-                            railTable = null, railFactText = null }) {
+                            railTable = null, railFactText = null,
+                            oceanBlocks = null }) {
   if (items.length === 0) {
     console.log(`⚠️  [${sectionConfig.id}] 관련 기사 없음 → status: no-data`);
     return { status: 'no-data', text: '', pass1Tokens: 0, pass2Tokens: 0 };
@@ -208,9 +215,30 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
   if (pass2Res.stop_reason === 'max_tokens')
     console.warn(`   ⚠️ PASS 2가 max_tokens에서 잘림! 상향 필요`);
 
-  // 지표 표 삽입 — LLM이 그리지 않으므로 코드에서 주입
-  if (indexTable) {
-    // 우선순위: "운임"+"지수" 동시 포함 > "지수 동향" > "운임"or"지수" 단독 > 첫 ## 다음 > 맨 앞
+  // ocean 섹션: per-index 차트+표 주입 (02-1~02-5 각 소제목 아래, 둘째 지수부터 새 페이지)
+  if (sectionConfig.id === 'ocean' && oceanBlocks && oceanBlocks.length) {
+    oceanBlocks.forEach((b, idx) => {
+      if (!b.table) return;
+      let anchor = null;
+      for (const kw of b.headingKw) {
+        const safe = kw.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+        const m = revised.match(new RegExp('#{2,3}[^\\n]*' + safe + '[^\\n]*'));
+        if (m) { anchor = m[0]; break; }
+      }
+      const pb     = idx > 0 ? '<div class="page-break"></div>\n\n' : '';
+      const inject = `\n\n[[CHART:${b.chart}]]\n\n${b.table}\n`;
+      if (anchor) revised = revised.replace(anchor, `${pb}${anchor}${inject}`);
+      else        revised += `\n\n${pb}### (${b.id.toUpperCase()} 표)${inject}`;
+    });
+    // 02-6 종합 전망 소제목 또는 말미에 벙커유 차트 추가
+    const bunkerM = revised.match(/#{2,3}[^\n]*(?:02-6|종합|벙커)[^\n]*/i);
+    if (bunkerM) {
+      revised = revised.replace(bunkerM[0], `${bunkerM[0]}\n\n[[CHART:ocean_bunker]]\n`);
+    } else {
+      revised += '\n\n[[CHART:ocean_bunker]]\n';
+    }
+  } else if (indexTable) {
+    // 운임 지수 표 삽입 (01. 핵심 시황 섹션)
     const anchor =
       revised.match(/##[^\n]*운임[^\n]*지수[^\n]*/) ||
       revised.match(/##[^\n]*지수[^\n]*동향[^\n]*/) ||
@@ -225,10 +253,6 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
       } else {
         revised = `## 운임 지수 동향\n\n${indexTable}\n\n${revised}`;
       }
-    }
-    // ocean 섹션에만 운임·벙커 차트 토큰 추가 (index 섹션 중복 방지)
-    if (sectionConfig.id === 'ocean') {
-      revised += '\n\n[[CHART:ocean_scfi]]\n\n[[CHART:ocean_bdi]]\n\n[[CHART:ocean_bunker]]\n';
     }
   }
 
