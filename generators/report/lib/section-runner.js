@@ -182,7 +182,7 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
   console.log(`⏳ [${sectionConfig.id}] PASS 1 — 초안 생성...`);
   const pass1Res = await client.messages.create({
     model:      'claude-sonnet-4-6',
-    max_tokens: 8000,   // 한국어 토큰 효율 고려 — 꼭지 4개 섹션도 안 잘리게
+    max_tokens: 12000,   // 한국어 토큰 효율 고려 — 꼭지 4개 섹션도 안 잘리게
     system:     systemPrompt,
     messages:   [{ role: 'user', content: userPrompt }],
   });
@@ -197,7 +197,7 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
   console.log(`⏳ [${sectionConfig.id}] PASS 2 — 자기검수·수정...`);
   const pass2Res = await client.messages.create({
     model:      'claude-sonnet-4-6',
-    max_tokens: 8000,
+    max_tokens: 12000,
     system:     buildCritiqueSystemPrompt(styleGuide),
     messages:   [{ role: 'user', content: buildCritiqueUserPrompt(draft) }],
   });
