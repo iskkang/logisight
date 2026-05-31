@@ -9,14 +9,27 @@ function sb() {
     { auth: { persistSession: false } });
 }
 
-// 리포트 톤(네이비·시안 계열) 팔레트
 const COLORS = ['#1E3A5F', '#2E86AB', '#E08E45', '#6A994E', '#BC4749', '#8E7DBE'];
 
+// index_code → 표시 라벨 (차트·표 공용). 표 빌더에서도 재사용하도록 export.
+const LABELS = {
+  KCCI: '종합', SCFI: '종합', CCFI: '종합', BDI: '종합', WCI: '종합',
+  VLSFO: 'VLSFO', HSFO: 'HSFO',
+  SCFI_USWC: '미주서안', SCFI_EU: '유럽', SCFI_USEC: '미주동안',
+  WCI_SHA_RTM: '상하이-로테르담', WCI_SHA_GOA: '상하이-제노아',
+  WCI_SHA_LAX: '상하이-LA', WCI_SHA_NYC: '상하이-뉴욕',
+  KCCI_USWC: '미주서안', KCCI_USEC: '미주동안', KCCI_NEU: '북유럽', KCCI_MED: '지중해',
+  KCCI_ME: '중동', KCCI_AU: '호주', KCCI_SAE: '남미동안', KCCI_SAW: '남미서안',
+  KCCI_ZAF: '남아프리카', KCCI_WAF: '서아프리카', KCCI_CN: '중국', KCCI_JP: '일본', KCCI_SEA: '동남아',
+};
+
+// 최신 weeks개만 — ascending 캡 버그 수정: 최신순으로 충분히 받고 라벨 정렬
 async function indexSeries(codes, { weeks = 52 } = {}) {
   const { data, error } = await sb().from('freight_indices')
     .select('index_code,week_date,value')
     .in('index_code', codes)
-    .order('week_date', { ascending: true });
+    .order('week_date', { ascending: false })
+    .limit(codes.length * (weeks + 8));   // 최신 구간이 모든 코드에 대해 충분히 들어오도록
   if (error || !data || !data.length) return null;
 
   const byCode = {}; const dateSet = new Set();
@@ -25,11 +38,11 @@ async function indexSeries(codes, { weeks = 52 } = {}) {
     (byCode[r.index_code] = byCode[r.index_code] || {})[r.week_date] = Number(r.value);
     dateSet.add(r.week_date);
   }
-  let labels = [...dateSet].sort();
+  let labels = [...dateSet].sort();           // 오름차순(시간순)
   if (labels.length > weeks) labels = labels.slice(-weeks);
 
   const datasets = codes.filter(c => byCode[c]).map((c, i) => ({
-    label: c,
+    label: LABELS[c] || c,
     data: labels.map(d => (byCode[c][d] ?? null)),
     borderColor: COLORS[i % COLORS.length],
     backgroundColor: 'transparent',
@@ -39,9 +52,14 @@ async function indexSeries(codes, { weeks = 52 } = {}) {
   return { labels, datasets };
 }
 
-const getOceanScfi   = () => indexSeries(['SCFI', 'SCFI_USWC', 'SCFI_EU', 'SCFI_USEC']);
+// 지수별 추이 차트 — 종합선 위주(라카이브 상단 차트). 항로는 표에서.
+const getOceanKcci   = () => indexSeries(['KCCI']);
+const getOceanScfi   = () => indexSeries(['SCFI']);
+const getOceanCcfi   = () => indexSeries(['CCFI']);
 const getOceanBdi    = () => indexSeries(['BDI']);
 const getOceanBunker = () => indexSeries(['VLSFO', 'HSFO']);
+// WCI는 항로(월별 4개)까지 — 데이터가 적어 다중선이 보기 좋음
+const getOceanWci    = () => indexSeries(['WCI', 'WCI_SHA_RTM', 'WCI_SHA_GOA', 'WCI_SHA_LAX', 'WCI_SHA_NYC']);
 
 async function getRailOtp() {
   const client = sb();
@@ -75,10 +93,13 @@ async function getRailOtp() {
 }
 
 const CHARTS = {
-  ocean_scfi:   { title: 'SCFI 종합·항로별 추이',               loader: getOceanScfi,   yLabel: 'index' },
-  ocean_bdi:    { title: 'BDI(건화물) 추이',                     loader: getOceanBdi,    yLabel: 'index' },
-  ocean_bunker: { title: '벙커유(VLSFO·HSFO) 추이',              loader: getOceanBunker, yLabel: 'USD/ton' },
-  rail_otp:     { title: '유라시아 회랑별 정시율 (MTL Link 실측)', loader: getRailOtp,     yLabel: 'OTP %' },
+  ocean_kcci:   { title: 'KCCI(한국형 컨테이너 운임지수) 추이', loader: getOceanKcci,   yLabel: 'index' },
+  ocean_scfi:   { title: 'SCFI(상하이 컨테이너운임지수) 추이',  loader: getOceanScfi,   yLabel: 'index' },
+  ocean_ccfi:   { title: 'CCFI(중국 컨테이너운임지수) 추이',    loader: getOceanCcfi,   yLabel: 'index' },
+  ocean_bdi:    { title: 'BDI(건화물선운임지수) 추이',          loader: getOceanBdi,    yLabel: 'index' },
+  ocean_wci:    { title: 'WCI(드류리) 종합·항로별 추이',        loader: getOceanWci,    yLabel: 'USD/FEU' },
+  ocean_bunker: { title: '벙커유(VLSFO·HSFO) 추이',             loader: getOceanBunker, yLabel: 'USD/ton' },
+  rail_otp:     { title: '유라시아 회랑별 정시율 (MTL Link 실측)', loader: getRailOtp,   yLabel: 'OTP %' },
 };
 
 async function buildChart(id) {
@@ -91,4 +112,4 @@ async function buildChart(id) {
   } catch (e) { console.warn(`chart-data: ${id} 로드 실패`, e.message); return null; }
 }
 
-module.exports = { CHARTS, buildChart };
+module.exports = { CHARTS, LABELS, buildChart };
