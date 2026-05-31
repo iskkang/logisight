@@ -13,7 +13,7 @@ require('dotenv').config({ path: path.resolve(__dirname, '../../.env.local') });
 
 const Anthropic = require('@anthropic-ai/sdk');
 const SECTIONS  = require('./sections.config');
-const { loadAllMonthlyItems } = require('./lib/index-factsheet');
+const { loadAllMonthlyItems, loadIndexFactsheet, buildIndexTable } = require('./lib/index-factsheet');
 const { loadStyleGuide }      = require('./lib/style');
 const { runSection, saveSectionFile, parseFrontmatter } = require('./lib/section-runner');
 
@@ -53,6 +53,9 @@ async function main() {
   const styleGuide = loadStyleGuide();
   const client     = new Anthropic({ apiKey: ANTHROPIC_KEY });
 
+  const indexRows  = await loadIndexFactsheet();
+  const { table: indexTable, factText: indexFactText } = buildIndexTable(indexRows);
+
   console.log(`\n📋 monthly items: ${allItems.length}건 | 대상 섹션: ${targets.map(s => s.id).join(', ')}`);
   console.log(`📁 출력 디렉터리: ${OUT_DIR}\n`);
 
@@ -72,10 +75,15 @@ async function main() {
       }
     }
 
-    const items = sec.filterItems(allItems);
+    const items      = sec.filterItems(allItems);
+    const needsIndex = (sec.id === 'ocean' || sec.id === 'index');
     console.log(`▶ [${sec.id}] ${sec.title} — 관련 기사 ${items.length}건`);
 
-    const result  = await runSection({ client, sectionConfig: sec, items, styleGuide, month: MONTH });
+    const result  = await runSection({
+      client, sectionConfig: sec, items, styleGuide, month: MONTH,
+      indexTable:    needsIndex ? indexTable    : null,
+      indexFactText: needsIndex ? indexFactText : null,
+    });
     const saved   = saveSectionFile(OUT_DIR, sec.id, MONTH, result.status, result.text, {
       pass1_tokens: result.pass1Tokens,
       pass2_tokens: result.pass2Tokens,

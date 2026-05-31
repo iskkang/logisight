@@ -45,7 +45,7 @@ ${styleGuide}
 
 # 데이터 사용 원칙 (환각 방지 — 최우선)
 1. 제공된 기사 제목·요약에 명시된 사실만 사용. 출처에 없는 수치 절대 생성 금지.
-2. 운임 지수 수치(SCFI/WCI/FBX 등) → "구체 수치는 Logisight 지표 대시보드 참조"로 처리.
+2. 운임 수치는 입력의 '확정 운임 지수' 블록 값만 인용. 그 외 숫자 생성 금지. 표는 시스템이 삽입하므로 본문엔 표를 그리지 말 것.
 3. 근거가 약한 내용은 [Logisight 분석] 마커 + (추정) 표기.
 4. 물류·해운·공급망과 무관한 기사는 제외.
 5. 입력 기사가 적으면 무리하게 분량 늘리지 말 것.
@@ -57,11 +57,33 @@ ${styleGuide}
 - "스페이스" → "선적 공간" 또는 "선복"`;
 }
 
-function buildSectionUserPrompt(title, items, month) {
+function buildSectionUserPrompt(title, items, month, indexFactText) {
   const lines = [`분석 기준월: ${month}`, ''];
+
+  if (indexFactText) {
+    lines.push('## 확정 운임 지수 (이 수치만 사용, 다른 숫자 생성 금지)');
+    lines.push(indexFactText);
+    lines.push('');
+  }
+
+  const causal  = items.filter(i => i.category === 'lane_causal');
   const carrier = items.filter(i => i.category === 'carrier_update');
   const deep    = items.filter(i => i.category === 'deep_analysis');
+  const other   = items.filter(
+    i => !['lane_causal', 'carrier_update', 'deep_analysis'].includes(i.category)
+  );
 
+  if (causal.length > 0) {
+    lines.push(
+      `## 항로별 원인 코멘트 (${causal.length}건) — ★ 아래 코멘트에 명시된 원인만 사용, 창작 금지`
+    );
+    for (const i of causal) {
+      const summary = i.summary_en ? ` — ${i.summary_en.slice(0, 400)}` : '';
+      lines.push(`- [${i.source}] ${i.title}${summary}`);
+      lines.push(`  URL: ${i.url}`);
+    }
+    lines.push('');
+  }
   if (carrier.length > 0) {
     lines.push(`## 운임·시황 업데이트 (${carrier.length}건)`);
     for (const i of carrier) {
@@ -75,6 +97,14 @@ function buildSectionUserPrompt(title, items, month) {
       const summary = i.summary_en ? ` — 요약: ${i.summary_en.slice(0, 180)}` : '';
       lines.push(`- [${i.source}] ${i.title}${summary}`);
       lines.push(`  URL: ${i.url}`);
+    }
+    lines.push('');
+  }
+  if (other.length > 0) {
+    lines.push(`## 기타 기사 (${other.length}건)`);
+    for (const i of other) {
+      const summary = i.summary_en ? ` — ${i.summary_en.slice(0, 150)}` : '';
+      lines.push(`- [${i.source}] ${i.title}${summary}`);
     }
     lines.push('');
   }
@@ -95,7 +125,8 @@ ${styleGuide}
 
 # 자기검수 체크리스트 (모두 통과해야 최종본)
 - [ ] 모든 문장이 명사형(~함/됨/임/전망)으로 끝나는가?
-- [ ] 입력에 없는 운임 수치를 생성하지 않았는가? (환각 방지 — 최우선)
+- [ ] '확정 운임 지수' 블록 외 운임 수치를 생성하지 않았는가? (환각 방지 — 최우선)
+- [ ] 본문 안에 Markdown 표를 그리지 않았는가? (표는 시스템 삽입)
 - [ ] 각 분석 블록이 현상→원인→배경→전망 4단 구조인가?
 - [ ] 분석 블록 끝에 ☞/➔ 시사점이 있는가?
 - [ ] 수치에 ▲▼과 비교 기준(WoW/MoM/YoY)이 붙어 있는가?
@@ -112,14 +143,15 @@ function buildCritiqueUserPrompt(draft) {
 
 // ── Core 2-pass engine ───────────────────────────────────────────────────────
 
-async function runSection({ client, sectionConfig, items, styleGuide, month }) {
+async function runSection({ client, sectionConfig, items, styleGuide, month,
+                            indexTable = null, indexFactText = null }) {
   if (items.length === 0) {
     console.log(`⚠️  [${sectionConfig.id}] 관련 기사 없음 → status: no-data`);
     return { status: 'no-data', text: '', pass1Tokens: 0, pass2Tokens: 0 };
   }
 
   const systemPrompt = buildSectionSystemPrompt(styleGuide, sectionConfig.focus);
-  const userPrompt   = buildSectionUserPrompt(sectionConfig.title, items, month);
+  const userPrompt   = buildSectionUserPrompt(sectionConfig.title, items, month, indexFactText);
 
   // PASS 1: 초안 생성
   console.log(`⏳ [${sectionConfig.id}] PASS 1 — 초안 생성...`);
@@ -141,9 +173,19 @@ async function runSection({ client, sectionConfig, items, styleGuide, month }) {
     system:     buildCritiqueSystemPrompt(styleGuide),
     messages:   [{ role: 'user', content: buildCritiqueUserPrompt(draft) }],
   });
-  const revised = pass2Res.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
+  let revised = pass2Res.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
   const pass2Tokens = (pass2Res.usage?.input_tokens || 0) + (pass2Res.usage?.output_tokens || 0);
   console.log(`   ✓ PASS 2 완료 (${pass2Tokens} tokens)`);
+
+  // 지표 표 삽입 — LLM이 그리지 않으므로 코드에서 주입
+  if (indexTable) {
+    const anchor = revised.match(/##[^\n]*(?:운임|지수)[^\n]*/);
+    if (anchor) {
+      revised = revised.replace(anchor[0], `${anchor[0]}\n\n${indexTable}\n`);
+    } else {
+      revised = `## 01. 운임 지수 동향\n\n${indexTable}\n\n${revised}`;
+    }
+  }
 
   return { status: 'draft', text: revised, pass1Tokens, pass2Tokens };
 }

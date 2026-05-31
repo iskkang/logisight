@@ -12,7 +12,8 @@ const SECTIONS = [
     focus:
       '이번 달 가장 중요한 단일 핵심 이슈 1개를 선정하고, 전체 해운·물류 시황을 총론으로 정리. ' +
       '[이번 달 핵심]은 이슈 1개 / 문장 1개 / 현상…원인…전망 구조 / 말줄임표 최대 1개 / 명사형 종결 필수.',
-    filterItems: (items) => items,
+    // 지표 표(코드 주입) + 심층 분석 요약 일부만 → 전체 기사 오염 차단
+    filterItems: (items) => items.filter(i => i.category === 'deep_analysis').slice(0, 5),
   },
   {
     id: 'ocean',
@@ -28,7 +29,12 @@ const SECTIONS = [
         '운임', '해운', '선박', '선복', '선사', '컨테이너',
         'asia', 'europe', 'transpacific', 'intra-asia',
       ];
-      return items.filter(i => matches(i, kw) || i.category === 'carrier_update');
+      return items.filter(i =>
+        i.category === 'lane_causal'    ||   // Linerlytica·gCaptain 항로 원인 — 무조건 포함
+        i.category === 'carrier_update' ||   // Freightos·Flexport 시황 업데이트
+        i.category === 'deep_analysis'  ||   // JOC 심층 분석
+        matches(i, kw)
+      );
     },
   },
   {
