@@ -70,14 +70,14 @@ const MONTHLY_SOURCES: MonthlySource[] = [
     category: 'lane_causal',
   },
 
-  // gCaptain: RSS, Drewry·Xeneta·Linerlytica 코멘트를 항로별 수치+원인으로 종합
-  // topicFilter: 일반 해사 뉴스(군사·조선·사고 등)를 걸러내고 운임·공급 관련 항목만 보관
+  // gCaptain: RSS, 종합 해운·해사 뉴스 — 운임 관련 기사가 deep_analysis에 기여
+  // topicFilter: 군사·조선·사고 등 비운임 기사 수집 단계에서 차단 (lane_causal 안전망과 별개)
   {
-    name: 'gCaptain',
+    name: 'gCaptain Analysis',
     url: 'https://feeds.feedburner.com/gcaptain',
     type: 'rss',
     section: 'shipping',
-    category: 'lane_causal',
+    category: 'deep_analysis',    // lane_causal → deep_analysis: lane_causal은 Linerlytica 전용
     topicFilter: /freight rate|container rate|ocean rate|shipping rate|carrier earning|TEU|FEU|SCFI|WCI|FBX|shipper|blank sailing|capacity|bunker|surcharge|GRI|peak season|Hormuz.*shipping|shipping.*Hormuz|Red Sea.*shipping|shipping.*disruption|port congestion|trade lane|vessel supply/i,
   },
 ];

@@ -14,8 +14,8 @@ const supabase = (SUPABASE_URL && SUPABASE_KEY)
   ? createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: false } })
   : null;
 
-// lane_causal 항목 관련성 필터 — topicFilter 추가 전 스냅샷 잔재(비운임 기사) 차단
-// gCaptain에서 수집된 군사·사고·해군 뉴스 등 운임과 무관한 항목 제거
+// lane_causal 안전망: 카테고리가 잘못 들어와도 운임·항로 무관 기사 차단.
+// 정상 상태에선 Linerlytica Market Pulse(순수 항로 분석)만 lane_causal이므로 거의 안 걸림.
 const LANE_CAUSAL_RELEVANCE = /freight rate|container rate|ocean rate|shipping rate|carrier earn|TEU|FEU|SCFI|WCI|FBX|shipper|blank sailing|capacity|bunker|surcharge|GRI|peak season|Hormuz.*shipping|shipping.*Hormuz|Red Sea.*shipping|shipping.*disruption|port congestion|trade lane|vessel supply|market pulse/i;
 
 // ── (기존) 뉴스 아이템 로더 — run-section.js 호환 유지 ──
