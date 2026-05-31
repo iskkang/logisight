@@ -19,10 +19,11 @@ const BOT_HEADERS = {
 interface MonthlySource {
   name: string;
   url: string;
-  type: 'rss' | 'html';
+  type: 'rss' | 'html' | 'linerlytica';
   section: 'shipping' | 'rail' | 'trade';
-  category: 'carrier_update' | 'deep_analysis';
-  urlPattern?: RegExp;  // html 전용: 기사 URL 경로 패턴 (메뉴·푸터 제거용)
+  category: 'carrier_update' | 'deep_analysis' | 'lane_causal';
+  urlPattern?: RegExp;   // html 전용: 기사 URL 경로 패턴 (메뉴·푸터 제거용)
+  topicFilter?: RegExp;  // rss 전용: 이 패턴에 매칭되는 항목만 보관 (일반 소스 노이즈 제거)
 }
 
 const MONTHLY_SOURCES: MonthlySource[] = [
@@ -57,6 +58,28 @@ const MONTHLY_SOURCES: MonthlySource[] = [
     //         월간 리포트 작성 시 운영자가 수동 확인 권장
     urlPattern: /\/global-logistics-update\/(january|february|march|april|may|june|july|august|september|october|november|december)-\d{1,2}-\d{4}/i,
   },
+
+  // ── lane_causal: 항로별 등락 원인 코멘트 소스 ──
+  // Linerlytica: SSR HTML, /tag/marketpulse/ 에 최근 ~10주 Market Pulse 무료 인트로 포함
+  // 인트로에 항로별 원인 서술: "Asia-Europe rates dragged down by capacity pressure from new 24,000 TEU ships" 등
+  {
+    name: 'Linerlytica Market Pulse',
+    url: 'https://www.linerlytica.com/tag/marketpulse/',
+    type: 'linerlytica',
+    section: 'shipping',
+    category: 'lane_causal',
+  },
+
+  // gCaptain: RSS, Drewry·Xeneta·Linerlytica 코멘트를 항로별 수치+원인으로 종합
+  // topicFilter: 일반 해사 뉴스(군사·조선·사고 등)를 걸러내고 운임·공급 관련 항목만 보관
+  {
+    name: 'gCaptain',
+    url: 'https://feeds.feedburner.com/gcaptain',
+    type: 'rss',
+    section: 'shipping',
+    category: 'lane_causal',
+    topicFilter: /freight rate|container rate|ocean rate|shipping rate|carrier earning|TEU|FEU|SCFI|WCI|FBX|shipper|blank sailing|capacity|bunker|surcharge|GRI|peak season|Hormuz.*shipping|shipping.*Hormuz|Red Sea.*shipping|shipping.*disruption|port congestion|trade lane|vessel supply/i,
+  },
 ];
 
 // ocean_news.ts 원본을 건드리지 않기 위해 monthly 전용 파서를 여기에 둔다.
@@ -83,7 +106,9 @@ async function parseRss(src: MonthlySource): Promise<NewsItem[]> {
     });
     if (items.length >= 10) break;  // 월간 분석은 10건
   }
-  return items;
+  return src.topicFilter
+    ? items.filter(i => src.topicFilter!.test(`${i.title} ${i.summary_en || ''}`))
+    : items;
 }
 
 async function fetchHtmlLinks(src: MonthlySource): Promise<NewsItem[]> {
@@ -134,11 +159,62 @@ async function fetchHtmlLinks(src: MonthlySource): Promise<NewsItem[]> {
   return items;
 }
 
+// Linerlytica /tag/marketpulse/ — SSR 목록 1회 fetch로 최근 6주치 Market Pulse 인트로 추출.
+// 각 글 블록: [링크(제목)] → [날짜] → "Register Free Trial" → [항로별 원인 인트로 문단]
+async function fetchLinerlytica(src: MonthlySource): Promise<NewsItem[]> {
+  const res = await fetch(src.url, { headers: BOT_HEADERS, signal: AbortSignal.timeout(12000) });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const html = await res.text();
+
+  const items: NewsItem[] = [];
+  // 앵커 내부 제목이 <h2> 자식 요소로 감싸져 있으므로 [\s\S]*? 로 캡처 후 태그 제거
+  const linkRe = /<a[^>]+href="(\/post\/market-pulse-[^"]+)"[^>]*>([\s\S]*?)<\/a>/g;
+  const linkMatches = Array.from(html.matchAll(linkRe));
+
+  for (let i = 0; i < linkMatches.length; i++) {
+    const m = linkMatches[i];
+    const url   = `https://www.linerlytica.com${m[1]}`;
+    const title = m[2].replace(/<[^>]+>/g, '').trim();
+    const start = (m.index ?? 0) + m[0].length;
+    const end   = i + 1 < linkMatches.length
+      ? (linkMatches[i + 1].index ?? start)
+      : Math.min(start + 4000, html.length);
+    const chunk = html.slice(start, end);
+
+    // HTML 태그 제거 → 평문
+    const text = chunk.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+
+    // 날짜 추출 (예: "May 26, 2026")
+    const dm = text.match(/([A-Z][a-z]+ \d{1,2}, \d{4})/);
+    const published_at = dm ? new Date(dm[1]).toISOString() : new Date().toISOString();
+
+    // 인트로: "Register Free Trial" 이후 본문, 없으면 날짜 이후 텍스트
+    let intro = text;
+    const rfIdx = text.indexOf('Register Free Trial');
+    if (rfIdx >= 0) {
+      intro = text.slice(rfIdx + 'Register Free Trial'.length).trim();
+    } else if (dm) {
+      intro = text.slice((dm.index ?? 0) + dm[1].length).trim();
+    }
+    // "MARKET BRIEF ..." 머리표 제거, 600자 컷
+    intro = intro.replace(/^MARKET BRIEF[^.]*?\.\s*/i, '').trim().slice(0, 600);
+
+    if (!title || intro.length < 40) continue;
+    items.push({ title, url, published_at, summary_en: intro, source: src.name });
+    if (items.length >= 6) break;  // 최근 6주 (한 달+여유)
+  }
+  return items;
+}
+
 export async function collect(): Promise<CollectorResult> {
   const result: CollectorResult = { section: 'shipping', data: [] };
 
   const settled = await Promise.allSettled(
-    MONTHLY_SOURCES.map(src => rateLimited(src.url, () => src.type === 'rss' ? parseRss(src) : fetchHtmlLinks(src)))
+    MONTHLY_SOURCES.map(src => rateLimited(src.url, () => {
+      if (src.type === 'rss')         return parseRss(src);
+      if (src.type === 'linerlytica') return fetchLinerlytica(src);
+      return fetchHtmlLinks(src);
+    }))
   );
 
   for (let i = 0; i < MONTHLY_SOURCES.length; i++) {

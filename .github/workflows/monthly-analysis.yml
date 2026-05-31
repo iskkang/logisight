@@ -27,8 +27,13 @@ jobs:
           SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
-      - name: Generate monthly intelligence report
-        run: npm run report:monthly
+      - name: Generate sections (7-section pipeline, 2-pass self-review)
+        run: npm run section:all
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Assemble report (force — CI auto-approval)
+        run: node generators/report/assemble-monthly-report.js --force
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 

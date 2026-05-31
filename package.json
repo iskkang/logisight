@@ -45,6 +45,11 @@
     "monthly:all": "npm run collect:monthly && npm run monthly:generate",
     "report:monthly": "node generators/report/generate-monthly-analysis.js",
     "monthly:full": "npm run collect:monthly && npm run report:monthly",
+    "section:run": "node generators/report/run-section.js",
+    "section:all": "node generators/report/run-section.js --all",
+    "monthly:assemble": "node generators/report/assemble-monthly-report.js",
+    "monthly:pdf": "node generators/report/monthly-report-pdf.js",
+    "monthly:pipeline": "npm run collect:monthly && npm run section:all",
     "lint": "eslint collectors generators scripts --ext ts,js"
   },
   "dependencies": {
@@ -53,6 +58,7 @@
     "date-fns": "^3.3.0",
     "dotenv": "^17.4.2",
     "fast-xml-parser": "^5.8.0",
+    "marked": "^14.1.4",
     "resend": "^3.5.0",
     "ws": "^8.21.0",
     "xlsx": "^0.18.5"

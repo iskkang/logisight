@@ -31,9 +31,12 @@ function loadStyleGuide() {
   return fs.readFileSync(STYLE_GUIDE_PATH, 'utf-8');
 }
 
-// category가 정확히 'deep_analysis' 또는 'carrier_update'인 항목만 추출.
+// category가 정확히 'deep_analysis' / 'carrier_update' / 'lane_causal'인 항목만 추출.
 // 'ocean_news' 같은 일간 뉴스 카테고리는 제외.
 // title 10자 미만(메뉴·푸터 잡링크)도 제외.
+// lane_causal: 스냅샷에 누적된 비운임성 항목을 2차 필터링 (topicFilter와 동일 기준)
+const LANE_CAUSAL_RELEVANCE = /freight rate|container rate|ocean rate|shipping rate|carrier earning|TEU|FEU|SCFI|WCI|FBX|shipper|blank sailing|capacity|bunker|surcharge|GRI|peak season|Hormuz.*shipping|shipping.*Hormuz|Red Sea.*shipping|shipping.*disruption|port congestion|trade lane|vessel supply/i;
+
 function loadMonthlyItems() {
   if (!fs.existsSync(NEWS_PATH)) {
     console.error('ERROR: latest-news.json 없음 — npm run collect:monthly 먼저 실행하세요.');
@@ -44,10 +47,15 @@ function loadMonthlyItems() {
     ...(data.shipping || []),
     ...(data.rail     || []),
     ...(data.trade    || []),
-  ].filter(i =>
-    (i.category === 'deep_analysis' || i.category === 'carrier_update') &&
-    i.source && i.url && i.title && i.title.length >= 10
-  );
+  ].filter(i => {
+    if (!i.source || !i.url || !i.title || i.title.length < 10) return false;
+    if (i.category === 'deep_analysis' || i.category === 'carrier_update') return true;
+    if (i.category === 'lane_causal') {
+      // 2차 필터: 운임·공급 관련 항목만, 군사·법률·비해운 주제 제외
+      return LANE_CAUSAL_RELEVANCE.test(`${i.title} ${i.summary_en || ''}`);
+    }
+    return false;
+  });
 
   // URL dedup
   const seen = new Set();
@@ -59,13 +67,25 @@ function loadMonthlyItems() {
 }
 
 function buildUserPrompt(items) {
-  const deep    = items.filter(i => i.category === 'deep_analysis');
+  const causal  = items.filter(i => i.category === 'lane_causal');
   const carrier = items.filter(i => i.category === 'carrier_update');
+  const deep    = items.filter(i => i.category === 'deep_analysis');
 
   const lines = [];
   lines.push(`분석 기준월: ${MONTH}`);
   lines.push(`수집일: ${TODAY}`);
   lines.push('');
+
+  // 항로별 원인 코멘트를 가장 먼저 — 리포트의 "원인" 서술은 이 블록에만 근거해야 함
+  if (causal.length > 0) {
+    lines.push(`## 항로별 시황 코멘트 (등락 "원인" 분석의 유일한 근거 — ${causal.length}건)`);
+    lines.push('★ 아래 코멘트에 명시된 원인만 사용. 특정 항로의 등락 원인이 여기 없으면 "원인 미확인"으로 표기하고 지어내지 말 것.');
+    for (const it of causal) {
+      lines.push(`- [${it.source}] ${it.title}`);
+      if (it.summary_en) lines.push(`  코멘트: ${it.summary_en}`);
+    }
+    lines.push('');
+  }
 
   if (carrier.length > 0) {
     lines.push(`## 운임·시황 업데이트 (${carrier.length}건)`);
@@ -111,6 +131,16 @@ ${styleGuide}
 3. 근거가 약하거나 추정인 내용은 [Logisight 분석] 마커 + (추정) 표기.
 4. 물류·해운·공급망과 무관한 기사는 제외.
 5. 입력 기사가 적으면 무리하게 분량을 늘리지 말 것 — 있는 기사 기반으로만.
+6. 항로별 등락 "원인"은 입력의 "항로별 시황 코멘트" 블록에 명시된 내용에만 근거한다. 해당 항로의 원인이 코멘트에 없으면 반드시 "원인 미확인 — 추가 자료 필요"로 표기. 그럴듯한 원인 창작 금지 — 이것이 이 리포트의 핵심 품질 기준.
+7. 코멘트의 항로명과 지표 코드를 아래 항로 명칭 매핑으로 대조한 후, 명확히 일치할 때만 연결한다. 애매하면 "종합 지수 수준" 설명으로 후퇴하고 특정 항로 원인으로 단정하지 말 것.
+
+# 항로 명칭 매핑 (지표 코드 ↔ 코멘트 동의어 — 수치와 원인을 연결하는 핵심 테이블)
+- **미주서안** (SCFI_USWC): US West Coast, USWC, FE-WCNA, Transpacific West Coast, Shanghai-Los Angeles, Asia-WCNA, WCNA
+- **미주동안** (SCFI_USEC): US East Coast, USEC, FE-ECNA, Shanghai-New York, Asia-ECNA, ECNA
+- **유럽·북유럽** (SCFI_EU / WCI Rotterdam): North Europe, FE-N.Eur, Asia-North Europe, NWE, Asia-Europe, AEX
+- **지중해** (SCFI_Med): Mediterranean, FE-Med, Asia-Med, Med
+- **인트라-아시아** (Intra-Asia / Southeast Asia): Intra-Asia, SE Asia, Southeast Asia, feeder
+- **종합** (SCFI 종합 / WCI composite / FBX 전체): composite, overall, global average, all routes
 
 # 어휘 원칙 (자연스러운 한·영 혼용)
 영문 약어·고유명사는 그대로 쓴다: TEU, FEU, GRI, COA, FAK, SCFI, WCI, FBX, IEEPA, CBP, CIT.
@@ -161,7 +191,27 @@ ${styleGuide}
 - 단기(1개월): {전망 내용 2가지 있으면 별도 bullet로 분리 — 세미콜론으로 묶지 말 것}
 - 중기(2~3개월): {중기 전망, 명사형 종결}
 
-☞ {한국 화주·포워더 대상 구체 행동 1가지. "~까지 ~을 ~권고" 패턴.}
+### 항로별 등락 분석
+{아래 규칙 엄수:
+  - 항로별 시황 코멘트에 원인이 명시된 항로만 [원인] 서술.
+  - 코멘트에 없는 항로는 [현상]만 쓰고 [원인]에 "원인 미확인 — 추가 자료 필요" 표기.
+  - 항로 명칭 매핑으로 코멘트의 영문 노선명을 표준명에 맞춰 연결.
+  - 근거 코멘트에 있는 항로(미주서안·동안·유럽·인트라-아시아 중 해당)만 블록 작성.}
+
+**미주서안 ({▲/▼}{수치 또는 "수치 미수집"})**
+- [현상] {방향·출처, 명사형 종결}
+- [원인] {코멘트 근거 원인 / 또는 "원인 미확인 — 추가 자료 필요"}
+☞ {한국 화주 관점 시사점, 명사형 종결}
+
+**미주동안 ({▲/▼})**
+{동일 패턴 — 코멘트 근거 없으면 [현상]만, [원인]에 "원인 미확인"}
+
+**유럽·북유럽 ({▲/▼})**
+{동일 패턴}
+
+{인트라-아시아 등 추가 항로: 코멘트 근거가 있을 때만 블록 추가. 없으면 이 항목 생략.}
+
+☞ {전체 시황 종합 시사점 — 한국 화주·포워더 대상 구체 행동 1가지. "~까지 ~을 ~권고" 패턴.}
 
 ---
 
