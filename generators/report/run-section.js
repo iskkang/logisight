@@ -14,7 +14,7 @@ require('dotenv').config({ path: path.resolve(__dirname, '../../.env.local') });
 const Anthropic = require('@anthropic-ai/sdk');
 const SECTIONS  = require('./sections.config');
 const { loadAllMonthlyItems, loadIndexFactsheet, buildIndexTable } = require('./lib/index-factsheet');
-const { loadRailDelay, buildRailDelayTable } = require('./lib/rail-delay');
+const { buildOceanIndices } = require('./lib/ocean-indices');
 const { loadStyleGuide }      = require('./lib/style');
 const { runSection, saveSectionFile, parseFrontmatter } = require('./lib/section-runner');
 
@@ -76,25 +76,27 @@ async function main() {
       }
     }
 
-    const items      = sec.filterItems(allItems);
-    const needsIndex = (sec.id === 'ocean' || sec.id === 'index');
+    const items = sec.filterItems(allItems);
     console.log(`▶ [${sec.id}] ${sec.title} — 관련 기사 ${items.length}건`);
 
-    // ── rail 실측 표 ──
-    let railTable = null, railFactText = null;
-    if (sec.id === 'rail') {
-      const loaded = await loadRailDelay({ weeksBack: 8 });
-      const built  = buildRailDelayTable(loaded);
-      railTable    = built.table;
-      railFactText = built.factText;
-      console.log(`▶ [rail] MTL 실측 ${railFactText ? '주입' : '미수집'}`);
+    // ── ocean per-index 지수 블록 ──
+    let oceanBlocks = null, oceanFactText = null;
+    if (sec.id === 'ocean') {
+      const built  = await buildOceanIndices();
+      oceanBlocks  = built.blocks;
+      oceanFactText = built.factText;
+      console.log(`▶ [ocean] per-index 지수 블록 ${oceanBlocks.length}개 로드`);
     }
+
+    // ── rail 실측(MTL Link)은 외부 리포트에서 제외 ──
+    const railTable = null, railFactText = null;
 
     const result  = await runSection({
       client, sectionConfig: sec, items, styleGuide, month: MONTH,
-      indexTable:    needsIndex ? indexTable    : null,
-      indexFactText: needsIndex ? indexFactText : null,
-      railTable, railFactText,
+      indexTable:    sec.id === 'index' ? indexTable    : null,
+      indexFactText: sec.id === 'ocean' ? oceanFactText
+                   : sec.id === 'index' ? indexFactText : null,
+      railTable, railFactText, oceanBlocks,
     });
     const saved   = saveSectionFile(OUT_DIR, sec.id, MONTH, result.status, result.text, {
       pass1_tokens: result.pass1Tokens,
