@@ -157,37 +157,53 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
   console.log(`⏳ [${sectionConfig.id}] PASS 1 — 초안 생성...`);
   const pass1Res = await client.messages.create({
     model:      'claude-sonnet-4-6',
-    max_tokens: 3000,
+    max_tokens: 8000,   // 한국어 토큰 효율 고려 — 꼭지 4개 섹션도 안 잘리게
     system:     systemPrompt,
     messages:   [{ role: 'user', content: userPrompt }],
   });
   const draft = pass1Res.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
-  const pass1Tokens = (pass1Res.usage?.input_tokens || 0) + (pass1Res.usage?.output_tokens || 0);
-  console.log(`   ✓ PASS 1 완료 (${pass1Tokens} tokens)`);
+  const p1In  = pass1Res.usage?.input_tokens  || 0;
+  const p1Out = pass1Res.usage?.output_tokens || 0;
+  console.log(`   ✓ PASS 1 완료 (출력 ${p1Out} / 입력 ${p1In} tokens)`);
+  if (pass1Res.stop_reason === 'max_tokens')
+    console.warn(`   ⚠️ PASS 1이 max_tokens에서 잘림! 상향 필요`);
 
   // PASS 2: 자기검수 + 수정
   console.log(`⏳ [${sectionConfig.id}] PASS 2 — 자기검수·수정...`);
   const pass2Res = await client.messages.create({
     model:      'claude-sonnet-4-6',
-    max_tokens: 3500,
+    max_tokens: 8000,
     system:     buildCritiqueSystemPrompt(styleGuide),
     messages:   [{ role: 'user', content: buildCritiqueUserPrompt(draft) }],
   });
   let revised = pass2Res.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
-  const pass2Tokens = (pass2Res.usage?.input_tokens || 0) + (pass2Res.usage?.output_tokens || 0);
-  console.log(`   ✓ PASS 2 완료 (${pass2Tokens} tokens)`);
+  const p2In  = pass2Res.usage?.input_tokens  || 0;
+  const p2Out = pass2Res.usage?.output_tokens || 0;
+  console.log(`   ✓ PASS 2 완료 (출력 ${p2Out} / 입력 ${p2In} tokens)`);
+  if (pass2Res.stop_reason === 'max_tokens')
+    console.warn(`   ⚠️ PASS 2가 max_tokens에서 잘림! 상향 필요`);
 
   // 지표 표 삽입 — LLM이 그리지 않으므로 코드에서 주입
   if (indexTable) {
-    const anchor = revised.match(/##[^\n]*(?:운임|지수)[^\n]*/);
+    // 우선순위: "운임"+"지수" 동시 포함 > "지수 동향" > "운임"or"지수" 단독 > 첫 ## 다음 > 맨 앞
+    const anchor =
+      revised.match(/##[^\n]*운임[^\n]*지수[^\n]*/) ||
+      revised.match(/##[^\n]*지수[^\n]*동향[^\n]*/) ||
+      revised.match(/##[^\n]*(?:운임|지수)[^\n]*/);
     if (anchor) {
       revised = revised.replace(anchor[0], `${anchor[0]}\n\n${indexTable}\n`);
     } else {
-      revised = `## 01. 운임 지수 동향\n\n${indexTable}\n\n${revised}`;
+      const firstH = revised.match(/\n##\s[^\n]*\n/);
+      if (firstH) {
+        const at = revised.indexOf(firstH[0]) + firstH[0].length;
+        revised = revised.slice(0, at) + `\n${indexTable}\n\n` + revised.slice(at);
+      } else {
+        revised = `## 운임 지수 동향\n\n${indexTable}\n\n${revised}`;
+      }
     }
   }
 
-  return { status: 'draft', text: revised, pass1Tokens, pass2Tokens };
+  return { status: 'draft', text: revised, pass1Tokens: p1Out, pass2Tokens: p2Out };
 }
 
 // ── File I/O ─────────────────────────────────────────────────────────────────
