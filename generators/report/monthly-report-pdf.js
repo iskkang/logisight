@@ -105,6 +105,17 @@ blockquote p{margin:0;font-size:9.5pt}
 /* ── Footer text ── */
 p:last-child em,p:last-child{font-size:8pt;color:#8899aa}
 
+/* ── Tables (라카이브식 격자) ── */
+table{width:100%;border-collapse:collapse;margin:3mm 0 5mm;font-size:8.5pt;page-break-inside:avoid}
+thead th{background:#1E3A5F;color:#fff;font-weight:700;font-size:8pt;
+  padding:1.8mm 2.5mm;text-align:center;border:0.4px solid #2E86AB}
+tbody td{padding:1.4mm 2.5mm;border:0.4px solid #d0d7e0;color:#2c3e50}
+tbody td:first-child{font-weight:500;color:#1E3A5F;text-align:left}
+tbody td:not(:first-child){text-align:right;font-variant-numeric:tabular-nums}
+tbody tr:nth-child(even) td{background:#f4f8fb}
+.up{color:#d32f2f;font-weight:700}
+.down{color:#1565c0;font-weight:700}
+
 /* ── Chart box ── */
 .chart-box{height:62mm;margin:4mm 0 6mm;page-break-inside:avoid}
 .chart-box canvas{max-width:100%}
@@ -125,6 +136,10 @@ async function main() {
   console.log(`⏳ ${MONTH} 월간 리포트 PDF 생성 중...`);
   const md = loadMarkdown();
   let bodyHtml = marked.parse(md);
+  // ▲(상승)=적색, ▼(하락)=청색 — 한국 운임지수 관례
+  bodyHtml = bodyHtml
+    .replace(/▲/g, '<span class="up">▲</span>')
+    .replace(/▼/g, '<span class="down">▼</span>');
 
   // ── 차트 토큰 치환: [[CHART:id]] → <div class="chart-box"><canvas id="chart_id"></canvas></div>
   const ids = [];
