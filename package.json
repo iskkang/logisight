@@ -43,6 +43,8 @@
     "collect:monthly": "npx tsx collectors/index.ts monthly-analysis",
     "monthly:generate": "node generators/report/generate-monthly-analysis.js",
     "monthly:all": "npm run collect:monthly && npm run monthly:generate",
+    "report:monthly": "node generators/report/generate-monthly-analysis.js",
+    "monthly:full": "npm run collect:monthly && npm run report:monthly",
     "lint": "eslint collectors generators scripts --ext ts,js"
   },
   "dependencies": {
