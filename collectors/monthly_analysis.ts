@@ -4,10 +4,11 @@
 // 실행: npm run collect:monthly  (매월 2일 04:00 KST GitHub Actions)
 //
 // 운임 지수 값(WCI/FBX/SCFI/KCCI/CCFI/BDI)은 shipping_indices.ts 책임 — 여기서 다루지 않음
-// JS 렌더링/차단 소스(Maersk·DHL·Xeneta·一带一路)는 별도 carrier_reports_pw.ts (Playwright) 태스크로 분리
+// JS 렌더링/차단 소스(Maersk·DHL)는 별도 carrier_reports_pw.ts (Playwright) 태스크로 분리
 
 import { rateLimited } from './utils/rate_limiter';
 import { snapshotWriter } from './utils/snapshot_writer';
+import { fetchArticleBody } from './utils/article_body';
 import type { CollectorResult, NewsItem } from './types';
 
 const BOT_HEADERS = {
@@ -77,8 +78,52 @@ const MONTHLY_SOURCES: MonthlySource[] = [
     url: 'https://feeds.feedburner.com/gcaptain',
     type: 'rss',
     section: 'shipping',
-    category: 'deep_analysis',    // lane_causal → deep_analysis: lane_causal은 Linerlytica 전용
+    category: 'deep_analysis',
     topicFilter: /freight rate|container rate|ocean rate|shipping rate|carrier earning|TEU|FEU|SCFI|WCI|FBX|shipper|blank sailing|capacity|bunker|surcharge|GRI|peak season|Hormuz.*shipping|shipping.*Hormuz|Red Sea.*shipping|shipping.*disruption|port congestion|trade lane|vessel supply/i,
+  },
+
+  // ── 신규 소스 (본문 발췌로 깊이 확보) ──
+
+  // 항공 화물 — air 섹션 공백 해소
+  // WorldACD RSS: /feed/ URL이 article 링크 직접 포함 (확인됨)
+  {
+    name: 'WorldACD',
+    url: 'https://www.worldacd.com/feed/',
+    type: 'rss',
+    section: 'air',
+    category: 'deep_analysis',
+    topicFilter: /air cargo|airfreight|air freight|WorldACD|aviation cargo|belly|charter|TAC|yield|tonnage/i,
+  },
+
+  // 해운 심층 — Container News RSS (확인됨, slugURL 방식)
+  {
+    name: 'Container News',
+    url: 'https://container-news.com/feed/',
+    type: 'rss',
+    section: 'shipping',
+    category: 'deep_analysis',
+  },
+
+  // 철도 CIS/중앙아 — rail 섹션 차별점 (Logisight 핵심 노선)
+  // urlPattern: railfreight.com/(카테고리)/YYYY/MM/DD/슬러그/ (확인됨)
+  {
+    name: 'RailFreight BeltRoad',
+    url: 'https://www.railfreight.com/tag/khorgos/',
+    type: 'html',
+    section: 'rail',
+    category: 'deep_analysis',
+    urlPattern: /railfreight\.com\/[a-z-]+\/\d{4}\/\d{2}\/\d{2}\//,
+  },
+
+  // Xeneta: 항로별 운임 데이터 분석 블로그 (확인됨 — 본문 추출 가능)
+  // urlPattern: xeneta.com/blog/(슬러그) (확인됨)
+  {
+    name: 'Xeneta',
+    url: 'https://www.xeneta.com/blog',
+    type: 'html',
+    section: 'shipping',
+    category: 'deep_analysis',
+    urlPattern: /xeneta\.com\/blog\/[a-z0-9][a-z0-9-]+$/,
   },
 ];
 
@@ -231,15 +276,24 @@ export async function collect(): Promise<CollectorResult> {
       });
       continue;
     }
+    // Linerlytica는 fetchLinerlytica가 이미 인트로를 summary_en에 넣었으므로 본문 skip(유료벽)
+    const SKIP_BODY = new Set(['Linerlytica Market Pulse']);
     for (const item of res.value) {
+      let content = '';
+      if (!SKIP_BODY.has(src.name) && item.url?.startsWith('http')) {
+        content = await fetchArticleBody(item.url);  // 실패 시 '' — 수집 안 막음
+      }
       result.data.push({
         data_type: 'monthly_source',
         data_key: `MONTHLY_${src.category}_${Date.now()}_${Math.random().toString(36).slice(2)}`,
-        data_value: { ...item, section: src.section, language: 'en', category: src.category },
+        data_value: { ...item, content, section: src.section, language: 'en', category: src.category },
         source: src.name, source_url: src.url, is_complete: true,
       });
     }
-    console.log(`✅ ${src.name}: ${res.value.length}건`);
+    const bodyCount = res.value.filter((_, idx) => {
+      return !SKIP_BODY.has(src.name) && res.value[idx]?.url?.startsWith('http');
+    }).length;
+    console.log(`✅ ${src.name}: ${res.value.length}건 (본문 발췌 시도 ${bodyCount}건)`);
   }
 
   const success = result.data.filter(d => d.is_complete).length;

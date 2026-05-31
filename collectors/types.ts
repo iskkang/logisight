@@ -6,9 +6,10 @@ export interface NewsItem {
   published_at: string;
   summary_en: string;
   source: string;
-  og_image?: string;       // OG image URL (있으면 뉴스레터 이미지로 사용)
-  importance_score?: number; // 0~10, AI 평가
-  translated_ko?: string;  // AI 번역 결과
+  content?: string;          // 기사 본문 발췌 (최대 ~2500자)
+  og_image?: string;
+  importance_score?: number;
+  translated_ko?: string;
 }
 
 export interface CollectorData {

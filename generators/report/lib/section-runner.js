@@ -27,6 +27,11 @@ function parseFrontmatter(content) {
 
 // ── Prompt builders ──────────────────────────────────────────────────────────
 
+function bodyOf(i) {
+  if (i.content && i.content.length > 100) return i.content.slice(0, 1500);
+  return i.summary_en ? i.summary_en.slice(0, 300) : '';
+}
+
 function buildSectionSystemPrompt(styleGuide, focus) {
   return `당신은 Logisight(MTL Shipping Agency)의 글로벌 해운·물류 시장 수석 분석가입니다.
 독자: 한국 화주·포워더·MTL 영업팀 및 경영진.
@@ -44,11 +49,13 @@ ${styleGuide}
 --- 스타일 가이드 끝 ---
 
 # 데이터 사용 원칙 (환각 방지 — 최우선)
-1. 제공된 기사 제목·요약에 명시된 사실만 사용. 출처에 없는 수치 절대 생성 금지.
+1. 제공된 기사 제목·요약·본문에 명시된 사실만 사용. 출처에 없는 수치 절대 생성 금지.
 2. 운임 수치는 입력의 '확정 운임 지수' 블록 값만 인용. 그 외 숫자 생성 금지. 표는 시스템이 삽입하므로 본문엔 표를 그리지 말 것.
 3. 근거가 약한 내용은 [Logisight 분석] 마커 + (추정) 표기.
 4. 물류·해운·공급망과 무관한 기사는 제외.
 5. 입력 기사가 적으면 무리하게 분량 늘리지 말 것.
+6. 기사 "본문"에 담긴 구체 수치·인용·항로 정보를 적극 활용해 분석 깊이를 높일 것. 단 본문에서 인용한 수치·사실은 반드시 출처(매체명, 날짜)를 병기.
+7. 확정 운임 지수 표(시스템 주입, oneksa 검증치)와 기사 본문 수치는 구분할 것. 본문 수치는 서사에서 출처와 함께 인용(예: "Drewry 기준 상하이-로테르담 $2,147/FEU (gCaptain, 2026-04-24)").
 
 # 어휘 원칙
 - "트랜스퍼시픽" → "아시아-북미 항로"
@@ -78,8 +85,9 @@ function buildSectionUserPrompt(title, items, month, indexFactText) {
       `## 항로별 원인 코멘트 (${causal.length}건) — ★ 아래 코멘트에 명시된 원인만 사용, 창작 금지`
     );
     for (const i of causal) {
-      const summary = i.summary_en ? ` — ${i.summary_en.slice(0, 400)}` : '';
-      lines.push(`- [${i.source}] ${i.title}${summary}`);
+      lines.push(`- [${i.source}] ${i.title}`);
+      const body = bodyOf(i);
+      if (body) lines.push(`  본문: ${body}`);
       lines.push(`  URL: ${i.url}`);
     }
     lines.push('');
@@ -87,15 +95,19 @@ function buildSectionUserPrompt(title, items, month, indexFactText) {
   if (carrier.length > 0) {
     lines.push(`## 운임·시황 업데이트 (${carrier.length}건)`);
     for (const i of carrier) {
-      lines.push(`- [${i.source}] ${i.title} — ${i.url}`);
+      lines.push(`- [${i.source}] ${i.title}`);
+      const body = bodyOf(i);
+      if (body) lines.push(`  본문: ${body}`);
+      lines.push(`  URL: ${i.url}`);
     }
     lines.push('');
   }
   if (deep.length > 0) {
     lines.push(`## 심층 분석 기사 (${deep.length}건)`);
     for (const i of deep) {
-      const summary = i.summary_en ? ` — 요약: ${i.summary_en.slice(0, 180)}` : '';
-      lines.push(`- [${i.source}] ${i.title}${summary}`);
+      lines.push(`- [${i.source}] ${i.title}`);
+      const body = bodyOf(i);
+      if (body) lines.push(`  본문: ${body}`);
       lines.push(`  URL: ${i.url}`);
     }
     lines.push('');
@@ -103,8 +115,10 @@ function buildSectionUserPrompt(title, items, month, indexFactText) {
   if (other.length > 0) {
     lines.push(`## 기타 기사 (${other.length}건)`);
     for (const i of other) {
-      const summary = i.summary_en ? ` — ${i.summary_en.slice(0, 150)}` : '';
-      lines.push(`- [${i.source}] ${i.title}${summary}`);
+      lines.push(`- [${i.source}] ${i.title}`);
+      const body = bodyOf(i);
+      if (body) lines.push(`  본문: ${body}`);
+      lines.push(`  URL: ${i.url}`);
     }
     lines.push('');
   }
