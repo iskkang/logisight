@@ -4,7 +4,7 @@
 
 import * as dotenv from 'dotenv';
 import * as path from 'path';
-dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
+dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
 
 import { collect as collectShipping }    from './shipping_indices';
 import { collect as collectBunker }      from './bunker';
