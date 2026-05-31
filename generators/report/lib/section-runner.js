@@ -226,6 +226,10 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
         revised = `## 운임 지수 동향\n\n${indexTable}\n\n${revised}`;
       }
     }
+    // ocean 섹션에만 운임·벙커 차트 토큰 추가 (index 섹션 중복 방지)
+    if (sectionConfig.id === 'ocean') {
+      revised += '\n\n[[CHART:ocean_scfi]]\n\n[[CHART:ocean_bdi]]\n\n[[CHART:ocean_bunker]]\n';
+    }
   }
 
   // rail 실측 표 삽입 — 04-3 소제목 아래

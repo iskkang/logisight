@@ -1,6 +1,6 @@
 'use strict';
 // generators/report/monthly-report-pdf.js
-// 월간 리포트 마크다운 → PDF 변환
+// 월간 리포트 마크다운 → PDF 변환 (Chart.js 차트 주입 포함)
 // 사용법:
 //   node monthly-report-pdf.js
 //   node monthly-report-pdf.js --month=2026-04
@@ -9,6 +9,7 @@ const fs        = require('fs');
 const path      = require('path');
 const { marked } = require('marked');
 const puppeteer = require('puppeteer-core');
+const { buildChart } = require('./lib/chart-data');
 
 const TODAY    = new Date().toISOString().slice(0, 10);
 const monthArg = process.argv.find(a => a.startsWith('--month='));
@@ -29,8 +30,31 @@ function loadMarkdown() {
     .trim();
 }
 
-function buildHtml(mdContent) {
-  const bodyHtml = marked.parse(mdContent);
+function buildHtml(bodyHtml, chartConfigs = []) {
+  const chartScript = chartConfigs.length ? `
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const CFG = ${JSON.stringify(chartConfigs)};
+CFG.forEach(c => {
+  const el = document.getElementById('chart_' + c.id);
+  if (!el) return;
+  new Chart(el, {
+    type: 'line', data: c.data,
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: false,
+      plugins: {
+        title: { display: true, text: c.title, font: { size: 12, weight: '700' }, color: '#1E3A5F' },
+        legend: { position: 'bottom', labels: { font: { size: 9 }, boxWidth: 16 } }
+      },
+      scales: {
+        x: { ticks: { font: { size: 7 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
+        y: { title: { display: true, text: c.yLabel, font: { size: 8 } }, ticks: { font: { size: 7 } } }
+      }
+    }
+  });
+});
+window.__chartsReady = true;
+</script>` : '';
 
   return `<!DOCTYPE html>
 <html lang="ko">
@@ -80,6 +104,10 @@ blockquote p{margin:0;font-size:9.5pt}
 
 /* ── Footer text ── */
 p:last-child em,p:last-child{font-size:8pt;color:#8899aa}
+
+/* ── Chart box ── */
+.chart-box{height:62mm;margin:4mm 0 6mm;page-break-inside:avoid}
+.chart-box canvas{max-width:100%}
 </style>
 </head>
 <body>
@@ -88,14 +116,32 @@ p:last-child em,p:last-child{font-size:8pt;color:#8899aa}
   <div class="rh-meta">월간 시장 인텔리전스 &nbsp;·&nbsp; ${MONTH} &nbsp;·&nbsp; MTL Shipping Agency</div>
 </div>
 ${bodyHtml}
+${chartScript}
 </body>
 </html>`;
 }
 
 async function main() {
   console.log(`⏳ ${MONTH} 월간 리포트 PDF 생성 중...`);
-  const md   = loadMarkdown();
-  const html = buildHtml(md);
+  const md = loadMarkdown();
+  let bodyHtml = marked.parse(md);
+
+  // ── 차트 토큰 치환: [[CHART:id]] → <div class="chart-box"><canvas id="chart_id"></canvas></div>
+  const ids = [];
+  const tokenRe = /<p>\s*\[\[CHART:([a-z0-9_]+)\]\]\s*<\/p>|\[\[CHART:([a-z0-9_]+)\]\]/g;
+  bodyHtml = bodyHtml.replace(tokenRe, (_m, a, b) => {
+    const id = a || b; ids.push(id);
+    return `<div class="chart-box"><canvas id="chart_${id}"></canvas></div>`;
+  });
+
+  const chartConfigs = [];
+  for (const id of [...new Set(ids)]) {
+    const c = await buildChart(id);
+    if (c) { chartConfigs.push(c); console.log(`  ✓ 차트 ${id}: ${c.data.datasets.length}계열`); }
+    else   { console.warn(`  ⚠️ 차트 ${id} 데이터 없음 — 빈 자리 처리`); }
+  }
+
+  const html = buildHtml(bodyHtml, chartConfigs);
 
   const browser = await puppeteer.launch({
     executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
@@ -112,8 +158,17 @@ async function main() {
   try {
     const page = await browser.newPage();
     await page.setViewport({ width: 794, height: 1123, deviceScaleFactor: 1 });
-    console.log('⏳ 페이지 로드 중 (Noto Sans KR CDN)...');
+    console.log('⏳ 페이지 로드 중 (Noto Sans KR CDN, Chart.js)...');
     await page.setContent(html, { waitUntil: 'networkidle0', timeout: 30000 });
+
+    // 차트 렌더 대기
+    if (chartConfigs.length) {
+      await page.evaluate(() => new Promise(res => {
+        let n = 0;
+        const t = setInterval(() => { if (window.__chartsReady || n++ > 25) { clearInterval(t); res(); } }, 100);
+      }));
+      await new Promise(r => setTimeout(r, 400));  // 캔버스 페인트 여유
+    }
 
     fs.mkdirSync(OUT_DIR, { recursive: true });
     await page.pdf({

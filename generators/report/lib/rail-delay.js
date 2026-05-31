@@ -104,6 +104,8 @@ function buildRailDelayTable(loaded) {
     ...tableRows,
     ``,
     `※ ${latestWeek} 기준, DEST_ARR(최종 도착). 음수=예정 대비 조기 도착. indicative(표본<3) 제외. 출처: MTL Link TCR-Tracking 실측.`,
+    ``,
+    `[[CHART:rail_otp]]`,
   ].join('\n');
 
   const factText = [

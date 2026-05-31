@@ -124,8 +124,8 @@ export async function collect(): Promise<CollectorResult> {
 
   const dbRows: Record<string, unknown>[] = [];
 
-  // 최근 8주 (약 2개월) 분량만 처리
-  for (const row of rows.slice(0, 8)) {
+  // 최대 60주 (~1년치) 처리 — upsert가 index_code+week_date 유니크라 멱등
+  for (const row of rows.slice(0, 60)) {
     const rawDate = row[dateIdx]?.trim() ?? '';
     // YYYY-MM-DD 또는 YYYY.MM.DD 형식 허용
     const normDate = rawDate.replace(/\./g, '-');
