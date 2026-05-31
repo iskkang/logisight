@@ -28,6 +28,7 @@ import { collect as collectOceanNews }         from './ocean_news';
 import { collect as collectChokepoints }       from './chokepoints';
 import { collect as collectPortStats }         from './port_stats';
 import { collect as collectMonthlyAnalysis }   from './monthly_analysis';
+import { collect as collectFreightIndexExcel } from './freight_index_excel';
 
 const GROUPS = [
   {
@@ -100,7 +101,8 @@ const GROUPS = [
   {
     name: 'monthly-analysis',
     collectors: [
-      { name: 'monthly_analysis', fn: collectMonthlyAnalysis },
+      { name: 'monthly_analysis',     fn: collectMonthlyAnalysis },
+      { name: 'freight_index_excel',  fn: collectFreightIndexExcel },
     ],
   },
 ];
