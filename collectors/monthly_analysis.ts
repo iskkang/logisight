@@ -1,9 +1,10 @@
 // collectors/monthly_analysis.ts
-// 월간 분석 소스 수집기 — 운임지수·기업 월간업데이트·심층분석 (daily 파이프라인과 분리)
-// data_type: 'monthly_source' 로 저장 — curate-rail/ocean.js가 건드리지 않음
+// 월간 분석 소스 수집기 — 기업 업데이트·심층 분석 (daily 파이프라인과 분리)
+// data_type: 'monthly_source' — curate-rail/ocean.js가 건드리지 않음
 // 실행: npm run collect:monthly  (매월 2일 04:00 KST GitHub Actions)
-
-// TODO: oneksa.kr 엑셀 다운로드는 collectors/utils/xlsx_parser.ts 활용해 별도 PR에서 추가
+//
+// 운임 지수 값(WCI/FBX/SCFI/KCCI/CCFI/BDI)은 shipping_indices.ts 책임 — 여기서 다루지 않음
+// JS 렌더링/차단 소스(Maersk·DHL·Xeneta·一带一路)는 별도 carrier_reports_pw.ts (Playwright) 태스크로 분리
 
 import { rateLimited } from './utils/rate_limiter';
 import { snapshotWriter } from './utils/snapshot_writer';
@@ -20,42 +21,56 @@ interface MonthlySource {
   url: string;
   type: 'rss' | 'html';
   section: 'shipping' | 'rail' | 'trade';
-  category: 'freight_index' | 'carrier_update' | 'deep_analysis';
+  category: 'carrier_update' | 'deep_analysis';
+  urlPattern?: RegExp;  // html 전용: 기사 URL 경로 패턴 (메뉴·푸터 제거용)
 }
 
 const MONTHLY_SOURCES: MonthlySource[] = [
-  // ── 운임 지수 (freight_index) ──
-  { name: 'Freightos FBX',        url: 'https://www.freightos.com/freight-industry-updates/', type: 'html', section: 'shipping', category: 'freight_index' },
-  { name: 'Drewry WCI',           url: 'https://www.drewry.co.uk/supply-chain-advisors/supply-chain-expertise/world-container-index-assessed-by-drewry', type: 'html', section: 'shipping', category: 'freight_index' },
-  { name: 'Xeneta XSI',           url: 'https://www.xeneta.com/news',                          type: 'html', section: 'shipping', category: 'freight_index' },
-  { name: 'KOBC KCCI',            url: 'https://www.kobc.or.kr/ebz/shippinginfo/kcci/gridList.do?mId=0304000000', type: 'html', section: 'shipping', category: 'freight_index' },
+  // ── deep_analysis: RSS (검증 완료, 요약 포함 40건) ──
+  {
+    name: 'JOC',
+    url: 'https://feeds.feedburner.com/joc/aajm',
+    type: 'rss',
+    section: 'shipping',
+    category: 'deep_analysis',
+  },
 
-  // ── 기업 월간 Market Update (carrier_update) ──
-  // 주의: Maersk 캐시가 오래될 수 있음 (확인: 2024-07 기준), DHL도 신선도 점검 필요
-  { name: 'Maersk Market Update', url: 'https://www.maersk.com/news/category/news',             type: 'html', section: 'shipping', category: 'carrier_update' },
-  { name: 'DHL Market Update',    url: 'https://lot.dhl.com/categories/resources/',             type: 'html', section: 'shipping', category: 'carrier_update' },
-  { name: 'Flexport Update',      url: 'https://www.flexport.com/global-logistics-update/',     type: 'html', section: 'shipping', category: 'carrier_update' },
-
-  // ── 심층 분석 (deep_analysis) ──
-  // Sea-Intelligence: shipshipship.uk 애그리게이터 경유 (직접 접근 시 유료 차단)
-  { name: 'Sea-Intelligence',     url: 'https://www.shipshipship.uk/publications/362/sea-intelligence', type: 'html', section: 'shipping', category: 'deep_analysis' },
-  { name: 'JOC Container',        url: 'https://www.joc.com/maritime/container-shipping-news',  type: 'html', section: 'shipping', category: 'deep_analysis' },
-  { name: '一带一路 데이터',        url: 'https://www.yidaiyilu.gov.cn/dataChart',               type: 'html', section: 'rail',     category: 'deep_analysis' },
+  // ── carrier_update: SSR HTML + urlPattern (메뉴·푸터 제거) ──
+  {
+    name: 'Freightos Weekly Update',
+    url: 'https://www.freightos.com/freight-industry-updates/',
+    type: 'html',
+    section: 'shipping',
+    category: 'carrier_update',
+    // 슬래시 뒤 슬래그가 반드시 있어야 함 — 카테고리 페이지(/weekly-freight-updates/) 제외
+    urlPattern: /\/freight-industry-updates\/(weekly-freight-updates|market-updates)\/.+/,
+  },
+  // Flexport: JS 렌더링 확인됨 → Playwright 기반 carrier_reports_pw.ts (TASK C)로 이동
 ];
+
+// ocean_news.ts 원본을 건드리지 않기 위해 monthly 전용 파서를 여기에 둔다.
 
 async function parseRss(src: MonthlySource): Promise<NewsItem[]> {
   const res = await fetch(src.url, { headers: BOT_HEADERS, signal: AbortSignal.timeout(10000) });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const text = await res.text();
   const items: NewsItem[] = [];
+
   for (const m of text.matchAll(/<item>([\s\S]*?)<\/item>/g)) {
     const b = m[1];
-    const title   = (b.match(/<title><!\[CDATA\[(.*?)\]\]>/)?.[1] || b.match(/<title>(.*?)<\/title>/)?.[1] || '').trim();
-    const link    = (b.match(/<link>(.*?)<\/link>/)?.[1] || '').trim();
-    const pubDate = b.match(/<pubDate>(.*?)<\/pubDate>/)?.[1] || '';
+    const title = (b.match(/<title><!\[CDATA\[([\s\S]*?)\]\]>/)?.[1] || b.match(/<title>([\s\S]*?)<\/title>/)?.[1] || '').trim();
+    const link  = (b.match(/<link>([\s\S]*?)<\/link>/)?.[1] || '').trim();
+    const desc  = (b.match(/<description><!\[CDATA\[([\s\S]*?)\]\]>/)?.[1] || b.match(/<description>([\s\S]*?)<\/description>/)?.[1] || '').trim();
+    const pub   = b.match(/<pubDate>([\s\S]*?)<\/pubDate>/)?.[1] || '';
     if (!title || !link) continue;
-    items.push({ title, url: link, published_at: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(), summary_en: '', source: src.name });
-    if (items.length >= 5) break;
+    items.push({
+      title,
+      url: link,
+      published_at: pub ? new Date(pub).toISOString() : new Date().toISOString(),
+      summary_en: desc.replace(/<[^>]+>/g, '').slice(0, 400),
+      source: src.name,
+    });
+    if (items.length >= 10) break;  // 월간 분석은 10건
   }
   return items;
 }
@@ -67,14 +82,17 @@ async function fetchHtmlLinks(src: MonthlySource): Promise<NewsItem[]> {
   const base = new URL(src.url).origin;
   const items: NewsItem[] = [];
   const seen = new Set<string>();
-  for (const m of html.matchAll(/<a[^>]+href="([^"]+)"[^>]*>([^<]{10,120})<\/a>/g)) {
+
+  for (const m of html.matchAll(/<a[^>]+href="([^"]+)"[^>]*>([^<]{10,160})<\/a>/g)) {
     let href = m[1].trim();
     const title = m[2].trim().replace(/\s+/g, ' ');
     if (!href || href.startsWith('javascript') || href.startsWith('#') || href.startsWith('mailto')) continue;
-    if (seen.has(title)) continue;
     if (href.startsWith('/')) href = `${base}${href}`;
     if (!href.startsWith('http')) continue;
-    seen.add(title);
+    // urlPattern이 있으면 기사 경로만 채택 — 메뉴·푸터 링크 차단
+    if (src.urlPattern && !src.urlPattern.test(href)) continue;
+    if (seen.has(href)) continue;
+    seen.add(href);
     items.push({ title, url: href, published_at: new Date().toISOString(), summary_en: '', source: src.name });
     if (items.length >= 5) break;
   }
