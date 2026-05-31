@@ -54,19 +54,32 @@ const SECTIONS = [
   },
   {
     id: 'rail',
-    title: '04. 철도 시황',
+    title: '04. 철도 시황 (TCR·TSR·유라시아)',
     focus:
-      'CIS·중앙아시아 철도 운송 동향 — TCR(중국횡단철도)/TSR(시베리아횡단철도) 운임·리드타임·운행 현황, ' +
-      '블록 트레인 공급, 한국-CIS 구간 지연 이슈.',
+      '중국-유럽 철도(TCR, 중유반열·일대일로), 시베리아 횡단철도(TSR) 등 ' +
+      '한국·중국·중앙아시아·러시아를 잇는 유라시아 대륙철도 동향에 한정. ' +
+      '국경 통관 정체(호르고스·알라산쿠·도스틱 등), 블록 트레인 공급·수요, 운임, 리드타임을 다룸. ' +
+      '★ 미국·캐나다 등 북미 대륙철도(UP·NS·BNSF), 독일·서유럽 자국 내 철도 이슈는 이 섹션에서 다루지 말 것.',
     filterItems: (items) => {
-      const kw = [
-        'rail', 'TCR', 'TSR', 'TITR', 'TMR', 'train', 'block train',
-        'silk road', 'belt and road', 'Almaty', 'Andijan', 'Bishkek',
-        'Kazakhstan', 'Uzbekistan', 'Kyrgyz',
-        '철도', '중앙아시아', '시베리아', '중국횡단', '대륙철도',
-        '카자흐스탄', '우즈베키스탄', '키르기즈',
+      const INCLUDE = [
+        'TCR','TSR','TITR','TMR','china-europe','china europe','중유반열','중구반열',
+        'belt and road','일대일로','silk road','block train','블록 트레인','중앙아시아','central asia',
+        'kazakhstan','카자흐스탄','uzbekistan','우즈베키스탄','kyrgyz','키르기스',
+        'khorgos','호르고스','alashankou','알라산쿠','알라샨커우','dostyk','도스틱',
+        'rzd','시베리아','trans-siberian','eurasia','유라시아','중국횡단','시베리아횡단',
+        'xian','시안','chongqing','충칭','연운항','blank train',
       ];
-      return items.filter(i => matches(i, kw));
+      const EXCLUDE = [
+        'union pacific','norfolk southern','UP-NS','UP/NS','BNSF','CSX','CN rail','CPKC',
+        'STB','surface transportation board','미국 철도','북미 대륙','대륙횡단 철도 합병',
+        'german rail','deutsche bahn','독일 북부 철도','독일 철도',
+      ];
+      const txt = i => `${i.title} ${i.summary_en||''} ${i.content||''} ${i.source||''}`.toLowerCase();
+      return items.filter(i => {
+        const t = txt(i);
+        if (EXCLUDE.some(k => t.includes(k.toLowerCase()))) return false;   // 북미·서유럽 우선 배제
+        return i.section === 'rail' || INCLUDE.some(k => t.includes(k.toLowerCase()));
+      });
     },
   },
   {

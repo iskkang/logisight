@@ -17,11 +17,13 @@ const BOT_HEADERS = {
   'Accept-Language': 'en-US,en;q=0.9',
 };
 
+const BAD_TITLE = /\| RailFreight\.com|^Asia-Europe$|^Belt and Road$|^RailFreight/i;
+
 interface MonthlySource {
   name: string;
   url: string;
   type: 'rss' | 'html' | 'linerlytica';
-  section: 'shipping' | 'rail' | 'trade';
+  section: 'shipping' | 'air' | 'rail' | 'trade';
   category: 'carrier_update' | 'deep_analysis' | 'lane_causal';
   urlPattern?: RegExp;   // html 전용: 기사 URL 경로 패턴 (메뉴·푸터 제거용)
   topicFilter?: RegExp;  // rss 전용: 이 패턴에 매칭되는 항목만 보관 (일반 소스 노이즈 제거)
@@ -104,16 +106,22 @@ const MONTHLY_SOURCES: MonthlySource[] = [
     category: 'deep_analysis',
   },
 
-  // 철도 CIS/중앙아 — rail 섹션 차별점 (Logisight 핵심 노선)
-  // urlPattern: railfreight.com/(카테고리)/YYYY/MM/DD/슬러그/ (확인됨)
-  {
-    name: 'RailFreight BeltRoad',
-    url: 'https://www.railfreight.com/tag/khorgos/',
-    type: 'html',
-    section: 'rail',
-    category: 'deep_analysis',
-    urlPattern: /railfreight\.com\/[a-z-]+\/\d{4}\/\d{2}\/\d{2}\//,
-  },
+  // ── 철도 (TCR/TSR/CIS) — rail 섹션 전용, 아시아-유라시아 한정 ──
+  // RSS (요약 포함): RailFreight BeltAndRoad·RZD-Partner·Vgudok
+  // 본문 발췌: RailFreight 부분 유료벽 → SKIP_BODY 처리, RSS 요약만 사용
+  { name: 'RailFreight BeltAndRoad', url: 'https://www.railfreight.com/category/beltandroad/feed/',
+    type: 'rss', section: 'rail', category: 'deep_analysis' },
+  { name: 'RZD-Partner', url: 'https://www.rzd-partner.ru/news/xml.php',
+    type: 'rss', section: 'rail', category: 'deep_analysis' },
+  { name: 'Vgudok', url: 'https://vgudok.com/rss.xml',
+    type: 'rss', section: 'rail', category: 'deep_analysis' },
+  // HTML (국경/중앙아/일대일로) — urlPattern으로 기사만, 본문 skip(유료벽)
+  { name: 'RailFreight Khorgos', url: 'https://www.railfreight.com/tag/khorgos/',
+    type: 'html', section: 'rail', category: 'deep_analysis',
+    urlPattern: /railfreight\.com\/[a-z-]+\/\d{4}\/\d{2}\/\d{2}\// },
+  { name: '一带一路 中欧班列', url: 'https://www.yidaiyilu.gov.cn/news',
+    type: 'html', section: 'rail', category: 'deep_analysis',
+    urlPattern: /yidaiyilu\.gov\.cn\/.*\/\d+\.html?/ },
 
   // Xeneta: 항로별 운임 데이터 분석 블로그 (확인됨 — 본문 추출 가능)
   // urlPattern: xeneta.com/blog/(슬러그) (확인됨)
@@ -142,6 +150,7 @@ async function parseRss(src: MonthlySource): Promise<NewsItem[]> {
     const desc  = (b.match(/<description><!\[CDATA\[([\s\S]*?)\]\]>/)?.[1] || b.match(/<description>([\s\S]*?)<\/description>/)?.[1] || '').trim();
     const pub   = b.match(/<pubDate>([\s\S]*?)<\/pubDate>/)?.[1] || '';
     if (!title || !link) continue;
+    if (BAD_TITLE.test(title.trim())) continue;   // 사이트명/카테고리 헤더 skip
     items.push({
       title,
       url: link,
@@ -277,7 +286,7 @@ export async function collect(): Promise<CollectorResult> {
       continue;
     }
     // Linerlytica는 fetchLinerlytica가 이미 인트로를 summary_en에 넣었으므로 본문 skip(유료벽)
-    const SKIP_BODY = new Set(['Linerlytica Market Pulse']);
+    const SKIP_BODY = new Set(['Linerlytica Market Pulse', 'RailFreight BeltAndRoad', 'RailFreight Khorgos']);
     for (const item of res.value) {
       let content = '';
       if (!SKIP_BODY.has(src.name) && item.url?.startsWith('http')) {
