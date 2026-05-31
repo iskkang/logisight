@@ -45,7 +45,18 @@ const MONTHLY_SOURCES: MonthlySource[] = [
     // 슬래시 뒤 슬래그가 반드시 있어야 함 — 카테고리 페이지(/weekly-freight-updates/) 제외
     urlPattern: /\/freight-industry-updates\/(weekly-freight-updates|market-updates)\/.+/,
   },
-  // Flexport: JS 렌더링 확인됨 → Playwright 기반 carrier_reports_pw.ts (TASK C)로 이동
+  {
+    name: 'Flexport Update',
+    url: 'https://www.flexport.com/global-logistics-update/',
+    type: 'html',
+    section: 'shipping',
+    category: 'carrier_update',
+    // 기사 slug는 항상 "월명-일-연도" 시작 (예: /global-logistics-update/may-28-2026-...)
+    // 월명 화이트리스트로 좁혀 customs-suite 등 잡링크 차단
+    // Maersk: robots 차단(ToS 위반 소지), DHL: 최신 콘텐츠 JS 지연로드 → 두 소스 모두 자동수집 제외,
+    //         월간 리포트 작성 시 운영자가 수동 확인 권장
+    urlPattern: /\/global-logistics-update\/(january|february|march|april|may|june|july|august|september|october|november|december)-\d{1,2}-\d{4}/i,
+  },
 ];
 
 // ocean_news.ts 원본을 건드리지 않기 위해 monthly 전용 파서를 여기에 둔다.
@@ -83,6 +94,7 @@ async function fetchHtmlLinks(src: MonthlySource): Promise<NewsItem[]> {
   const items: NewsItem[] = [];
   const seen = new Set<string>();
 
+  // Primary pass: anchors with visible direct text (works for Freightos etc.)
   for (const m of html.matchAll(/<a[^>]+href="([^"]+)"[^>]*>([^<]{10,160})<\/a>/g)) {
     let href = m[1].trim();
     const title = m[2].trim().replace(/\s+/g, ' ');
@@ -96,6 +108,29 @@ async function fetchHtmlLinks(src: MonthlySource): Promise<NewsItem[]> {
     items.push({ title, url: href, published_at: new Date().toISOString(), summary_en: '', source: src.name });
     if (items.length >= 5) break;
   }
+
+  // Fallback pass: href-only extraction for urlPattern sources whose anchors
+  // contain child elements (JS-framework pages like Flexport/Gatsby).
+  // Title is derived from the URL slug by stripping the date prefix.
+  if (src.urlPattern && items.length < 5) {
+    for (const m of html.matchAll(/<a\b[^>]+href="([^"]+)"/g)) {
+      let href = m[1].trim();
+      if (!href || href.startsWith('javascript') || href.startsWith('#') || href.startsWith('mailto')) continue;
+      if (href.startsWith('/')) href = `${base}${href}`;
+      if (!href.startsWith('http')) continue;
+      if (!src.urlPattern.test(href)) continue;
+      if (seen.has(href)) continue;
+      seen.add(href);
+      const slug = href.replace(/\/$/, '').split('/').pop() ?? '';
+      // strip leading "month-day-year-" date prefix from slug
+      const titleRaw = slug.replace(/^[a-z]+-\d{1,2}-\d{4}-?/, '').replace(/-/g, ' ').trim();
+      if (!titleRaw) continue;
+      const title = titleRaw.charAt(0).toUpperCase() + titleRaw.slice(1);
+      items.push({ title, url: href, published_at: new Date().toISOString(), summary_en: '', source: src.name });
+      if (items.length >= 5) break;
+    }
+  }
+
   return items;
 }
 
