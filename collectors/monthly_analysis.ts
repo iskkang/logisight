@@ -17,7 +17,7 @@ const BOT_HEADERS = {
   'Accept-Language': 'en-US,en;q=0.9',
 };
 
-const BAD_TITLE = /\| RailFreight\.com|^Asia-Europe$|^Belt and Road$|^RailFreight/i;
+const BAD_TITLE = /\| RailFreight\.com|^Asia-Europe$|^Belt and Road$|^RailFreight$|^SeaNews$|^Global Times$/i;
 
 interface MonthlySource {
   name: string;
@@ -106,22 +106,14 @@ const MONTHLY_SOURCES: MonthlySource[] = [
     category: 'deep_analysis',
   },
 
-  // ── 철도 (TCR/TSR/CIS) — rail 섹션 전용, 아시아-유라시아 한정 ──
-  // RSS (요약 포함): RailFreight BeltAndRoad·RZD-Partner·Vgudok
-  // 본문 발췌: RailFreight 부분 유료벽 → SKIP_BODY 처리, RSS 요약만 사용
+  // ── 철도 (TCR/TSR/CIS) — 영문 전용 3개, 번역 불필요 ──
+  // RailFreight: 본문 skip(부분 유료벽). SeaNews·Global Times: 본문 발췌 양호.
   { name: 'RailFreight BeltAndRoad', url: 'https://www.railfreight.com/category/beltandroad/feed/',
     type: 'rss', section: 'rail', category: 'deep_analysis' },
-  { name: 'RZD-Partner', url: 'https://www.rzd-partner.ru/news/xml.php',
+  { name: 'SeaNews EN', url: 'https://seanews.ru/en/feed/',
     type: 'rss', section: 'rail', category: 'deep_analysis' },
-  { name: 'Vgudok', url: 'https://vgudok.com/rss.xml',
+  { name: 'Global Times BRI', url: 'https://www.globaltimes.cn/rss/outbrain.xml',
     type: 'rss', section: 'rail', category: 'deep_analysis' },
-  // HTML (국경/중앙아/일대일로) — urlPattern으로 기사만, 본문 skip(유료벽)
-  { name: 'RailFreight Khorgos', url: 'https://www.railfreight.com/tag/khorgos/',
-    type: 'html', section: 'rail', category: 'deep_analysis',
-    urlPattern: /railfreight\.com\/[a-z-]+\/\d{4}\/\d{2}\/\d{2}\// },
-  { name: '一带一路 中欧班列', url: 'https://www.yidaiyilu.gov.cn/news',
-    type: 'html', section: 'rail', category: 'deep_analysis',
-    urlPattern: /yidaiyilu\.gov\.cn\/.*\/\d+\.html?/ },
 
   // Xeneta: 항로별 운임 데이터 분석 블로그 (확인됨 — 본문 추출 가능)
   // urlPattern: xeneta.com/blog/(슬러그) (확인됨)
@@ -286,7 +278,7 @@ export async function collect(): Promise<CollectorResult> {
       continue;
     }
     // Linerlytica는 fetchLinerlytica가 이미 인트로를 summary_en에 넣었으므로 본문 skip(유료벽)
-    const SKIP_BODY = new Set(['Linerlytica Market Pulse', 'RailFreight BeltAndRoad', 'RailFreight Khorgos']);
+    const SKIP_BODY = new Set(['Linerlytica Market Pulse', 'RailFreight BeltAndRoad']);
     for (const item of res.value) {
       let content = '';
       if (!SKIP_BODY.has(src.name) && item.url?.startsWith('http')) {
