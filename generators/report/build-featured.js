@@ -8,6 +8,7 @@ require('dotenv').config({ path: path.resolve(__dirname, '../../.env.local') });
 if (typeof globalThis.WebSocket === 'undefined') { try { globalThis.WebSocket = require('ws'); } catch (_) {} }
 const Anthropic = require('@anthropic-ai/sdk');
 const { loadAllMonthlyItems } = require('./lib/index-factsheet');
+const SECTIONS = require('./sections.config');
 
 const TODAY    = new Date().toISOString().slice(0, 10);
 const monthArg = process.argv.find(a => a.startsWith('--month='));
@@ -84,8 +85,50 @@ async function main() {
     );
   }
 
-  const section = `\n\n---\n\n<div class="page-break"></div>\n\n# 주요 해운 기사\n\n${blocks.join('\n\n')}\n`;
-  fs.appendFileSync(DRAFT, section, 'utf-8');
-  console.log(`✅ 대표 기사 ${blocks.length}건 추가 → ${DRAFT}`);
+  // ── 주요 해운 기사: 해운(02) 다음·항공(03) 앞에 삽입 (맨 끝 append 아님) ──
+  const featured = `<div class="page-break"></div>\n\n# 주요 해운 기사\n\n${blocks.join('\n\n')}\n`;
+  let draft = fs.readFileSync(DRAFT, 'utf-8');
+
+  // 재실행 시 중복 방지: 이미 삽입돼 있으면 건너뜀(먼저 assemble 재실행 권장)
+  if (/\n#{1,3}\s+주요\s*해운\s*기사/.test(draft)) {
+    console.log('⚠️ draft에 이미 "주요 해운 기사"가 있음 — 삽입 건너뜀(중복 방지). 새로 넣으려면 assemble 먼저 재실행.');
+    return;
+  }
+
+  const esc        = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const airTitle   = (SECTIONS.find(s => s.id === 'air')   || {}).title || '항공 화물';
+  const oceanTitle = (SECTIONS.find(s => s.id === 'ocean') || {}).title || '해운 시황';
+
+  // 1순위: 항공 섹션 제목(예: "# 03. 항공 화물") 바로 앞에 삽입
+  let m = draft.match(new RegExp('\\n#{1,3}\\s+' + esc(airTitle)));
+  // 2순위: 항공 번호 헤딩(03.) — 제목이 미세하게 달라진 경우
+  if (!m) m = draft.match(/\n#{1,3}\s+0?3\.\s[^\n]*/);
+
+  if (m) {
+    const at = draft.indexOf(m[0]) + 1;                 // 앞 개행 다음 '#' 위치
+    draft = draft.slice(0, at) + featured + '\n\n---\n\n' + draft.slice(at);
+    fs.writeFileSync(DRAFT, draft, 'utf-8');
+    console.log(`✅ 대표 기사 ${blocks.length}건 — 항공 섹션 앞에 삽입`);
+  } else {
+    // 3순위(폴백): 해운 섹션 뒤 첫 구분선에 삽입
+    const om = draft.match(new RegExp('#{1,3}\\s+' + esc(oceanTitle)));
+    let inserted = false;
+    if (om) {
+      const sepRe = /\n\n---\n\n/g;
+      sepRe.lastIndex = draft.indexOf(om[0]) + om[0].length;
+      const sep = sepRe.exec(draft);
+      if (sep) {
+        const at = sep.index + sep[0].length;
+        draft = draft.slice(0, at) + featured + '\n\n---\n\n' + draft.slice(at);
+        fs.writeFileSync(DRAFT, draft, 'utf-8');
+        inserted = true;
+        console.log(`✅ 대표 기사 ${blocks.length}건 — 해운 섹션 뒤에 삽입(폴백)`);
+      }
+    }
+    if (!inserted) {
+      fs.appendFileSync(DRAFT, `\n\n---\n\n${featured}`, 'utf-8');
+      console.log(`⚠️ 항공/해운 섹션 위치 못 찾음 — 대표 기사 ${blocks.length}건 맨 끝에 추가`);
+    }
+  }
 }
 main().catch(e => { console.error(e); process.exit(1); });
