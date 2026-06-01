@@ -219,15 +219,15 @@ function buildTable(articles, month) {
   const rows = [];
   const src  = '[Landbridge](http://www.landbridge.com/yaowen/)';
 
-  if (maxTrains > 0) rows.push(`| 中欧班列 편수 | **${maxTrains.toLocaleString()}列** | ${yoyStr} | ${month} | ${src} |`);
-  if (maxTeu    > 0) rows.push(`| 화물량 | **${maxTeu >= 10000 ? (maxTeu / 10000).toFixed(1) + '万' : maxTeu.toFixed(0)}TEU** | — | ${month} | ${src} |`);
-  if (maxValue  > 0) rows.push(`| 货値 | **${maxValue.toFixed(1)}억 USD** | — | ${month} | ${src} |`);
+  if (maxTrains > 0) rows.push(`| 중국-유럽 화물열차 운행편수 | **${maxTrains.toLocaleString()}편** | ${yoyStr} | ${month} |`);
+  if (maxTeu    > 0) rows.push(`| 화물량 | **${maxTeu >= 10000 ? (maxTeu / 10000).toFixed(1) + '만' : maxTeu.toFixed(0)}TEU** | — | ${month} |`);
+  if (maxValue  > 0) rows.push(`| 화물가치 | **${maxValue.toFixed(1)}억 USD** | — | ${month} |`);
 
   if (!rows.length) return null;
 
   return [
-    '| 지표 | 최신값 | YoY | 기준월 | 출처 |',
-    '|------|--------|-----|--------|------|',
+    '| 지표 | 실적 | YoY | 기준월 |',
+    '|------|------|-----|--------|',
     ...rows,
   ].join('\n');
 }
@@ -292,7 +292,7 @@ async function buildRailIndices({ month, force = false } = {}) {
 
   // Fact text for LLM
   const lines = [
-    `## Landbridge 중국 철도·中欧班列 데이터 (대상 월: ${m})`,
+    `## Landbridge 중국 철도·중국-유럽 화물열차 데이터 (대상 월: ${m})`,
     '',
   ];
   for (const a of translated.slice(0, 15)) {
@@ -300,9 +300,9 @@ async function buildRailIndices({ month, force = false } = {}) {
     lines.push(`- [${a.source}] ${a.title}${ko} (${a.date})`);
     const s = a.stats;
     const details = [];
-    if (s.trainCount)  details.push(`편수: ${s.trainCount.toLocaleString()}列`);
-    if (s.teu)         details.push(`화물량: ${s.teu >= 10000 ? (s.teu / 10000).toFixed(1) + '万' : s.teu}TEU`);
-    if (s.valueYi)     details.push(`货値: ${s.valueYi.toFixed(1)}억USD`);
+    if (s.trainCount)  details.push(`편수: ${s.trainCount.toLocaleString()}편`);
+    if (s.teu)         details.push(`화물량: ${s.teu >= 10000 ? (s.teu / 10000).toFixed(1) + '만' : s.teu}TEU`);
+    if (s.valueYi)     details.push(`화물가치: ${s.valueYi.toFixed(1)}억USD`);
     if (s.yoy != null) details.push(`YoY: ${s.yoy >= 0 ? '▲' : '▼'}${Math.abs(s.yoy).toFixed(1)}%`);
     if (s.rateUsdTeu)  details.push(`운임: ${s.rateUsdTeu.toLocaleString()}USD/TEU`);
     if (details.length) lines.push(`  수치: ${details.join(', ')}`);
@@ -318,7 +318,7 @@ async function buildRailIndices({ month, force = false } = {}) {
     lines.push('→ 혼잡 블록을 본문에 포함하되, 이 기사에 나온 수치만 사용.');
   } else {
     lines.push(`## ℹ️ B-2 혼잡 게이팅: ${m} 기간 혼잡 키워드 미감지`);
-    lines.push('이번 달 혼잡 관련 기사 없음 — **혼잡 블록을 본문에 포함하지 말 것.** 정량(편수·물동량·货值 YoY)만으로 마무리.');
+    lines.push('이번 달 혼잡 관련 기사 없음 — **혼잡 블록을 본문에 포함하지 말 것.** 정량(편수·물동량·화물가치 YoY)만으로 마무리.');
   }
 
   const factText = lines.join('\n');
