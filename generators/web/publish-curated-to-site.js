@@ -32,7 +32,7 @@ loadEnvLocal();
 const SUPABASE_URL  = process.env.SUPABASE_URL ?? '';
 const SERVICE_KEY   = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
 
-const CATEGORY_MAP = { rail: '철도', ocean: '해상' };
+const CATEGORY_MAP = { rail: '철도', ocean: '해상', air: '항공', trade: '물류' };
 
 // og:image / twitter:image 추출, 없으면 첫 <img> fallback. 상대경로 → 절대경로 변환
 async function fetchOgImage(url) {
@@ -300,6 +300,8 @@ async function main() {
   await cleanStaleData(supabase);
   await processSection(supabase, 'curated-rail.json');
   await processSection(supabase, 'curated-ocean.json');
+  await processSection(supabase, 'curated-air.json');
+  await processSection(supabase, 'curated-trade.json');
 
   console.log('\n🎉 publish-curated-to-site 완료');
 }

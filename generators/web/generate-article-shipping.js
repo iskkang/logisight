@@ -24,10 +24,10 @@ const STYLE_GUIDE = fs.readFileSync(
 );
 
 const sectionArg = process.argv.find(a => a.startsWith('--section='));
-const SECTION    = sectionArg ? sectionArg.split('=')[1] : 'rail'; // rail | ocean
+const SECTION    = sectionArg ? sectionArg.split('=')[1] : 'rail'; // rail | ocean | air | trade
 
-if (!['rail', 'ocean'].includes(SECTION)) {
-  console.error('❌ --section=rail 또는 --section=ocean 지정 필요');
+if (!['rail', 'ocean', 'air', 'trade'].includes(SECTION)) {
+  console.error('❌ --section=rail|ocean|air|trade 지정 필요');
   process.exit(1);
 }
 
@@ -37,6 +37,8 @@ const CURATED_PATH = path.join(DRAFTS_DIR, `curated-${SECTION}.json`);
 const DEFAULT_KEYWORD = {
   rail:  'freight train railway china',
   ocean: 'container port cargo ship',
+  air:   'air cargo aircraft freighter',
+  trade: 'supply chain logistics trade',
 };
 
 // ── Unsplash 이미지 fetch ──────────────────────────────────────────────────
@@ -70,8 +72,10 @@ async function generateArticle(curated, imageUrl, imageKeyword) {
     .map(l => `- [${l.source}] ${l.title_ko || l.title} — ${l.url}`)
     .join('\n');
 
-  const sectionLabel = SECTION === 'rail' ? '철도' : '해운';
-  const category     = SECTION === 'rail' ? '철도' : '해상';
+  const LABELS = { rail: '철도', ocean: '해운', air: '항공화물', trade: '무역·정책' };
+  const CATS   = { rail: '철도', ocean: '해상', air: '항공',    trade: '물류' };
+  const sectionLabel = LABELS[SECTION] ?? SECTION;
+  const category     = CATS[SECTION]   ?? '물류';
 
   // ── 시스템 프롬프트: 스타일 가이드 전체 주입 ──────────────────────────
   const systemPrompt = `당신은 15년 경력의 해운·물류 전문 기자입니다.
@@ -179,7 +183,8 @@ async function main() {
 
   // maritime_news upsert
   const canonicalUrl    = `https://logisight.mtlship.com/article/${TODAY}-${SECTION}-${slug}`;
-  const defaultCategory = SECTION === 'rail' ? '철도' : '해상';
+  const CATS2 = { rail: '철도', ocean: '해상', air: '항공', trade: '물류' };
+  const defaultCategory = CATS2[SECTION] ?? '물류';
   await insertArticle({
     markdownContent: article,
     canonicalUrl,

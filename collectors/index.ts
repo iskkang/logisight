@@ -99,6 +99,14 @@ const GROUPS = [
     ],
   },
   {
+    name: 'policy-daily',
+    collectors: [
+      { name: 'policy_us',  fn: collectPolicyUS  },
+      { name: 'policy_eu',  fn: collectPolicyEU  },
+      { name: 'policy_imo', fn: collectPolicyIMO },
+    ],
+  },
+  {
     name: 'monthly-analysis',
     collectors: [
       { name: 'monthly_analysis',     fn: collectMonthlyAnalysis },
@@ -116,6 +124,7 @@ const GROUP_MAP: Record<string, string> = {
   'rail-weekly': 'rail-weekly',
   'ocean-daily': 'ocean-daily',
   'ocean-weekly':       'ocean-weekly',
+  'policy-daily':       'policy-daily',
   'monthly-analysis':   'monthly-analysis',
 };
 
