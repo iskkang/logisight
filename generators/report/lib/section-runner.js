@@ -274,6 +274,7 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
                             indexTable = null, indexFactText = null,
                             railTable = null, railFactText = null,
                             oceanBlocks = null,
+                            airBundle = null,
                             airTable = null, airFactText = null,
                             portThroughputTable = null, portThroughputFactText = null }) {
   if (items.length === 0) {
@@ -356,8 +357,8 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
       if (anchor) revised = revised.replace(anchor, `${pb}${anchor}${inject}`);
       else        revised += `\n\n${pb}### (${b.id.toUpperCase()} 표)${inject}`;
     });
-    // 02-8 종합 전망 소제목 또는 말미에 벙커유 차트 추가
-    const bunkerM = revised.match(/#{2,3}[^\n]*(?:02-8|종합|벙커)[^\n]*/i);
+    // 말미 또는 벙커유 소제목에 벙커유 차트 추가 (02-8 종합전망 삭제로 fallback 우선)
+    const bunkerM = revised.match(/#{2,3}[^\n]*(?:02-8|벙커유|벙커\s*유)[^\n]*/i);
     if (bunkerM) {
       revised = revised.replace(bunkerM[0], `${bunkerM[0]}\n\n[[CHART:ocean_bunker]]\n`);
     } else {
@@ -396,27 +397,56 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
     }
   }
 
-  // air 섹션: 운임 차트 토큰 + 지수 표 삽입
-  // 삽입 위치 우선순위: (1) ## 03-1. 소제목 아래, (2) # 03. 섹션 제목 바로 아래, (3) 최상단
-  // 섹션 제목(# NN.) 앞에 삽입하면 PDF에서 섹션 디바이더 이전 페이지에 렌더링되므로 반드시 제목 뒤에 삽입
+  // air 섹션: A-1 BAI표, A-2 Superset차트, A-3 IATA표, A-4 Xeneta(LLM 처리) 주입
+  // 각 소제목 (## 03-1, 03-2, 03-3) 아래에 해당 데이터 삽입.
+  // 섹션 제목(# NN.) 앞에 삽입하면 PDF에서 섹션 디바이더 이전 페이지에 렌더링되므로 반드시 제목 뒤에 삽입.
   if (sectionConfig.id === 'air') {
-    if (airTable) {
-      const chartInject = '\n\n[[CHART:air_rate]]\n\n' + airTable + '\n';
-      const subAnchor = revised.match(/#{2,3}[^\n]*(?:운임|물동량|동향|WorldACD)[^\n]*/)
-                     || revised.match(/#{2,3}[^\n]*/);
-      if (subAnchor) {
-        revised = revised.replace(subAnchor[0], subAnchor[0] + chartInject);
-      } else {
-        // ## 소제목 없음 → # 섹션 제목 뒤에 삽입 (디바이더 앞 방지)
-        const secAnchor = revised.match(/^#\s[^\n]*/m);
-        if (secAnchor) {
-          revised = revised.replace(secAnchor[0], secAnchor[0] + chartInject);
-        } else {
-          revised += '\n\n' + chartInject;
+    const ab = airBundle;
+
+    // A-1: BAI/TAC 스냅샷 표 → ## 03-1. 소제목 아래
+    if (ab?.baiTable) {
+      const anchor = revised.match(/#{2,3}[^\n]*(?:03-1|BAI|TAC|스냅샷)[^\n]*/)
+                  || revised.match(/#{2,3}[^\n]*(?:운임)[^\n]*/);
+      if (anchor) {
+        revised = revised.replace(anchor[0], anchor[0] + '\n\n' + ab.baiTable + '\n');
+      }
+    }
+
+    // A-2: Superset 차트 → ## 03-2. 소제목 아래 (없으면 notice만)
+    if (ab?.chartData) {
+      const anchor = revised.match(/#{2,3}[^\n]*(?:03-2|추세|시계열)[^\n]*/);
+      if (anchor) {
+        revised = revised.replace(anchor[0], anchor[0] + '\n\n[[CHART:air_rate]]\n');
+      }
+      // Superset 표도 있으면 차트 아래에 추가
+      if (ab.table && anchor) {
+        const anchorUpdated = revised.match(/#{2,3}[^\n]*(?:03-2|추세|시계열)[^\n]*/);
+        if (anchorUpdated) {
+          const afterChart = anchorUpdated[0] + '\n\n[[CHART:air_rate]]\n';
+          revised = revised.replace(afterChart, afterChart + '\n' + ab.table + '\n');
         }
       }
     } else {
-      const notice = '\n\n> ⚠️ **이번 회차 항공 데이터 미수집** — WorldACD·BAI 수집 실패. 다음 호 업데이트 예정.\n\n';
+      // Superset 없음 → 03-2 소제목 아래에 notice 삽입
+      const notice = '\n\n> ⚠️ **항공 운임 추세 차트 미수집** — Superset 접속 실패. BAI 스냅샷으로 현황 대체.\n\n';
+      const anchor = revised.match(/#{2,3}[^\n]*(?:03-2|추세|시계열)[^\n]*/);
+      if (anchor) {
+        const at = revised.indexOf(anchor[0]) + anchor[0].length;
+        revised = revised.slice(0, at) + notice + revised.slice(at);
+      }
+    }
+
+    // A-3: IATA 권역별 표 → ## 03-3. 소제목 아래
+    if (ab?.iataTable) {
+      const anchor = revised.match(/#{2,3}[^\n]*(?:03-3|IATA|권역별)[^\n]*/);
+      if (anchor) {
+        revised = revised.replace(anchor[0], anchor[0] + '\n\n' + ab.iataTable + '\n');
+      }
+    }
+
+    // 완전 미수집인 경우 (airBundle 자체가 null)
+    if (!ab) {
+      const notice = '\n\n> ⚠️ **이번 회차 항공 데이터 미수집** — TAC/BAI·IATA 수집 실패. 다음 호 업데이트 예정.\n\n';
       const subAnchor = revised.match(/\n#{2,3}[^\n]*/);
       if (subAnchor) {
         const at = revised.indexOf(subAnchor[0]) + subAnchor[0].length;

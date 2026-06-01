@@ -1,10 +1,14 @@
 'use strict';
 // Air cargo index data for the monthly report air section.
-// Priority: Superset BI (TAC Index $/kg, 3 routes) → WorldACD page scrape → BAI only
-// Cache:    outputs/cache/air-index.json  (TTL 7 days — avoids hammering BI)
 //
-// Cache schema:
-//   { fetched_at, source, chartData:{labels,datasets}, table, factText }
+// Priority chain:
+//   A-2 chart  : Superset BI (TAC Index $/kg time-series)  → null if unavailable (no 1-point fallback)
+//   A-1 table  : aircargoweek.com TAC roundup (BAI00 + origin WoW snapshot)
+//   A-3 table  : IATA Air Cargo Market Analysis (regional CTK/ACTK/CLF)
+//   A-4 text   : Xeneta public blog/press-release rate data
+//
+// Cache: outputs/cache/air-index.json  (TTL 7 days)
+// Schema: { fetched_at, source, chartData, baiTable, iataTable, xenetaFactText, table, factText }
 
 const path = require('path');
 const fs   = require('fs');
@@ -60,7 +64,7 @@ async function fetchPage(url) {
   try {
     const r = await fetch(url, {
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; LogisightBot/1.0)' },
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(20000),
     });
     if (!r.ok) return null;
     return await r.text();
@@ -76,82 +80,207 @@ function stripHtml(html) {
              .replace(/\s+/g, ' ');
 }
 
-// ── WorldACD scrape (fallback) ─────────────────────────────────────────────────
+// ── A-1: TAC / BAI snapshot (aircargoweek.com) ────────────────────────────────
+// Tries to extract BAI00 + origin-pair indices with WoW comparison.
+// Gracefully returns whatever is found; WoW computed if prev-week data available.
 
-function extractSpotRate(text) {
-  const PATS = [
-    /(?:spot|average|avg|overall)[^$\d]{0,30}\$([\d.]+)\s*(?:per\s*)?kg/i,
-    /\$([\d.]+)\s*(?:per\s*)?kg(?:\s*(?:spot|avg|average|overall))?/i,
-    /([\d.]+)\s*USD\s*(?:per\s*)?kg/i,
-    /([\d.]+)\s*\$\s*\/\s*kg/i,
-  ];
-  for (const pat of PATS) {
-    const m = text.match(pat);
-    if (m) { const n = parseFloat(m[1]); if (!isNaN(n) && n > 0.5 && n < 30) return n; }
-  }
-  return null;
-}
-
-async function fetchWorldAcdWeek(year, week) {
-  const w   = String(week).padStart(2, '0');
-  const url = `https://worldacd.com/trend-reports/weekly/worldacd-weekly-air-cargo-trends-${year}-week-${w}/`;
-  const html = await fetchPage(url);
-  if (!html) return null;
-  return { label: `${year}-W${w}`, spot: extractSpotRate(stripHtml(html)), url };
-}
-
-async function fetchWorldAcd8Weeks() {
-  const now  = new Date();
-  const year = isoYear(now), week = isoWeek(now);
-  const list = [];
-  for (let i = 7; i >= 0; i--) {
-    let w = week - i, y = year;
-    if (w <= 0) { y = year - 1; w = 52 + w; }
-    list.push({ y, w });
-  }
-  const results = [];
-  for (const { y, w } of list) {
-    const r = await fetchWorldAcdWeek(y, w);
-    if (r?.spot != null) results.push(r);
-  }
-  return results;
-}
-
-// ── BAI ────────────────────────────────────────────────────────────────────────
-
-async function fetchBai() {
+async function fetchTacBaiSnapshot() {
   const html = await fetchPage('https://www.aircargoweek.com/market-data/');
   if (!html) return null;
+
   const text = stripHtml(html);
-  for (const pat of [
-    /BAI[- ]?00[^\d]{0,10}([\d,.]+)/i,
-    /Baltic\s+Air\s+(?:Freight\s+)?Index[^\d]{0,20}([\d,.]+)/i,
-    /TAC\s+Index[^\d]{0,20}([\d,.]+)/i,
-    /BAI\s+([\d,.]+)/i,
-  ]) {
-    const m = text.match(pat);
-    if (m) { const n = parseFloat(m[1].replace(/,/g, '')); if (!isNaN(n) && n > 50) return n; }
+
+  // BAI-style patterns: "BAI00 1234", "BAI30 (HKG-EUR) 987", etc.
+  const INDEX_PATS = [
+    { key: 'BAI00',  label: 'BAI00 (글로벌 평균)',          re: /BAI[- ]?00[^\d]{0,15}([\d,]+)/i  },
+    { key: 'BAI30',  label: 'BAI30 (홍콩 → 유럽)',          re: /BAI[- ]?30[^\d]{0,25}([\d,]+)/i  },
+    { key: 'BAI80',  label: 'BAI80 (상하이 → 유럽)',         re: /BAI[- ]?80[^\d]{0,25}([\d,]+)/i  },
+    { key: 'BAI20',  label: 'BAI20 (프랑크푸르트 → 아시아)', re: /BAI[- ]?20[^\d]{0,25}([\d,]+)/i  },
+    { key: 'BAI25',  label: 'BAI25 (프랑크푸르트 → 북미)',   re: /BAI[- ]?25[^\d]{0,25}([\d,]+)/i  },
+  ];
+
+  // WoW pattern: "up/down X%" or "▲/▼ X%" near index
+  const WOW_RE = /(?:(?:up|down|▲|▼)\s*)([\d.]+)%/gi;
+
+  const rows = [];
+  let foundAny = false;
+
+  for (const idx of INDEX_PATS) {
+    const m = text.match(idx.re);
+    if (!m) continue;
+    const val = parseFloat(m[1].replace(/,/g, ''));
+    if (isNaN(val) || val < 50) continue;
+    foundAny = true;
+
+    // Scan text around this match for WoW percentage
+    const pos   = text.indexOf(m[0]);
+    const near  = text.slice(Math.max(0, pos - 60), pos + 120);
+    const wowMs = [...near.matchAll(WOW_RE)];
+    let wow = '';
+    if (wowMs.length > 0) {
+      const pct = parseFloat(wowMs[0][1]);
+      if (!isNaN(pct)) {
+        const dir = /down|▼/i.test(wowMs[0][0]) ? '▼' : '▲';
+        wow = `${dir}${pct.toFixed(1)}%`;
+      }
+    }
+
+    rows.push({ key: idx.key, label: idx.label, val: val.toFixed(0), wow });
   }
+
+  if (!foundAny) return null;
+
+  const now  = new Date();
+  const week = `${isoYear(now)}-W${String(isoWeek(now)).padStart(2, '0')}`;
+  const src  = '[aircargoweek.com](https://www.aircargoweek.com/market-data/)';
+
+  const header = '| 지수 | 최신값 | WoW | 기준주차 | 출처 |';
+  const sep    = '|------|--------|-----|---------|------|';
+  const lines  = rows.map(r =>
+    `| ${r.label} | **${r.val}** | ${r.wow || '—'} | ${week} | ${src} |`
+  );
+  return [header, sep, ...lines].join('\n');
+}
+
+// ── A-3: IATA Air Cargo Regional Data ────────────────────────────────────────
+// IATA publishes monthly air cargo market analysis; tries to extract HTML table
+// from their public statistics page. Returns null if data is PDF-only.
+
+async function fetchIataRegional() {
+  // Try the IATA air freight statistics page (sometimes has embedded data)
+  const URLS = [
+    'https://www.iata.org/en/publications/economics/air-freight-monthly-analysis/',
+    'https://www.iata.org/en/publications/economics/air-freight-statistics/',
+  ];
+
+  for (const url of URLS) {
+    const html = await fetchPage(url);
+    if (!html) continue;
+
+    // Look for a table containing CTK or CLF data
+    const tableRe = /<table[\s\S]*?<\/table>/gi;
+    const tables  = html.match(tableRe) || [];
+
+    for (const tbl of tables) {
+      const tblText = stripHtml(tbl).toLowerCase();
+      if (!tblText.includes('ctk') && !tblText.includes('cargo')) continue;
+
+      // Found a likely table — extract rows
+      const rowRe = /<tr[\s\S]*?<\/tr>/gi;
+      const rows  = tbl.match(rowRe) || [];
+      if (rows.length < 3) continue;
+
+      // Build plain-text table from rows
+      const mdRows = rows.map(row => {
+        const cells = (row.match(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi) || [])
+          .map(cell => stripHtml(cell).trim().replace(/\s+/g, ' '));
+        return cells.length > 0 ? '| ' + cells.join(' | ') + ' |' : null;
+      }).filter(Boolean);
+
+      if (mdRows.length < 3) continue;
+
+      // Add markdown separator after header row
+      const colCount = (mdRows[0].match(/\|/g) || []).length - 1;
+      const sep = '|' + Array(colCount).fill('---').join('|') + '|';
+      return [mdRows[0], sep, ...mdRows.slice(1)].join('\n');
+    }
+
+    // If no HTML table found, try to extract text data from JSON-LD or embedded scripts
+    const jsonLdRe = /<script type="application\/json">([\s\S]*?)<\/script>/gi;
+    let m;
+    while ((m = jsonLdRe.exec(html)) !== null) {
+      try {
+        const data = JSON.parse(m[1]);
+        // Superset/BI-style: { data: [{region, ctk_yoy, actk_yoy, clf}, ...] }
+        if (Array.isArray(data?.data) && data.data[0]?.ctk_yoy != null) {
+          const header = '| 권역 | CTK YoY | ACTK YoY | CLF (%) |';
+          const sep    = '|------|---------|---------|---------|';
+          const rows = data.data.map(r =>
+            `| ${r.region || '—'} | ${r.ctk_yoy ?? '—'} | ${r.actk_yoy ?? '—'} | ${r.clf ?? '—'} |`
+          );
+          return [header, sep, ...rows].join('\n');
+        }
+      } catch (_) {}
+    }
+  }
+
   return null;
 }
 
-// ── Table builder ──────────────────────────────────────────────────────────────
+// ── A-4: Xeneta public air cargo data ────────────────────────────────────────
+// Fetches Xeneta's latest blog/press release and extracts air freight rate numbers
+// as fact text for the LLM to reference in analysis.
 
-function momArrow(curr, prev) {
-  if (curr == null || prev == null || prev === 0) return '';
-  const pct = ((curr - prev) / prev) * 100;
-  const sym = pct > 0 ? '▲' : pct < 0 ? '▼' : '→';
-  return ` ${sym}${Math.abs(pct).toFixed(1)}% MoM`;
+async function fetchXeneta() {
+  const BLOG_URLS = [
+    'https://www.xeneta.com/blog/category/air-freight/',
+    'https://www.xeneta.com/news/',
+    'https://www.xeneta.com/blog/',
+  ];
+
+  for (const blogUrl of BLOG_URLS) {
+    const html = await fetchPage(blogUrl);
+    if (!html) continue;
+
+    // Find article links mentioning air cargo / air freight
+    const linkRe = /<a[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi;
+    const airLinks = [];
+    let m;
+    while ((m = linkRe.exec(html)) !== null) {
+      const href  = m[1];
+      const label = stripHtml(m[2]).toLowerCase();
+      if ((label.includes('air') || label.includes('freight')) && href.includes('xeneta.com')) {
+        airLinks.push(href);
+      }
+    }
+
+    if (!airLinks.length) continue;
+
+    // Fetch the first matching article
+    const articleUrl = airLinks[0].startsWith('http') ? airLinks[0] : `https://www.xeneta.com${airLinks[0]}`;
+    const articleHtml = await fetchPage(articleUrl);
+    if (!articleHtml) continue;
+
+    const articleText = stripHtml(articleHtml);
+
+    // Extract rate mentions: "X USD/kg", "$X/kg", "X% YoY", etc.
+    const ratePats = [
+      /[\$]?([\d.]+)\s*(?:USD)?\s*\/\s*kg/gi,
+      /([\d.]+)\s*USD\s*per\s*kg/gi,
+      /(?:up|down|▲|▼|grew?|fell?|declined?|increased?)[^.]{0,60}([\d.]+)\s*%/gi,
+    ];
+
+    const snippets = [];
+    // Grab sentences containing rate data
+    const sentences = articleText.split(/(?<=[.!?])\s+/);
+    for (const sent of sentences) {
+      for (const pat of ratePats) {
+        pat.lastIndex = 0;
+        if (pat.test(sent) && sent.length > 20 && sent.length < 300) {
+          snippets.push(sent.trim());
+          break;
+        }
+      }
+      if (snippets.length >= 6) break;
+    }
+
+    if (!snippets.length) continue;
+
+    const today = new Date().toISOString().slice(0, 10);
+    return `## Xeneta 공개 운임 데이터 (${today}, ${articleUrl})\n` + snippets.map(s => `- ${s}`).join('\n');
+  }
+
+  return null;
 }
 
-// Build table from Superset multi-series chart data (TAC index routes)
+// ── Table builder (Superset) ───────────────────────────────────────────────────
+
 function buildSupersetTable(chartData, month) {
   const header = '| 노선 | 최신값 (USD/kg) | 전월 대비 | 기준월 | 출처 |';
   const sep    = '|------|---------------|---------|--------|------|';
   const base   = process.env.SUPERSET_BASE || 'https://glip-bi.deepvue.vvnst.com';
 
   const rows = chartData.datasets.map(ds => {
-    // Find the latest non-null value
     let curr = null, prev = null;
     for (let i = ds.data.length - 1; i >= 0; i--) {
       if (ds.data[i] != null) {
@@ -159,31 +288,23 @@ function buildSupersetTable(chartData, month) {
         else if (prev == null) { prev = ds.data[i]; break; }
       }
     }
+    const mom = (() => {
+      if (curr == null || prev == null || prev === 0) return '—';
+      const pct = ((curr - prev) / prev) * 100;
+      const sym = pct > 0 ? '▲' : pct < 0 ? '▼' : '→';
+      return `${sym}${Math.abs(pct).toFixed(1)}% MoM`;
+    })();
     const lastLabel = chartData.labels[chartData.labels.length - 1] || month;
-    const mom = momArrow(curr, prev);
     const val = curr != null ? curr.toFixed(2) : '—';
-    return `| ${ds.label} | **${val}** | ${mom || '—'} | ${lastLabel} | [사내 BI](${base}) |`;
+    return `| ${ds.label} | **${val}** | ${mom} | ${lastLabel} | [사내 BI](${base}) |`;
   });
 
   return [header, sep, ...rows].join('\n');
 }
 
-// Build table when Superset is not available (BAI + WorldACD only)
-function buildFallbackTable(bai, worldAcdLatest) {
-  const header = '| 지수 | 최신값 | 기준주차 | 출처 |';
-  const sep    = '|------|--------|---------|------|';
-  const rows   = [];
-  if (worldAcdLatest?.spot != null)
-    rows.push(`| WorldACD 글로벌 스팟 | **${worldAcdLatest.spot.toFixed(2)} USD/kg** | ${worldAcdLatest.label} | [WorldACD](${worldAcdLatest.url}) |`);
-  if (bai != null)
-    rows.push(`| BAI00 (발틱 항공운임지수) | **${bai.toFixed(0)}** | — | [aircargoweek.com](https://www.aircargoweek.com/market-data/) |`);
-  if (!rows.length) return null;
-  return [header, sep, ...rows].join('\n');
-}
-
 // ── Fact text for LLM ─────────────────────────────────────────────────────────
 
-function buildFactText(chartData, bai, worldAcdLatest, source, month) {
+function buildFactText({ source, chartData, baiRows, iataTable, xenetaFactText, month }) {
   const lines = [];
   const today = new Date().toISOString().slice(0, 10);
 
@@ -193,15 +314,28 @@ function buildFactText(chartData, bai, worldAcdLatest, source, month) {
       const last = ds.data.filter(v => v != null).slice(-1)[0];
       if (last != null) lines.push(`${ds.label}: ${last.toFixed(2)} USD/kg`);
     }
+    lines.push(`(출처: 사내 BI / Superset, ${today})`);
+    lines.push('');
   }
-  if (worldAcdLatest?.spot != null)
-    lines.push(`WorldACD 글로벌 스팟: ${worldAcdLatest.spot.toFixed(2)} USD/kg (${worldAcdLatest.label})`);
-  if (bai != null)
-    lines.push(`BAI00 (발틱 항공운임지수): ${bai.toFixed(0)}`);
 
-  if (!lines.length) return '';
-  lines.push(`(출처: ${source === 'superset' ? '사내 BI / Superset' : 'WorldACD·aircargoweek.com'}, ${today})`);
-  return lines.join('\n');
+  if (baiRows) {
+    lines.push('## TAC/BAI 항공 운임 스냅샷 (aircargoweek.com)');
+    lines.push(baiRows);
+    lines.push('');
+  }
+
+  if (iataTable) {
+    lines.push('## IATA 권역별 항공화물 수요·공급·적재율');
+    lines.push(iataTable);
+    lines.push('');
+  }
+
+  if (xenetaFactText) {
+    lines.push(xenetaFactText);
+    lines.push('');
+  }
+
+  return lines.join('\n').trim();
 }
 
 // ── Main ───────────────────────────────────────────────────────────────────────
@@ -219,69 +353,57 @@ async function buildAirIndices({ force = false } = {}) {
   const month = now.toISOString().slice(0, 7);
   const { slice_id, dashboard_id } = BI_CHARTS.air_index || {};
 
-  // ── 1. Superset (primary) ──────────────────────────────────────────────────
+  // ── 1. Superset chart (A-2) ────────────────────────────────────────────────
   let chartData = null;
-  let source    = 'worldacd';
+  let source    = 'bai-only';
 
   if (slice_id && dashboard_id) {
     console.log('  air-indices: Superset 수집 시도...');
     chartData = await fetchSupersetAirIndex({ sliceId: slice_id, dashboardId: dashboard_id });
-    if (chartData) source = 'superset';
-    else console.warn('  air-indices: Superset 실패 → WorldACD fallback');
-  }
-
-  // ── 2. WorldACD (fallback chart + always fetch for table reference) ────────
-  let worldAcdLatest = null;
-  if (!chartData) {
-    console.log('  air-indices: WorldACD 8주 수집...');
-    const weeks = await fetchWorldAcd8Weeks();
-    if (weeks.length) {
-      worldAcdLatest = weeks[weeks.length - 1];
-      chartData = {
-        labels:   weeks.map(w => w.label),
-        datasets: [{
-          label:           'WorldACD 글로벌 스팟 ($/kg)',
-          data:            weeks.map(w => w.spot),
-          borderColor:     '#2E86AB',
-          backgroundColor: 'transparent',
-          borderWidth: 2, pointRadius: 2, tension: 0.25, spanGaps: true,
-        }],
-      };
+    if (chartData) {
+      source = 'superset';
+      console.log(`  air-indices: Superset OK (${chartData.labels.length}개 월)`);
+    } else {
+      console.warn('  air-indices: Superset 실패 → 차트 없음 (1점 fallback 금지)');
     }
-  } else {
-    // Superset OK — also grab WorldACD latest week for table reference
-    const r = await fetchWorldAcdWeek(isoYear(now), isoWeek(now));
-    if (r?.spot != null) worldAcdLatest = r;
   }
 
-  // ── 3. BAI ─────────────────────────────────────────────────────────────────
-  console.log('  air-indices: BAI 수집...');
-  const bai = await fetchBai();
-  if (bai) console.log(`  air-indices: BAI00 = ${bai.toFixed(0)}`);
+  // ── 2. TAC/BAI snapshot table (A-1) ───────────────────────────────────────
+  console.log('  air-indices: BAI 스냅샷 수집...');
+  const baiTable = await fetchTacBaiSnapshot();
+  if (baiTable) console.log('  air-indices: BAI 스냅샷 OK');
+  else          console.warn('  air-indices: BAI 스냅샷 미수집');
 
-  if (!chartData && !bai) {
+  // ── 3. IATA regional table (A-3) ──────────────────────────────────────────
+  console.log('  air-indices: IATA 권역별 데이터 수집...');
+  const iataTable = await fetchIataRegional();
+  if (iataTable) console.log('  air-indices: IATA OK');
+  else           console.warn('  air-indices: IATA 미수집 (PDF-only 또는 접근 불가)');
+
+  // ── 4. Xeneta data (A-4) ──────────────────────────────────────────────────
+  console.log('  air-indices: Xeneta 데이터 수집...');
+  const xenetaFactText = await fetchXeneta();
+  if (xenetaFactText) console.log('  air-indices: Xeneta OK');
+  else                console.warn('  air-indices: Xeneta 미수집');
+
+  // ── Abort if nothing at all ───────────────────────────────────────────────
+  if (!chartData && !baiTable && !iataTable && !xenetaFactText) {
     console.warn('  air-indices: 모든 소스 미수집 → null 반환');
     return null;
   }
 
-  // ── 4. Build table + factText ──────────────────────────────────────────────
-  let table;
+  // ── Build Superset table (if Superset OK) ─────────────────────────────────
+  let supersetTable = null;
   if (source === 'superset' && chartData) {
-    table = buildSupersetTable(chartData, month);
-    // Append BAI + WorldACD rows if available
-    const extras = [];
-    if (worldAcdLatest?.spot != null)
-      extras.push(`| WorldACD 글로벌 스팟 | **${worldAcdLatest.spot.toFixed(2)} USD/kg** | ${worldAcdLatest.label} | — | [WorldACD](${worldAcdLatest.url}) |`);
-    if (bai != null)
-      extras.push(`| BAI00 | **${bai.toFixed(0)}** | — | — | [aircargoweek.com](https://www.aircargoweek.com/market-data/) |`);
-    if (extras.length) table += '\n' + extras.join('\n');
-  } else {
-    table = buildFallbackTable(bai, worldAcdLatest) || '';
+    supersetTable = buildSupersetTable(chartData, month);
   }
 
-  const factText = buildFactText(chartData, bai, worldAcdLatest, source, month);
+  // combined legacy `table` field = Superset table first, then BAI table
+  const table = [supersetTable, baiTable].filter(Boolean).join('\n\n');
 
-  const payload = { source, chartData, table, factText };
+  const factText = buildFactText({ source, chartData, baiRows: baiTable, iataTable, xenetaFactText, month });
+
+  const payload = { source, chartData, baiTable, iataTable, xenetaFactText, table, factText };
   saveCache(payload);
   console.log(`  air-indices: 완료 (source=${source})`);
   return payload;

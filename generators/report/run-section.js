@@ -3,7 +3,7 @@
 // 월간 리포트 섹션별 2패스 생성기 CLI
 // 사용법:
 //   node run-section.js ocean           # 단일 섹션
-//   node run-section.js --all           # 전체 7섹션
+//   node run-section.js --all           # 전체 6섹션 (01~06; 07 규제·정책 삭제)
 //   node run-section.js --all --force   # 이미 approved 섹션 포함 강제 재생성
 
 const path = require('path');
@@ -90,13 +90,17 @@ async function main() {
       console.log(`▶ [ocean] per-index 지수 블록 ${oceanBlocks.length}개 로드`);
     }
 
-    // ── air: WorldACD·BAI 지수 수집 ──
-    let airTable = null, airFactText = null;
+    // ── air: TAC/BAI·IATA·Xeneta·Superset 수집 ──
+    let airBundle = null, airTable = null, airFactText = null;
     if (sec.id === 'air') {
-      console.log('▶ [air] WorldACD·BAI 데이터 수집...');
-      const airData = await buildAirIndices();
-      if (airData) { airTable = airData.table; airFactText = airData.factText; }
-      else console.warn('⚠️  [air] 항공 데이터 미수집 — 폴백 표시');
+      console.log('▶ [air] 항공 데이터 수집 (BAI·IATA·Xeneta·Superset)...');
+      airBundle = await buildAirIndices();
+      if (airBundle) {
+        airTable    = airBundle.table;
+        airFactText = airBundle.factText;
+      } else {
+        console.warn('⚠️  [air] 항공 데이터 미수집 — notice 표시');
+      }
     }
 
     // ── macro: Container Port Throughput 수집 ──
@@ -117,6 +121,7 @@ async function main() {
       indexFactText: sec.id === 'ocean' ? oceanFactText
                    : sec.id === 'index' ? indexFactText : null,
       railTable, railFactText, oceanBlocks,
+      airBundle,
       airTable, airFactText,
       portThroughputTable, portThroughputFactText,
     });

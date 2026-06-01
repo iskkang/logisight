@@ -314,9 +314,9 @@ sup.ref-mark{font-size:6pt;color:#a07d36;vertical-align:super;line-height:0}
 .stat-wrap{margin:4mm 0 5mm;break-inside:avoid}
 .stat-strip{display:flex;gap:3.5mm}
 .stat-card{flex:1;background:#fbfaf6;border:1px solid #ece6d8;border-top:2.5px solid #a07d36;border-radius:0 0 6px 6px;padding:3.5mm 3mm 3mm}
-.stat-val{font-family:var(--serif);font-size:24pt;font-weight:900;color:#0d2741;line-height:1}
+.stat-val{font-family:var(--serif);font-size:17pt;font-weight:900;color:#0d2741;line-height:1}
 .stat-val.up{color:#c0392b}.stat-val.down{color:#1d63c4}
-.stat-lab{font-size:8pt;color:#6b7682;margin-top:1.5mm;line-height:1.3}
+.stat-lab{font-size:7.5pt;color:#6b7682;margin-top:1.5mm;line-height:1.3}
 .stat-cap{font-size:7pt;color:#9aa3af;margin-top:2mm;text-align:right}
 </style>
 </head>

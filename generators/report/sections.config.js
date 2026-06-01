@@ -17,14 +17,13 @@ const SECTIONS = [
     focus:
       '이번 달 가장 중요한 단일 핵심 이슈 1개를 선정하고, 전체 해운·물류 시황을 총론으로 정리. ' +
       '[이번 달 핵심]은 이슈 1개 / 문장 1개 / 현상…원인…전망 구조 / 말줄임표 최대 1개 / 명사형 종결 필수.',
-    // 지표 표(코드 주입) + 심층 분석 요약 일부만 → 전체 기사 오염 차단
     filterItems: (items) => items.filter(i => i.category === 'deep_analysis').slice(0, 5),
   },
   {
     id: 'ocean',
     title: '02. 해운 시황',
     focus:
-      '컨테이너·건화물 운임 시황. 아래 8개 소제목 구조 필수. ' +
+      '컨테이너·건화물 운임 시황. 아래 7개 소제목 구조 필수. ' +
       '지수 표·차트는 시스템이 자동 주입하므로 본문에 표나 수치를 그리지 말 것. ' +
       '제공된 "해운 운임 지수" 데이터의 수치만 인용하고, 그 외 운임 수치 창작 금지. ' +
       '## 02-1. KCCI (한국형 컨테이너 운임지수) — KCCI 종합 및 13개 항로 등락, 한국 수출입 운임 시사점. ' +
@@ -37,7 +36,6 @@ const SECTIONS = [
       '데이터 미수집 시 SCFI·KCCI 수급 연계 관점으로 공급 전망 대체. ' +
       '## 02-7. 역내(Intra-Asia) 운임 — KCCI 역내 항로(중국·일본·동남아) 기반 역내 운임 동향. ' +
       '글로벌 운임과의 디커플링 여부, 역내 수요·공급 시사점. 데이터 미수집 시 생략. ' +
-      '## 02-8. 종합 전망 — 지수 간 수렴·발산과 시장 방향성 종합. ' +
       '각 지수는 현상에서 원인·전망으로 자연스럽게 이어지는 산문으로 서술(대괄호 라벨·머리표 금지). ' +
       '특정 기업·영업 관점·독자 행동 권유 없이 객관적 시장 전망으로 마무리. 항로 등락 원인은 주어진 기사에 근거. ' +
       '분량 엄수: 지수 블록(02-N)은 표+차트+해설이 한 페이지에 들어가도록 해설을 2문단 이내로 압축(문단당 4~5줄). ' +
@@ -52,9 +50,9 @@ const SECTIONS = [
       ];
       return items.filter(i =>
         hasSubstance(i) && (
-          i.category === 'lane_causal'    ||   // Linerlytica·gCaptain 항로 원인 — 무조건 포함
-          i.category === 'carrier_update' ||   // Freightos·Flexport 시황 업데이트
-          i.category === 'deep_analysis'  ||   // JOC 심층 분석
+          i.category === 'lane_causal'    ||
+          i.category === 'carrier_update' ||
+          i.category === 'deep_analysis'  ||
           matches(i, kw)
         )
       );
@@ -64,15 +62,20 @@ const SECTIONS = [
     id: 'air',
     title: '03. 항공 화물',
     focus:
-      '항공 화물 운임·물동량 동향 — WorldACD·TAC Index 기반 노선별 등락, ' +
-      '전자상거래·특송 수요, 성수기 공급 전망.',
+      '항공 화물 운임·물동량 동향 — TAC/BAI 스냅샷, Superset 추세, IATA 권역별, Xeneta 분석. 아래 4개 소제목 구조 필수. ' +
+      '## 03-1. TAC/BAI 항공 운임 스냅샷 — 제공된 BAI00·출발지별(홍콩·상하이·프랑크푸르트) WoW 스냅샷 표 기반 현황 서술. 표는 시스템 주입. ' +
+      '## 03-2. 항공 운임 추세 — Superset 시계열 차트는 시스템 주입. 없을 경우 BAI 스냅샷 기반 단기 추이 서술. ' +
+      '## 03-3. IATA 권역별 공급·수요·적재율 — 제공된 CTK·ACTK·CLF 권역별 표 기반 수요(CTK) vs 공급(ACTK) 증감·적재율 분석. 표는 시스템 주입. ' +
+      '데이터 미수집 시 "IATA 데이터 미수집" 정직 표기 후 기사 기반 권역별 동향 서술. ' +
+      '## 03-4. Xeneta 공개 운임 분석 — 제공된 Xeneta factText 수치 기반 주요 노선 운임 동향 서술 + 분석. 수치 없을 경우 생략. ' +
+      '전자상거래·특송 수요, 성수기 공급 전망. ' +
+      '각 소제목은 현상→원인→전망 산문(대괄호 라벨·영업 시사점 금지). WorldACD 단독 1점 차트 언급 금지.',
     filterItems: (items) => {
       const kw = [
-        'air cargo', 'airfreight', 'air freight', 'WorldACD', 'TAC', 'IATA',
-        'e-commerce', 'express', 'charter', 'belly',
+        'air cargo', 'airfreight', 'air freight', 'TAC', 'IATA', 'BAI', 'Xeneta',
+        'e-commerce', 'express', 'charter', 'belly', 'air rate',
         '항공', '에어카고', '특송', '국제항공',
       ];
-      // 항공과 무관한 인접 섹션 키워드 명시적 배제 (해운 운임·철도 등 오염 방지)
       const EXCLUDE = ['fraud', 'scam', 'crime', '사기', 'north american rail', 'union pacific', 'deutsche bahn'];
       return items.filter(i =>
         hasSubstance(i) &&
@@ -85,20 +88,26 @@ const SECTIONS = [
     id: 'rail',
     title: '04. 철도 시황 (TCR·TSR·유라시아)',
     focus:
-      '중국-유럽(TCR·일대일로), TSR, 한·중·중앙아·러시아 유라시아 철도에 한정. 북미·서유럽 자국 철도 제외. ' +
-      '아래 3개 소제목 구조 필수, 데이터 없는 지역은 "금월 데이터 미수집" 정직 표기: ' +
-      '## 04-1. 중국-유럽 철도 (TCR·일대일로) — 중구반열 운행·물동량, 중국측 국경. ' +
-      '## 04-2. 러시아 철도 (TSR·극동) — RZD 동향, 러-중 국경, 대EU 물동량. ' +
-      '## 04-3. 종합 전망 — 유라시아 회랑 시장의 구조적 방향성 종합. ' +
-      '각 소제목은 현상에서 원인·배경·전망으로 자연스럽게 이어지는 산문(대괄호 라벨·머리표 금지). ' +
-      '특정 기업·영업 관점·행동 권유 없이 객관적 전망으로 마무리. 운임·스페이스는 다루지 말 것(데이터 제외). ' +
-      '시각자료 토큰: ① 소제목 블록에 비교 가능한 핵심 수치 3개 이상이 있으면 도입 문단 뒤에 [[STATS: 값|라벨|up/down ; … :: 캡션(출처·기준일)]] 한 줄 삽입(수치 3개 미만이면 생략, 수치는 본문과 반드시 일치). ② [[STATS:]]가 없는 소제목 블록에는 해당 블록 대표 출처 URL을 [[OGIMG: URL]] 한 줄로 삽입(도입 문단 뒤, 블록당 최대 1장).',
+      '중국 일대일로·中欧班列(중구반열)·TCR을 중심으로 한 유라시아 철도 시황 분석. 아래 2개 소제목 구조 필수. ' +
+      '데이터 없는 항목은 "금월 데이터 미수집" 정직 표기. ' +
+      '## 04-1. 중국-유럽 철도 (TCR·中欧班列·일대일로) — ' +
+      '① 중국 철도 화물 총량 YoY, ② 中欧班列 편수·물동량 YoY, ' +
+      '③ 호르고스(알라산쿠)·만저우리 등 주요 중국측 국경 통과량·운임 변화, ' +
+      '④ 소스: China State Railway Group·RailFreight·CRCT·Xinhua 등. ' +
+      '비교 가능한 핵심 수치 3개 이상이 있으면 도입 문단 뒤에 [[STATS: 값|라벨|up/down ; … :: 캡션(출처·기준일)]] 삽입. ' +
+      '## 04-2. 러시아 TSR·중앙아 회랑 — RZD 동향, 러-중 국경, 중앙아시아 인프라(보조, 1개 단락 이내). ' +
+      '각 소제목은 현상→원인→배경→전망 산문(대괄호 라벨·머리표 금지). ' +
+      '특정 기업·영업 관점·행동 권유 없이 객관적 전망으로 마무리. ' +
+      '시각자료 토큰: [[STATS:]]가 없는 소제목 블록에는 해당 블록 대표 출처 URL을 [[OGIMG: URL]] 한 줄로 삽입(도입 문단 뒤, 블록당 최대 1장).',
     filterItems: (items) => {
       const INCLUDE = [
-        'TCR','TSR','TITR','TMR','china-europe','china europe','중유반열','중구반열',
+        'TCR','TSR','TITR','TMR','china-europe','china europe','중구반열','中欧班列',
         'belt and road','일대일로','silk road','block train','블록 트레인','중앙아시아','central asia',
         'kazakhstan','카자흐스탄','uzbekistan','우즈베키스탄','kyrgyz','키르기스',
         'khorgos','호르고스','alashankou','알라산쿠','알라샨커우','dostyk','도스틱',
+        'manzhouli','만저우리','alataw','알라타우',
+        'china state railway','CSRG','중국 철도','중국철도','chinese railway',
+        'china rail freight','중구반열','中欧班列','railfreight','CRCT',
         'rzd','시베리아','trans-siberian','eurasia','유라시아','중국횡단','시베리아횡단',
         'xian','시안','chongqing','충칭','연운항','blank train',
       ];
@@ -111,7 +120,7 @@ const SECTIONS = [
       return items.filter(i => {
         if (!hasSubstance(i)) return false;
         const t = txt(i);
-        if (EXCLUDE.some(k => t.includes(k.toLowerCase()))) return false;   // 북미·서유럽 우선 배제
+        if (EXCLUDE.some(k => t.includes(k.toLowerCase()))) return false;
         return i.section === 'rail' || INCLUDE.some(k => t.includes(k.toLowerCase()));
       });
     },
@@ -158,24 +167,6 @@ const SECTIONS = [
         'throughput', 'cargo volume', 'container demand', 'volume',
         '관세', '무역전쟁', '제재', '지정학', '호르무즈', '홍해', '유가',
         '원자재', '환율', '무역', '공급망', '물동량', '처리량', '수요',
-      ];
-      return items.filter(i => hasSubstance(i) && matches(i, kw));
-    },
-  },
-  {
-    id: 'policy',
-    maxItems: 30,
-    title: '07. 규제·정책',
-    focus:
-      '글로벌 무역·해운 규제 및 정책 변화 — 미국 IEEPA 관세·법원 공방, ' +
-      'EU CBAM, IMO 환경 규제, 한국 통관·관세 정책. ' +
-      '시각자료 토큰: ① 소제목 블록에 비교 가능한 핵심 수치 3개 이상이 있으면 도입 문단 뒤에 [[STATS: 값|라벨|up/down ; … :: 캡션(출처·기준일)]] 한 줄 삽입(수치 3개 미만이면 생략, 수치는 본문과 반드시 일치). ② [[STATS:]]가 없는 소제목 블록에는 해당 블록 대표 출처 URL을 [[OGIMG: URL]] 한 줄로 삽입(도입 문단 뒤, 블록당 최대 1장).',
-    filterItems: (items) => {
-      const kw = [
-        'regulation', 'policy', 'law', 'court', 'tariff', 'customs',
-        'IEEPA', 'CBP', 'CIT', 'CBAM', 'IMO', 'compliance',
-        'legislation', 'bill', 'act', 'ruling', 'Flexport',
-        '규제', '정책', '법원', '통관', '관세', '입법', '법령',
       ];
       return items.filter(i => hasSubstance(i) && matches(i, kw));
     },
