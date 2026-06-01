@@ -10,7 +10,7 @@
 const fs        = require('fs');
 const path      = require('path');
 const https     = require('https');
-const Anthropic = require('@anthropic-ai/sdk').default;
+const { callDeepSeek } = require('../lib/deepseek');
 const { insertArticle } = require('../../lib/supabase-insert');
 
 const TODAY        = new Date().toISOString().slice(0, 10);
@@ -65,7 +65,6 @@ function fetchUnsplashImage(keyword) {
 
 // ── Claude 기사 생성 ──────────────────────────────────────────────────────
 async function generateArticle(curated, imageUrl, imageKeyword) {
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   const linksText = (curated.links || [])
     .map(l => `- [${l.source}] ${l.title_ko || l.title} — ${l.url}`)
@@ -129,12 +128,7 @@ status: draft
 *출처: 출처1, 출처2*
 \`\`\``;
 
-  const msg = await client.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 3000,
-    system: systemPrompt,
-    messages: [{ role: 'user', content: userPrompt }],
-  });
+  const msg = await callDeepSeek({ max_tokens: 3000, system: systemPrompt, messages: [{ role: 'user', content: userPrompt }] });
 
   const raw     = msg.content[0].text.trim();
   const mdMatch = raw.match(/```markdown\n([\s\S]*?)```/) || raw.match(/```\n([\s\S]*?)```/);

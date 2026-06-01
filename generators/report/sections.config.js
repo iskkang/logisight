@@ -102,6 +102,7 @@ const SECTIONS = [
   },
   {
     id: 'region',
+    maxItems: 25,
     title: '05. 지역별 이슈',
     focus:
       '한국·캐나다·유럽·독일 등 주요 지역 물류 이슈 — 항만 혼잡, 인프라 투자, ' +
@@ -119,6 +120,7 @@ const SECTIONS = [
   },
   {
     id: 'macro',
+    maxItems: 30,
     title: '06. 거시경제·지정학',
     focus:
       '글로벌 거시경제 및 지정학 리스크가 해운·물류에 미치는 영향. 아래 3개 소제목 구조 필수. ' +
@@ -144,6 +146,7 @@ const SECTIONS = [
   },
   {
     id: 'policy',
+    maxItems: 30,
     title: '07. 규제·정책',
     focus:
       '글로벌 무역·해운 규제 및 정책 변화 — 미국 IEEPA 관세·법원 공방, ' +

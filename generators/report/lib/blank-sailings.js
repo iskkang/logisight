@@ -1,27 +1,35 @@
 'use strict';
-// Drewry Cancelled Sailings Tracker — blank sailing data for the ocean section.
-// Priority: Drewry tracker direct fetch → parse → cache
-// Cache:    outputs/cache/blank-sailings.json  (TTL 7 days)
-// Trend:    accumulated from previous cache runs (last 8 ISO weeks)
+// Blank Sailing data — EconDB omissions-time-series (primary source)
+// Drewry Cancelled Sailings Tracker URL (/news/news/cancelled-sailings-tracker) returns 404
+// as of 2026-06; replaced with EconDB free JSON API (same data used in collectors/blank_sailing.ts).
+// Cache: outputs/cache/blank-sailings.json  (TTL 7 days)
 
 const path = require('path');
 const fs   = require('fs');
 
-const CACHE_PATH = path.resolve(__dirname, '../../../outputs/cache/blank-sailings.json');
-const CACHE_TTL  = 7 * 24 * 60 * 60 * 1000;
-const DREWRY_URL = 'https://www.drewry.co.uk/news/news/cancelled-sailings-tracker';
-const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+const CACHE_PATH  = path.resolve(__dirname, '../../../outputs/cache/blank-sailings.json');
+const CACHE_TTL   = 7 * 24 * 60 * 60 * 1000;
+const ECONDB_BASE = 'https://www.econdb.com/widgets/omissions-time-series/data/';
+const SOURCE_NAME = 'EconDB Blank Sailing Tracker';
+const SOURCE_URL  = 'https://www.econdb.com/widgets/omissions-time-series/';
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+const REGIONS = [
+  'East Asia',
+  'Mediterranean',
+  'Northwest Europe',
+  'North America East',
+  'North America West',
+  'Indian Subcontinent',
+  'Middle East',
+];
 
-function currentIsoWeek() {
-  const now = new Date();
-  const d   = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
-  const day = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - day);
-  const jan1 = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  return Math.ceil((((d - jan1) / 86400000) + 1) / 7);
-}
+// EconDB regions → trade lane display names for the report table
+const TRADE_LABELS = {
+  'North America East': 'Transpacific EB / Transatlantic',
+  'North America West': 'Transpacific WB',
+  'Northwest Europe':   'Asia-N.Europe',
+  'Mediterranean':      'Mediterranean',
+};
 
 // ── Cache I/O ─────────────────────────────────────────────────────────────────
 
@@ -29,16 +37,8 @@ function loadCache() {
   try {
     if (!fs.existsSync(CACHE_PATH)) return null;
     const raw = JSON.parse(fs.readFileSync(CACHE_PATH, 'utf-8'));
-    const age = Date.now() - new Date(raw.fetched_at).getTime();
-    if (age > CACHE_TTL) return null;
+    if (Date.now() - new Date(raw.fetched_at).getTime() > CACHE_TTL) return null;
     return raw;
-  } catch (_) { return null; }
-}
-
-function loadCacheRaw() {
-  try {
-    if (!fs.existsSync(CACHE_PATH)) return null;
-    return JSON.parse(fs.readFileSync(CACHE_PATH, 'utf-8'));
   } catch (_) { return null; }
 }
 
@@ -53,180 +53,102 @@ function saveCache(payload) {
   } catch (e) { console.warn('  blank-sailings: 캐시 저장 실패:', e.message); }
 }
 
-// ── HTTP ──────────────────────────────────────────────────────────────────────
+// ── EconDB fetch ──────────────────────────────────────────────────────────────
 
-async function fetchPage() {
-  try {
-    const r = await fetch(DREWRY_URL, {
-      headers: { 'User-Agent': UA, Accept: 'text/html,*/*' },
-      signal: AbortSignal.timeout(20000),
+async function fetchRegion(region) {
+  const url = `${ECONDB_BASE}?region=${encodeURIComponent(region)}`;
+  const r = await fetch(url, {
+    headers: { 'User-Agent': 'Logisight/1.0 (+https://logisight.mtlship.com)' },
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  const data = await r.json();
+  const items = data?.plots?.[0]?.data ?? [];
+  return items
+    .filter(item => item['Date'])
+    .map(item => {
+      const blanked = item['Blanked capacity'] != null ? Number(item['Blanked capacity']) : null;
+      const planned = item['Actual capacity']  != null ? Number(item['Actual capacity'])  : null;
+      const blank_pct = blanked != null && planned != null && planned > 0
+        ? parseFloat(((blanked / planned) * 100).toFixed(1))
+        : null;
+      return { week_start: String(item['Date']), blanked, planned, blank_pct };
     });
-    if (!r.ok) { console.warn(`  blank-sailings: HTTP ${r.status}`); return null; }
-    return await r.text();
-  } catch (e) {
-    console.warn('  blank-sailings: fetch 오류 —', e.message);
-    return null;
+}
+
+// ── Aggregation ───────────────────────────────────────────────────────────────
+
+function isoWeek(dateStr) {
+  const d    = new Date(dateStr + 'T00:00:00Z');
+  const jan4 = new Date(Date.UTC(d.getUTCFullYear(), 0, 4));
+  return Math.ceil(((d - jan4) / 86400000 + jan4.getUTCDay() + 1) / 7);
+}
+
+function aggregate(regionData) {
+  // Find latest week with data across all regions
+  let latestWeek = '';
+  for (const rows of Object.values(regionData)) {
+    const last = rows[rows.length - 1]?.week_start ?? '';
+    if (last > latestWeek) latestWeek = last;
   }
-}
+  if (!latestWeek) return null;
 
-function stripHtml(html) {
-  return html
-    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/\s+/g, ' ');
-}
+  // Global TEU summary at (or closest to) latestWeek
+  let totalBlanked = 0, totalPlanned = 0;
+  for (const rows of Object.values(regionData)) {
+    const row = [...rows].reverse().find(r => r.week_start <= latestWeek);
+    if (row?.blanked != null) totalBlanked += row.blanked;
+    if (row?.planned != null) totalPlanned += row.planned;
+  }
+  const pct = totalPlanned > 0
+    ? parseFloat(((totalBlanked / totalPlanned) * 100).toFixed(1))
+    : null;
+  if (pct == null) return null;
 
-// ── Parsers ───────────────────────────────────────────────────────────────────
+  // By-trade breakdown
+  const by_trade = [];
+  for (const [region, label] of Object.entries(TRADE_LABELS)) {
+    const rows = regionData[region];
+    if (!rows?.length) continue;
+    const row = [...rows].reverse().find(r => r.week_start <= latestWeek);
+    if (row?.blank_pct != null) by_trade.push({ trade: label, pct: row.blank_pct });
+  }
 
-// Try Next.js __NEXT_DATA__ JSON for scheduled/cancelled pair
-function tryNextData(html) {
-  const m = html.match(/<script[^>]*id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
-  if (!m) return null;
-  try {
-    const str = m[1];
-    const sm  = str.match(/"scheduled"\s*:\s*(\d+)[^}]{0,80}"cancelled"\s*:\s*(\d+)/);
-    if (sm) {
-      const scheduled = parseInt(sm[1]);
-      const cancelled = parseInt(sm[2]);
-      if (scheduled > 0 && cancelled <= scheduled)
-        return { scheduled, cancelled, pct: parseFloat(((cancelled / scheduled) * 100).toFixed(1)) };
-    }
-  } catch (_) {}
-  return null;
-}
-
-function extractSummary(text) {
-  const PATS = [
-    // "47 of 707 scheduled sailings (6.6%)"
-    {
-      re: /(\d+)\s+of\s+([\d,]+)\s+scheduled\s+sailings?[^(]{0,30}\(([\d.]+)%\)/i,
-      fn: (m) => ({ cancelled: parseInt(m[1]), scheduled: parseInt(m[2].replace(/,/g, '')), pct: parseFloat(m[3]) }),
-    },
-    // "707 scheduled sailings ... 47 ... cancelled"
-    {
-      re: /([\d,]+)\s+scheduled\s+sailings?[\s\S]{0,80}?(\d+)[^%\d]{0,20}(?:are|were|have been)\s+cancelled/i,
-      fn: (m) => {
-        const s = parseInt(m[1].replace(/,/g, ''));
-        const c = parseInt(m[2]);
-        return { scheduled: s, cancelled: c, pct: s > 0 ? parseFloat(((c / s) * 100).toFixed(1)) : null };
-      },
-    },
-    // "6.6% of ... scheduled sailings ... cancelled"
-    {
-      re: /([\d.]+)%\s+of\s+(?:the\s+)?[\d,]+\s+scheduled\s+sailings?[^.]{0,50}cancelled/i,
-      fn: (m) => ({ scheduled: null, cancelled: null, pct: parseFloat(m[1]) }),
-    },
-    // "cancelled: 47 ... scheduled: 707"
-    {
-      re: /cancelled[:\s]*([\d,]+)[\s\S]{0,80}scheduled[:\s]*([\d,]+)/i,
-      fn: (m) => {
-        const c = parseInt(m[1].replace(/,/g, ''));
-        const s = parseInt(m[2].replace(/,/g, ''));
-        return { cancelled: c, scheduled: s, pct: s > 0 ? parseFloat(((c / s) * 100).toFixed(1)) : null };
-      },
-    },
-  ];
-  for (const { re, fn } of PATS) {
-    const m = text.match(re);
-    if (m) {
-      const r = fn(m);
-      if (r.pct != null && r.pct >= 0 && r.pct <= 60) return r;
+  // Weekly trend: sum all regions per week, keep last 8
+  const weekMap = {};
+  for (const rows of Object.values(regionData)) {
+    for (const row of rows) {
+      if (!weekMap[row.week_start]) weekMap[row.week_start] = { b: 0, p: 0 };
+      if (row.blanked != null) weekMap[row.week_start].b += row.blanked;
+      if (row.planned != null) weekMap[row.week_start].p += row.planned;
     }
   }
-  return null;
-}
-
-function extractHorizon(text) {
-  const m = text.match(/(?:next|rolling|coming|upcoming)\s+([\d]+)\s*weeks?/i)
-         || text.match(/([\d]+)\s*weeks?\s+(?:ahead|forward|rolling|horizon)/i);
-  return m ? parseInt(m[1]) : null;
-}
-
-function extractByTrade(text) {
-  const TRADES = [
-    {
-      key: 'Transpacific EB',
-      pats: [
-        /transpacific\s*(?:east.?bound|EB)[^%\d]{0,40}([\d.]+)\s*%/i,
-        /Asia[- ](?:US|North\s*America|USWC|USEC)[^%\d]{0,40}([\d.]+)\s*%/i,
-      ],
-    },
-    {
-      key: 'Asia-N.Europe/Med',
-      pats: [
-        /Asia[- ](?:N(?:orth)?\.?\s*Eu|Northern\s*Europe|Europe\/Med|Med)[^%\d]{0,40}([\d.]+)\s*%/i,
-        /Far\s*East[- ](?:Europe|Med)[^%\d]{0,40}([\d.]+)\s*%/i,
-      ],
-    },
-    {
-      key: 'Transatlantic WB',
-      pats: [
-        /transatlantic\s*(?:west.?bound|WB)[^%\d]{0,40}([\d.]+)\s*%/i,
-      ],
-    },
-  ];
-  const result = [];
-  for (const { key, pats } of TRADES) {
-    for (const pat of pats) {
-      const m = text.match(pat);
-      if (m) { result.push({ trade: key, pct: parseFloat(m[1]) }); break; }
-    }
-  }
-  return result;
-}
-
-function extractByAlliance(text) {
-  const NAMES = ['Gemini', 'MSC', 'Ocean Alliance', 'Premier Alliance'];
-  const result = [];
-  for (const name of NAMES) {
-    const safe = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const m = text.match(new RegExp(safe + '[^%\\d]{0,50}?([\\d.]+)\\s*%', 'i'));
-    if (m) result.push({ name, share: parseFloat(m[1]) });
-  }
-  return result;
-}
-
-function parseHtml(html) {
-  const nd   = tryNextData(html);
-  const text = stripHtml(html);
-  const summary = nd || extractSummary(text);
-  if (!summary || summary.pct == null) return null;
+  const trend = Object.entries(weekMap)
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .slice(-8)
+    .map(([ws, { b, p }]) => ({
+      week:  isoWeek(ws),
+      as_of: ws,
+      pct:   p > 0 ? parseFloat(((b / p) * 100).toFixed(1)) : null,
+    }))
+    .filter(r => r.pct != null);
 
   return {
-    as_of:         new Date().toISOString().slice(0, 10),
-    source:        'Drewry Cancelled Sailings Tracker',
-    url:           DREWRY_URL,
-    horizon_weeks: extractHorizon(text),
-    summary,
-    by_trade:    extractByTrade(text),
-    by_alliance: extractByAlliance(text),
+    as_of:         latestWeek,
+    source:        SOURCE_NAME,
+    url:           SOURCE_URL,
+    horizon_weeks: null,         // EconDB is historical, not forward-looking
+    summary:       { scheduled: Math.round(totalPlanned), cancelled: Math.round(totalBlanked), pct },
+    by_trade,
+    by_alliance:   [],           // Alliance-level breakdown not available from EconDB
+    trend,
   };
-}
-
-// ── Trend accumulation ────────────────────────────────────────────────────────
-
-function mergeTrend(current, oldCache) {
-  const week   = currentIsoWeek();
-  const newPt  = { week, pct: current.summary.pct, as_of: current.as_of };
-  const old    = Array.isArray(oldCache?.trend) ? oldCache.trend : [];
-  const byWeek = {};
-  for (const p of [...old, newPt]) {
-    if (p.pct != null) byWeek[p.week] = p;
-  }
-  return Object.values(byWeek)
-    .sort((a, b) => a.week - b.week)
-    .slice(-8);
 }
 
 // ── Renderers ─────────────────────────────────────────────────────────────────
 
 function buildTable(data) {
-  const { summary, by_trade, by_alliance, horizon_weeks, as_of, url, trend } = data;
+  const { summary, by_trade, as_of, url, trend } = data;
 
   let wowStr = '—';
   if (Array.isArray(trend) && trend.length >= 2) {
@@ -235,42 +157,36 @@ function buildTable(data) {
     wowStr = sym + Math.abs(diff).toFixed(1) + '%p';
   }
 
-  const hw  = horizon_weeks ? '향후 ' + horizon_weeks + '주' : '향후 N주';
-  const pct = summary.pct     != null ? '**' + summary.pct.toFixed(1) + '%**' : '—';
-  const sch = summary.scheduled != null ? summary.scheduled.toLocaleString('ko-KR') : '—';
-  const cnl = summary.cancelled  != null ? summary.cancelled.toLocaleString('ko-KR')  : '—';
+  const pct = summary.pct != null ? '**' + summary.pct.toFixed(1) + '%**' : '—';
+  const sch = summary.scheduled != null ? summary.scheduled.toLocaleString('ko-KR') + ' TEU' : '—';
+  const cnl = summary.cancelled  != null ? summary.cancelled.toLocaleString('ko-KR')  + ' TEU' : '—';
 
   const rows = [
-    '| **전체 (' + hw + ')** | **' + sch + '** | **' + cnl + '** | ' + pct + ' | ' + wowStr + ' |',
+    '| **전체 (' + as_of + ' 기준)** | **' + sch + '** | **' + cnl + '** | ' + pct + ' | ' + wowStr + ' |',
     ...by_trade.map(t => '| ' + t.trade + ' | — | — | ' + t.pct.toFixed(1) + '% | — |'),
-    ...by_alliance.map(a => '| (' + a.name + ' 얼라이언스) | — | — | ' + a.share.toFixed(1) + '% | — |'),
   ];
 
-  if (!rows.length) return null;
-
   return [
-    '| 항로/구분 | 예정 편수 | 결항 편수 | 결항률(%) | 전주 대비 |',
-    '|----------|----------|----------|---------|---------|',
+    '| 항로/구분 | 예정 선복(TEU) | 결항 선복(TEU) | 결항률(%) | 전주 대비 |',
+    '|----------|-------------|-------------|---------|---------|',
     ...rows,
     '',
-    '※ ' + as_of + ' 기준. 출처: [Drewry Cancelled Sailings Tracker](' + url + ').',
+    '※ ' + as_of + ' 기준 주간 데이터. 출처: [' + SOURCE_NAME + '](' + url + ').',
   ].join('\n');
 }
 
 function buildFactText(data) {
-  const { summary, by_trade, by_alliance, horizon_weeks, as_of } = data;
-  const hw    = horizon_weeks ? '향후 ' + horizon_weeks + '주' : '향후 N주';
+  const { summary, by_trade, as_of } = data;
   const lines = [];
   if (summary.pct != null) {
-    const schPart = summary.scheduled != null ? '/' + summary.scheduled + '편' : '';
     lines.push(
-      '전체 결항률: ' + summary.pct.toFixed(1) + '% (결항 ' +
-      (summary.cancelled != null ? summary.cancelled : '?') + '편' + schPart + ', ' + hw + ')'
+      '전체 결항률: ' + summary.pct.toFixed(1) + '% (' + as_of + ' 기준 주간, ' +
+      'EconDB 집계 결항 ' + (summary.cancelled != null ? summary.cancelled.toLocaleString('ko-KR') : '?') + ' TEU' +
+      '/' + (summary.scheduled != null ? summary.scheduled.toLocaleString('ko-KR') : '?') + ' TEU)'
     );
   }
-  for (const t of by_trade)    lines.push(t.trade + ': ' + t.pct.toFixed(1) + '%');
-  for (const a of by_alliance) lines.push(a.name + ': ' + a.share.toFixed(1) + '%');
-  lines.push('(출처: Drewry Cancelled Sailings Tracker, ' + as_of + ')');
+  for (const t of by_trade) lines.push(t.trade + ': ' + t.pct.toFixed(1) + '%');
+  lines.push('(출처: ' + SOURCE_NAME + ', ' + as_of + ')');
   return lines.join('\n');
 }
 
@@ -299,27 +215,37 @@ async function buildBlankSailings({ force = false } = {}) {
     }
   }
 
-  console.log('  blank-sailings: Drewry 트래커 수집...');
-  const html = await fetchPage();
-  if (!html) return null;
+  console.log('  blank-sailings: EconDB 수집 중 (' + REGIONS.length + '개 지역)...');
 
-  const parsed = parseHtml(html);
-  if (!parsed) {
-    console.warn('  blank-sailings: 파싱 실패 (JS 렌더링 또는 구조 변경)');
+  const regionData = {};
+  for (const region of REGIONS) {
+    try {
+      const rows = await fetchRegion(region);
+      if (rows.length) regionData[region] = rows;
+      console.log(`  blank-sailings: [${region}] ${rows.length}주`);
+    } catch (e) {
+      console.warn(`  blank-sailings: [${region}] 실패 —`, e.message);
+    }
+  }
+
+  if (!Object.keys(regionData).length) {
+    console.warn('  blank-sailings: 모든 지역 수집 실패');
     return null;
   }
 
-  const oldCache  = loadCacheRaw();
-  const trend     = mergeTrend(parsed, oldCache);
-  const withTrend = { ...parsed, trend };
+  const parsed = aggregate(regionData);
+  if (!parsed) {
+    console.warn('  blank-sailings: 집계 실패 (데이터 없음)');
+    return null;
+  }
 
-  const chartData = buildChartData(trend);
-  const table     = buildTable(withTrend);
-  const factText  = buildFactText(withTrend);
+  const chartData = buildChartData(parsed.trend);
+  const table     = buildTable(parsed);
+  const factText  = buildFactText(parsed);
 
-  const payload = { ...withTrend, chartData, table, factText };
+  const payload = { ...parsed, chartData, table, factText };
   saveCache(payload);
-  console.log('  blank-sailings: 완료 (결항률 ' + parsed.summary.pct + '%)');
+  console.log('  blank-sailings: 완료 (결항률 ' + parsed.summary.pct + '%, ' + parsed.as_of + ')');
   return payload;
 }
 

@@ -183,9 +183,25 @@ function buildCritiqueUserPrompt(draft) {
   return `아래 초안을 체크리스트 기준으로 검수·수정하여 최종본을 출력하세요.\n\n---\n${draft}\n---`;
 }
 
-// ── DeepSeek V4-Pro helper (OpenAI-compatible) — PASS 1 전용 ─────────────────
-// DEEPSEEK_API_KEY 환경변수가 있을 때만 사용됨. 없으면 Claude 폴백.
-async function callDeepSeekPass1(systemPrompt, userContent, maxTokens) {
+// ── Retry helper ─────────────────────────────────────────────────────────────
+async function callWithRetry(fn, { tries = 3, baseMs = 4000 } = {}) {
+  let last;
+  for (let i = 0; i < tries; i++) {
+    try { return await fn(); }
+    catch (e) {
+      last = e;
+      const retriable = /timeout|aborted|ECONN|5\d\d|fetch failed/i.test(e.message || '');
+      if (!retriable || i === tries - 1) throw e;
+      const wait = baseMs * Math.pow(2, i);
+      console.warn(`  ↻ 재시도 ${i + 1}/${tries - 1} (${wait}ms) — ${e.message}`);
+      await new Promise(r => setTimeout(r, wait));
+    }
+  }
+  throw last;
+}
+
+// ── DeepSeek streaming helper — PASS 1 (idle timeout 리셋으로 긴 생성 안전) ──
+async function callDeepSeekStream(systemPrompt, userContent, maxTokens) {
   const r = await fetch('https://api.deepseek.com/chat/completions', {
     method:  'POST',
     headers: {
@@ -195,24 +211,53 @@ async function callDeepSeekPass1(systemPrompt, userContent, maxTokens) {
     body: JSON.stringify({
       model:      'deepseek-v4-pro',
       max_tokens: maxTokens,
+      stream:     true,
       messages:   [
         { role: 'system', content: systemPrompt },
         { role: 'user',   content: userContent  },
       ],
     }),
-    signal: AbortSignal.timeout(180000),
+    signal: AbortSignal.timeout(600000),  // 10 min hard cap; streaming keeps idle clock reset
   });
   if (!r.ok) {
     const body = await r.text().catch(() => '');
     throw new Error('DeepSeek API HTTP ' + r.status + ': ' + body.slice(0, 200));
   }
-  const data  = await r.json();
-  const text  = data.choices?.[0]?.message?.content || '';
-  const usage = data.usage || {};
+
+  let text = '', finishReason = null, promptTokens = 0, completionTokens = 0;
+  const reader  = r.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    const lines = buf.split('\n');
+    buf = lines.pop() ?? '';
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith('data: ')) continue;
+      const json = trimmed.slice(6);
+      if (json === '[DONE]') continue;
+      try {
+        const chunk = JSON.parse(json);
+        const delta = chunk.choices?.[0]?.delta?.content;
+        if (delta) text += delta;
+        const fr = chunk.choices?.[0]?.finish_reason;
+        if (fr) finishReason = fr;
+        if (chunk.usage) {
+          promptTokens     = chunk.usage.prompt_tokens     || 0;
+          completionTokens = chunk.usage.completion_tokens || 0;
+        }
+      } catch (_) {}
+    }
+  }
+
   return {
     content:     [{ type: 'text', text }],
-    stop_reason: data.choices?.[0]?.finish_reason === 'length' ? 'max_tokens' : 'end_turn',
-    usage:       { input_tokens: usage.prompt_tokens || 0, output_tokens: usage.completion_tokens || 0 },
+    stop_reason: finishReason === 'length' ? 'max_tokens' : 'end_turn',
+    usage:       { input_tokens: promptTokens, output_tokens: completionTokens },
   };
 }
 
@@ -229,19 +274,27 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
     return { status: 'no-data', text: '', pass1Tokens: 0, pass2Tokens: 0 };
   }
 
-  const systemPrompt = buildSectionSystemPrompt(styleGuide, sectionConfig.focus);
-  const userPrompt   = buildSectionUserPrompt(sectionConfig.title, items, month, indexFactText, railFactText, airFactText, portThroughputFactText);
+  // maxItems: 대형 섹션 프롬프트 과부하 방지 (region 25, macro/policy 30 등)
+  const cappedItems = sectionConfig.maxItems ? items.slice(0, sectionConfig.maxItems) : items;
+  if (cappedItems.length < items.length)
+    console.log(`   ↓ maxItems 적용: ${items.length} → ${cappedItems.length}건`);
 
-  // PASS 1: 초안 생성 — DEEPSEEK_API_KEY 설정 시 deepseek-v4-pro, 미설정 시 claude-sonnet-4-6
-  const pass1Model = process.env.DEEPSEEK_API_KEY ? 'deepseek-v4-pro' : 'claude-sonnet-4-6';
+  const systemPrompt = buildSectionSystemPrompt(styleGuide, sectionConfig.focus);
+  const userPrompt   = buildSectionUserPrompt(sectionConfig.title, cappedItems, month, indexFactText, railFactText, airFactText, portThroughputFactText);
+
+  // PASS 1: 초안 생성 — DEEPSEEK_API_KEY 설정 시 deepseek-v4-pro(스트리밍), 미설정 시 claude-sonnet-4-6
+  const pass1Model = process.env.DEEPSEEK_API_KEY ? 'deepseek-v4-pro (stream)' : 'claude-sonnet-4-6';
   console.log(`⏳ [${sectionConfig.id}] PASS 1 — 초안 생성 (${pass1Model})...`);
-  const pass1Res = process.env.DEEPSEEK_API_KEY
-    ? await callDeepSeekPass1(systemPrompt, userPrompt, 12000)
-    : await client.messages.create({
-        model: 'claude-sonnet-4-6', max_tokens: 12000,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: userPrompt }],
-      });
+  const pass1Res = await callWithRetry(
+    () => process.env.DEEPSEEK_API_KEY
+      ? callDeepSeekStream(systemPrompt, userPrompt, 12000)
+      : client.messages.create({
+          model: 'claude-sonnet-4-6', max_tokens: 12000,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: userPrompt }],
+        }),
+    { tries: 3, baseMs: 4000 }
+  );
   const draft = pass1Res.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
   const p1In  = pass1Res.usage?.input_tokens  || 0;
   const p1Out = pass1Res.usage?.output_tokens || 0;
@@ -251,12 +304,15 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
 
   // PASS 2: 자기검수 + 수정
   console.log(`⏳ [${sectionConfig.id}] PASS 2 — 자기검수·수정...`);
-  const pass2Res = await client.messages.create({
-    model:      'claude-sonnet-4-6',
-    max_tokens: 12000,
-    system:     buildCritiqueSystemPrompt(styleGuide),
-    messages:   [{ role: 'user', content: buildCritiqueUserPrompt(draft) }],
-  });
+  const pass2Res = await callWithRetry(
+    () => client.messages.create({
+      model:      'claude-sonnet-4-6',
+      max_tokens: 12000,
+      system:     buildCritiqueSystemPrompt(styleGuide),
+      messages:   [{ role: 'user', content: buildCritiqueUserPrompt(draft) }],
+    }),
+    { tries: 3, baseMs: 4000 }
+  );
   let revised = pass2Res.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
   const p2In  = pass2Res.usage?.input_tokens  || 0;
   const p2Out = pass2Res.usage?.output_tokens || 0;

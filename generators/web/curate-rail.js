@@ -5,7 +5,7 @@
 
 const fs      = require('fs');
 const path    = require('path');
-const Anthropic = require('@anthropic-ai/sdk').default;
+const { callDeepSeek } = require('../lib/deepseek');
 
 const NEWS_PATH   = path.resolve(__dirname, '../../content/drafts/latest-news.json');
 const OUT_PATH    = path.resolve(__dirname, '../../content/drafts/curated-rail.json');
@@ -41,7 +41,6 @@ async function curate(items) {
     process.exit(0);
   }
 
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   const itemList = items.map((i, idx) =>
     `${idx + 1}. [${i.source}] ${i.title_en || i.title} — ${i.url}`
@@ -114,11 +113,7 @@ ${itemList}
   "excluded_count": ${Math.max(0, items.length - 3)}
 }`;
 
-  const msg = await client.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 2048,
-    messages: [{ role: 'user', content: prompt }],
-  });
+  const msg = await callDeepSeek({ max_tokens: 2048, messages: [{ role: 'user', content: prompt }] });
 
   const raw = msg.content[0].text.trim();
   const jsonMatch = raw.match(/\{[\s\S]*\}/);

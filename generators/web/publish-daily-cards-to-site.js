@@ -10,7 +10,7 @@
 // 웹사이트 기사 생성은 generate-article-shipping.js / generate-article-brief.js 사용.
 //
 // 입력: content/drafts/curated-rail.json, content/drafts/curated-ocean.json
-// 환경변수: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ANTHROPIC_API_KEY
+// 환경변수: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, DEEPSEEK_API_KEY
 
 'use strict';
 
@@ -21,7 +21,7 @@ const ws = require('ws');
 globalThis.WebSocket = ws;
 
 const { createClient } = require('@supabase/supabase-js');
-const Anthropic = require('@anthropic-ai/sdk').default;
+const { callDeepSeek } = require('../lib/deepseek');
 
 const DRAFTS_DIR = path.resolve(__dirname, '../content/drafts');
 const TODAY      = new Date().toISOString().slice(0, 10);
@@ -40,7 +40,6 @@ loadEnvLocal();
 
 const SUPABASE_URL  = process.env.SUPABASE_URL ?? '';
 const SERVICE_KEY   = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
-const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY ?? '';
 
 const CATEGORY_MAP = { rail: '철도', ocean: '해상' };
 
@@ -115,13 +114,11 @@ async function fetchArticleText(url) {
   } catch { return ''; }
 }
 
-// Claude로 한국어 2문장 요약 (링크 기사용)
+// DeepSeek으로 한국어 2문장 요약 (링크 기사용)
 async function summarizeKorean(articleText) {
-  if (!ANTHROPIC_KEY) return null;
+  if (!process.env.DEEPSEEK_API_KEY) return null;
   try {
-    const client = new Anthropic({ apiKey: ANTHROPIC_KEY });
-    const msg = await client.messages.create({
-      model: 'claude-sonnet-4-6',
+    const msg = await callDeepSeek({
       max_tokens: 300,
       messages: [{
         role: 'user',

@@ -11,7 +11,7 @@
 const fs      = require('fs');
 const path    = require('path');
 const https   = require('https');
-const Anthropic = require('@anthropic-ai/sdk').default;
+const { callDeepSeek } = require('../lib/deepseek');
 const { insertArticle } = require('../../lib/supabase-insert');
 
 const TODAY      = new Date().toISOString().slice(0, 10);
@@ -80,7 +80,6 @@ function loadAllItems() {
 
 // ── Claude 브리핑 기사 생성 ───────────────────────────────────────────────
 async function generateBriefArticle(items, imageUrl, keyword) {
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   // 최대 20건만 제공 (토큰 절약)
   const itemList = items.slice(0, 20).map((i, idx) =>
@@ -161,11 +160,7 @@ status: draft
 *출처: 출처1, 출처2*
 \`\`\``;
 
-  const msg = await client.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 4000,
-    messages: [{ role: 'user', content: prompt }],
-  });
+  const msg = await callDeepSeek({ max_tokens: 4000, messages: [{ role: 'user', content: prompt }] });
 
   const raw     = msg.content[0].text.trim();
   const mdMatch = raw.match(/```markdown\n([\s\S]*?)```/) || raw.match(/```\n([\s\S]*?)```/);

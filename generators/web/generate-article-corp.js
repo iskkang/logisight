@@ -10,7 +10,7 @@
 const fs        = require('fs');
 const path      = require('path');
 const https     = require('https');
-const Anthropic = require('@anthropic-ai/sdk').default;
+const { callDeepSeek } = require('../lib/deepseek');
 const { insertArticle } = require('../../lib/supabase-insert');
 
 const TODAY        = new Date().toISOString().slice(0, 10);
@@ -84,7 +84,7 @@ function loadCorpItems() {
 }
 
 // ── Step 1: 기사 선정 + 유형 판별 (Haiku — 경량 분류) ────────────────────
-async function selectArticle(items, client) {
+async function selectArticle(items) {
   const itemList = items.slice(0, 10).map((i, idx) =>
     `${idx + 1}. [${i.source}] ${i.title_en || i.title} — ${i.url}`
   ).join('\n');
@@ -113,11 +113,7 @@ JSON으로만 응답:
   "unsplash_keyword": "적절한 Unsplash 키워드 (영어)"
 }`;
 
-  const msg = await client.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 256,
-    messages: [{ role: 'user', content: selectPrompt }],
-  });
+  const msg = await callDeepSeek({ max_tokens: 256, messages: [{ role: 'user', content: selectPrompt }] });
 
   try {
     const raw = msg.content[0].text.trim();
@@ -128,7 +124,7 @@ JSON으로만 응답:
 }
 
 // ── Step 2: 기사 작성 (Sonnet — 스타일 가이드 주입) ──────────────────────
-async function writeArticle(selectedItem, selection, imageUrl, client) {
+async function writeArticle(selectedItem, selection, imageUrl) {
   const keyword      = selection.unsplash_keyword || KEYWORD_MAP[selection.article_type] || KEYWORD_MAP['기본'];
   const patternGuide = selection.pattern === 'C'
     ? `패턴 C (노선 개설): ① 노선 개요 리드 → ② 노선 세부 → ③ 전략적 의미 → ④ 향후 계획`
@@ -191,12 +187,7 @@ status: draft
 *출처: ${selectedItem.source}*
 \`\`\``;
 
-  const msg = await client.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 3000,
-    system: systemPrompt,
-    messages: [{ role: 'user', content: userPrompt }],
-  });
+  const msg = await callDeepSeek({ max_tokens: 3000, system: systemPrompt, messages: [{ role: 'user', content: userPrompt }] });
 
   const raw     = msg.content[0].text.trim();
   const mdMatch = raw.match(/```markdown\n([\s\S]*?)```/) || raw.match(/```\n([\s\S]*?)```/);
@@ -223,8 +214,7 @@ async function main() {
     process.exit(0);
   }
 
-  const client    = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-  const selection = await selectArticle(items, client);
+  const selection = await selectArticle(items);
 
   const selectedItem = items[selection.selected_index - 1] || items[0];
   const keyword      = selection.unsplash_keyword || KEYWORD_MAP[selection.article_type] || KEYWORD_MAP['기본'];
@@ -238,7 +228,7 @@ async function main() {
   else          console.log('   → 이미지 없음 (null)');
 
   console.log(`✍️  Claude 기사 생성 중... (스타일 가이드 주입됨)`);
-  const { article } = await writeArticle(selectedItem, selection, imageUrl, client);
+  const { article } = await writeArticle(selectedItem, selection, imageUrl);
 
   if (!fs.existsSync(ARTICLES_DIR)) fs.mkdirSync(ARTICLES_DIR, { recursive: true });
 

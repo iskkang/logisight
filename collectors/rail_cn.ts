@@ -3,7 +3,6 @@
 // 소스: China Railway, 95306, CRCT, Xi'an, Chengdu, BRI Portal (weekly)
 //       Global Times BRI RSS, Xinhua English RSS (daily)
 
-import Anthropic from '@anthropic-ai/sdk';
 import { rateLimited } from './utils/rate_limiter';
 import { snapshotWriter } from './utils/snapshot_writer';
 import type { CollectorResult, NewsItem } from './types';
@@ -115,22 +114,24 @@ async function translateBatch(items: NewsItem[]): Promise<TranslatedItem[]> {
     return items.map(i => ({ title_en: i.title, title_cn: '', summary_en: i.summary_en, url: i.url, source: i.source }));
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) {
-    console.warn('⚠️ ANTHROPIC_API_KEY 미설정 — 번역 스킵');
+    console.warn('⚠️ DEEPSEEK_API_KEY 미설정 — 번역 스킵');
     return items.map(i => ({ title_en: i.title, title_cn: /[一-鿿]/.test(i.title) ? i.title : '', summary_en: '', url: i.url, source: i.source } as TranslatedItem));
   }
 
-  const client = new Anthropic({ apiKey });
   const inputJson = JSON.stringify(chineseItems.map(i => ({ title: i.title, url: i.url, source: i.source })));
 
   try {
-    const msg = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 2048,
-      messages: [{
-        role: 'user',
-        content: `아래 중국어 물류·철도 뉴스 제목을 영어로 번역하고 한 줄 요약을 추가하세요.
+    const res = await fetch('https://api.deepseek.com/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + apiKey },
+      body: JSON.stringify({
+        model: 'deepseek-v4-pro',
+        max_tokens: 2048,
+        messages: [{
+          role: 'user',
+          content: `아래 중국어 물류·철도 뉴스 제목을 영어로 번역하고 한 줄 요약을 추가하세요.
 반드시 JSON 배열로만 응답하세요. 다른 텍스트 없이 JSON만.
 
 입력:
@@ -138,10 +139,13 @@ ${inputJson}
 
 출력 형식:
 [{"title_en": "...", "title_cn": "원문", "summary_en": "1-sentence summary in English", "url": "...", "source": "..."}]`,
-      }],
+        }],
+      }),
+      signal: AbortSignal.timeout(30000),
     });
-
-    const raw = (msg.content[0] as { type: string; text: string }).text.trim();
+    if (!res.ok) throw new Error(`DeepSeek API HTTP ${res.status}`);
+    const data = await res.json() as { choices: Array<{ message: { content: string } }> };
+    const raw = (data.choices?.[0]?.message?.content || '').trim();
     const jsonMatch = raw.match(/\[[\s\S]*\]/);
     if (!jsonMatch) throw new Error('JSON 파싱 실패');
     const translated = JSON.parse(jsonMatch[0]) as TranslatedItem[];

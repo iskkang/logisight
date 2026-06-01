@@ -161,7 +161,7 @@ async function buildOceanIndices() {
       headingKw: ['02-6', '블랭크', '결항'],
       table:     blankData?.table    ?? null,
       factText:  blankData?.factText ?? null,
-      notice:    '이번 회차 블랭크 세일링 데이터 미수집 — Drewry 수집 실패. 다음 호 업데이트 예정.',
+      notice:    '이번 회차 블랭크 세일링 데이터 미수집 — EconDB 수집 실패. 다음 호 업데이트 예정.',
     },
     {
       id:        'intra_asia',
