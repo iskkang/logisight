@@ -34,6 +34,20 @@ function escapeHtml(s) {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+// 인라인 인용·각주·참고자료 블록을 본문에서 완전 제거 (렌더 전 md 단계에서 적용)
+function stripCitations(md) {
+  return md
+    // (매체, YYYY[-MM[-DD]] [잡텍스트]) 형태 인용 제거
+    .replace(/\s*\(([^()]*?),\s*20\d{2}(?:-\d{2}(?:-\d{2})?)?[^()]*?\)/g, '')
+    // 남은 각주 마크 [n] 제거
+    .replace(/\[\d{1,3}\]/g, '')
+    // "참고자료" 블록 제거: 제목줄부터 그 뒤 번호목록(1. … 2. …)까지
+    .replace(/(^|\n)#{0,3}\s*참고자료\s*\n(?:\s*\[?\d+\]?[.)]\s.*\n?)+/g, '\n')
+    // 이중 공백·빈줄 정리
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n');
+}
+
 // 헤딩 분류:
 //  "NN. ..."  → 풀블리드 섹션 디바이더 (예: "02. 해운 시황")
 //  "주요 해운 기사" → 디바이더
@@ -125,41 +139,6 @@ function colorDeltas(html) {
   });
 }
 
-// C5-7: 인라인 인용 "(출처, YYYY[-MM[-DD]])" → 각주 번호 + 섹션 하단 참고자료 블록
-// 섹션 디바이더(<section class="divider">)를 경계로 섹션별 독립 번호 부여.
-//
-// 확장 regex: (출처명, 연도[...잡텍스트]) 형태를 전부 캐치 — "Week NN", "인용", "분석 인용" 등
-// 포함된 인용도 매칭. 출처+날짜를 키로 정규화해 중복 ref 번호 통합.
-// 안전망: "2026년, ..." 형식(연도가 쉼표 앞)은 lookahead로 배제.
-function addFootnotes(html) {
-  // Group 1: 출처명 (쉼표 앞 텍스트)
-  // Group 2: 연도 YYYY[-MM[-DD]] (날짜 파트만 표준화)
-  // 쉼표 뒤 잡텍스트(Week NN, 인용, 부연 등) 허용, 닫는 괄호까지 허용
-  const CITE_RE = /\(([^()]*?),\s*(20\d{2}(?:-\d{2}(?:-\d{2})?)?)[^()]*?\)/g;
-
-  // 섹션 디바이더를 경계로 분리
-  const SEP = '\x00DIV\x00';
-  const marked = html.replace(/(<section class="divider">)/g, SEP + '$1');
-  const chunks = marked.split(SEP);
-
-  return chunks.map(chunk => {
-    const dm = chunk.match(/^(<section class="divider">[\s\S]*?<\/section>)([\s\S]*)$/);
-    const head = dm ? dm[1] : '';
-    const work = dm ? dm[2] : chunk;
-
-    const refs = []; const refMap = {};
-    const processed = work.replace(CITE_RE, (_, src, date) => {
-      const key = src.trim() + ', ' + date;
-      if (!refMap[key]) { refs.push(key); refMap[key] = refs.length; }
-      return `<sup class="ref-mark">[${refMap[key]}]</sup>`;
-    });
-    if (!refs.length) return head + processed;
-
-    const refBlock = `<div class="refs-block"><p class="refs-title">참고자료</p>`
-      + `<ol class="refs-list">${refs.map(r => `<li>${r}</li>`).join('')}</ol></div>`;
-    return head + processed + refBlock;
-  }).join('');
-}
 
 function buildHtml(transformed, chartConfigs = []) {
   const chartScript = chartConfigs.length ? `
@@ -303,13 +282,6 @@ p.article-cat{font-family:var(--sans);font-size:7.5pt;letter-spacing:4px;
 .chart-box.no-data{display:flex;align-items:center;justify-content:center;background:#f5f3ee}
 .no-data-msg{color:#9aa3af;font-style:italic;font-size:9pt}
 
-/* 참고자료 블록 */
-sup.ref-mark{font-size:6pt;color:#a07d36;vertical-align:super;line-height:0}
-.refs-block{margin:5mm 0 2mm;padding:3mm 5mm;border-top:1px solid #e7e1d2;break-inside:avoid}
-.refs-title{font-family:var(--sans);font-size:8pt;font-weight:700;color:#0d2741;margin:0 0 2mm}
-.refs-list{padding-left:4mm;margin:0;list-style:decimal}
-.refs-list li{font-size:7.5pt;line-height:1.5;color:#6b7682;margin-bottom:0.5mm}
-
 /* 숫자 콜아웃 카드 */
 .stat-wrap{margin:4mm 0 5mm;break-inside:avoid}
 .stat-strip{display:flex;gap:3.5mm}
@@ -358,12 +330,13 @@ ${chartScript}
 
 async function main() {
   console.log(`⏳ ${MONTH} 월간 리포트 PDF 생성 중...`);
-  const md = loadMarkdown();
+  let md = loadMarkdown();
 
   // md 선두 blockquote의 발행일을 표지에 반영 (없으면 오늘 날짜)
   const pubMatch = md.match(/발행일[^\d]{0,8}(\d{4}-\d{2}-\d{2})/);
   if (pubMatch) PUB = pubMatch[1];
 
+  md = stripCitations(md);
   let bodyHtml = marked.parse(md);
 
   // 차트 토큰 치환: [[CHART:id]] → 차트 카드
@@ -420,10 +393,9 @@ async function main() {
     console.log(`  · OGIMG ${job.url.slice(0, 60)}… — ${dataUri ? 'OK' : '없음(제거)'}`);
   }
 
-  // 헤딩 분류(디바이더/서브섹션) + 목차 수집, 표 등락 색상, 참고자료 각주
+  // 헤딩 분류(디바이더/서브섹션) + 목차 수집, 표 등락 색상
   const transformed = transformBody(bodyHtml);
   transformed.html = colorDeltas(transformed.html);
-  transformed.html = addFootnotes(transformed.html);
 
   const html = buildHtml(transformed, chartConfigs);
 
