@@ -26,7 +26,7 @@ const CARGO_RE     = /\b(?:air cargo|CTK|ACTK|cargo tonne|freight tonne|CLF|carg
 function findInputFile(month) {
   if (!fs.existsSync(INPUT_DIR)) return null;
   const files = fs.readdirSync(INPUT_DIR)
-    .filter(f => /^air-cargo-\d{4}-\d{2}\.(pdf|txt|html)$/.test(f))
+    .filter(f => /\.(pdf|txt|html)$/i.test(f) && f !== '.gitkeep')
     .sort()
     .reverse();
   if (!files.length) return null;
