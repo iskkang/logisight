@@ -1,0 +1,16 @@
+{
+  "feeds": [
+    { "name": "The Loadstar",         "url": "https://theloadstar.com/feed/",                                                         "tier": 1 },
+    { "name": "Splash247",            "url": "https://splash247.com/feed/",                                                           "tier": 1 },
+    { "name": "Journal of Commerce",  "url": "https://www.joc.com/rss.xml",                                                           "tier": 1 },
+    { "name": "gCaptain",             "url": "https://gcaptain.com/feed/",                                                             "tier": 2 },
+    { "name": "Container News",       "url": "https://container-news.com/feed/",                                                       "tier": 2 },
+    { "name": "Maritime Executive",   "url": "https://www.maritime-executive.com/rss",                                                 "tier": 2 },
+    { "name": "FreightWaves",         "url": "https://www.freightwaves.com/news/feed",                                                 "tier": 2 },
+    { "name": "Logistics Management", "url": "https://feeds.feedburner.com/logisticsmgmt/latest",                                      "tier": 2 },
+    { "name": "PortNews (RU/CIS)",    "url": "https://en.portnews.ru/rss/",                                                           "tier": 2 },
+    { "name": "Hellenic Shipping",    "url": "https://www.hellenicshippingnews.com/feed/",                                            "tier": 3 }
+  ],
+  "tier_weight": { "1": 1.0, "2": 0.8, "3": 0.6 },
+  "cross_report_multiplier": { "2": 1.2, "3": 1.5 }
+}

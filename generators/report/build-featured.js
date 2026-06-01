@@ -9,6 +9,7 @@ if (typeof globalThis.WebSocket === 'undefined') { try { globalThis.WebSocket = 
 const Anthropic = require('@anthropic-ai/sdk');
 const { loadAllMonthlyItems } = require('./lib/index-factsheet');
 const SECTIONS = require('./sections.config');
+const { buildNewsCandidates } = require('./lib/rss-candidates');
 
 const TODAY    = new Date().toISOString().slice(0, 10);
 const monthArg = process.argv.find(a => a.startsWith('--month='));
@@ -44,15 +45,41 @@ async function main() {
   if (!fs.existsSync(DRAFT)) {
     console.error(`${DRAFT} 없음 — 먼저 assemble-monthly-report.js 실행`); process.exit(1);
   }
-  const items = loadAllMonthlyItems()
-    .filter(i => i.url && i.title && MARITIME.test(`${i.title} ${i.summary_en || ''} ${i.source || ''}`))
-    .slice(0, 40);
+  // ── 후보 수집: RSS 풀 → 폴백 시 기존 monthly items ──
+  const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  let items = [];
+  let rssMode = false;
+  try {
+    const rssCandidates = await buildNewsCandidates();
+    if (rssCandidates && rssCandidates.length >= N * 2) {
+      items = rssCandidates.slice(0, 40).map(c => ({
+        title:        c.title,
+        url:          c.url,
+        source:       c.source,
+        summary_en:   c.summary,
+        published_at: c.pub_date,
+        score:        c.score,
+        source_count: c.source_count,
+      }));
+      rssMode = true;
+      console.log(`  build-featured: RSS 후보 ${items.length}건 사용`);
+    }
+  } catch (e) {
+    console.warn('  build-featured: RSS 빌드 실패, monthly items 폴백:', e.message);
+  }
+  if (!rssMode) {
+    items = loadAllMonthlyItems()
+      .filter(i => i.url && i.title && MARITIME.test(`${i.title} ${i.summary_en || ''} ${i.source || ''}`))
+      .slice(0, 40);
+  }
   if (!items.length) { console.log('해운 기사 없음 — 대표 기사 스킵'); return; }
 
-  const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-  const list = items.map((it, n) =>
-    `[${n}] ${it.title} | ${it.source || ''} | ${it.url}\n${(it.summary_en || it.content || '').slice(0, 400)}`
-  ).join('\n\n');
+  const list = items.map((it, n) => {
+    const scoreInfo = it.score != null
+      ? ` [score=${it.score} cross=${it.source_count}매체]`
+      : '';
+    return `[${n}]${scoreInfo}\n${it.title} | ${it.source || ''} | ${it.url}\n${(it.summary_en || it.content || '').slice(0, 400)}`;
+  }).join('\n\n');
 
   const sys = `당신은 Logisight 외부 고객용 월간 해운 리포트의 기사 에디터입니다. 후보 기사 중 ${MONTH} 해운 시장에서 가장 중요한 ${N}건을 선정해 각각 한국어 피처 기사로 작성합니다.
 규칙:
@@ -61,6 +88,7 @@ async function main() {
 ③ 명사·명사형으로 종결하되 '~임/~함/~됨/~해짐' 어미를 붙이지 말 것(전망임→전망, 조정됨→조정, 가능함→가능, 작용 중임→작용 중). 경어체·평서체 금지.
 ④ 후보 기사에 있는 사실만 사용(환각 금지). 수치엔 출처·단위.
 ⑤ JSON만 출력(설명·코드펜스 없이).
+⑥ score(높을수록 중요)·cross(교차보도 매체 수)가 표시된 후보는 그 수치를 참고해 중요한 기사를 우선 선정.
 각 기사 형식: { "idx": 후보번호(정수), "title": "한국어 헤드라인(간결·임팩트)", "subtitle": "한 줄 부제", "body": "2~3문단(문단 사이 \\n\\n), 각 문단 3~5문장" }
 출력: {"articles":[ ... ${N}건 ... ]}`;
 
