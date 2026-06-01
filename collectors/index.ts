@@ -29,6 +29,7 @@ import { collect as collectChokepoints }       from './chokepoints';
 import { collect as collectPortStats }         from './port_stats';
 import { collect as collectMonthlyAnalysis }   from './monthly_analysis';
 import { collect as collectFreightIndexExcel } from './freight_index_excel';
+import { collect as collectNewsLogistics }     from './news_logistics';
 
 const GROUPS = [
   {
@@ -114,6 +115,12 @@ const GROUPS = [
     ],
   },
   {
+    name: 'logistics-daily',
+    collectors: [
+      { name: 'news_logistics', fn: collectNewsLogistics },
+    ],
+  },
+  {
     name: 'monthly-analysis',
     collectors: [
       { name: 'monthly_analysis',     fn: collectMonthlyAnalysis },
@@ -133,6 +140,7 @@ const GROUP_MAP: Record<string, string> = {
   'ocean-weekly':       'ocean-weekly',
   'air-daily':          'air-daily',
   'policy-daily':       'policy-daily',
+  'logistics-daily':    'logistics-daily',
   'monthly-analysis':   'monthly-analysis',
 };
 

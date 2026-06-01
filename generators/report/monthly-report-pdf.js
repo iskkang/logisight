@@ -98,8 +98,20 @@ function transformBody(bodyHtml) {
   });
 
   // D8: 첫째/둘째/셋째 열거는 문장 종결 뒤 줄바꿈 삽입 (종합전망 가독성)
-  const result = html.replace(/\.\s+(첫째,|둘째,|셋째,|넷째,|다섯째,)/g,
+  let result = html.replace(/\.\s+(첫째,|둘째,|셋째,|넷째,|다섯째,)/g,
     '.<br>&nbsp;&nbsp;$1');
+
+  // D9: leadNext 버그 수정 — 섹션 디바이더와 h2.sub.lead 사이에 단락/표/이미지가 끼어있으면
+  // lead 클래스를 제거해 잘못된 break-before:auto 적용을 방지.
+  result = result.replace(
+    /(<\/section>)([\s\S]*?)(<h2 class="sub lead">)/g,
+    (_, endSection, between, h2Lead) => {
+      if (/<(?:p|table|figure|blockquote|ul|ol|div)[^>]*>/.test(between)) {
+        return endSection + between + '<h2 class="sub">';
+      }
+      return endSection + between + h2Lead;
+    }
+  );
 
   return { html: result, toc };
 }
@@ -115,10 +127,15 @@ function colorDeltas(html) {
 
 // C5-7: 인라인 인용 "(출처, YYYY[-MM[-DD]])" → 각주 번호 + 섹션 하단 참고자료 블록
 // 섹션 디바이더(<section class="divider">)를 경계로 섹션별 독립 번호 부여.
+//
+// 확장 regex: (출처명, 연도[...잡텍스트]) 형태를 전부 캐치 — "Week NN", "인용", "분석 인용" 등
+// 포함된 인용도 매칭. 출처+날짜를 키로 정규화해 중복 ref 번호 통합.
+// 안전망: "2026년, ..." 형식(연도가 쉼표 앞)은 lookahead로 배제.
 function addFootnotes(html) {
-  // 패턴: (Source Text, 20XX) or (Source Text, 20XX-MM) or (Source Text, 20XX-MM-DD)
-  // "년" 뒤 쉼표 형태(완공 목표: 2026년, ...) 는 연도가 쉼표 앞이므로 매칭 안 됨.
-  const CITE_RE = /\(([^()]+,\s*20\d{2}(?:-\d{2}(?:-\d{2})?)?)\)/g;
+  // Group 1: 출처명 (쉼표 앞 텍스트)
+  // Group 2: 연도 YYYY[-MM[-DD]] (날짜 파트만 표준화)
+  // 쉼표 뒤 잡텍스트(Week NN, 인용, 부연 등) 허용, 닫는 괄호까지 허용
+  const CITE_RE = /\(([^()]*?),\s*(20\d{2}(?:-\d{2}(?:-\d{2})?)?)[^()]*?\)/g;
 
   // 섹션 디바이더를 경계로 분리
   const SEP = '\x00DIV\x00';
@@ -126,15 +143,13 @@ function addFootnotes(html) {
   const chunks = marked.split(SEP);
 
   return chunks.map(chunk => {
-    // 선행 디바이더(<section class="divider">…</section>)는 그대로 두고,
-    // 그 뒤 본문에만 각주/참고자료 처리 (섹션별 독립 번호).
     const dm = chunk.match(/^(<section class="divider">[\s\S]*?<\/section>)([\s\S]*)$/);
     const head = dm ? dm[1] : '';
     const work = dm ? dm[2] : chunk;
 
     const refs = []; const refMap = {};
-    const processed = work.replace(CITE_RE, (_, citation) => {
-      const key = citation.trim();
+    const processed = work.replace(CITE_RE, (_, src, date) => {
+      const key = src.trim() + ', ' + date;
       if (!refMap[key]) { refs.push(key); refMap[key] = refs.length; }
       return `<sup class="ref-mark">[${refMap[key]}]</sup>`;
     });
@@ -299,9 +314,9 @@ sup.ref-mark{font-size:6pt;color:#a07d36;vertical-align:super;line-height:0}
 .stat-wrap{margin:4mm 0 5mm;break-inside:avoid}
 .stat-strip{display:flex;gap:3.5mm}
 .stat-card{flex:1;background:#fbfaf6;border:1px solid #ece6d8;border-top:2.5px solid #a07d36;border-radius:0 0 6px 6px;padding:3.5mm 3mm 3mm}
-.stat-val{font-family:var(--serif);font-size:17pt;font-weight:900;color:#0d2741;line-height:1}
+.stat-val{font-family:var(--serif);font-size:24pt;font-weight:900;color:#0d2741;line-height:1}
 .stat-val.up{color:#c0392b}.stat-val.down{color:#1d63c4}
-.stat-lab{font-size:7.5pt;color:#6b7682;margin-top:1.5mm;line-height:1.3}
+.stat-lab{font-size:8pt;color:#6b7682;margin-top:1.5mm;line-height:1.3}
 .stat-cap{font-size:7pt;color:#9aa3af;margin-top:2mm;text-align:right}
 </style>
 </head>
@@ -395,7 +410,8 @@ async function main() {
   let ogMatch;
   ogRe.lastIndex = 0;
   while ((ogMatch = ogRe.exec(bodyHtml)) !== null) {
-    const url = (ogMatch[1] || ogMatch[2] || '').trim();
+    // marked가 URL을 <a href="...">...</a>로 자동 변환할 수 있으므로 태그 제거
+    const url = (ogMatch[1] || ogMatch[2] || '').trim().replace(/<[^>]+>/g, '').trim();
     if (url) ogJobs.push({ full: ogMatch[0], url });
   }
   for (const job of ogJobs) {

@@ -49,7 +49,14 @@ function buildSectionSystemPrompt(styleGuide, focus) {
    ★★ 특정 기업(MTL 등) 언급, 영업 권유, "MTL 영업팀은…", "☞/➔ 권고", "한국 화주는 …하라/검토하라" 식
    독자 행동 지시·영업 시사점(So what)을 출력에 절대 포함하지 말 것 — 외부 중립 리포트.
    분석은 시장 자체의 방향성·리스크·전망으로 끝낼 것(독자에게 행동을 지시하지 않음).
-⑤ 모든 수치·인용에 출처(기관/날짜) 명기.
+⑤ 출처 표기 — 반드시 (매체명, YYYY-MM-DD) 또는 (매체명, YYYY-MM) 형식만 사용.
+   괄호 안에 "Week NN", "인용", "분석 인용", "출처" 등 부연 절대 금지.
+   주차·부연은 본문 문장에 풀어 쓸 것. 날짜 없는 인용 금지. 예: (Linerlytica, 2026-05-21)
+
+# 기사 선정·사용 기준
+- 운임·물동량·정책·인프라 등 시장 분석성 기사 우선(JOC·Drewry·Linerlytica·Flexport·gCaptain 등 전문 매체).
+- 단신·인물·가십·사건사고는 제외. 본문이 매우 짧거나(100자 미만) 섹션 주제와 직접 무관한 기사는 건너뛸 것.
+- 기사 주제가 해당 섹션과 일치해야 함 — 항공 섹션엔 항공 화물 기사만, 철도엔 철도만, 지역엔 지역 이슈만.
 
 --- 스타일 가이드 시작 ---
 ${styleGuide}
@@ -174,7 +181,7 @@ ${styleGuide}
 - [ ] MTL·영업팀 언급, "☞/➔ 권고", "한국 화주는 …하라/검토하라" 식 독자 행동 지시·영업 시사점이 전혀 없는가? — 있으면 삭제하고 객관적 시장 전망으로 대체 (외부 중립 리포트)
 - [ ] 분석이 독자 행동 지시 없이 시장 전망으로 마무리되는가?
 - [ ] 수치에 ▲▼과 비교 기준(WoW/MoM/YoY)이 붙어 있는가?
-- [ ] 출처(기관명·날짜)가 명기됐는가?
+- [ ] 출처(기관명·날짜)가 명기됐는가? 형식이 (매체명, YYYY-MM-DD) 또는 (매체명, YYYY-MM)인가? "Week NN"·"인용" 등 부연이 괄호 안에 없는가?
 - [ ] "~입니다/합니다" 경어체가 없는가? "~이다/했다" 평서체가 없는가?
 - [ ] 벙커비/벙커연료비 → 벙커유로, 트랜스퍼시픽 → 아시아-북미 항로로 교체됐는가?`;
 }
@@ -389,22 +396,39 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
     }
   }
 
-  // air 섹션: 운임 차트 토큰 + 지수 표 삽입 (첫 번째 ## 소제목 아래)
+  // air 섹션: 운임 차트 토큰 + 지수 표 삽입
+  // 삽입 위치 우선순위: (1) ## 03-1. 소제목 아래, (2) # 03. 섹션 제목 바로 아래, (3) 최상단
+  // 섹션 제목(# NN.) 앞에 삽입하면 PDF에서 섹션 디바이더 이전 페이지에 렌더링되므로 반드시 제목 뒤에 삽입
   if (sectionConfig.id === 'air') {
     if (airTable) {
       const chartInject = '\n\n[[CHART:air_rate]]\n\n' + airTable + '\n';
-      const anchor = revised.match(/#{2,3}[^\n]*(?:운임|물동량|동향)[^\n]*/)
-                  || revised.match(/#{2,3}[^\n]*/);
-      if (anchor) revised = revised.replace(anchor[0], anchor[0] + chartInject);
-      else        revised = '[[CHART:air_rate]]\n\n' + airTable + '\n\n' + revised;
+      const subAnchor = revised.match(/#{2,3}[^\n]*(?:운임|물동량|동향|WorldACD)[^\n]*/)
+                     || revised.match(/#{2,3}[^\n]*/);
+      if (subAnchor) {
+        revised = revised.replace(subAnchor[0], subAnchor[0] + chartInject);
+      } else {
+        // ## 소제목 없음 → # 섹션 제목 뒤에 삽입 (디바이더 앞 방지)
+        const secAnchor = revised.match(/^#\s[^\n]*/m);
+        if (secAnchor) {
+          revised = revised.replace(secAnchor[0], secAnchor[0] + chartInject);
+        } else {
+          revised += '\n\n' + chartInject;
+        }
+      }
     } else {
       const notice = '\n\n> ⚠️ **이번 회차 항공 데이터 미수집** — WorldACD·BAI 수집 실패. 다음 호 업데이트 예정.\n\n';
-      const anchor = revised.match(/\n#{2,3}[^\n]*/);
-      if (anchor) {
-        const at = revised.indexOf(anchor[0]) + anchor[0].length;
+      const subAnchor = revised.match(/\n#{2,3}[^\n]*/);
+      if (subAnchor) {
+        const at = revised.indexOf(subAnchor[0]) + subAnchor[0].length;
         revised = revised.slice(0, at) + notice + revised.slice(at);
       } else {
-        revised = notice + revised;
+        const secAnchor = revised.match(/^#\s[^\n]*/m);
+        if (secAnchor) {
+          const at = revised.indexOf(secAnchor[0]) + secAnchor[0].length;
+          revised = revised.slice(0, at) + notice + revised.slice(at);
+        } else {
+          revised = notice + revised;
+        }
       }
     }
   }

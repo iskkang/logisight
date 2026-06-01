@@ -24,10 +24,10 @@ const STYLE_GUIDE = fs.readFileSync(
 );
 
 const sectionArg = process.argv.find(a => a.startsWith('--section='));
-const SECTION    = sectionArg ? sectionArg.split('=')[1] : 'rail'; // rail | ocean | air | trade
+const SECTION    = sectionArg ? sectionArg.split('=')[1] : 'rail'; // rail | ocean | air | trade | logistics
 
-if (!['rail', 'ocean', 'air', 'trade'].includes(SECTION)) {
-  console.error('❌ --section=rail|ocean|air|trade 지정 필요');
+if (!['rail', 'ocean', 'air', 'trade', 'logistics'].includes(SECTION)) {
+  console.error('❌ --section=rail|ocean|air|trade|logistics 지정 필요');
   process.exit(1);
 }
 
@@ -35,10 +35,11 @@ const CURATED_PATH = path.join(DRAFTS_DIR, `curated-${SECTION}.json`);
 
 // 섹션별 Unsplash 기본 키워드
 const DEFAULT_KEYWORD = {
-  rail:  'freight train railway china',
-  ocean: 'container port cargo ship',
-  air:   'air cargo aircraft freighter',
-  trade: 'supply chain logistics trade',
+  rail:      'freight train railway china',
+  ocean:     'container port cargo ship',
+  air:       'air cargo aircraft freighter',
+  trade:     'supply chain logistics trade',
+  logistics: 'logistics warehouse dhl fedex',
 };
 
 // ── Unsplash 이미지 fetch ──────────────────────────────────────────────────
@@ -72,8 +73,8 @@ async function generateArticle(curated, imageUrl, imageKeyword) {
     .map(l => `- [${l.source}] ${l.title_ko || l.title} — ${l.url}`)
     .join('\n');
 
-  const LABELS = { rail: '철도', ocean: '해운', air: '항공화물', trade: '무역·정책' };
-  const CATS   = { rail: '철도', ocean: '해상', air: '항공',    trade: '물류' };
+  const LABELS = { rail: '철도', ocean: '해운', air: '항공화물', trade: '무역·정책', logistics: '글로벌 물류' };
+  const CATS   = { rail: '철도', ocean: '해상', air: '항공',    trade: '물류',     logistics: '물류' };
   const sectionLabel = LABELS[SECTION] ?? SECTION;
   const category     = CATS[SECTION]   ?? '물류';
 
@@ -183,7 +184,7 @@ async function main() {
 
   // maritime_news upsert
   const canonicalUrl    = `https://logisight.mtlship.com/article/${TODAY}-${SECTION}-${slug}`;
-  const CATS2 = { rail: '철도', ocean: '해상', air: '항공', trade: '물류' };
+  const CATS2 = { rail: '철도', ocean: '해상', air: '항공', trade: '물류', logistics: '물류' };
   const defaultCategory = CATS2[SECTION] ?? '물류';
   await insertArticle({
     markdownContent: article,

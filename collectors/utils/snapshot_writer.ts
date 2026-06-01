@@ -14,6 +14,7 @@ interface NewsOutput {
   air: object[];
   rail: object[];
   trade: object[];
+  logistics: object[];
   carrier_advisory: object[];
   risk: object[];
 }
@@ -26,11 +27,11 @@ function loadExisting(): NewsOutput {
       // corrupted — start fresh
     }
   }
-  return { date: '', shipping: [], air: [], rail: [], trade: [], carrier_advisory: [], risk: [] };
+  return { date: '', shipping: [], air: [], rail: [], trade: [], logistics: [], carrier_advisory: [], risk: [] };
 }
 
 const ROLL_DAYS = 35;   // 30일 롤링 + 여유 5일
-const SECTIONS_TO_CLEAN = ['shipping', 'air', 'rail', 'trade', 'carrier_advisory', 'risk'] as const;
+const SECTIONS_TO_CLEAN = ['shipping', 'air', 'rail', 'trade', 'logistics', 'carrier_advisory', 'risk'] as const;
 
 export async function snapshotWriter(result: CollectorResult): Promise<void> {
   const output = loadExisting();

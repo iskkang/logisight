@@ -5,6 +5,11 @@ function matches(item, keywords) {
   return keywords.some(k => text.includes(k.toLowerCase()));
 }
 
+// 단신·가십 필터: 본문 합산 150자 미만 항목 제외
+function hasSubstance(item) {
+  return (item.summary_en || '').length + (item.content || '').length >= 150;
+}
+
 const SECTIONS = [
   {
     id: 'index',
@@ -34,7 +39,9 @@ const SECTIONS = [
       '글로벌 운임과의 디커플링 여부, 역내 수요·공급 시사점. 데이터 미수집 시 생략. ' +
       '## 02-8. 종합 전망 — 지수 간 수렴·발산과 시장 방향성 종합. ' +
       '각 지수는 현상에서 원인·전망으로 자연스럽게 이어지는 산문으로 서술(대괄호 라벨·머리표 금지). ' +
-      '특정 기업·영업 관점·독자 행동 권유 없이 객관적 시장 전망으로 마무리. 항로 등락 원인은 주어진 기사에 근거. 소제목당 4~6문장 간결.',
+      '특정 기업·영업 관점·독자 행동 권유 없이 객관적 시장 전망으로 마무리. 항로 등락 원인은 주어진 기사에 근거. ' +
+      '분량 엄수: 지수 블록(02-N)은 표+차트+해설이 한 페이지에 들어가도록 해설을 2문단 이내로 압축(문단당 4~5줄). ' +
+      '마지막 문단 한 줄 때문에 다음 페이지로 넘어가지 않도록 문장을 줄여 fit.',
     filterItems: (items) => {
       const kw = [
         'freight', 'ocean', 'container', 'shipping', 'vessel', 'carrier',
@@ -44,10 +51,12 @@ const SECTIONS = [
         'asia', 'europe', 'transpacific', 'intra-asia',
       ];
       return items.filter(i =>
-        i.category === 'lane_causal'    ||   // Linerlytica·gCaptain 항로 원인 — 무조건 포함
-        i.category === 'carrier_update' ||   // Freightos·Flexport 시황 업데이트
-        i.category === 'deep_analysis'  ||   // JOC 심층 분석
-        matches(i, kw)
+        hasSubstance(i) && (
+          i.category === 'lane_causal'    ||   // Linerlytica·gCaptain 항로 원인 — 무조건 포함
+          i.category === 'carrier_update' ||   // Freightos·Flexport 시황 업데이트
+          i.category === 'deep_analysis'  ||   // JOC 심층 분석
+          matches(i, kw)
+        )
       );
     },
   },
@@ -63,7 +72,13 @@ const SECTIONS = [
         'e-commerce', 'express', 'charter', 'belly',
         '항공', '에어카고', '특송', '국제항공',
       ];
-      return items.filter(i => matches(i, kw));
+      // 항공과 무관한 인접 섹션 키워드 명시적 배제 (해운 운임·철도 등 오염 방지)
+      const EXCLUDE = ['fraud', 'scam', 'crime', '사기', 'north american rail', 'union pacific', 'deutsche bahn'];
+      return items.filter(i =>
+        hasSubstance(i) &&
+        matches(i, kw) &&
+        !EXCLUDE.some(k => `${i.title} ${i.summary_en || ''}`.toLowerCase().includes(k))
+      );
     },
   },
   {
@@ -94,6 +109,7 @@ const SECTIONS = [
       ];
       const txt = i => `${i.title} ${i.summary_en||''} ${i.content||''} ${i.source||''}`.toLowerCase();
       return items.filter(i => {
+        if (!hasSubstance(i)) return false;
         const t = txt(i);
         if (EXCLUDE.some(k => t.includes(k.toLowerCase()))) return false;   // 북미·서유럽 우선 배제
         return i.section === 'rail' || INCLUDE.some(k => t.includes(k.toLowerCase()));
@@ -107,15 +123,17 @@ const SECTIONS = [
     focus:
       '한국·캐나다·유럽·독일 등 주요 지역 물류 이슈 — 항만 혼잡, 인프라 투자, ' +
       '포워딩 환경 변화, 공급망 재편 관련 지역 특화 이슈. ' +
-      '시각자료 토큰: ① 소제목 블록에 비교 가능한 핵심 수치 3개 이상이 있으면 도입 문단 뒤에 [[STATS: 값|라벨|up/down ; … :: 캡션(출처·기준일)]] 한 줄 삽입(수치 3개 미만이면 생략, 수치는 본문과 반드시 일치). ② [[STATS:]]가 없는 소제목 블록에는 해당 블록 대표 출처 URL을 [[OGIMG: URL]] 한 줄로 삽입(도입 문단 뒤, 블록당 최대 1장).',
+      '시각자료 토큰: ① 소제목 블록에 비교 가능한 핵심 수치 3개 이상이 있으면 도입 문단 뒤에 [[STATS: 값|라벨|up/down ; … :: 캡션(출처·기준일)]] 한 줄 삽입(수치 3개 미만이면 생략, 수치는 본문과 반드시 일치). ② [[STATS:]]가 없는 소제목 블록에는 해당 블록 대표 출처 URL을 [[OGIMG: URL]] 한 줄로 삽입(도입 문단 뒤, 블록당 최대 1장). ' +
+      '★ 지역별 이슈에서 미국(관세·CBP·USTR·항만·공급망) 관련 기사 1건 이상 반드시 포함.',
     filterItems: (items) => {
       const kw = [
         'Korea', 'Canada', 'Germany', 'EU', 'Europe', 'Japan',
+        'United States', 'USA', 'America', 'USTR', 'CBP',
         'infrastructure', 'port', 'congestion', 'hub',
-        '한국', '캐나다', '독일', '유럽', '일본',
+        '한국', '캐나다', '독일', '유럽', '일본', '미국',
         '항만', '인프라', '허브', '혼잡', '포워더',
       ];
-      return items.filter(i => matches(i, kw));
+      return items.filter(i => hasSubstance(i) && matches(i, kw));
     },
   },
   {
@@ -141,7 +159,7 @@ const SECTIONS = [
         '관세', '무역전쟁', '제재', '지정학', '호르무즈', '홍해', '유가',
         '원자재', '환율', '무역', '공급망', '물동량', '처리량', '수요',
       ];
-      return items.filter(i => matches(i, kw));
+      return items.filter(i => hasSubstance(i) && matches(i, kw));
     },
   },
   {
@@ -159,7 +177,7 @@ const SECTIONS = [
         'legislation', 'bill', 'act', 'ruling', 'Flexport',
         '규제', '정책', '법원', '통관', '관세', '입법', '법령',
       ];
-      return items.filter(i => matches(i, kw));
+      return items.filter(i => hasSubstance(i) && matches(i, kw));
     },
   },
 ];
