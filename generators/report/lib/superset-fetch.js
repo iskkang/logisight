@@ -54,25 +54,20 @@ async function getCsrf(sessionCookie) {
   return { csrfToken: result, sessionCookie: refreshed };
 }
 
-// Step 3 ─ chart/data
-async function postChartData(csrfToken, sessionCookie, sliceId, dashboardId) {
-  const qFormData = encodeURIComponent(JSON.stringify({ slice_id: sliceId }));
-  const url = `${BASE}/api/v1/chart/data?form_data=${qFormData}&dashboard_id=${dashboardId}`;
+// Step 3 ─ GET /api/v1/chart/{id}/data/ (uses chart's stored config — no body needed)
+async function postChartData(csrfToken, sessionCookie, sliceId) {
+  const url = `${BASE}/api/v1/chart/${sliceId}/data/`;
   const r = await fetch(url, {
-    method: 'POST',
     headers: {
-      'User-Agent':   UA,
-      'X-CSRFToken':  csrfToken,
-      'Content-Type': 'application/json',
-      Accept:         'application/json',
-      Referer:        REFERER,
-      Origin:         BASE,
-      Cookie:         sessionCookie,
+      'User-Agent':  UA,
+      'X-CSRFToken': csrfToken,
+      Accept:        'application/json',
+      Referer:       REFERER,
+      Cookie:        sessionCookie,
     },
-    body: '{}',
     signal: abort(),
   });
-  if (!r.ok) throw new Error(`chart/data → HTTP ${r.status}: ${await r.text().catch(() => '')}`);
+  if (!r.ok) throw new Error(`chart/${sliceId}/data → HTTP ${r.status}: ${await r.text().catch(() => '')}`);
   return r.json();
 }
 
@@ -114,7 +109,7 @@ async function fetchSupersetAirIndex({ sliceId, dashboardId } = {}) {
     console.log('  superset: 세션 확보');
     const { csrfToken, sessionCookie } = await getCsrf(session);
     console.log('  superset: CSRF 확보');
-    const json                  = await postChartData(csrfToken, sessionCookie, sliceId, dashboardId);
+    const json                  = await postChartData(csrfToken, sessionCookie, sliceId);
     const chartData             = parseResult(json);
     if (!chartData) throw new Error('결과 파싱 실패 — colnames 구조 확인 필요');
     console.log(`  superset: ${chartData.labels.length}개 월간 데이터 (${chartData.datasets.length}개 계열)`);
