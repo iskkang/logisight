@@ -1,8 +1,12 @@
 'use strict';
 const path = require('path');
+const fs   = require('fs');
 require('dotenv').config({ path: path.resolve(__dirname, '../../../.env.local') });
 if (typeof globalThis.WebSocket === 'undefined') { try { globalThis.WebSocket = require('ws'); } catch (_) {} }
 const { createClient } = require('@supabase/supabase-js');
+
+const AIR_CACHE = path.resolve(__dirname, '../../../outputs/cache/air-index.json');
+const BS_CACHE  = path.resolve(__dirname, '../../../outputs/cache/blank-sailings.json');
 
 function sb() {
   return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY,
@@ -67,6 +71,28 @@ const getOceanBunker = () => indexSeries(['VLSFO', 'HSFO']);
 // WCI는 항로(월별 4개)까지 — 데이터가 적어 다중선이 보기 좋음
 const getOceanWci    = () => indexSeries(['WCI', 'WCI_SHA_RTM', 'WCI_SHA_GOA', 'WCI_SHA_LAX', 'WCI_SHA_NYC']);
 
+// Air rate: reads from outputs/cache/air-index.json written by air-indices.js
+// Cache schema: { fetched_at, source, chartData: { labels, datasets }, table, factText }
+async function getAirRate() {
+  try {
+    if (!fs.existsSync(AIR_CACHE)) return null;
+    const raw = JSON.parse(fs.readFileSync(AIR_CACHE, 'utf-8'));
+    const cd  = raw.chartData || raw;  // handle both nested and legacy flat schema
+    if (!cd.labels || !cd.datasets?.length) return null;
+    return cd;
+  } catch (_) { return null; }
+}
+
+async function getOceanBlankSailings() {
+  try {
+    if (!fs.existsSync(BS_CACHE)) return null;
+    const raw = JSON.parse(fs.readFileSync(BS_CACHE, 'utf-8'));
+    const cd  = raw.chartData;
+    if (!cd?.labels || !cd.datasets?.length) return null;
+    return cd;
+  } catch (_) { return null; }
+}
+
 async function getRailOtp() {
   const client = sb();
   const { data, error } = await client.from('delay_index_weekly')
@@ -104,8 +130,10 @@ const CHARTS = {
   ocean_ccfi:   { title: 'CCFI(중국 컨테이너운임지수) 추이',    loader: getOceanCcfi,   yLabel: 'index' },
   ocean_bdi:    { title: 'BDI(건화물선운임지수) 추이',          loader: getOceanBdi,    yLabel: 'index' },
   ocean_wci:    { title: 'WCI(드류리) 종합·항로별 추이',        loader: getOceanWci,    yLabel: 'USD/FEU' },
-  ocean_bunker: { title: '벙커유(VLSFO·HSFO) 추이',             loader: getOceanBunker, yLabel: 'USD/ton' },
+  ocean_bunker:          { title: '벙커유(VLSFO·HSFO) 추이',                           loader: getOceanBunker,         yLabel: 'USD/ton' },
+  ocean_blank_sailings:  { title: '블랭크 세일링 결항률 추이 (Drewry)',                    loader: getOceanBlankSailings,  yLabel: '%' },
   rail_otp:     { title: '유라시아 회랑별 정시율 (MTL Link 실측)', loader: getRailOtp,   yLabel: 'OTP %' },
+  air_rate:     { title: '항공 화물 스팟 운임 추이 (WorldACD 글로벌 평균)', loader: getAirRate, yLabel: 'USD/kg' },
 };
 
 async function buildChart(id) {

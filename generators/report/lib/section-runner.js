@@ -75,7 +75,7 @@ ${styleGuide}
 - "스페이스" → "선적 공간" 또는 "선복"`;
 }
 
-function buildSectionUserPrompt(title, items, month, indexFactText, railFactText) {
+function buildSectionUserPrompt(title, items, month, indexFactText, railFactText, airFactText) {
   const lines = [`분석 기준월: ${month}`, ''];
 
   if (indexFactText) {
@@ -87,6 +87,12 @@ function buildSectionUserPrompt(title, items, month, indexFactText, railFactText
   if (railFactText) {
     lines.push('## MTL Link 실측 정시 데이터 (이 수치만 사용, 다른 숫자 생성 금지)');
     lines.push(railFactText);
+    lines.push('');
+  }
+
+  if (airFactText) {
+    lines.push('## 항공 운임 지수 (이 수치만 사용, 다른 운임 수치 생성 금지)');
+    lines.push(airFactText);
     lines.push('');
   }
 
@@ -176,14 +182,15 @@ function buildCritiqueUserPrompt(draft) {
 async function runSection({ client, sectionConfig, items, styleGuide, month,
                             indexTable = null, indexFactText = null,
                             railTable = null, railFactText = null,
-                            oceanBlocks = null }) {
+                            oceanBlocks = null,
+                            airTable = null, airFactText = null }) {
   if (items.length === 0) {
     console.log(`⚠️  [${sectionConfig.id}] 관련 기사 없음 → status: no-data`);
     return { status: 'no-data', text: '', pass1Tokens: 0, pass2Tokens: 0 };
   }
 
   const systemPrompt = buildSectionSystemPrompt(styleGuide, sectionConfig.focus);
-  const userPrompt   = buildSectionUserPrompt(sectionConfig.title, items, month, indexFactText, railFactText);
+  const userPrompt   = buildSectionUserPrompt(sectionConfig.title, items, month, indexFactText, railFactText, airFactText);
 
   // PASS 1: 초안 생성
   console.log(`⏳ [${sectionConfig.id}] PASS 1 — 초안 생성...`);
@@ -218,20 +225,36 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
   // ocean 섹션: per-index 차트+표 주입 (02-1~02-5 각 소제목 아래, 둘째 지수부터 새 페이지)
   if (sectionConfig.id === 'ocean' && oceanBlocks && oceanBlocks.length) {
     oceanBlocks.forEach((b, idx) => {
-      if (!b.table) return;
+      const pb = idx > 0 ? '<div class="page-break"></div>\n\n' : '';
+
+      if (!b.table) {
+        // blank_sailings fetch 실패 시 미수집 notice 주입
+        if (b.id === 'blank_sailings') {
+          let noticeAnchor = null;
+          for (const kw of b.headingKw) {
+            const safe = kw.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+            const m = revised.match(new RegExp('#{2,3}[^\\n]*' + safe + '[^\\n]*'));
+            if (m) { noticeAnchor = m[0]; break; }
+          }
+          if (noticeAnchor) {
+            const notice = '\n\n> ⚠️ **이번 회차 블랭크 세일링 데이터 미수집** — Drewry 수집 실패. 다음 호 업데이트 예정.\n\n';
+            revised = revised.replace(noticeAnchor, `${pb}${noticeAnchor}${notice}`);
+          }
+        }
+        return;
+      }
       let anchor = null;
       for (const kw of b.headingKw) {
         const safe = kw.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
         const m = revised.match(new RegExp('#{2,3}[^\\n]*' + safe + '[^\\n]*'));
         if (m) { anchor = m[0]; break; }
       }
-      const pb     = idx > 0 ? '<div class="page-break"></div>\n\n' : '';
       const inject = `\n\n[[CHART:${b.chart}]]\n\n${b.table}\n`;
       if (anchor) revised = revised.replace(anchor, `${pb}${anchor}${inject}`);
       else        revised += `\n\n${pb}### (${b.id.toUpperCase()} 표)${inject}`;
     });
-    // 02-6 종합 전망 소제목 또는 말미에 벙커유 차트 추가
-    const bunkerM = revised.match(/#{2,3}[^\n]*(?:02-6|종합|벙커)[^\n]*/i);
+    // 02-7 종합 전망 소제목 또는 말미에 벙커유 차트 추가
+    const bunkerM = revised.match(/#{2,3}[^\n]*(?:02-7|종합|벙커)[^\n]*/i);
     if (bunkerM) {
       revised = revised.replace(bunkerM[0], `${bunkerM[0]}\n\n[[CHART:ocean_bunker]]\n`);
     } else {
@@ -267,6 +290,27 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
       const before04_4 = revised.match(/#{2,3}[^\n]*04-4[^\n]*/);
       if (before04_4) revised = revised.replace(before04_4[0], `${railTable}\n\n${before04_4[0]}`);
       else revised += `\n\n### 04-3. 유라시아 회랑별 정시 성과 (MTL 실측)\n\n${railTable}\n`;
+    }
+  }
+
+  // air 섹션: 운임 차트 토큰 + 지수 표 삽입 (첫 번째 ## 소제목 아래)
+  if (sectionConfig.id === 'air') {
+    if (airTable) {
+      const chartInject = `\n\n[[CHART:air_rate]]\n\n${airTable}\n`;
+      const anchor = revised.match(/#{2,3}[^\n]*(?:운임|물동량|동향)[^\n]*/)
+                  || revised.match(/#{2,3}[^\n]*/);
+      if (anchor) revised = revised.replace(anchor[0], `${anchor[0]}${chartInject}`);
+      else        revised = `[[CHART:air_rate]]\n\n${airTable}\n\n${revised}`;
+    } else {
+      // Fallback notice when fetch failed
+      const notice = `\n\n> ⚠️ **이번 회차 항공 데이터 미수집** — WorldACD·BAI 수집 실패. 다음 호 업데이트 예정.\n\n`;
+      const anchor = revised.match(/\n#{2,3}[^\n]*/);
+      if (anchor) {
+        const at = revised.indexOf(anchor[0]) + anchor[0].length;
+        revised = revised.slice(0, at) + notice + revised.slice(at);
+      } else {
+        revised = notice + revised;
+      }
     }
   }
 

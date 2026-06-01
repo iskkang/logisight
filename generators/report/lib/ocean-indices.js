@@ -4,6 +4,7 @@ require('dotenv').config({ path: path.resolve(__dirname, '../../../.env.local') 
 if (typeof globalThis.WebSocket === 'undefined') { try { globalThis.WebSocket = require('ws'); } catch (_) {} }
 const { createClient } = require('@supabase/supabase-js');
 const { LABELS } = require('./chart-data');
+const { buildBlankSailings } = require('./blank-sailings');
 
 function sb() {
   return createClient(
@@ -113,12 +114,15 @@ function render(byCode, order, opts = {}) {
 }
 
 async function buildOceanIndices() {
-  const [kcci, scfi, ccfi, wci, bdi] = await Promise.all([
-    loadGroup(KCCI_ORDER),
-    loadGroup(SCFI_ORDER),
-    loadGroup(CCFI_ORDER),
-    loadGroup(WCI_ORDER),
-    loadGroup(BDI_ORDER),
+  const [[kcci, scfi, ccfi, wci, bdi], blankData] = await Promise.all([
+    Promise.all([
+      loadGroup(KCCI_ORDER),
+      loadGroup(SCFI_ORDER),
+      loadGroup(CCFI_ORDER),
+      loadGroup(WCI_ORDER),
+      loadGroup(BDI_ORDER),
+    ]),
+    buildBlankSailings(),
   ]);
 
   const blocks = [
@@ -148,6 +152,13 @@ async function buildOceanIndices() {
     {
       id: 'bdi', chart: 'ocean_bdi', headingKw: ['02-5', 'BDI'],
       ...render(bdi, BDI_ORDER, { source: 'Baltic Exchange' }),
+    },
+    {
+      id:        'blank_sailings',
+      chart:     'ocean_blank_sailings',
+      headingKw: ['02-6', '블랭크', '결항'],
+      table:     blankData?.table    ?? null,
+      factText:  blankData?.factText ?? null,
     },
   ];
 
