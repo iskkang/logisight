@@ -78,44 +78,54 @@ async function getChartMeta(csrfToken, sessionCookie, sliceId) {
   };
 }
 
-// Step 4 ─ POST chart data (query_context as body, or minimal fallback)
+// Step 4 ─ POST chart data to /api/v1/chart/data (not per-slice endpoint)
+// query_context from step 3 is passed as body with force=true; fallback uses form_data param.
 async function postChartData(csrfToken, sessionCookie, sliceId, meta) {
-  const url = `${BASE}/api/v1/chart/${sliceId}/data/`;
+  const url = `${BASE}/api/v1/chart/data`;
+  const commonHeaders = {
+    'User-Agent':   UA,
+    'X-CSRFToken':  csrfToken,
+    'Content-Type': 'application/json',
+    Accept:         'application/json',
+    Referer:        REFERER,
+    Cookie:         sessionCookie,
+  };
 
-  let body;
   if (meta?.queryContext) {
-    // Use the stored query_context exactly — this is what Superset itself sends
-    body = typeof meta.queryContext === 'string'
-      ? meta.queryContext
-      : JSON.stringify(meta.queryContext);
-  } else if (meta?.datasourceId) {
-    // Fallback: build a minimal POST body from datasource_id
-    body = JSON.stringify({
+    // Use stored query_context with force=true — exactly what the browser sends
+    const qc = typeof meta.queryContext === 'string'
+      ? JSON.parse(meta.queryContext)
+      : { ...meta.queryContext };
+    qc.force = true;
+    const r = await fetch(url, {
+      method: 'POST', headers: commonHeaders, body: JSON.stringify(qc), signal: abort(),
+    });
+    if (!r.ok) throw new Error(`chart/data (qc) → HTTP ${r.status}: ${await r.text().catch(() => '')}`);
+    return r.json();
+  }
+
+  if (meta?.datasourceId) {
+    // Fallback: minimal body from datasource_id
+    const body = JSON.stringify({
       datasource:    { id: meta.datasourceId, type: meta.datasourceType || 'table' },
       queries:       [{ row_limit: 5000, orderby: [['__timestamp', true]] }],
       form_data:     JSON.stringify({ slice_id: sliceId }),
       result_format: 'json',
       result_type:   'full',
     });
-  } else {
-    // Last resort: pass form_data only and hope the server resolves it
-    body = JSON.stringify({ form_data: JSON.stringify({ slice_id: sliceId }) });
+    const r = await fetch(url, {
+      method: 'POST', headers: commonHeaders, body, signal: abort(),
+    });
+    if (!r.ok) throw new Error(`chart/data (datasource) → HTTP ${r.status}: ${await r.text().catch(() => '')}`);
+    return r.json();
   }
 
-  const r = await fetch(url, {
-    method:  'POST',
-    headers: {
-      'User-Agent':   UA,
-      'X-CSRFToken':  csrfToken,
-      'Content-Type': 'application/json',
-      Accept:         'application/json',
-      Referer:        REFERER,
-      Cookie:         sessionCookie,
-    },
-    body,
-    signal: abort(),
+  // Last resort: form_data as query param, Superset resolves saved state
+  const fd = encodeURIComponent(JSON.stringify({ slice_id: sliceId }));
+  const r = await fetch(`${url}?form_data=${fd}&dashboard_id=1&force=true`, {
+    method: 'POST', headers: commonHeaders, body: '{}', signal: abort(),
   });
-  if (!r.ok) throw new Error(`chart/${sliceId}/data → HTTP ${r.status}: ${await r.text().catch(() => '')}`);
+  if (!r.ok) throw new Error(`chart/data (form_data fallback) → HTTP ${r.status}: ${await r.text().catch(() => '')}`);
   return r.json();
 }
 
@@ -165,7 +175,7 @@ async function fetchSupersetAirIndex({ sliceId, dashboardId } = {}) {
     const json                         = await postChartData(csrfToken, sessionCookie, sliceId, meta);
     const chartData                    = parseResult(json);
     if (!chartData) throw new Error('결과 파싱 실패 — colnames 구조 확인 필요');
-    console.log(`  superset: ${chartData.labels.length}개 월간 데이터 (${chartData.datasets.length}개 계열)`);
+    console.log(`  superset: TAC ${chartData.labels.length}행 수집 (${chartData.datasets.length}개 계열, 최신월 ${chartData.labels.at(-1)})`);
     return chartData;
   } catch (e) {
     console.warn('  superset: 오류 —', e.message);

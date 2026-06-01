@@ -273,30 +273,40 @@ async function fetchXeneta() {
   return null;
 }
 
-// ── Table builder (Superset) ───────────────────────────────────────────────────
+// ── Table builder (Superset TAC — MoM + YoY) ──────────────────────────────────
+
+const LANE_LABELS = {
+  'Frankfurt-N America': '프랑크푸르트→북미',
+  'Hong Kong-Europe':    '홍콩→유럽',
+  'Hong Kong-N America': '홍콩→북미',
+};
+
+function pctChg(cur, prev) {
+  return (cur != null && prev != null && prev !== 0) ? ((cur - prev) / prev * 100) : null;
+}
+
+function fmtPct(p) {
+  if (p == null) return '—';
+  const sym = p > 0 ? '▲' : p < 0 ? '▼' : '→';
+  return `${sym}${Math.abs(p).toFixed(1)}%`;
+}
 
 function buildSupersetTable(chartData, month) {
-  const header = '| 노선 | 최신값 (USD/kg) | 전월 대비 | 기준월 | 출처 |';
-  const sep    = '|------|---------------|---------|--------|------|';
-  const base   = process.env.SUPERSET_BASE || 'https://glip-bi.deepvue.vvnst.com';
+  const asOf   = chartData.labels[chartData.labels.length - 1] || month;
+  const header = `| 노선 | 최신값 (USD/kg) | MoM | YoY | 기준월 |`;
+  const sep    = `|------|---------------|-----|-----|--------|`;
 
   const rows = chartData.datasets.map(ds => {
-    let curr = null, prev = null;
-    for (let i = ds.data.length - 1; i >= 0; i--) {
-      if (ds.data[i] != null) {
-        if (curr == null) { curr = ds.data[i]; }
-        else if (prev == null) { prev = ds.data[i]; break; }
-      }
-    }
-    const mom = (() => {
-      if (curr == null || prev == null || prev === 0) return '—';
-      const pct = ((curr - prev) / prev) * 100;
-      const sym = pct > 0 ? '▲' : pct < 0 ? '▼' : '→';
-      return `${sym}${Math.abs(pct).toFixed(1)}% MoM`;
-    })();
-    const lastLabel = chartData.labels[chartData.labels.length - 1] || month;
-    const val = curr != null ? curr.toFixed(2) : '—';
-    return `| ${ds.label} | **${val}** | ${mom} | ${lastLabel} | [사내 BI](${base}) |`;
+    const vals = ds.data;
+    let li = vals.length - 1;
+    while (li >= 0 && vals[li] == null) li--;
+    const latest = li >= 0   ? vals[li]      : null;
+    const prevMo = li >= 1   ? vals[li - 1]  : null;
+    const prevYr = li >= 12  ? vals[li - 12] : null;
+
+    const lane = LANE_LABELS[ds.label] || ds.label;
+    const val  = latest != null ? latest.toFixed(2) : '—';
+    return `| ${lane} | **${val}** | ${fmtPct(pctChg(latest, prevMo))} MoM | ${fmtPct(pctChg(latest, prevYr))} YoY | ${asOf} |`;
   });
 
   return [header, sep, ...rows].join('\n');
@@ -309,12 +319,20 @@ function buildFactText({ source, chartData, baiRows, iataTable, xenetaFactText, 
   const today = new Date().toISOString().slice(0, 10);
 
   if (source === 'superset' && chartData) {
-    lines.push('## TAC Index 항로별 운임 (사내 BI / Superset, USD/kg, 월별)');
+    const asOf = chartData.labels[chartData.labels.length - 1] || month;
+    lines.push(`## TAC Index 항로별 운임 (사내 BI / Superset, USD/kg, 월별, 최신 가용월 ${asOf})`);
+    lines.push('※ TAC 월별 데이터는 보고서 발행월 기준 1~2개월 시차 있음. 아래 수치는 실제 수집 기준월.');
     for (const ds of chartData.datasets) {
-      const last = ds.data.filter(v => v != null).slice(-1)[0];
-      if (last != null) lines.push(`${ds.label}: ${last.toFixed(2)} USD/kg`);
+      const vals = ds.data;
+      let li = vals.length - 1;
+      while (li >= 0 && vals[li] == null) li--;
+      if (li < 0) continue;
+      const lane   = LANE_LABELS[ds.label] || ds.label;
+      const latest = vals[li];
+      const prevMo = li >= 1  ? vals[li - 1]  : null;
+      const prevYr = li >= 12 ? vals[li - 12] : null;
+      lines.push(`${lane}: ${latest.toFixed(2)} USD/kg (MoM ${fmtPct(pctChg(latest, prevMo))}, YoY ${fmtPct(pctChg(latest, prevYr))})`);
     }
-    lines.push(`(출처: 사내 BI / Superset, ${today})`);
     lines.push('');
   }
 
@@ -403,7 +421,8 @@ async function buildAirIndices({ force = false } = {}) {
 
   const factText = buildFactText({ source, chartData, baiRows: baiTable, iataTable, xenetaFactText, month });
 
-  const payload = { source, chartData, baiTable, iataTable, xenetaFactText, table, factText };
+  const asOf = (source === 'superset' && chartData) ? chartData.labels[chartData.labels.length - 1] : null;
+  const payload = { source, chartData, baiTable, iataTable, xenetaFactText, table, factText, ...(asOf ? { asOf } : {}) };
   saveCache(payload);
   console.log(`  air-indices: 완료 (source=${source})`);
   return payload;

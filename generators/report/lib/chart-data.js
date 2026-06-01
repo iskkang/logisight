@@ -157,7 +157,7 @@ const CHARTS = {
   ocean_intra_asia:      { title: '역내(Intra-Asia) 운임 추이 (KCCI 역내 항로 proxy)',    loader: getOceanIntraAsia,      yLabel: 'index' },
   macro_port_throughput: { title: '글로벌 컨테이너 항만 처리량 지수 추이 (ISL/RWI-ISL)', loader: getMacroPortThroughput, yLabel: 'index' },
   rail_otp:     { title: '유라시아 회랑별 정시율 (MTL Link 실측)', loader: getRailOtp,   yLabel: 'OTP %' },
-  air_rate:     { title: '항공 화물 스팟 운임 추이 (WorldACD 글로벌 평균)', loader: getAirRate, yLabel: 'USD/kg' },
+  air_rate:     { title: 'TAC Index 항공 운임 추이 (USD/kg, 사내 BI)', loader: getAirRate, yLabel: 'USD/kg' },
 };
 
 async function buildChart(id) {
