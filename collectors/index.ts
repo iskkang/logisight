@@ -99,6 +99,13 @@ const GROUPS = [
     ],
   },
   {
+    name: 'air-daily',
+    collectors: [
+      // news_global includes AirCargoNews + CNBC Logistics (section='air') and SupplyChainDive+TTNews (section='trade')
+      { name: 'news_global', fn: collectNewsGlobal },
+    ],
+  },
+  {
     name: 'policy-daily',
     collectors: [
       { name: 'policy_us',  fn: collectPolicyUS  },
@@ -124,6 +131,7 @@ const GROUP_MAP: Record<string, string> = {
   'rail-weekly': 'rail-weekly',
   'ocean-daily': 'ocean-daily',
   'ocean-weekly':       'ocean-weekly',
+  'air-daily':          'air-daily',
   'policy-daily':       'policy-daily',
   'monthly-analysis':   'monthly-analysis',
 };
