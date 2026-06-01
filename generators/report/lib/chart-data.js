@@ -9,7 +9,10 @@ function sb() {
     { auth: { persistSession: false } });
 }
 
-const COLORS = ['#1E3A5F', '#2E86AB', '#E08E45', '#6A994E', '#BC4749', '#8E7DBE'];
+const COLORS = [
+  '#1E3A5F','#2E86AB','#E08E45','#6A994E','#BC4749','#8E7DBE',
+  '#F4A261','#457B9D','#E63946','#2D6A4F','#C9A14A','#8B5E3C','#5C7A99','#9B8B4F',
+];
 
 // index_code → 표시 라벨 (차트·표 공용). 표 빌더에서도 재사용하도록 export.
 const LABELS = {
@@ -52,9 +55,12 @@ async function indexSeries(codes, { weeks = 52 } = {}) {
   return { labels, datasets };
 }
 
-// 지수별 추이 차트 — 종합선 위주(라카이브 상단 차트). 항로는 표에서.
-const getOceanKcci   = () => indexSeries(['KCCI']);
-const getOceanScfi   = () => indexSeries(['SCFI']);
+// 지수별 추이 차트 — KCCI 전 항로, SCFI 4계열, 나머지 종합선 위주
+const getOceanKcci   = () => indexSeries(
+  ['KCCI','KCCI_USWC','KCCI_USEC','KCCI_NEU','KCCI_MED','KCCI_ME','KCCI_AU','KCCI_SAE','KCCI_SAW','KCCI_ZAF','KCCI_WAF','KCCI_CN','KCCI_JP','KCCI_SEA'],
+  { weeks: 26 },
+);
+const getOceanScfi   = () => indexSeries(['SCFI','SCFI_USWC','SCFI_EU','SCFI_USEC']);
 const getOceanCcfi   = () => indexSeries(['CCFI']);
 const getOceanBdi    = () => indexSeries(['BDI']);
 const getOceanBunker = () => indexSeries(['VLSFO', 'HSFO']);

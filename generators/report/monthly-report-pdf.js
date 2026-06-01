@@ -39,38 +39,68 @@ function escapeHtml(s) {
 //  "NN-N. ..." 및 기타 헤딩 → 서브섹션 제목(자기 페이지, 골드 밑줄)
 //  디바이더 직후 첫 제목은 lead → 페이지 강제개행 없이 디바이더 다음 페이지에 자연 배치
 function transformBody(bodyHtml) {
-  // 선두 메타 제거: 첫 H1(리포트 제목) + 첫 blockquote(발행일) + 첫 hr
-  bodyHtml = bodyHtml.replace(/^\s*<h1>[^<]*<\/h1>\s*/i, '');
+  // ── Pre-processing ───────────────────────────────────────────────────────
+
+  // A2: strip 모든 비-섹션 H1 (리포트 제목, 섹션 파일 헤더 H1 등).
+  // "NN. Title" 형식만 남기고 나머지는 제거.
+  bodyHtml = bodyHtml.replace(/<h1>([\s\S]*?)<\/h1>/gi, (m, inner) => {
+    const text = inner.replace(/<[^>]+>/g, '').trim();
+    return /^\d{1,2}\.\s+/.test(text) ? m : '';
+  });
+
+  // A3: "### YYYY년 NM월호 — NN. Title" H3 → "<h2>NN. Title</h2>"
+  // (index 섹션 파일이 이 형식의 부제를 포함하므로 섹션 디바이더로 승격)
+  bodyHtml = bodyHtml.replace(/<h3>([\s\S]*?)<\/h3>/gi, (m, inner) => {
+    const text = inner.replace(/<[^>]+>/g, '').trim();
+    if (/\d{4}년.*—\s*\d{1,2}\./.test(text)) {
+      const dashIdx = inner.lastIndexOf('—');
+      if (dashIdx >= 0) return `<h2>${inner.slice(dashIdx + 1).trim()}</h2>`;
+    }
+    return m;
+  });
+
+  // 선두 blockquote(발행일) + 첫 hr 제거
   bodyHtml = bodyHtml.replace(/^\s*<blockquote>[\s\S]*?<\/blockquote>\s*/i, '');
   bodyHtml = bodyHtml.replace(/^\s*<hr\s*\/?>\s*/i, '');
 
+  // D12: <del>(~~취소선~~) 태그 제거
+  bodyHtml = bodyHtml.replace(/<del>([\s\S]*?)<\/del>/gi, '$1');
+
+  // ── Heading classification ───────────────────────────────────────────────
   const toc = [];
   let leadNext = false;
 
-  const html = bodyHtml.replace(/<(h[123])>([\s\S]*?)<\/\1>/g, (m, tag, inner) => {
+  // D3: marked 출력의 inner는 이미 HTML 인코딩됨(&amp; 등).
+  // escapeHtml(text) 로 재인코딩하면 &amp;amp; 로 이중 인코딩되므로,
+  // text(= inner의 태그 제거본, 이미 HTML-safe) 를 출력에 직접 사용.
+  const html = bodyHtml.replace(/<(h[123])>([\s\S]*?)<\/\1>/gi, (m, tag, inner) => {
     const text = inner.replace(/<[^>]+>/g, '').trim();
     const mSec = text.match(/^(\d{1,2})\.\s+(.+)$/);     // "02. 해운 시황"
     const isArticles = /^주요\s*해운\s*기사$/.test(text);
     const mSub = text.match(/^(\d{1,2}-\d)\.\s+(.+)$/);  // "02-1. KCCI ..."
 
     if (mSec || isArticles) {
-      const num = mSec ? mSec[1] : '·';
-      const title = mSec ? mSec[2] : '주요 해운 기사';
+      const num   = mSec ? mSec[1] : '·';
+      const title = mSec ? mSec[2] : '주요 해운 기사';   // text는 이미 HTML-encoded
       toc.push({ num, title });
       leadNext = true;
       return `<section class="divider"><div class="dv-tag">SECTION ${num}</div>`
         + `<div class="dv-num">${num}</div><div class="dv-rule"></div>`
-        + `<h2 class="dv-title">${escapeHtml(title)}</h2></section>`;
+        + `<h2 class="dv-title">${title}</h2></section>`;
     }
     const cls = leadNext ? 'sub lead' : 'sub';
     leadNext = false;
     const t2 = mSub
-      ? `<span class="sub-no">${mSub[1]}</span>${escapeHtml(mSub[2])}`
-      : escapeHtml(text);
+      ? `<span class="sub-no">${mSub[1]}</span>${mSub[2]}`  // 이미 HTML-encoded
+      : text;
     return `<h2 class="${cls}">${t2}</h2>`;
   });
 
-  return { html, toc };
+  // D8: 첫째/둘째/셋째 열거는 문장 종결 뒤 줄바꿈 삽입 (종합전망 가독성)
+  const result = html.replace(/\.\s+(첫째,|둘째,|셋째,|넷째,|다섯째,)/g,
+    '.<br>&nbsp;&nbsp;$1');
+
+  return { html: result, toc };
 }
 
 // 표 셀 등락: ▲ 적색 / ▼ 청색
@@ -80,6 +110,35 @@ function colorDeltas(html) {
     if (c.includes('▼')) return `<td class="down">${c}</td>`;
     return m;
   });
+}
+
+// C5-7: 인라인 인용 "(출처, YYYY[-MM[-DD]])" → 각주 번호 + 섹션 하단 참고자료 블록
+// 섹션 디바이더(<section class="divider">)를 경계로 섹션별 독립 번호 부여.
+function addFootnotes(html) {
+  // 패턴: (Source Text, 20XX) or (Source Text, 20XX-MM) or (Source Text, 20XX-MM-DD)
+  // "년" 뒤 쉼표 형태(완공 목표: 2026년, ...) 는 연도가 쉼표 앞이므로 매칭 안 됨.
+  const CITE_RE = /\(([^()]+,\s*20\d{2}(?:-\d{2}(?:-\d{2})?)?)\)/g;
+
+  // 섹션 디바이더를 경계로 분리
+  const SEP = '\x00DIV\x00';
+  const marked = html.replace(/(<section class="divider">)/g, SEP + '$1');
+  const chunks = marked.split(SEP);
+
+  return chunks.map(chunk => {
+    if (chunk.startsWith('<section class="divider">')) return chunk;
+
+    const refs = []; const refMap = {};
+    const processed = chunk.replace(CITE_RE, (_, citation) => {
+      const key = citation.trim();
+      if (!refMap[key]) { refs.push(key); refMap[key] = refs.length; }
+      return `<sup class="ref-mark">[${refMap[key]}]</sup>`;
+    });
+    if (!refs.length) return processed;
+
+    const refBlock = `<div class="refs-block"><p class="refs-title">참고자료</p>`
+      + `<ol class="refs-list">${refs.map(r => `<li>${r}</li>`).join('')}</ol></div>`;
+    return processed + refBlock;
+  }).join('');
 }
 
 function buildHtml(transformed, chartConfigs = []) {
@@ -103,8 +162,9 @@ CFG.forEach(c => {
 window.__chartsReady = true;
 </script>` : '';
 
+  // t.title은 marked 출력에서 추출 → 이미 HTML-encoded. escapeHtml() 재호출 금지(이중 인코딩).
   const tocRows = transformed.toc.map(t =>
-    `<li><span class="toc-no">${t.num}</span><span class="toc-tt">${escapeHtml(t.title)}</span></li>`
+    `<li><span class="toc-no">${t.num}</span><span class="toc-tt">${t.title}</span></li>`
   ).join('');
 
   return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8">
@@ -214,6 +274,21 @@ td.down{color:#1d63c4;font-weight:600}
   border-radius:8px;margin:4mm 0 5mm;break-inside:avoid}
 .flow p em{color:#8a93a0;font-style:italic;font-size:8.5pt}
 .flow p:last-child em{color:#9aa3af}
+
+/* 카테고리 배지 (해운 기사 섹션) */
+p.article-cat{font-family:var(--sans);font-size:7.5pt;letter-spacing:4px;
+  color:#a07d36;font-weight:700;text-transform:uppercase;margin:0 0 2mm}
+
+/* 차트 no-data 안내 */
+.chart-box.no-data{display:flex;align-items:center;justify-content:center;background:#f5f3ee}
+.no-data-msg{color:#9aa3af;font-style:italic;font-size:9pt}
+
+/* 참고자료 블록 */
+sup.ref-mark{font-size:6pt;color:#a07d36;vertical-align:super;line-height:0}
+.refs-block{margin:5mm 0 2mm;padding:3mm 5mm;border-top:1px solid #e7e1d2;break-inside:avoid}
+.refs-title{font-family:var(--sans);font-size:8pt;font-weight:700;color:#0d2741;margin:0 0 2mm}
+.refs-list{padding-left:4mm;margin:0;list-style:decimal}
+.refs-list li{font-size:7.5pt;line-height:1.5;color:#6b7682;margin-bottom:0.5mm}
 </style>
 </head>
 <body>
@@ -271,15 +346,25 @@ async function main() {
   });
 
   const chartConfigs = [];
+  const noDataIds    = [];
   for (const id of [...new Set(ids)]) {
     const c = await buildChart(id);
     if (c) { chartConfigs.push(c); console.log(`  ✓ 차트 ${id}: ${c.data.datasets.length}계열`); }
-    else   { console.warn(`  ⚠️ 차트 ${id} 데이터 없음 — 빈 자리 처리`); }
+    else   { noDataIds.push(id); console.warn(`  ⚠️ 차트 ${id} 데이터 없음 — 안내 표시`); }
   }
 
-  // 헤딩 분류(디바이더/서브섹션) + 목차 수집, 표 등락 색상
+  // B10: 데이터 없는 차트 캔버스 → 안내 박스로 교체
+  for (const id of noDataIds) {
+    bodyHtml = bodyHtml.replace(
+      `<figure class="chart-box"><canvas id="chart_${id}"></canvas></figure>`,
+      `<figure class="chart-box no-data"><span class="no-data-msg">데이터 미수집</span></figure>`,
+    );
+  }
+
+  // 헤딩 분류(디바이더/서브섹션) + 목차 수집, 표 등락 색상, 참고자료 각주
   const transformed = transformBody(bodyHtml);
   transformed.html = colorDeltas(transformed.html);
+  transformed.html = addFootnotes(transformed.html);
 
   const html = buildHtml(transformed, chartConfigs);
 

@@ -81,7 +81,7 @@ async function main() {
     const img  = dataUri ? `<img class="feature-img" src="${dataUri}" alt="">\n\n` : '';
     const date = src.published_at ? src.published_at.slice(0, 10) : '';
     blocks.push(
-      `<div class="page-break"></div>\n\n## ${a.title}\n\n#### ${a.subtitle}\n\n${img}${a.body}\n\n*출처: ${src.source || ''}${date ? ` · ${date}` : ''}*`
+      `<div class="page-break"></div>\n\n<p class="article-cat">해운 시황</p>\n\n## ${a.title}\n\n#### ${a.subtitle}\n\n${img}${a.body}\n\n*출처: ${src.source || ''}${date ? ` · ${date}` : ''}*`
     );
   }
 
