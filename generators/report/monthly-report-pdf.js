@@ -37,12 +37,14 @@ function escapeHtml(s) {
 // 인라인 인용·각주·참고자료 블록을 본문에서 완전 제거 (렌더 전 md 단계에서 적용)
 function stripCitations(md) {
   return md
+    // "참고자료" / "References" 블록 전체 제거 (헤딩 + 뒤따르는 내용 포함)
+    .replace(/(^|\n)\s*(?:#{1,4}\s*)?(?:참고\s*자료|references)\s*[:：]?\s*\n[\s\S]*?(?=\n\s*\n|\n#{1,3}\s|$)/gi, '\n')
     // (매체, YYYY[-MM[-DD]] [잡텍스트]) 형태 인용 제거
     .replace(/\s*\(([^()]*?),\s*20\d{2}(?:-\d{2}(?:-\d{2})?)?[^()]*?\)/g, '')
+    // URL만 있는 단독 줄 제거
+    .replace(/^[^\n]*https?:\/\/[^\s)]+[^\n]*$/gm, '')
     // 남은 각주 마크 [n] 제거
     .replace(/\[\d{1,3}\]/g, '')
-    // "참고자료" 블록 제거: 제목줄부터 그 뒤 번호목록(1. … 2. …)까지
-    .replace(/(^|\n)#{0,3}\s*참고자료\s*\n(?:\s*\[?\d+\]?[.)]\s.*\n?)+/g, '\n')
     // 이중 공백·빈줄 정리
     .replace(/[ \t]{2,}/g, ' ')
     .replace(/\n{3,}/g, '\n\n');
@@ -337,6 +339,8 @@ async function main() {
   if (pubMatch) PUB = pubMatch[1];
 
   md = stripCitations(md);
+  // `---` 앞뒤에 빈 줄 보장 — 단락 바로 뒤의 `---`가 Setext H2로 파싱되는 것을 방지
+  md = md.replace(/([^\n])\n(---+)(\n)/g, '$1\n\n$2\n\n');
   let bodyHtml = marked.parse(md);
 
   // 차트 토큰 치환: [[CHART:id]] → 차트 카드
