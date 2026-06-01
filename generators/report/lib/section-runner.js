@@ -183,6 +183,39 @@ function buildCritiqueUserPrompt(draft) {
   return `아래 초안을 체크리스트 기준으로 검수·수정하여 최종본을 출력하세요.\n\n---\n${draft}\n---`;
 }
 
+// ── DeepSeek V4-Pro helper (OpenAI-compatible) — PASS 1 전용 ─────────────────
+// DEEPSEEK_API_KEY 환경변수가 있을 때만 사용됨. 없으면 Claude 폴백.
+async function callDeepSeekPass1(systemPrompt, userContent, maxTokens) {
+  const r = await fetch('https://api.deepseek.com/chat/completions', {
+    method:  'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization:  'Bearer ' + process.env.DEEPSEEK_API_KEY,
+    },
+    body: JSON.stringify({
+      model:      'deepseek-v4-pro',
+      max_tokens: maxTokens,
+      messages:   [
+        { role: 'system', content: systemPrompt },
+        { role: 'user',   content: userContent  },
+      ],
+    }),
+    signal: AbortSignal.timeout(180000),
+  });
+  if (!r.ok) {
+    const body = await r.text().catch(() => '');
+    throw new Error('DeepSeek API HTTP ' + r.status + ': ' + body.slice(0, 200));
+  }
+  const data  = await r.json();
+  const text  = data.choices?.[0]?.message?.content || '';
+  const usage = data.usage || {};
+  return {
+    content:     [{ type: 'text', text }],
+    stop_reason: data.choices?.[0]?.finish_reason === 'length' ? 'max_tokens' : 'end_turn',
+    usage:       { input_tokens: usage.prompt_tokens || 0, output_tokens: usage.completion_tokens || 0 },
+  };
+}
+
 // ── Core 2-pass engine ───────────────────────────────────────────────────────
 
 async function runSection({ client, sectionConfig, items, styleGuide, month,
@@ -199,14 +232,16 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
   const systemPrompt = buildSectionSystemPrompt(styleGuide, sectionConfig.focus);
   const userPrompt   = buildSectionUserPrompt(sectionConfig.title, items, month, indexFactText, railFactText, airFactText, portThroughputFactText);
 
-  // PASS 1: 초안 생성
-  console.log(`⏳ [${sectionConfig.id}] PASS 1 — 초안 생성...`);
-  const pass1Res = await client.messages.create({
-    model:      'claude-sonnet-4-6',
-    max_tokens: 12000,   // 한국어 토큰 효율 고려 — 꼭지 4개 섹션도 안 잘리게
-    system:     systemPrompt,
-    messages:   [{ role: 'user', content: userPrompt }],
-  });
+  // PASS 1: 초안 생성 — DEEPSEEK_API_KEY 설정 시 deepseek-v4-pro, 미설정 시 claude-sonnet-4-6
+  const pass1Model = process.env.DEEPSEEK_API_KEY ? 'deepseek-v4-pro' : 'claude-sonnet-4-6';
+  console.log(`⏳ [${sectionConfig.id}] PASS 1 — 초안 생성 (${pass1Model})...`);
+  const pass1Res = process.env.DEEPSEEK_API_KEY
+    ? await callDeepSeekPass1(systemPrompt, userPrompt, 12000)
+    : await client.messages.create({
+        model: 'claude-sonnet-4-6', max_tokens: 12000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }],
+      });
   const draft = pass1Res.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
   const p1In  = pass1Res.usage?.input_tokens  || 0;
   const p1Out = pass1Res.usage?.output_tokens || 0;
