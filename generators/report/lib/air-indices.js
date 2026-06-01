@@ -14,6 +14,7 @@ const path = require('path');
 const fs   = require('fs');
 
 const { fetchSupersetAirIndex } = require('./superset-fetch');
+const { buildIataCargo }        = require('./iata-cargo');
 const BI_CHARTS  = require('../config/bi-charts.json');
 
 const CACHE_PATH = path.resolve(__dirname, '../../../outputs/cache/air-index.json');
@@ -142,70 +143,7 @@ async function fetchTacBaiSnapshot() {
   return [header, sep, ...lines].join('\n');
 }
 
-// ── A-3: IATA Air Cargo Regional Data ────────────────────────────────────────
-// IATA publishes monthly air cargo market analysis; tries to extract HTML table
-// from their public statistics page. Returns null if data is PDF-only.
-
-async function fetchIataRegional() {
-  // Try the IATA air freight statistics page (sometimes has embedded data)
-  const URLS = [
-    'https://www.iata.org/en/publications/economics/air-freight-monthly-analysis/',
-    'https://www.iata.org/en/publications/economics/air-freight-statistics/',
-  ];
-
-  for (const url of URLS) {
-    const html = await fetchPage(url);
-    if (!html) continue;
-
-    // Look for a table containing CTK or CLF data
-    const tableRe = /<table[\s\S]*?<\/table>/gi;
-    const tables  = html.match(tableRe) || [];
-
-    for (const tbl of tables) {
-      const tblText = stripHtml(tbl).toLowerCase();
-      if (!tblText.includes('ctk') && !tblText.includes('cargo')) continue;
-
-      // Found a likely table — extract rows
-      const rowRe = /<tr[\s\S]*?<\/tr>/gi;
-      const rows  = tbl.match(rowRe) || [];
-      if (rows.length < 3) continue;
-
-      // Build plain-text table from rows
-      const mdRows = rows.map(row => {
-        const cells = (row.match(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi) || [])
-          .map(cell => stripHtml(cell).trim().replace(/\s+/g, ' '));
-        return cells.length > 0 ? '| ' + cells.join(' | ') + ' |' : null;
-      }).filter(Boolean);
-
-      if (mdRows.length < 3) continue;
-
-      // Add markdown separator after header row
-      const colCount = (mdRows[0].match(/\|/g) || []).length - 1;
-      const sep = '|' + Array(colCount).fill('---').join('|') + '|';
-      return [mdRows[0], sep, ...mdRows.slice(1)].join('\n');
-    }
-
-    // If no HTML table found, try to extract text data from JSON-LD or embedded scripts
-    const jsonLdRe = /<script type="application\/json">([\s\S]*?)<\/script>/gi;
-    let m;
-    while ((m = jsonLdRe.exec(html)) !== null) {
-      try {
-        const data = JSON.parse(m[1]);
-        // Superset/BI-style: { data: [{region, ctk_yoy, actk_yoy, clf}, ...] }
-        if (Array.isArray(data?.data) && data.data[0]?.ctk_yoy != null) {
-          const header = '| 권역 | CTK YoY | ACTK YoY | CLF (%) |';
-          const sep    = '|------|---------|---------|---------|';
-          const rows = data.data.map(r =>
-            `| ${r.region || '—'} | ${r.ctk_yoy ?? '—'} | ${r.actk_yoy ?? '—'} | ${r.clf ?? '—'} |`
-          );
-          return [header, sep, ...rows].join('\n');
-        }
-      } catch (_) {}
-    }
-  }
-
-  return null;
-}
+// A-3: IATA Air Cargo Market Analysis は iata-cargo.js で処理 (buildIataCargo)
 
 // ── A-4: Xeneta public air cargo data ────────────────────────────────────────
 // Fetches Xeneta's latest blog/press release and extracts air freight rate numbers
@@ -392,11 +330,13 @@ async function buildAirIndices({ force = false } = {}) {
   if (baiTable) console.log('  air-indices: BAI 스냅샷 OK');
   else          console.warn('  air-indices: BAI 스냅샷 미수집');
 
-  // ── 3. IATA regional table (A-3) ──────────────────────────────────────────
+  // ── 3. IATA Air Cargo (A-3) — 업로드 파일 우선, fallback: pressroom ──────────
   console.log('  air-indices: IATA 권역별 데이터 수집...');
-  const iataTable = await fetchIataRegional();
-  if (iataTable) console.log('  air-indices: IATA OK');
-  else           console.warn('  air-indices: IATA 미수집 (PDF-only 또는 접근 불가)');
+  const iataBundle = await buildIataCargo({ month });
+  const iataTable     = iataBundle?.iataTable     || null;
+  const iataFactText2 = iataBundle?.iataFactText  || null;
+  if (iataTable) console.log(`  air-indices: IATA OK (asOf=${iataBundle?.data?.asOf})`);
+  else           console.warn('  air-indices: IATA 미수집 → A-3 생략');
 
   // ── 4. Xeneta data (A-4) ──────────────────────────────────────────────────
   console.log('  air-indices: Xeneta 데이터 수집...');
@@ -419,7 +359,7 @@ async function buildAirIndices({ force = false } = {}) {
   // combined legacy `table` field = Superset table first, then BAI table
   const table = [supersetTable, baiTable].filter(Boolean).join('\n\n');
 
-  const factText = buildFactText({ source, chartData, baiRows: baiTable, iataTable, xenetaFactText, month });
+  const factText = buildFactText({ source, chartData, baiRows: baiTable, iataTable: iataFactText2 || iataTable, xenetaFactText, month });
 
   const asOf = (source === 'superset' && chartData) ? chartData.labels[chartData.labels.length - 1] : null;
   const payload = { source, chartData, baiTable, iataTable, xenetaFactText, table, factText, ...(asOf ? { asOf } : {}) };
