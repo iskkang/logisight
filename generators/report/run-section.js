@@ -16,6 +16,7 @@ const SECTIONS  = require('./sections.config');
 const { loadAllMonthlyItems, loadIndexFactsheet, buildIndexTable } = require('./lib/index-factsheet');
 const { buildOceanIndices }   = require('./lib/ocean-indices');
 const { buildAirIndices }     = require('./lib/air-indices');
+const { buildRailIndices }    = require('./lib/rail-indices');
 const { buildPortThroughput } = require('./lib/port-throughput');
 const { loadStyleGuide }      = require('./lib/style');
 const { runSection, saveSectionFile, parseFrontmatter } = require('./lib/section-runner');
@@ -112,8 +113,14 @@ async function main() {
       else console.warn('⚠️  [macro] Port Throughput 미수집 — ⚠️ notice 표시');
     }
 
-    // ── rail 실측(MTL Link)은 외부 리포트에서 제외 ──
-    const railTable = null, railFactText = null;
+    // ── rail: Landbridge 중국 철도·中欧班列 정량 데이터 수집 ──
+    let railTable = null, railFactText = null;
+    if (sec.id === 'rail') {
+      console.log('▶ [rail] Landbridge 데이터 수집...');
+      const railData = await buildRailIndices({ month: MONTH });
+      if (railData) { railTable = railData.table || null; railFactText = railData.factText; }
+      else console.warn('⚠️  [rail] Landbridge 미수집 — factText 없음');
+    }
 
     const result  = await runSection({
       client, sectionConfig: sec, items, styleGuide, month: MONTH,

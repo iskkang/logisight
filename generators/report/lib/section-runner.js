@@ -383,17 +383,15 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
     }
   }
 
-  // rail 실측 표 삽입 — 04-3 소제목 아래
+  // rail Landbridge 정량 표 삽입 — 04-1 (중국-유럽) 소제목 아래
   if (railTable) {
     const anchor =
-      revised.match(/#{2,3}[^\n]*04-3[^\n]*/) ||
-      revised.match(/#{2,3}[^\n]*(?:회랑|정시)[^\n]*/);
+      revised.match(/#{2,3}[^\n]*04-1[^\n]*/) ||
+      revised.match(/#{2,3}[^\n]*(?:중국.유럽|中欧|중구반열|TCR)[^\n]*/i);
     if (anchor) {
       revised = revised.replace(anchor[0], `${anchor[0]}\n\n${railTable}\n`);
     } else {
-      const before04_4 = revised.match(/#{2,3}[^\n]*04-4[^\n]*/);
-      if (before04_4) revised = revised.replace(before04_4[0], `${railTable}\n\n${before04_4[0]}`);
-      else revised += `\n\n### 04-3. 유라시아 회랑별 정시 성과 (MTL 실측)\n\n${railTable}\n`;
+      revised += `\n\n${railTable}\n`;
     }
   }
 
