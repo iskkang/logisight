@@ -330,17 +330,6 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
   if (pass2Res.stop_reason === 'max_tokens')
     console.warn(`   ⚠️ PASS 2가 max_tokens에서 잘림! 상향 필요`);
 
-  // Air 섹션: WorldACD 할루시네이션 강제 제거 (프롬프트 금지만으로는 불충분)
-  if (sectionConfig.id === 'air') {
-    revised = revised
-      .replace(/\|[^\n]*WorldACD[^\n]*\n?/gi, '')                                // 표 데이터 행
-      .replace(/[^\n]*WorldACD[^\n]*(?:USD\/kg|\/kg|달러)[^\n]*/gi, '')           // 본문 수치 문장
-      .replace(/[^\n]*월드와이드[^\n]*(?:\/kg|달러)[^\n]*/gi, '')                  // 월드와이드 + 단가
-      .replace(/^\|[^\n]+\|\n\|[-| ]+\|\s*\n(?!\|)/gm, '')                       // 데이터 없는 빈 표 제거
-      .replace(/\n{3,}/g, '\n\n').trim();
-    console.log(`   ✓ air 섹션 WorldACD 스트립 완료`);
-  }
-
   // ocean 섹션: per-index 차트+표 주입 (02-1~02-5 각 소제목 아래, 둘째 지수부터 새 페이지)
   if (sectionConfig.id === 'ocean' && oceanBlocks && oceanBlocks.length) {
     oceanBlocks.forEach((b, idx) => {
@@ -492,6 +481,17 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
         revised = notice + revised;
       }
     }
+  }
+
+  // Air 섹션: WorldACD 강제 제거 — airBundle 주입 이후에 실행해야 캐시 데이터도 제거됨
+  if (sectionConfig.id === 'air') {
+    revised = revised
+      .replace(/\|[^\n]*WorldACD[^\n]*\n?/gi, '')
+      .replace(/[^\n]*WorldACD[^\n]*(?:USD\/kg|\/kg|달러)[^\n]*/gi, '')
+      .replace(/[^\n]*월드와이드[^\n]*(?:\/kg|달러)[^\n]*/gi, '')
+      .replace(/^\|[^\n]+\|\n\|[-| ]+\|\s*\n(?!\|)/gm, '')
+      .replace(/\n{3,}/g, '\n\n').trim();
+    console.log(`   ✓ air 섹션 WorldACD 스트립 완료`);
   }
 
   return { status: 'draft', text: revised, pass1Tokens: p1Out, pass2Tokens: p2Out };
