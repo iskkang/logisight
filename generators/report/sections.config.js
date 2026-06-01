@@ -69,7 +69,9 @@ const SECTIONS = [
       '데이터 미수집 시 "IATA 데이터 미수집" 정직 표기 후 기사 기반 권역별 동향 서술. ' +
       '## 03-4. Xeneta 공개 운임 분석 — 제공된 Xeneta factText 수치 기반 주요 노선 운임 동향 서술 + 분석. 수치 없을 경우 생략. ' +
       '전자상거래·특송 수요, 성수기 공급 전망. ' +
-      '각 소제목은 현상→원인→전망 산문(대괄호 라벨·영업 시사점 금지). WorldACD 단독 1점 차트 언급 금지.',
+      '각 소제목은 현상→원인→전망 산문(대괄호 라벨·영업 시사점 금지). ' +
+      '★ 운임 수치 창작 절대 금지: 제공된 TAC Index(Superset)·BAI(aircargoweek.com)·Xeneta factText에 있는 수치만 사용. ' +
+      '그 외 외부 운임 지수·데이터 소스 언급 및 수치 생성 금지.',
     filterItems: (items) => {
       const kw = [
         'air cargo', 'airfreight', 'air freight', 'TAC', 'IATA', 'BAI', 'Xeneta',
