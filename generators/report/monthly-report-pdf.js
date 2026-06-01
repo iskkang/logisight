@@ -125,19 +125,23 @@ function addFootnotes(html) {
   const chunks = marked.split(SEP);
 
   return chunks.map(chunk => {
-    if (chunk.startsWith('<section class="divider">')) return chunk;
+    // 선행 디바이더(<section class="divider">…</section>)는 그대로 두고,
+    // 그 뒤 본문에만 각주/참고자료 처리 (섹션별 독립 번호).
+    const dm = chunk.match(/^(<section class="divider">[\s\S]*?<\/section>)([\s\S]*)$/);
+    const head = dm ? dm[1] : '';
+    const work = dm ? dm[2] : chunk;
 
     const refs = []; const refMap = {};
-    const processed = chunk.replace(CITE_RE, (_, citation) => {
+    const processed = work.replace(CITE_RE, (_, citation) => {
       const key = citation.trim();
       if (!refMap[key]) { refs.push(key); refMap[key] = refs.length; }
       return `<sup class="ref-mark">[${refMap[key]}]</sup>`;
     });
-    if (!refs.length) return processed;
+    if (!refs.length) return head + processed;
 
     const refBlock = `<div class="refs-block"><p class="refs-title">참고자료</p>`
       + `<ol class="refs-list">${refs.map(r => `<li>${r}</li>`).join('')}</ol></div>`;
-    return processed + refBlock;
+    return head + processed + refBlock;
   }).join('');
 }
 
