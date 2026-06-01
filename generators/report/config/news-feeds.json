@@ -1,28 +1,33 @@
 {
   "feeds": [
-    { "name": "The Loadstar",         "url": "https://theloadstar.com/feed/",                   "tier": 1 },
-    { "name": "Splash247",            "url": "https://splash247.com/feed/",                     "tier": 1 },
-    { "name": "Journal of Commerce",  "url": "https://www.joc.com/rss.xml",                     "tier": 1 },
-    { "name": "gCaptain",             "url": "https://gcaptain.com/feed/",                       "tier": 2 },
-    { "name": "Container News",       "url": "https://container-news.com/feed/",                 "tier": 2 },
-    { "name": "Maritime Executive",   "url": "https://www.maritime-executive.com/rss",           "tier": 2 },
-    { "name": "FreightWaves",         "url": "https://www.freightwaves.com/news/feed",           "tier": 2 },
-    { "name": "Logistics Management", "url": "https://feeds.feedburner.com/logisticsmgmt/latest","tier": 2 },
-    { "name": "PortNews (RU/CIS)",    "url": "https://en.portnews.ru/rss/",                     "tier": 2 },
-    { "name": "Hellenic Shipping",    "url": "https://www.hellenicshippingnews.com/feed/",      "tier": 3 }
+    { "name": "The Loadstar",         "url": "https://theloadstar.com/feed/",                    "tier": 1, "role": "core", "domain": "theloadstar.com",         "paywall": true  },
+    { "name": "Splash247",            "url": "https://splash247.com/feed/",                      "tier": 1, "role": "core", "domain": "splash247.com"                              },
+    { "name": "Journal of Commerce",  "url": "https://www.joc.com/rss.xml",                       "tier": 1, "role": "core", "domain": "joc.com"                                    },
+    { "name": "Sea-Intelligence",     "url": null,                                                "tier": 1, "role": "core", "domain": "sea-intelligence.com"                       },
+    { "name": "Lloyd's List",         "url": null,                                                "tier": 1, "role": "core", "domain": "lloydslist.com",          "paywall": true  },
+    { "name": "TradeWinds",           "url": null,                                                "tier": 2, "role": "net",  "domain": "tradewindsnews.com"                         },
+    { "name": "gCaptain",             "url": "https://gcaptain.com/feed/",                        "tier": 2, "role": "net",  "domain": "gcaptain.com"                               },
+    { "name": "Container News",       "url": "https://container-news.com/feed/",                  "tier": 2, "role": "net",  "domain": "container-news.com"                         },
+    { "name": "Maritime Executive",   "url": "https://www.maritime-executive.com/rss",            "tier": 2, "role": "net",  "domain": "maritime-executive.com"                     },
+    { "name": "FreightWaves",         "url": "https://www.freightwaves.com/news/feed",            "tier": 2, "role": "net",  "domain": "freightwaves.com"                           },
+    { "name": "Logistics Management", "url": "https://feeds.feedburner.com/logisticsmgmt/latest", "tier": 2, "role": "net",  "domain": "logisticsmgmt.com"                          },
+    { "name": "PortNews (RU/CIS)",    "url": "https://en.portnews.ru/rss/",                       "tier": 2, "role": "net",  "domain": "portnews.ru"                                },
+    { "name": "Hellenic Shipping",    "url": "https://www.hellenicshippingnews.com/feed/",        "tier": 3, "role": "net",  "domain": "hellenicshippingnews.com"                   },
+    { "name": "FT Shipping",          "url": null,                                                "tier": 3, "role": "net",  "domain": "ft.com"                                     },
+    { "name": "Sea News",             "url": null,                                                "tier": 3, "role": "net",  "domain": "seanews.co.uk"                              },
+    { "name": "Shipping Herald",      "url": null,                                                "tier": 3, "role": "net",  "domain": "shippingherald.com"                         },
+    { "name": "Maritime Gateway",     "url": null,                                                "tier": 3, "role": "net",  "domain": "maritimegateway.com"                        },
+    { "name": "HK Maritime Hub",      "url": null,                                                "tier": 3, "role": "net",  "domain": "hkmaritimehub.com"                          }
   ],
 
   "seasearch": {
-    "enabled": true,
-    "base_url": "https://shipshipship.uk",
-    "endpoint_tmpl": "/api/publications/{pub_id}/articles?limit=25",
-    "publications": [
-      { "id": 6,   "name": "Splash247",          "tier": 1 },
-      { "id": 4,   "name": "gCaptain",           "tier": 2 },
-      { "id": 10,  "name": "Maritime Executive",  "tier": 2 },
-      { "id": 3,   "name": "Lloyd's List",       "tier": 1, "headline_only": true },
-      { "id": 39,  "name": "The Loadstar",       "tier": 1, "headline_only": true },
-      { "id": 362, "name": "Sea-Intelligence",   "tier": 1 }
+    "base_url": "https://www.shipshipship.uk",
+    "pages": [
+      { "path": "/front-page" },
+      { "path": "/publications/362/sea-intelligence" },
+      { "path": "/publications/3/lloyds-list" },
+      { "path": "/publications/135/ft-shipping" },
+      { "path": "/publications/143/sea-news" }
     ]
   },
 
@@ -31,7 +36,7 @@
 
   "relevance_keywords": {
     "high":   ["운임", "freight rate", "spot rate", "SCFI", "WCI", "CCFI", "FBX",
-               "blank sailing", "容量", "컨테이너", "container freight"],
+               "blank sailing", "컨테이너", "container freight"],
     "medium": ["port congestion", "terminal", "alliance", "capacity", "blank",
                "TEU", "FEU", "vessel sharing", "rate increase", "surcharge"],
     "low":    ["shipping", "maritime", "logistics", "supply chain", "trade lane"]
