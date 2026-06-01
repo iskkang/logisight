@@ -7,7 +7,8 @@ const fs         = require('fs');
 const path       = require('path');
 const { marked } = require('marked');
 const puppeteer  = require('puppeteer-core');
-const { buildChart } = require('./lib/chart-data');
+const { buildChart }    = require('./lib/chart-data');
+const { fetchOgImage }  = require('./lib/og-image');
 
 const TODAY    = new Date().toISOString().slice(0, 10);
 const monthArg = process.argv.find(a => a.startsWith('--month='));
@@ -293,6 +294,15 @@ sup.ref-mark{font-size:6pt;color:#a07d36;vertical-align:super;line-height:0}
 .refs-title{font-family:var(--sans);font-size:8pt;font-weight:700;color:#0d2741;margin:0 0 2mm}
 .refs-list{padding-left:4mm;margin:0;list-style:decimal}
 .refs-list li{font-size:7.5pt;line-height:1.5;color:#6b7682;margin-bottom:0.5mm}
+
+/* 숫자 콜아웃 카드 */
+.stat-wrap{margin:4mm 0 5mm;break-inside:avoid}
+.stat-strip{display:flex;gap:3.5mm}
+.stat-card{flex:1;background:#fbfaf6;border:1px solid #ece6d8;border-top:2.5px solid #a07d36;border-radius:0 0 6px 6px;padding:3.5mm 3mm 3mm}
+.stat-val{font-family:var(--serif);font-size:17pt;font-weight:900;color:#0d2741;line-height:1}
+.stat-val.up{color:#c0392b}.stat-val.down{color:#1d63c4}
+.stat-lab{font-size:7.5pt;color:#6b7682;margin-top:1.5mm;line-height:1.3}
+.stat-cap{font-size:7pt;color:#9aa3af;margin-top:2mm;text-align:right}
 </style>
 </head>
 <body>
@@ -349,6 +359,20 @@ async function main() {
     return `<figure class="chart-box"><canvas id="chart_${id}"></canvas></figure>`;
   });
 
+  // [[STATS: 값|라벨|up/down ; ... :: 캡션]] → 숫자 콜아웃 스트립
+  bodyHtml = bodyHtml.replace(/<p>\s*\[\[STATS:([\s\S]*?)\]\]\s*<\/p>|\[\[STATS:([\s\S]*?)\]\]/g, function (_m, a, b) {
+    var inner = (a || b || ''), cap = '', body = inner;
+    var ci = inner.indexOf('::'); if (ci >= 0) { cap = inner.slice(ci + 2).trim(); body = inner.slice(0, ci); }
+    var cards = body.split(';').map(function (x) { return x.trim(); }).filter(Boolean).map(function (x) {
+      var parts = x.split('|').map(function (y) { return (y || '').trim(); });
+      var val = parts[0] || '', lab = parts[1] || '', dir = parts[2] || '';
+      var cls = dir === 'up' ? ' up' : dir === 'down' ? ' down' : '';
+      return '<div class="stat-card"><div class="stat-val' + cls + '">' + val + '</div><div class="stat-lab">' + lab + '</div></div>';
+    }).join('');
+    var capHtml = cap ? ('<div class="stat-cap">' + cap + '</div>') : '';
+    return '<div class="stat-wrap"><div class="stat-strip">' + cards + '</div>' + capHtml + '</div>';
+  });
+
   const chartConfigs = [];
   const noDataIds    = [];
   for (const id of [...new Set(ids)]) {
@@ -363,6 +387,21 @@ async function main() {
       `<figure class="chart-box"><canvas id="chart_${id}"></canvas></figure>`,
       `<figure class="chart-box no-data"><span class="no-data-msg">데이터 미수집</span></figure>`,
     );
+  }
+
+  // [[OGIMG: url]] → base64 <img> (fallback: 토큰 제거)
+  const ogRe = /<p>\s*\[\[OGIMG:\s*([^\]]+?)\]\]\s*<\/p>|\[\[OGIMG:\s*([^\]]+?)\]\]/g;
+  const ogJobs = [];
+  let ogMatch;
+  ogRe.lastIndex = 0;
+  while ((ogMatch = ogRe.exec(bodyHtml)) !== null) {
+    const url = (ogMatch[1] || ogMatch[2] || '').trim();
+    if (url) ogJobs.push({ full: ogMatch[0], url });
+  }
+  for (const job of ogJobs) {
+    const dataUri = await fetchOgImage(job.url);
+    bodyHtml = bodyHtml.replace(job.full, dataUri ? `<img src="${dataUri}" alt="" loading="eager">` : '');
+    console.log(`  · OGIMG ${job.url.slice(0, 60)}… — ${dataUri ? 'OK' : '없음(제거)'}`);
   }
 
   // 헤딩 분류(디바이더/서브섹션) + 목차 수집, 표 등락 색상, 참고자료 각주

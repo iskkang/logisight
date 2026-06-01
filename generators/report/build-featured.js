@@ -6,10 +6,11 @@ const fs   = require('fs');
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env.local') });
 if (typeof globalThis.WebSocket === 'undefined') { try { globalThis.WebSocket = require('ws'); } catch (_) {} }
-const Anthropic = require('@anthropic-ai/sdk');
+const { callDeepSeek } = require('../lib/deepseek');
 const { loadAllMonthlyItems } = require('./lib/index-factsheet');
 const SECTIONS = require('./sections.config');
 const { buildNewsCandidates } = require('./lib/rss-candidates');
+const { fetchOgImage } = require('./lib/og-image');
 
 const TODAY    = new Date().toISOString().slice(0, 10);
 const monthArg = process.argv.find(a => a.startsWith('--month='));
@@ -17,36 +18,11 @@ const MONTH    = monthArg ? monthArg.split('=')[1] : TODAY.slice(0, 7);
 const N        = 4;  // 대표 기사 건수
 const DRAFT    = path.resolve(__dirname, `../../content/drafts/monthly-analysis-${MONTH}.md`);
 
-const MARITIME = /scfi|ccfi|운임|컨테이너|container|freight|port|항만|선사|carrier|vessel|선박|해운|shipping|ocean|maersk|msc|hapag|호르무즈|hormuz|blank sailing|블랭크|선복|drewry|wci|fbx|bdi|벙커|bunker|alliance|얼라이언스/i;
-
-async function fetchOgImage(url) {
-  try {
-    const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; LogisightBot/1.0)' } });
-    if (!res.ok) return null;
-    const html = await res.text();
-    const m = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
-           || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)
-           || html.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i);
-    if (!m) return null;
-    let img = m[1].replace(/&amp;/g, '&');
-    if (img.startsWith('//')) img = 'https:' + img;
-    else if (img.startsWith('/')) { const u = new URL(url); img = u.origin + img; }
-    const ir = await fetch(img, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-    if (!ir.ok) return null;
-    const ct = (ir.headers.get('content-type') || 'image/jpeg').split(';')[0];
-    if (!/^image\//.test(ct)) return null;
-    const buf = Buffer.from(await ir.arrayBuffer());
-    if (buf.length > 3_000_000) return null;  // 3MB 초과 스킵(PDF 비대화 방지)
-    return `data:${ct};base64,${buf.toString('base64')}`;
-  } catch (_) { return null; }
-}
-
 async function main() {
   if (!fs.existsSync(DRAFT)) {
     console.error(`${DRAFT} 없음 — 먼저 assemble-monthly-report.js 실행`); process.exit(1);
   }
   // ── 후보 수집: RSS 풀 → 폴백 시 기존 monthly items ──
-  const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   let items = [];
   let rssMode = false;
   try {
@@ -92,11 +68,11 @@ async function main() {
 각 기사 형식: { "idx": 후보번호(정수), "title": "한국어 헤드라인(간결·임팩트)", "subtitle": "한 줄 부제", "body": "2~3문단(문단 사이 \\n\\n), 각 문단 3~5문장" }
 출력: {"articles":[ ... ${N}건 ... ]}`;
 
-  const resp = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6', max_tokens: 4500, system: sys,
+  const resp = await callDeepSeek({
+    max_tokens: 4500, system: sys,
     messages: [{ role: 'user', content: `후보 기사:\n\n${list}\n\n위에서 ${N}건 선정·작성. JSON만 출력.` }],
   });
-  let txt = resp.content.filter(b => b.type === 'text').map(b => b.text).join('').replace(/```json|```/g, '').trim();
+  let txt = resp.content[0].text.replace(/```json|```/g, '').trim();
   let picked;
   try { picked = JSON.parse(txt).articles; }
   catch (e) { console.error('JSON 파싱 실패:', e.message); console.error(txt.slice(0, 400)); process.exit(1); }
