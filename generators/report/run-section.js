@@ -14,7 +14,9 @@ require('dotenv').config({ path: path.resolve(__dirname, '../../.env.local') });
 const Anthropic = require('@anthropic-ai/sdk');
 const SECTIONS  = require('./sections.config');
 const { loadAllMonthlyItems, loadIndexFactsheet, buildIndexTable } = require('./lib/index-factsheet');
-const { buildOceanIndices } = require('./lib/ocean-indices');
+const { buildOceanIndices }   = require('./lib/ocean-indices');
+const { buildAirIndices }     = require('./lib/air-indices');
+const { buildPortThroughput } = require('./lib/port-throughput');
 const { loadStyleGuide }      = require('./lib/style');
 const { runSection, saveSectionFile, parseFrontmatter } = require('./lib/section-runner');
 
@@ -88,6 +90,24 @@ async function main() {
       console.log(`▶ [ocean] per-index 지수 블록 ${oceanBlocks.length}개 로드`);
     }
 
+    // ── air: WorldACD·BAI 지수 수집 ──
+    let airTable = null, airFactText = null;
+    if (sec.id === 'air') {
+      console.log('▶ [air] WorldACD·BAI 데이터 수집...');
+      const airData = await buildAirIndices();
+      if (airData) { airTable = airData.table; airFactText = airData.factText; }
+      else console.warn('⚠️  [air] 항공 데이터 미수집 — 폴백 표시');
+    }
+
+    // ── macro: Container Port Throughput 수집 ──
+    let portThroughputTable = null, portThroughputFactText = null;
+    if (sec.id === 'macro') {
+      console.log('▶ [macro] Port Throughput 데이터 수집...');
+      const ptData = await buildPortThroughput();
+      if (ptData) { portThroughputTable = ptData.table; portThroughputFactText = ptData.factText; }
+      else console.warn('⚠️  [macro] Port Throughput 미수집 — ⚠️ notice 표시');
+    }
+
     // ── rail 실측(MTL Link)은 외부 리포트에서 제외 ──
     const railTable = null, railFactText = null;
 
@@ -97,6 +117,8 @@ async function main() {
       indexFactText: sec.id === 'ocean' ? oceanFactText
                    : sec.id === 'index' ? indexFactText : null,
       railTable, railFactText, oceanBlocks,
+      airTable, airFactText,
+      portThroughputTable, portThroughputFactText,
     });
     const saved   = saveSectionFile(OUT_DIR, sec.id, MONTH, result.status, result.text, {
       pass1_tokens: result.pass1Tokens,

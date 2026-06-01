@@ -5,6 +5,7 @@ if (typeof globalThis.WebSocket === 'undefined') { try { globalThis.WebSocket = 
 const { createClient } = require('@supabase/supabase-js');
 const { LABELS } = require('./chart-data');
 const { buildBlankSailings } = require('./blank-sailings');
+const { buildIntraAsia }    = require('./intra-asia');
 
 function sb() {
   return createClient(
@@ -114,7 +115,7 @@ function render(byCode, order, opts = {}) {
 }
 
 async function buildOceanIndices() {
-  const [[kcci, scfi, ccfi, wci, bdi], blankData] = await Promise.all([
+  const [[kcci, scfi, ccfi, wci, bdi], blankData, intraData] = await Promise.all([
     Promise.all([
       loadGroup(KCCI_ORDER),
       loadGroup(SCFI_ORDER),
@@ -123,6 +124,7 @@ async function buildOceanIndices() {
       loadGroup(BDI_ORDER),
     ]),
     buildBlankSailings(),
+    buildIntraAsia(),
   ]);
 
   const blocks = [
@@ -159,6 +161,15 @@ async function buildOceanIndices() {
       headingKw: ['02-6', '블랭크', '결항'],
       table:     blankData?.table    ?? null,
       factText:  blankData?.factText ?? null,
+      notice:    '이번 회차 블랭크 세일링 데이터 미수집 — Drewry 수집 실패. 다음 호 업데이트 예정.',
+    },
+    {
+      id:        'intra_asia',
+      chart:     'ocean_intra_asia',
+      headingKw: ['02-7', '역내', 'Intra'],
+      table:     intraData?.table    ?? null,
+      factText:  intraData?.factText ?? null,
+      notice:    '이번 회차 역내 운임 데이터 미수집 — Supabase 조회 실패.',
     },
   ];
 

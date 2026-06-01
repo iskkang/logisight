@@ -7,6 +7,8 @@ const { createClient } = require('@supabase/supabase-js');
 
 const AIR_CACHE = path.resolve(__dirname, '../../../outputs/cache/air-index.json');
 const BS_CACHE  = path.resolve(__dirname, '../../../outputs/cache/blank-sailings.json');
+const IA_CACHE  = path.resolve(__dirname, '../../../outputs/cache/intra-asia.json');
+const PT_CACHE  = path.resolve(__dirname, '../../../outputs/cache/port-throughput.json');
 
 function sb() {
   return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY,
@@ -93,6 +95,26 @@ async function getOceanBlankSailings() {
   } catch (_) { return null; }
 }
 
+async function getOceanIntraAsia() {
+  try {
+    if (!fs.existsSync(IA_CACHE)) return null;
+    const raw = JSON.parse(fs.readFileSync(IA_CACHE, 'utf-8'));
+    const cd  = raw.chartData;
+    if (!cd?.labels || !cd.datasets?.length) return null;
+    return cd;
+  } catch (_) { return null; }
+}
+
+async function getMacroPortThroughput() {
+  try {
+    if (!fs.existsSync(PT_CACHE)) return null;
+    const raw = JSON.parse(fs.readFileSync(PT_CACHE, 'utf-8'));
+    const cd  = raw.chartData;
+    if (!cd?.labels || !cd.datasets?.length) return null;
+    return cd;
+  } catch (_) { return null; }
+}
+
 async function getRailOtp() {
   const client = sb();
   const { data, error } = await client.from('delay_index_weekly')
@@ -132,6 +154,8 @@ const CHARTS = {
   ocean_wci:    { title: 'WCI(드류리) 종합·항로별 추이',        loader: getOceanWci,    yLabel: 'USD/FEU' },
   ocean_bunker:          { title: '벙커유(VLSFO·HSFO) 추이',                           loader: getOceanBunker,         yLabel: 'USD/ton' },
   ocean_blank_sailings:  { title: '블랭크 세일링 결항률 추이 (Drewry)',                    loader: getOceanBlankSailings,  yLabel: '%' },
+  ocean_intra_asia:      { title: '역내(Intra-Asia) 운임 추이 (KCCI 역내 항로 proxy)',    loader: getOceanIntraAsia,      yLabel: 'index' },
+  macro_port_throughput: { title: '글로벌 컨테이너 항만 처리량 지수 추이 (ISL/RWI-ISL)', loader: getMacroPortThroughput, yLabel: 'index' },
   rail_otp:     { title: '유라시아 회랑별 정시율 (MTL Link 실측)', loader: getRailOtp,   yLabel: 'OTP %' },
   air_rate:     { title: '항공 화물 스팟 운임 추이 (WorldACD 글로벌 평균)', loader: getAirRate, yLabel: 'USD/kg' },
 };
