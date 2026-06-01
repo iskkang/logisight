@@ -1,11 +1,12 @@
 'use strict';
 // RSS 후보 풀 빌더 — build-featured.js 에 고품질 후보 공급
 // 1. config/news-feeds.json 로드
-// 2. 각 피드 RSS/Atom 수집·파싱(fast-xml-parser) — HTTP 실패·파싱 0건 피드 자동 드롭
-// 3. 신선도(최근 45일) + 관련성(SCOPE_RE) 필터
-// 4. 교차보도 클러스터링 (타이틀+요약 Jaccard ≥ 0.22 or 공유 토큰 ≥ 2)
-// 5. 점수 = tier_weight × cross_report_multiplier × recency
-// 6. outputs/cache/news-candidates.json 저장 (TTL 1일)
+// 2. RSS 피드 병렬 수집·파싱 — HTTP 실패·파싱 0건 피드 자동 드롭
+// 3. SeaSearch (shipshipship.uk) 보조 수집 — SEASEARCH_SESSION 없으면 스킵
+// 4. 신선도(최근 45일) + 관련성(SCOPE_RE) 필터
+// 5. 교차보도 클러스터링 (타이틀+요약 Jaccard ≥ 0.22 or 공유 토큰 ≥ 2)
+// 6. 점수 = tier_weight × cross_report_multiplier × recency × relevance
+// 7. outputs/cache/news-candidates.json 저장 (TTL 1일)
 
 const path = require('path');
 const fs   = require('fs');
@@ -55,7 +56,7 @@ function saveCache(payload) {
   } catch (e) { console.warn('  rss-candidates: 캐시 저장 실패:', e.message); }
 }
 
-// ── HTTP fetch ────────────────────────────────────────────────────────────────
+// ── HTTP helpers ──────────────────────────────────────────────────────────────
 
 async function fetchXml(url) {
   try {
@@ -70,6 +71,23 @@ async function fetchXml(url) {
     const ct = r.headers.get('content-type') || '';
     if (!ct.includes('xml') && !ct.includes('rss') && !ct.includes('atom') && !ct.includes('text')) return null;
     return await r.text();
+  } catch (_) { return null; }
+}
+
+async function fetchJsonAuth(url, cookieStr) {
+  try {
+    const r = await fetch(url, {
+      headers: {
+        'User-Agent': UA,
+        'Cookie':     cookieStr,
+        'Accept':     'application/json',
+      },
+      signal: AbortSignal.timeout(12000),
+    });
+    if (!r.ok) return null;
+    const ct = r.headers.get('content-type') || '';
+    if (!ct.includes('json')) return null;
+    return await r.json();
   } catch (_) { return null; }
 }
 
@@ -120,6 +138,86 @@ function parseRSS(xml) {
   } catch (_) { return []; }
 }
 
+// ── SeaSearch integration ─────────────────────────────────────────────────────
+// Requires SEASEARCH_SESSION env var (session cookie value from browser DevTools).
+// Endpoint template is configurable in news-feeds.json seasearch.endpoint_tmpl.
+
+async function fetchSeaSearch(config) {
+  const raw = process.env.SEASEARCH_SESSION;
+  if (!raw) return [];
+
+  const ssConf = config.seasearch || {};
+  if (!ssConf.enabled || !ssConf.endpoint_tmpl || !(ssConf.publications || []).length) return [];
+
+  const cookieStr = raw.includes('=') ? raw : `session=${raw}`;
+  const baseUrl   = (ssConf.base_url || 'https://shipshipship.uk').replace(/\/$/, '');
+  const now       = Date.now();
+  const results   = [];
+
+  for (const pub of ssConf.publications) {
+    const apiUrl = baseUrl + ssConf.endpoint_tmpl.replace('{pub_id}', pub.id);
+    const data   = await fetchJsonAuth(apiUrl, cookieStr);
+    if (!data) {
+      console.warn(`  seasearch: ${pub.name} HTTP 실패 또는 JSON 아님 — 스킵`);
+      continue;
+    }
+
+    const items = Array.isArray(data)
+      ? data
+      : (data.articles || data.data || data.results || data.items || []);
+
+    let added = 0;
+    for (const it of items) {
+      const title   = stripHtml(it.title || it.headline || '').slice(0, 200);
+      const url     = it.url || it.link || it.href || '';
+      const summary = pub.headline_only
+        ? ''
+        : stripHtml(it.summary || it.description || it.excerpt || it.body || '').slice(0, 500);
+      const dateStr = it.published_at || it.publishedAt || it.pub_date || it.date || it.created_at || '';
+      const pubDate = dateStr ? new Date(dateStr) : null;
+
+      if (!title || !url.startsWith('http')) continue;
+
+      const validDate = pubDate instanceof Date && !isNaN(pubDate.getTime());
+      const age       = validDate ? now - pubDate.getTime() : WINDOW_MS + 1;
+      if (age > WINDOW_MS) continue;
+      if (!SCOPE_RE.test(title + ' ' + summary)) continue;
+
+      results.push({
+        title,
+        url,
+        summary,
+        source:   pub.name,
+        tier:     pub.tier || 2,
+        pub_date: validDate ? pubDate.toISOString().slice(0, 10) : '',
+        age_days: Math.min(45, Math.round(Math.max(0, age) / 86400000)),
+      });
+      added++;
+    }
+    console.log(`  seasearch: ${pub.name} — ${added}건 통과`);
+  }
+
+  return results;
+}
+
+// ── Relevance scoring ─────────────────────────────────────────────────────────
+
+function scoreRelevance(article, relKw) {
+  if (!relKw) return 0.8;  // neutral if no config
+  const text = (article.title + ' ' + (article.summary || '')).toLowerCase();
+
+  const high   = (relKw.high   || []).filter(k => text.includes(k.toLowerCase())).length;
+  const medium = (relKw.medium || []).filter(k => text.includes(k.toLowerCase())).length;
+  const low    = (relKw.low    || []).filter(k => text.includes(k.toLowerCase())).length;
+
+  const rel = 0.5
+    + Math.min(high   * 0.20, 0.4)
+    + Math.min(medium * 0.08, 0.16)
+    + Math.min(low    * 0.04, 0.08);
+
+  return Math.min(1.0, rel);
+}
+
 // ── Cross-report clustering ───────────────────────────────────────────────────
 
 function tokenize(text) {
@@ -154,12 +252,50 @@ function clusterBySource(articles) {
     }
 
     if (group.length > 1) {
-      // Count only distinct sources (same source reporting same story ≠ cross-reporting)
       const distinct = new Set(group.map(k => articles[k].source)).size;
       for (const k of group) srcCount[k] = distinct;
     }
   }
   return srcCount;
+}
+
+// ── RSS collection (parallel) ─────────────────────────────────────────────────
+
+async function collectRssFeeds(feeds, now) {
+  const results = await Promise.allSettled(
+    feeds.map(async feed => {
+      const xml = await fetchXml(feed.url);
+      if (!xml) {
+        console.warn(`  rss: ${feed.name} HTTP 실패 — 드롭`);
+        return [];
+      }
+      const items = parseRSS(xml);
+      if (!items.length) {
+        console.warn(`  rss: ${feed.name} 파싱 0건 — 드롭`);
+        return [];
+      }
+      const batch = [];
+      for (const it of items) {
+        const validDate = it.pub instanceof Date && !isNaN(it.pub.getTime());
+        const age       = validDate ? now - it.pub.getTime() : WINDOW_MS + 1;
+        if (age > WINDOW_MS) continue;
+        if (!SCOPE_RE.test(it.title + ' ' + it.summary)) continue;
+        batch.push({
+          title:    it.title,
+          url:      it.link,
+          summary:  it.summary,
+          source:   feed.name,
+          tier:     feed.tier,
+          pub_date: validDate ? it.pub.toISOString().slice(0, 10) : '',
+          age_days: Math.min(45, Math.round(Math.max(0, age) / 86400000)),
+        });
+      }
+      console.log(`  rss: ${feed.name} — ${batch.length}건 통과`);
+      return batch;
+    }),
+  );
+
+  return results.flatMap(r => r.status === 'fulfilled' ? r.value : []);
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
@@ -180,35 +316,25 @@ async function buildNewsCandidates({ force = false } = {}) {
   const config = loadConfig();
   const tierW  = config.tier_weight             || {};
   const crMult = config.cross_report_multiplier || {};
+  const relKw  = config.relevance_keywords      || null;
   const now    = Date.now();
-  const all    = [];
 
-  for (const feed of config.feeds) {
-    console.log('  rss: ' + feed.name + ' 수집...');
-    const xml = await fetchXml(feed.url);
-    if (!xml) { console.warn('    ↳ HTTP 실패 — 드롭'); continue; }
+  // Collect RSS and SeaSearch in parallel
+  const [rssItems, ssItems] = await Promise.all([
+    collectRssFeeds(config.feeds || [], now),
+    fetchSeaSearch(config),
+  ]);
 
-    const items = parseRSS(xml);
-    if (!items.length) { console.warn('    ↳ 파싱 0건 — 드롭'); continue; }
+  const ssCount = ssItems.length;
+  if (ssCount) console.log(`  seasearch: 합계 ${ssCount}건`);
 
-    let added = 0;
-    for (const it of items) {
-      const validDate = it.pub instanceof Date && !isNaN(it.pub.getTime());
-      const age       = validDate ? now - it.pub.getTime() : WINDOW_MS + 1;
-      if (age > WINDOW_MS) continue;
-      if (!SCOPE_RE.test(it.title + ' ' + it.summary)) continue;
-      all.push({
-        title:    it.title,
-        url:      it.link,
-        summary:  it.summary,
-        source:   feed.name,
-        tier:     feed.tier,
-        pub_date: validDate ? it.pub.toISOString().slice(0, 10) : '',
-        age_days: Math.min(45, Math.round(Math.max(0, age) / 86400000)),
-      });
-      added++;
-    }
-    console.log('    ↳ ' + added + '건 통과 (누적 ' + all.length + ')');
+  // Merge; deduplicate by URL (SeaSearch wins on same URL for headline_only sources)
+  const seen = new Set();
+  const all  = [];
+  for (const a of [...ssItems, ...rssItems]) {
+    if (seen.has(a.url)) continue;
+    seen.add(a.url);
+    all.push(a);
   }
 
   if (!all.length) {
@@ -219,26 +345,28 @@ async function buildNewsCandidates({ force = false } = {}) {
   const srcCounts = clusterBySource(all);
 
   const scored = all.map((a, i) => {
-    const tw    = parseFloat(tierW[String(a.tier)]  || 0.6);
-    const n     = srcCounts[i];
-    const cm    = n >= 3 ? parseFloat(crMult['3'] || 1.5)
-                : n >= 2 ? parseFloat(crMult['2'] || 1.2)
-                : 1.0;
-    const rec   = Math.max(0.5, 1.0 - (a.age_days / 45) * 0.5);
-    const score = Math.round(tw * cm * rec * 1000) / 1000;
+    const tw  = parseFloat(tierW[String(a.tier)] || 0.6);
+    const n   = srcCounts[i];
+    const cm  = n >= 3 ? parseFloat(crMult['3'] || 1.5)
+              : n >= 2 ? parseFloat(crMult['2'] || 1.2)
+              : 1.0;
+    const rec = Math.max(0.5, 1.0 - (a.age_days / 45) * 0.5);
+    const rel = scoreRelevance(a, relKw);
+    const score = Math.round(tw * cm * rec * rel * 1000) / 1000;
     return { ...a, source_count: n, score };
   });
 
-  const seen  = new Set();
+  const uniq = new Set();
   const candidates = scored
     .sort((x, y) => y.score - x.score)
-    .filter(a => { if (seen.has(a.url)) return false; seen.add(a.url); return true; })
+    .filter(a => { if (uniq.has(a.url)) return false; uniq.add(a.url); return true; })
     .slice(0, TOP_N);
 
   saveCache({ candidates });
   console.log(
-    '  rss-candidates: 완료 — ' + candidates.length + '건, top score='
-    + (candidates[0]?.score ?? 0),
+    '  rss-candidates: 완료 — ' + candidates.length + '건'
+    + (ssCount ? ` (SeaSearch ${ssCount}건 포함)` : ' (RSS-only)')
+    + ', top score=' + (candidates[0]?.score ?? 0),
   );
   return candidates;
 }
