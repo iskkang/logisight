@@ -30,7 +30,7 @@ const UA   = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 // ── 공통 유틸 ─────────────────────────────────────────────────────────────────
 
 function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
-function randomDelay() { return sleep(800 + Math.floor(Math.random() * 700)); }
+function delay() { return sleep(cfg.delayMs || 1200); }
 
 function extractCookie(headers) {
   const raw = headers.get('set-cookie') || '';
@@ -41,21 +41,20 @@ function extractCookie(headers) {
   return pairs.find(function(p) { return /JSESSIONID_KITA/i.test(p); }) || pairs[0] || '';
 }
 
-function pad2(n) { return String(n).padStart(2, '0'); }
-
 function getPeriodParams() {
-  const now        = new Date();
-  const monthsBack = cfg.period.monthsBack || 13;
-  const endYear    = now.getFullYear();
-  const endMonth   = now.getMonth() + 1;
-  let startYear    = endYear;
-  let startMonth   = endMonth - monthsBack;
+  var now        = new Date();
+  var monthsBack = cfg.period.monthsBack || 13;
+  var endYear    = now.getFullYear();
+  var endMonth   = now.getMonth() + 1;
+  var startYear  = endYear;
+  var startMonth = endMonth - monthsBack;
   while (startMonth <= 0) { startMonth += 12; startYear--; }
+  // 스펙 준수: 월은 0 패딩 없이 문자열 ("6", "12")
   return {
     searchYear:   String(startYear),
-    searchMonth:  pad2(startMonth),
+    searchMonth:  String(startMonth),
     searchYear2:  String(endYear),
-    searchMonth2: pad2(endMonth),
+    searchMonth2: String(endMonth),
   };
 }
 
@@ -166,12 +165,13 @@ function saveCache(cachePath, payload) {
 // 해상 (SEA)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-async function fetchSeaChartData(cookie, route, container) {
+// 해상: SEA_FEU_CHARGE 1회 호출 → resultList에 teu + feu 동시 포함
+async function fetchSeaChartData(cookie, route) {
   var period     = getPeriodParams();
   var regionCode = cfg.regions.sea[route.regionName];
   var originCode = cfg.origins.sea[route.originName];
   var body = {
-    searchStart:       originCode,        // 출발지 코드 (NOT 기간)
+    searchStart:       originCode,
     searchEndMainLand: regionCode,
     searchEnd:         route.destCode,
     dayChange:         'B',
@@ -179,21 +179,25 @@ async function fetchSeaChartData(cookie, route, container) {
     searchMonth:       period.searchMonth,
     searchYear2:       period.searchYear2,
     searchMonth2:      period.searchMonth2,
-    seaCharge:         'SEA_' + container + '_CHARGE',
+    seaCharge:         'SEA_FEU_CHARGE',  // 1회로 teu+feu 동시 취득
   };
   if (route.originName === '인천') body.incheonYn = 'Y';
   return postJson(cfg.endpoints.sea.chartData, cookie, body);
 }
 
-function parseSeaChart(raw, container, isDump) {
+function parseSeaChart(raw, isDump) {
   if (isDump) {
     console.log('  [sea dump] keys:', JSON.stringify(Object.keys(raw || {})));
-    console.log('  [sea dump] sample:', JSON.stringify(raw).slice(0, 600));
+    var sample = raw.selectSeaChargeListCate;
+    if (sample && sample[0] && sample[0].resultList && sample[0].resultList[0]) {
+      console.log('  [sea dump] resultList[0]:', JSON.stringify(sample[0].resultList[0]));
+    }
   }
 
   var indices = [];
   var rates   = [];
 
+  // seaChargeGraph: 권역 지수 (result1=RADIS종합, result2=북미, result3=유럽, result4=아시아)
   var graphList = raw.seaChargeGraph || [];
   for (var i = 0; i < graphList.length; i++) {
     var row = graphList[i];
@@ -208,6 +212,7 @@ function parseSeaChart(raw, container, isDump) {
     });
   }
 
+  // selectSeaChargeListCate: 노선 월별 운임 (teu + feu 동시)
   var cateList = raw.selectSeaChargeListCate || [];
   for (var c = 0; c < cateList.length; c++) {
     var rateArr = cateList[c].resultList || [];
@@ -215,45 +220,15 @@ function parseSeaChart(raw, container, isDump) {
       var rr  = rateArr[r];
       var ym2 = cleanYm(rr.yearMon);
       if (!ym2) continue;
-      var val = rr.teu != null ? Number(rr.teu)
-              : rr.feu != null ? Number(rr.feu)
-              : rr.result1 != null ? Number(rr.result1) : null;
-      var entry = { yearMon: ym2 };
-      entry[container === 'TEU' ? 'teu' : 'feu'] = val;
-      rates.push(entry);
-    }
-  }
-
-  // 평탄화 폴백
-  if (!rates.length) {
-    var flat = raw.seaChargeList || raw.resultList || [];
-    for (var f = 0; f < flat.length; f++) {
-      var fr  = flat[f];
-      var ym3 = cleanYm(fr.yearMon);
-      if (!ym3) continue;
-      var fval = fr.teu != null ? Number(fr.teu) : fr.feu != null ? Number(fr.feu) : fr.charge != null ? Number(fr.charge) : null;
-      var fentry = { yearMon: ym3 };
-      fentry[container === 'TEU' ? 'teu' : 'feu'] = fval;
-      rates.push(fentry);
+      rates.push({
+        yearMon: ym2,
+        teu: rr.teu != null && rr.teu !== '0' ? Number(rr.teu) : null,
+        feu: rr.feu != null && rr.feu !== '0' ? Number(rr.feu) : null,
+      });
     }
   }
 
   return { indices: indices, rates: rates };
-}
-
-function mergeSeaRates(teuArr, feuArr) {
-  var map = {};
-  for (var i = 0; i < teuArr.length; i++) {
-    var r = teuArr[i];
-    if (!map[r.yearMon]) map[r.yearMon] = { yearMon: r.yearMon };
-    if (r.teu != null) map[r.yearMon].teu = r.teu;
-  }
-  for (var j = 0; j < feuArr.length; j++) {
-    var s = feuArr[j];
-    if (!map[s.yearMon]) map[s.yearMon] = { yearMon: s.yearMon };
-    if (s.feu != null) map[s.yearMon].feu = s.feu;
-  }
-  return Object.values(map).sort(function(a, b) { return a.yearMon.localeCompare(b.yearMon); });
 }
 
 function addSeaChanges(rates) {
@@ -271,7 +246,7 @@ function filterSeaIncomplete(indices, rates) {
     return r.radis > 5 || r.naIndex > 5 || r.euIndex > 5 || r.asiaIndex > 5;
   });
   var cleanRates = rates.filter(function(r) {
-    return !((r.teu == null || r.teu === 0) && (r.feu == null || r.feu === 0));
+    return r.teu > 0 || r.feu > 0;
   });
   return { indices: cleanIdx, rates: cleanRates };
 }
@@ -321,35 +296,16 @@ async function buildKitaFareSea(opts) {
           route.originName === '인천'
         );
         console.log('    destCode: ' + route.destCode);
-        await randomDelay();
+        await delay();
       }
 
-      var containers = cfg.containers || ['FEU', 'TEU'];
-      var allIndices = [], teuRates = [], feuRates = [];
+      // 단일 호출로 TEU + FEU 동시 취득
+      console.log('    chartData (SEA_FEU_CHARGE → teu+feu 동시)...');
+      var raw = await fetchSeaChartData(cookie, route);
+      var parsed  = parseSeaChart(raw, isDump);
+      isDump      = false;
 
-      for (var ci = 0; ci < containers.length; ci++) {
-        var container = containers[ci];
-        console.log('    chartData ' + container + '...');
-        var raw;
-        try {
-          raw = await fetchSeaChartData(cookie, route, container);
-        } catch (e2) {
-          console.warn('    chartData ' + container + ' 실패 —', e2.message);
-          if (ci < containers.length - 1) await randomDelay();
-          continue;
-        }
-
-        var parsed = parseSeaChart(raw, container, isDump);
-        isDump = false;
-
-        if (!allIndices.length && parsed.indices.length) allIndices = parsed.indices;
-        if (container === 'TEU') teuRates = parsed.rates;
-        else                     feuRates = parsed.rates;
-
-        if (ci < containers.length - 1) await randomDelay();
-      }
-
-      var cleaned = filterSeaIncomplete(allIndices, mergeSeaRates(teuRates, feuRates));
+      var cleaned = filterSeaIncomplete(parsed.indices, parsed.rates);
       var merged  = addSeaChanges(cleaned.rates);
 
       console.log('    완료 — indices:' + cleaned.indices.length + ', rates:' + merged.length);
@@ -360,7 +316,7 @@ async function buildKitaFareSea(opts) {
       results.push({ originName: route.originName, destName: route.destName, regionName: route.regionName, error: e3.message });
     }
 
-    if (ri < seaRoutes.length - 1) await randomDelay();
+    if (ri < seaRoutes.length - 1) await delay();
   }
 
   var ok      = results.filter(function(r) { return !r.error; }).length;
@@ -506,7 +462,7 @@ async function buildKitaFareAir(opts) {
           false
         );
         console.log('    destCode: ' + route.destCode);
-        await randomDelay();
+        await delay();
       }
 
       // 항공은 1회 호출로 전 중량 취득
@@ -518,7 +474,7 @@ async function buildKitaFareAir(opts) {
       // ac100/300/500가 비어 있으면 AIR_CHARGE300으로 재시도
       if (parsed.needsMoreWeights) {
         console.warn('    ac100/300/500 미수신 — AIR_CHARGE300으로 재시도');
-        await randomDelay();
+        await delay();
         var period2 = getPeriodParams();
         var body2 = {
           searchStart:       cfg.origins.air[route.originName],
@@ -548,7 +504,7 @@ async function buildKitaFareAir(opts) {
       results.push({ originName: route.originName, destName: route.destName, regionName: route.regionName, error: e3.message });
     }
 
-    if (ri < airRoutes.length - 1) await randomDelay();
+    if (ri < airRoutes.length - 1) await delay();
   }
 
   var ok      = results.filter(function(r) { return !r.error; }).length;
