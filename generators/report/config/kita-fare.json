@@ -27,9 +27,8 @@
   "routes": {
     "sea": [
       { "originName": "부산", "regionName": "북미",       "destName": "Long Beach",  "destCode": "0101010201" },
-      { "originName": "부산", "regionName": "유럽",       "destName": "Rotterdam",    "destCode": "" },
-      { "originName": "부산", "regionName": "러시아/CIS", "destName": "Vladivostok",  "destCode": "" },
-      { "originName": "인천", "regionName": "북미",       "destName": "Long Beach",   "destCode": "0101010201" }
+      { "originName": "부산", "regionName": "유럽",       "destName": "로테르담",      "destCode": "0101030102" },
+      { "originName": "부산", "regionName": "러시아/CIS", "destName": "보스토치니",    "destCode": "0101100102" }
     ],
     "air": [
       { "originName": "인천", "regionName": "북미", "destName": "Chicago", "destCode": "0201010101" }
