@@ -5,25 +5,36 @@
     "air": "/shippers/logisticsFare/logisticsAirFare.do"
   },
   "endpoints": {
-    "codeView":  "/shippers/logisticsFare/logisticsSeaCodeView.do",
-    "chartData": "/shippers/logisticsFare/getSeaChartDataByContainer.do"
+    "sea": {
+      "codeView":  "/shippers/logisticsFare/logisticsSeaCodeView.do",
+      "chartData": "/shippers/logisticsFare/getSeaChartDataByContainer.do"
+    },
+    "air": {
+      "codeView":  "/shippers/logisticsFare/logisticsAirCodeView.do",
+      "chartData": "/shippers/logisticsFare/getAirChartDataByWeight.do"
+    }
   },
   "origins": {
-    "부산": "0102010102",
-    "인천": "0102010101"
+    "sea": { "부산": "0102010102", "인천": "0102010101" },
+    "air": { "인천": "0202010101" }
   },
   "regions": {
-    "북미":       "010101",
-    "유럽":       "010103",
-    "아시아":     "010104",
-    "러시아/CIS": "010110"
+    "sea": { "북미": "010101", "유럽": "010103", "아시아": "010104", "러시아/CIS": "010110" },
+    "air": { "북미": "020101", "중남미": "020102", "유럽": "020103", "아시아": "020104",
+             "일본": "020105", "중국": "020106", "아프리카": "020107", "오세아니아": "020108",
+             "중동": "020109", "러시아": "020110" }
   },
-  "routes": [
-    { "originName": "부산", "regionName": "북미",       "destName": "Long Beach",    "destCode": "0101010201" },
-    { "originName": "부산", "regionName": "유럽",       "destName": "Rotterdam",      "destCode": "" },
-    { "originName": "부산", "regionName": "러시아/CIS", "destName": "Vladivostok",    "destCode": "" },
-    { "originName": "인천", "regionName": "북미",       "destName": "Long Beach",     "destCode": "0101010201" }
-  ],
+  "routes": {
+    "sea": [
+      { "originName": "부산", "regionName": "북미",       "destName": "Long Beach",  "destCode": "0101010201" },
+      { "originName": "부산", "regionName": "유럽",       "destName": "Rotterdam",    "destCode": "" },
+      { "originName": "부산", "regionName": "러시아/CIS", "destName": "Vladivostok",  "destCode": "" },
+      { "originName": "인천", "regionName": "북미",       "destName": "Long Beach",   "destCode": "0101010201" }
+    ],
+    "air": [
+      { "originName": "인천", "regionName": "북미", "destName": "Chicago", "destCode": "0201010101" }
+    ]
+  },
   "period": { "monthsBack": 13 },
   "containers": ["FEU", "TEU"]
 }
