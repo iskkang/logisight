@@ -568,6 +568,7 @@ module.exports = { buildKitaFareSea, buildKitaFareAir, SEA_CACHE_PATH: SEA_CACHE
 if (require.main === module) {
   require('dotenv').config({ path: path.resolve(__dirname, '../../../.env.local') });
   var force  = process.argv.includes('--force');
+  var doPush = process.argv.includes('--push');
   var mode   = process.argv.includes('--air') ? 'air' : 'sea';
   var single = process.argv.find(function(a) { return a.startsWith('--route='); });
   var route  = single ? single.split('=').slice(1).join('=') : null;
@@ -575,7 +576,7 @@ if (require.main === module) {
   var builder = mode === 'air' ? buildKitaFareAir : buildKitaFareSea;
 
   builder({ force: force || true, route: route })
-    .then(function(r) {
+    .then(async function(r) {
       if (!r) { console.log('결과 없음'); process.exit(1); }
       var ok = r.routes.filter(function(x) { return !x.error; });
       if (ok.length) {
@@ -587,6 +588,19 @@ if (require.main === module) {
       }
       var failed = r.routes.filter(function(x) { return x.error; });
       if (failed.length) console.warn('실패:', failed.map(function(x) { return x.originName + '->' + x.destName; }));
+
+      // --push 플래그: Supabase upsert
+      if (doPush && ok.length) {
+        try {
+          var kitaSb = require('./kita-supabase');
+          var pushFn = mode === 'air' ? kitaSb.pushAirToSupabase : kitaSb.pushSeaToSupabase;
+          var result = await pushFn(r);
+          console.log('\n✅ Supabase upsert 완료 — rates:' + result.rates + ', indices:' + result.indices);
+        } catch (e) {
+          console.error('❌ Supabase push 실패:', e.message);
+          process.exit(1);
+        }
+      }
     })
     .catch(function(e) { console.error('오류:', e.message); process.exit(1); });
 }
