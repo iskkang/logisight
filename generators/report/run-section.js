@@ -18,6 +18,7 @@ const { buildOceanIndices }   = require('./lib/ocean-indices');
 const { buildAirIndices }     = require('./lib/air-indices');
 const { buildRailIndices }    = require('./lib/rail-indices');
 const { buildPortThroughput } = require('./lib/port-throughput');
+const { buildKitaSeaReport, buildKitaAirReport } = require('./lib/kita-report');
 const { loadStyleGuide }      = require('./lib/style');
 const { runSection, saveSectionFile, parseFrontmatter } = require('./lib/section-runner');
 
@@ -82,17 +83,20 @@ async function main() {
     const items = sec.filterItems(allItems);
     console.log(`▶ [${sec.id}] ${sec.title} — 관련 기사 ${items.length}건`);
 
-    // ── ocean per-index 지수 블록 ──
-    let oceanBlocks = null, oceanFactText = null;
+    // ── ocean per-index 지수 블록 + KITA 부산발 참고운임 ──
+    let oceanBlocks = null, oceanFactText = null, kitaSeaBundle = null;
     if (sec.id === 'ocean') {
       const built  = await buildOceanIndices();
       oceanBlocks  = built.blocks;
       oceanFactText = built.factText;
       console.log(`▶ [ocean] per-index 지수 블록 ${oceanBlocks.length}개 로드`);
+      kitaSeaBundle = buildKitaSeaReport();
+      if (kitaSeaBundle) console.log(`▶ [ocean] KITA 해상 참고운임 로드 (기준 ${kitaSeaBundle.asOf})`);
+      else               console.warn('⚠️  [ocean] KITA 해상 운임 미수집 — notice 표시');
     }
 
-    // ── air: TAC/BAI·IATA·Xeneta·Superset 수집 ──
-    let airBundle = null, airTable = null, airFactText = null;
+    // ── air: TAC/BAI·IATA·Xeneta·Superset 수집 + KITA 인천발 참고운임 ──
+    let airBundle = null, airTable = null, airFactText = null, kitaAirBundle = null;
     if (sec.id === 'air') {
       console.log('▶ [air] 항공 데이터 수집 (BAI·IATA·Xeneta·Superset)...');
       airBundle = await buildAirIndices();
@@ -102,6 +106,9 @@ async function main() {
       } else {
         console.warn('⚠️  [air] 항공 데이터 미수집 — notice 표시');
       }
+      kitaAirBundle = buildKitaAirReport();
+      if (kitaAirBundle) console.log(`▶ [air] KITA 항공 참고운임 로드 (기준 ${kitaAirBundle.asOf})`);
+      else               console.warn('⚠️  [air] KITA 항공 운임 미수집 — notice 표시');
     }
 
     // ── macro: Container Port Throughput 수집 ──
@@ -131,6 +138,7 @@ async function main() {
       airBundle,
       airTable, airFactText,
       portThroughputTable, portThroughputFactText,
+      kitaSeaBundle, kitaAirBundle,
     });
     const saved   = saveSectionFile(OUT_DIR, sec.id, MONTH, result.status, result.text, {
       pass1_tokens: result.pass1Tokens,

@@ -83,7 +83,7 @@ ${styleGuide}
 - "스페이스" → "선적 공간" 또는 "선복"`;
 }
 
-function buildSectionUserPrompt(title, items, month, indexFactText, railFactText, airFactText, portThroughputFactText) {
+function buildSectionUserPrompt(title, items, month, indexFactText, railFactText, airFactText, portThroughputFactText, kitaFactText) {
   const lines = [`분석 기준월: ${month}`, ''];
 
   if (indexFactText) {
@@ -107,6 +107,11 @@ function buildSectionUserPrompt(title, items, month, indexFactText, railFactText
   if (portThroughputFactText) {
     lines.push('## 컨테이너 항만 물동량 지수 (이 수치만 사용, 다른 숫자 생성 금지)');
     lines.push(portThroughputFactText);
+    lines.push('');
+  }
+
+  if (kitaFactText) {
+    lines.push(kitaFactText);
     lines.push('');
   }
 
@@ -278,7 +283,8 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
                             oceanBlocks = null,
                             airBundle = null,
                             airTable = null, airFactText = null,
-                            portThroughputTable = null, portThroughputFactText = null }) {
+                            portThroughputTable = null, portThroughputFactText = null,
+                            kitaSeaBundle = null, kitaAirBundle = null }) {
   if (items.length === 0) {
     console.log(`⚠️  [${sectionConfig.id}] 관련 기사 없음 → status: no-data`);
     return { status: 'no-data', text: '', pass1Tokens: 0, pass2Tokens: 0 };
@@ -289,8 +295,9 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
   if (cappedItems.length < items.length)
     console.log(`   ↓ maxItems 적용: ${items.length} → ${cappedItems.length}건`);
 
+  const kitaFactText = (kitaSeaBundle && kitaSeaBundle.factText) || (kitaAirBundle && kitaAirBundle.factText) || null;
   const systemPrompt = buildSectionSystemPrompt(styleGuide, sectionConfig.focus);
-  const userPrompt   = buildSectionUserPrompt(sectionConfig.title, cappedItems, month, indexFactText, railFactText, airFactText, portThroughputFactText);
+  const userPrompt   = buildSectionUserPrompt(sectionConfig.title, cappedItems, month, indexFactText, railFactText, airFactText, portThroughputFactText, kitaFactText);
 
   // PASS 1: 초안 생성 — DEEPSEEK_API_KEY 설정 시 deepseek-v4-pro(스트리밍), 미설정 시 claude-sonnet-4-6
   const pass1Model = process.env.DEEPSEEK_API_KEY ? 'deepseek-v4-pro (stream)' : 'claude-sonnet-4-6';
@@ -366,6 +373,19 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
     } else {
       revised += '\n\n[[CHART:ocean_bunker]]\n';
     }
+
+    // KITA 부산발 참고운임 — LLM이 02-8 소제목을 쓰면 그 아래 주입, 없으면 신규 소절 추가
+    const kita08 = revised.match(/#{2,3}[^\n]*(?:02-8|KITA)[^\n]*/i);
+    if (kitaSeaBundle && kitaSeaBundle.table) {
+      const inject = '\n\n[[CHART:kita_sea]]\n\n' + kitaSeaBundle.table + '\n';
+      if (kita08) {
+        revised = revised.replace(kita08[0], '<div class="page-break"></div>\n\n' + kita08[0] + inject);
+      } else {
+        revised += '\n\n<div class="page-break"></div>\n\n## 02-8. KITA 부산발 참고운임 (한국 수출 실측 운임)' + inject;
+      }
+    } else if (!kita08) {
+      revised += '\n\n## 02-8. KITA 부산발 참고운임\n\n> ⚠️ **KITA 참고운임 미수집** — 다음 호 업데이트 예정.\n';
+    }
   } else if (indexTable) {
     // 운임 지수 표 삽입 (01. 핵심 시황 섹션)
     const anchor =
@@ -433,6 +453,16 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
       if (anchor) {
         const at = revised.indexOf(anchor[0]) + anchor[0].length;
         revised = revised.slice(0, at) + notice + revised.slice(at);
+      }
+    }
+
+    // A-2 보강: KITA 인천발 참고운임 차트·표 → ## 03-2. 소제목 아래 (Superset 차트 다음)
+    if (kitaAirBundle && kitaAirBundle.table) {
+      const anchor = revised.match(/#{2,3}[^\n]*(?:03-2|추세|시계열)[^\n]*/);
+      const inject = '\n\n**KITA 인천발 참고운임 (한국 수출 실측)**\n\n[[CHART:kita_air]]\n\n' + kitaAirBundle.table + '\n';
+      if (anchor) {
+        const at = revised.indexOf(anchor[0]) + anchor[0].length;
+        revised = revised.slice(0, at) + inject + revised.slice(at);
       }
     }
 

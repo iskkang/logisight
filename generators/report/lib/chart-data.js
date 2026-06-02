@@ -115,6 +115,15 @@ async function getMacroPortThroughput() {
   } catch (_) { return null; }
 }
 
+// KITA 참고운임 권역 지수 차트 — kita-report.js가 캐시에서 빌드
+const { buildKitaSeaReport, buildKitaAirReport } = require('./kita-report');
+async function getKitaSea() {
+  try { const r = buildKitaSeaReport(); return r?.chartData || null; } catch (_) { return null; }
+}
+async function getKitaAir() {
+  try { const r = buildKitaAirReport(); return r?.chartData || null; } catch (_) { return null; }
+}
+
 async function getRailOtp() {
   const client = sb();
   const { data, error } = await client.from('delay_index_weekly')
@@ -158,6 +167,8 @@ const CHARTS = {
   macro_port_throughput: { title: '글로벌 컨테이너 항만 처리량 지수 추이 (ISL/RWI-ISL)', loader: getMacroPortThroughput, yLabel: 'index' },
   rail_otp:     { title: '유라시아 회랑별 정시율 (MTL Link 실측)', loader: getRailOtp,   yLabel: 'OTP %' },
   air_rate:     { title: 'TAC Index 항공 운임 추이 (USD/kg, 사내 BI)', loader: getAirRate, yLabel: 'USD/kg' },
+  kita_sea:     { title: 'KITA 해상 권역 운임지수 추이 (RADIS·북미·유럽·아시아)', loader: getKitaSea, yLabel: 'index' },
+  kita_air:     { title: 'KITA 항공 권역 운임지수 추이 (북미·유럽·아시아·중국, KRW)', loader: getKitaAir, yLabel: 'index(KRW)' },
 };
 
 async function buildChart(id) {
