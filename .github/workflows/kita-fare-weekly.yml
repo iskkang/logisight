@@ -1,14 +1,14 @@
-name: Monthly Freight Rates
+name: KITA 참고운임 주간 수집
 
 on:
   schedule:
-    - cron: '0 18 1 * *'   # 매월 1일 03:00 KST (해수부 월초 공표 다음 날)
-  workflow_dispatch:
+    - cron: '0 18 * * 6'   # 매주 토요일 03:00 KST (UTC+9)
+  workflow_dispatch:        # 수동 실행 가능
 
 jobs:
-  fetch-freight-rates:
+  fetch-kita-fares:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 120    # 108개 노선 × 1.2s → 약 13분, 여유 있게 설정
 
     steps:
       - uses: actions/checkout@v4
@@ -21,10 +21,15 @@ jobs:
       - name: Install deps
         run: npm ci
 
-      - name: Fetch freight rates (KR POL)
-        run: npx tsx collectors/freight_rates.ts
+      - name: Fetch KITA sea fare (해상 참고운임 → Supabase)
+        run: node generators/report/lib/kita-fare.js --force --push
         env:
-          DATA_GO_KR_API_KEY:        ${{ secrets.DATA_GO_KR_API_KEY }}
+          SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Fetch KITA air fare (항공 참고운임 → Supabase)
+        run: node generators/report/lib/kita-fare.js --air --force --push
+        env:
           SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
@@ -36,8 +41,8 @@ jobs:
           const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
           const status = process.env.JOB_STATUS === 'success' ? 'ok' : 'error';
           sb.from('data_updates')
-            .insert({ dataset: 'freight_rates', status, notes: 'monthly-freight-rates workflow' })
-            .then(r => { console.log('data_updates logged:', r.error ? r.error.message : 'ok'); process.exit(0); })
+            .insert({ dataset: 'kita_fare', status, notes: 'kita-fare-weekly (sea + air)' })
+            .then(r => { console.log('logged:', r.error ? r.error.message : 'ok'); process.exit(0); })
             .catch(e => { console.error(e.message); process.exit(0); });
           "
         env:
