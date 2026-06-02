@@ -67,7 +67,7 @@
     "dotenv": "^17.4.2",
     "fast-xml-parser": "^5.8.0",
     "marked": "^14.1.4",
-    "pdf-parse": "^2.4.5",
+    "pdf-parse": "^1.1.1",
     "puppeteer-core": "^24.43.1",
     "resend": "^3.5.0",
     "ws": "^8.21.0",

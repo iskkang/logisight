@@ -2,7 +2,7 @@
   "air_index": {
     "slice_id": 49,
     "dashboard_id": 5,
-    "label": "항공 운임지수",
-    "yLabel": "index"
+    "label": "TAC Index 항로별 운임",
+    "yLabel": "USD/kg"
   }
 }

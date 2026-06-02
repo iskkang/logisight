@@ -25,16 +25,25 @@ const CARGO_RE     = /\b(?:air cargo|CTK|ACTK|cargo tonne|freight tonne|CLF|carg
 
 function findInputFile(month) {
   if (!fs.existsSync(INPUT_DIR)) return null;
-  const files = fs.readdirSync(INPUT_DIR)
-    .filter(f => /\.(pdf|txt|html)$/i.test(f) && f !== '.gitkeep')
-    .sort()
-    .reverse();
-  if (!files.length) return null;
+  const allFiles = fs.readdirSync(INPUT_DIR)
+    .filter(f => /\.(pdf|txt|html)$/i.test(f) && f !== '.gitkeep');
+
+  // cargo 파일만 (passenger 제외)
+  const cargoFiles = allFiles.filter(f => /cargo/i.test(f)).sort().reverse();
+
+  if (!cargoFiles.length) {
+    const passengerFiles = allFiles.filter(f => !/cargo/i.test(f));
+    if (passengerFiles.length) {
+      console.warn(`  iata-cargo: cargo PDF 없음(여객만 존재: ${passengerFiles.join(', ')}) → pressroom fallback`);
+    }
+    return null;
+  }
+
   if (month) {
-    const hit = files.find(f => f.includes(month));
+    const hit = cargoFiles.find(f => f.includes(month));
     if (hit) return path.join(INPUT_DIR, hit);
   }
-  return path.join(INPUT_DIR, files[0]);
+  return path.join(INPUT_DIR, cargoFiles[0]);
 }
 
 // ── Text extraction ───────────────────────────────────────────────────────────

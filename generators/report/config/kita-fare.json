@@ -1,0 +1,29 @@
+{
+  "base": "https://www.kita.net",
+  "page": {
+    "sea": "/shippers/logisticsFare/logisticsSeaFare.do",
+    "air": "/shippers/logisticsFare/logisticsAirFare.do"
+  },
+  "endpoints": {
+    "codeView":  "/shippers/logisticsFare/logisticsSeaCodeView.do",
+    "chartData": "/shippers/logisticsFare/getSeaChartDataByContainer.do"
+  },
+  "origins": {
+    "부산": "0102010102",
+    "인천": "0102010101"
+  },
+  "regions": {
+    "북미":       "010101",
+    "유럽":       "010103",
+    "아시아":     "010104",
+    "러시아/CIS": "010110"
+  },
+  "routes": [
+    { "originName": "부산", "regionName": "북미",       "destName": "Long Beach",    "destCode": "0101010201" },
+    { "originName": "부산", "regionName": "유럽",       "destName": "Rotterdam",      "destCode": "" },
+    { "originName": "부산", "regionName": "러시아/CIS", "destName": "Vladivostok",    "destCode": "" },
+    { "originName": "인천", "regionName": "북미",       "destName": "Long Beach",     "destCode": "0101010201" }
+  ],
+  "period": { "monthsBack": 13 },
+  "containers": ["FEU", "TEU"]
+}

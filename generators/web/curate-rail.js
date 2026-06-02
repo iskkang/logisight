@@ -5,7 +5,8 @@
 
 const fs      = require('fs');
 const path    = require('path');
-const { callDeepSeek } = require('../lib/deepseek');
+const { callDeepSeek }    = require('../lib/deepseek');
+const { parseJsonRobust } = require('../lib/parse-json');
 
 const NEWS_PATH   = path.resolve(__dirname, '../../content/drafts/latest-news.json');
 const OUT_PATH    = path.resolve(__dirname, '../../content/drafts/curated-rail.json');
@@ -113,13 +114,18 @@ ${itemList}
   "excluded_count": ${Math.max(0, items.length - 3)}
 }`;
 
-  const msg = await callDeepSeek({ max_tokens: 2048, messages: [{ role: 'user', content: prompt }] });
+  const msg = await callDeepSeek({
+    max_tokens: 2048,
+    responseFormat: { type: 'json_object' },
+    messages: [{ role: 'user', content: prompt }],
+  });
 
   const raw = msg.content[0].text.trim();
-  const jsonMatch = raw.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) throw new Error('Claude 응답에서 JSON 추출 실패');
-
-  const result = JSON.parse(jsonMatch[0]);
+  const result = parseJsonRobust(raw);
+  if (!result) {
+    console.error('❌ DeepSeek 응답 원본 (앞 500자):', raw.slice(0, 500));
+    throw new Error('DeepSeek 응답에서 JSON 추출 실패');
+  }
 
   // 200자 초과 필드 강제 단축
   for (const field of ['what', 'why_now', 'checkpoint']) {

@@ -3,11 +3,12 @@
 // Usage: const msg = await callDeepSeek({ system, messages, max_tokens });
 //        const text = msg.content[0].text;
 
-async function callDeepSeek({ system, messages, max_tokens = 4096 }) {
+async function callDeepSeek({ system, messages, max_tokens = 4096, responseFormat }) {
   const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) throw new Error('DEEPSEEK_API_KEY 미설정');
 
-  const body = { model: 'deepseek-v4-pro', max_tokens, messages: [] };
+  const body = { model: 'deepseek-chat', max_tokens, messages: [] };
+  if (responseFormat) body.response_format = responseFormat;
   if (system) body.messages.push({ role: 'system', content: system });
   for (const m of messages) body.messages.push(m);
 
