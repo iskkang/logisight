@@ -96,6 +96,11 @@ async function postJson(urlPath, cookie, body) {
     var txt = await r.text().catch(function() { return ''; });
     throw new Error('HTTP ' + r.status + ': ' + txt.slice(0, 120));
   }
+  // KITA는 미지원 노선/지역에 HTML 페이지를 반환함 (JSON 아님)
+  var ct = r.headers.get('content-type') || '';
+  if (ct.includes('text/html')) {
+    throw new Error('HTML 페이지 반환 — 해당 노선/지역 미지원 또는 세션 만료 (Content-Type: ' + ct.split(';')[0] + ')');
+  }
   return r.json();
 }
 
