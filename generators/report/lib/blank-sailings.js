@@ -1,14 +1,18 @@
 'use strict';
-// Blank Sailing data — EconDB omissions-time-series (primary source)
-// Drewry Cancelled Sailings Tracker URL (/news/news/cancelled-sailings-tracker) returns 404
-// as of 2026-06; replaced with EconDB free JSON API (same data used in collectors/blank_sailing.ts).
+// Blank Sailing data — 하이브리드 소스
+//   • 추세 차트·region별 결항 선복(TEU): EconDB omissions-time-series (자동 백본)
+//   • 헤드라인 결항 편수·East-West 항로 프레이밍: Drewry Cancelled Sailings Tracker (drewry-headline.js)
+// 두 소스는 측정 대상이 다름 — EconDB=선복(TEU)/region, Drewry=편수(voyage)/항로. 보완 관계로 라벨을 정직히 구분.
+// 결항률 분모는 proforma(=결항+실배선 선복). 'Actual capacity'(결항 후 실배선) 단독 분모는 결항률 과대.
 // Cache: outputs/cache/blank-sailings.json  (TTL 7 days)
 
 const path = require('path');
 const fs   = require('fs');
+const { buildDrewryHeadline } = require('./drewry-headline');
 
 const CACHE_PATH  = path.resolve(__dirname, '../../../outputs/cache/blank-sailings.json');
 const CACHE_TTL   = 7 * 24 * 60 * 60 * 1000;
+const CACHE_SCHEMA = 3;
 const ECONDB_BASE = 'https://www.econdb.com/widgets/omissions-time-series/data/';
 const SOURCE_NAME = 'EconDB Blank Sailing Tracker';
 const SOURCE_URL  = 'https://www.econdb.com/widgets/omissions-time-series/';
@@ -23,12 +27,15 @@ const REGIONS = [
   'Middle East',
 ];
 
-// EconDB regions → trade lane display names for the report table
-const TRADE_LABELS = {
-  'North America East': 'Transpacific EB / Transatlantic',
-  'North America West': 'Transpacific WB',
-  'Northwest Europe':   'Asia-N.Europe',
-  'Mediterranean':      'Mediterranean',
+// EconDB region → 한국어 region 라벨 (출항 지역 단위; Drewry의 항로/얼라이언스와 다름 — 캡션에 명기)
+const REGION_LABELS = {
+  'East Asia':           '동아시아',
+  'Mediterranean':       '지중해',
+  'Northwest Europe':    '북서유럽',
+  'North America East':  '북미 동안',
+  'North America West':  '북미 서안',
+  'Indian Subcontinent': '인도 아대륙',
+  'Middle East':         '중동',
 };
 
 // ── Cache I/O ─────────────────────────────────────────────────────────────────
@@ -37,6 +44,7 @@ function loadCache() {
   try {
     if (!fs.existsSync(CACHE_PATH)) return null;
     const raw = JSON.parse(fs.readFileSync(CACHE_PATH, 'utf-8'));
+    if (raw.schema_version !== CACHE_SCHEMA) return null;
     if (Date.now() - new Date(raw.fetched_at).getTime() > CACHE_TTL) return null;
     return raw;
   } catch (_) { return null; }
@@ -47,7 +55,7 @@ function saveCache(payload) {
     fs.mkdirSync(path.dirname(CACHE_PATH), { recursive: true });
     fs.writeFileSync(
       CACHE_PATH,
-      JSON.stringify({ fetched_at: new Date().toISOString(), ...payload }, null, 2),
+      JSON.stringify({ schema_version: CACHE_SCHEMA, fetched_at: new Date().toISOString(), ...payload }, null, 2),
       'utf-8',
     );
   } catch (e) { console.warn('  blank-sailings: 캐시 저장 실패:', e.message); }
@@ -67,8 +75,11 @@ async function fetchRegion(region) {
   return items
     .filter(item => item['Date'])
     .map(item => {
-      const blanked = item['Blanked capacity'] != null ? Number(item['Blanked capacity']) : null;
-      const planned = item['Actual capacity']  != null ? Number(item['Actual capacity'])  : null;
+      const blankedRaw = item['Blanked capacity (TEU)'] ?? item['Blanked capacity'];
+      const blanked = blankedRaw != null ? Number(blankedRaw) : null;
+      const actual  = item['Actual capacity'] != null ? Number(item['Actual capacity']) : null;
+      // 'Actual capacity'는 결항 후 실배선 선복 → 공시(공급) 선복 = proforma = 결항 + 실배선
+      const planned = (blanked != null && actual != null) ? blanked + actual : actual;
       const blank_pct = blanked != null && planned != null && planned > 0
         ? parseFloat(((blanked / planned) * 100).toFixed(1))
         : null;
@@ -85,33 +96,40 @@ function isoWeek(dateStr) {
 }
 
 function aggregate(regionData) {
-  // Find latest week with data across all regions
+  // Future rows are forecast placeholders. The monthly report must summarize
+  // the latest available current-or-past week, not a future horizon endpoint.
+  const today = new Date().toISOString().slice(0, 10);
+
+  // Find latest publishable week with data across all regions.
   let latestWeek = '';
   for (const rows of Object.values(regionData)) {
-    const last = rows[rows.length - 1]?.week_start ?? '';
+    const last = [...rows].reverse().find(r => r.week_start <= today)?.week_start ?? '';
     if (last > latestWeek) latestWeek = last;
   }
   if (!latestWeek) return null;
 
   // Global TEU summary at (or closest to) latestWeek
-  let totalBlanked = 0, totalPlanned = 0;
+  let totalBlanked = 0, totalPlanned = 0, blankedObservations = 0;
   for (const rows of Object.values(regionData)) {
     const row = [...rows].reverse().find(r => r.week_start <= latestWeek);
-    if (row?.blanked != null) totalBlanked += row.blanked;
+    if (row?.blanked != null) {
+      totalBlanked += row.blanked;
+      blankedObservations++;
+    }
     if (row?.planned != null) totalPlanned += row.planned;
   }
-  const pct = totalPlanned > 0
+  const pct = totalPlanned > 0 && blankedObservations > 0
     ? parseFloat(((totalBlanked / totalPlanned) * 100).toFixed(1))
     : null;
   if (pct == null) return null;
 
-  // By-trade breakdown
-  const by_trade = [];
-  for (const [region, label] of Object.entries(TRADE_LABELS)) {
+  // By-region breakdown (EconDB region 단위 — 항로 아님)
+  const by_region = [];
+  for (const [region, label] of Object.entries(REGION_LABELS)) {
     const rows = regionData[region];
     if (!rows?.length) continue;
     const row = [...rows].reverse().find(r => r.week_start <= latestWeek);
-    if (row?.blank_pct != null) by_trade.push({ trade: label, pct: row.blank_pct });
+    if (row?.blank_pct != null) by_region.push({ region: label, pct: row.blank_pct });
   }
 
   // Weekly trend: sum all regions per week, keep last 8
@@ -124,6 +142,7 @@ function aggregate(regionData) {
     }
   }
   const trend = Object.entries(weekMap)
+    .filter(([ws]) => ws <= latestWeek)
     .sort((a, b) => a[0].localeCompare(b[0]))
     .slice(-8)
     .map(([ws, { b, p }]) => ({
@@ -137,18 +156,18 @@ function aggregate(regionData) {
     as_of:         latestWeek,
     source:        SOURCE_NAME,
     url:           SOURCE_URL,
-    horizon_weeks: null,         // EconDB is historical, not forward-looking
+    horizon_weeks: null,
     summary:       { scheduled: Math.round(totalPlanned), cancelled: Math.round(totalBlanked), pct },
-    by_trade,
-    by_alliance:   [],           // Alliance-level breakdown not available from EconDB
+    by_region,
+    by_alliance:   [],           // Alliance·항로 분해는 EconDB로 불가 → Drewry 헤드라인으로 보완
     trend,
   };
 }
 
 // ── Renderers ─────────────────────────────────────────────────────────────────
 
-function buildTable(data) {
-  const { summary, by_trade, as_of, url, trend } = data;
+function buildTable(data, drewry) {
+  const { summary, by_region, as_of, url, trend } = data;
 
   let wowStr = '—';
   if (Array.isArray(trend) && trend.length >= 2) {
@@ -163,30 +182,53 @@ function buildTable(data) {
 
   const rows = [
     '| **전체 (' + as_of + ' 기준)** | **' + sch + '** | **' + cnl + '** | ' + pct + ' | ' + wowStr + ' |',
-    ...by_trade.map(t => '| ' + t.trade + ' | — | — | ' + t.pct.toFixed(1) + '% | — |'),
+    ...by_region.map(t => '| ' + t.region + ' | — | — | ' + t.pct.toFixed(1) + '% | — |'),
   ];
 
+  // Drewry 헤드라인(편수/항로) — EconDB 선복(TEU) 표와 측정 단위가 다름을 명시
+  const drewryLine = drewry
+    ? '> **Drewry 헤드라인** [2]: 동서 주요 항로 향후 ' + (drewry.horizon || 'N') + '주 ' +
+      drewry.blank.toLocaleString('ko-KR') + '편 결항 / 예정 ' + drewry.scheduled.toLocaleString('ko-KR') +
+      '편 (' + (drewry.pct != null ? drewry.pct.toFixed(1) + '%' : '—') + ', ' + drewry.asOf + ' 발표).'
+    : null;
+
+  const refs = ['', '**참고자료**', '[1] EconDB Omissions Time Series, ' + url];
+  if (drewry) refs.push('[2] Drewry Cancelled Sailings Tracker, ' + drewry.asOf);
+
   return [
-    '| 항로/구분 | 예정 선복(TEU) | 결항 선복(TEU) | 결항률(%) | 전주 대비 |',
+    '**결항 선복(TEU) — region별, 출처 EconDB** [1]',
+    '',
+    '| 지역(region) | 공급 선복(TEU) | 결항 선복(TEU) | 결항률(%) | 전주 대비 |',
     '|----------|-------------|-------------|---------|---------|',
     ...rows,
     '',
-    '※ ' + as_of + ' 기준 주간 데이터. 출처: [' + SOURCE_NAME + '](' + url + ').',
+    ...(drewryLine ? [drewryLine, ''] : []),
+    '※ ' + as_of + ' 기준 주간 데이터. region은 출항 지역 단위로, Drewry의 항로(Transpacific 등)·얼라이언스 분해와 다른 집계임.',
+    ...refs,
   ].join('\n');
 }
 
-function buildFactText(data) {
-  const { summary, by_trade, as_of } = data;
+function buildFactText(data, drewry) {
+  const { summary, by_region, as_of } = data;
   const lines = [];
-  if (summary.pct != null) {
+  // 헤드라인은 Drewry(편수/항로) — 본문 헤드라인 수치로 우선 사용
+  if (drewry) {
     lines.push(
-      '전체 결항률: ' + summary.pct.toFixed(1) + '% (' + as_of + ' 기준 주간, ' +
-      'EconDB 집계 결항 ' + (summary.cancelled != null ? summary.cancelled.toLocaleString('ko-KR') : '?') + ' TEU' +
-      '/' + (summary.scheduled != null ? summary.scheduled.toLocaleString('ko-KR') : '?') + ' TEU)'
+      '[헤드라인·Drewry, 결항 편수 기준] 동서 주요 항로 향후 ' + (drewry.horizon || 'N') + '주 ' +
+      drewry.blank + '편 결항 / 예정 ' + drewry.scheduled + '편' +
+      (drewry.pct != null ? ' (' + drewry.pct.toFixed(1) + '%)' : '') + ', ' + drewry.asOf + ' 발표.'
     );
   }
-  for (const t of by_trade) lines.push(t.trade + ': ' + t.pct.toFixed(1) + '%');
-  lines.push('(출처: ' + SOURCE_NAME + ', ' + as_of + ')');
+  // 추세·region 분해는 EconDB(선복 TEU 기준)
+  if (summary.pct != null) {
+    lines.push(
+      '[추세·EconDB, 결항 선복 TEU 기준] 전체 결항률 ' + summary.pct.toFixed(1) + '% (' + as_of + ' 기준 주간, ' +
+      '결항 ' + (summary.cancelled != null ? summary.cancelled.toLocaleString('ko-KR') : '?') + ' TEU' +
+      '/공급 ' + (summary.scheduled != null ? summary.scheduled.toLocaleString('ko-KR') : '?') + ' TEU)'
+    );
+  }
+  for (const t of by_region) lines.push('  · ' + t.region + ' 결항률: ' + t.pct.toFixed(1) + '%');
+  lines.push('(편수=Drewry, 선복 TEU=EconDB — 측정 단위 상이. region≠항로)');
   return lines.join('\n');
 }
 
@@ -239,11 +281,14 @@ async function buildBlankSailings({ force = false } = {}) {
     return null;
   }
 
-  const chartData = buildChartData(parsed.trend);
-  const table     = buildTable(parsed);
-  const factText  = buildFactText(parsed);
+  // Drewry 헤드라인(편수/항로) — 실패해도 EconDB 블록은 유지(빈 블록 방지)
+  const drewry = await buildDrewryHeadline();
 
-  const payload = { ...parsed, chartData, table, factText };
+  const chartData = buildChartData(parsed.trend);
+  const table     = buildTable(parsed, drewry);
+  const factText  = buildFactText(parsed, drewry);
+
+  const payload = { ...parsed, drewry, chartData, table, factText };
   saveCache(payload);
   console.log('  blank-sailings: 완료 (결항률 ' + parsed.summary.pct + '%, ' + parsed.as_of + ')');
   return payload;

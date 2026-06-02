@@ -1,0 +1,20 @@
+{
+  "endpoint": "https://www.econdb.com/widgets/omissions-time-series/data/",
+  "regions": [
+    "East Asia",
+    "Mediterranean",
+    "Northwest Europe",
+    "Indian Subcontinent",
+    "Middle East",
+    "North America East",
+    "North America West"
+  ],
+  "field_map": {
+    "date": "Date",
+    "blanked_teu": "Blanked capacity (TEU)",
+    "capacity_teu": "Actual capacity"
+  },
+  "denominator": "proforma",
+  "timeout_ms": 20000,
+  "_notes": "2026-06 실측 검증: rows 170개/region, 키=[Date, Blanked capacity (TEU), Actual capacity], 단위 TEU. region 파라미터 필터링 확인(East Asia≠North America West). 'Actual capacity'는 결항 후 실배선 선복이므로 결항률 분모는 proforma=blanked+actual (denominator=proforma). actual 단독을 분모로 쓰면 결항률이 과대 계상됨."
+}
