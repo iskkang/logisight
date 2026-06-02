@@ -14,8 +14,21 @@ function getClient() {
   return createClient(url, key, { auth: { persistSession: false } });
 }
 
+// conflictCol(콤마구분) 기준으로 행을 dedup — 마지막 값 우선.
+// ON CONFLICT는 한 배치에서 같은 키를 두 번 못 건드리므로 upsert 전 필수.
+function dedupRows(rows, conflictCol) {
+  var keys = conflictCol.split(',').map(function(c) { return c.trim(); });
+  var map  = {};
+  for (var i = 0; i < rows.length; i++) {
+    var k = keys.map(function(c) { return rows[i][c]; }).join('|');
+    map[k] = rows[i];
+  }
+  return Object.values(map);
+}
+
 async function batchUpsert(sb, table, rows, conflictCol) {
   if (!rows.length) return 0;
+  rows = dedupRows(rows, conflictCol);
   const BATCH = 100;
   var total = 0;
   for (var i = 0; i < rows.length; i += BATCH) {

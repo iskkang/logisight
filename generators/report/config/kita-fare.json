@@ -52,7 +52,7 @@
       { "originName": "부산", "regionName": "북미",       "destName": "뉴욕",              "destCode": "0101010106" },
       { "originName": "부산", "regionName": "북미",       "destName": "노퍽",              "destCode": "0101010101" },
       { "originName": "부산", "regionName": "북미",       "destName": "서배너",            "destCode": "0101010103" },
-      { "originName": "부산", "regionName": "북미",       "destName": "오클랜드",           "destCode": "0101010203" },
+      { "originName": "부산", "regionName": "북미",       "destName": "오클랜드(미국)",     "destCode": "0101010203" },
       { "originName": "부산", "regionName": "북미",       "destName": "시카고",            "destCode": "0101010301" },
       { "originName": "부산", "regionName": "북미",       "destName": "댈러스",            "destCode": "0101010302" },
       { "originName": "부산", "regionName": "북미",       "destName": "애틀랜타",           "destCode": "0101010303" },
@@ -148,7 +148,7 @@
       { "originName": "부산", "regionName": "오세아니아", "destName": "멜버른",            "destCode": "0101080104" },
       { "originName": "부산", "regionName": "오세아니아", "destName": "브리즈번",           "destCode": "0101080102" },
       { "originName": "부산", "regionName": "오세아니아", "destName": "프리맨틀",           "destCode": "0101080103" },
-      { "originName": "부산", "regionName": "오세아니아", "destName": "오클랜드",           "destCode": "0101080201" },
+      { "originName": "부산", "regionName": "오세아니아", "destName": "오클랜드(뉴질랜드)", "destCode": "0101080201" },
 
       { "originName": "부산", "regionName": "중동",       "destName": "두바이",            "destCode": "0101090401" },
       { "originName": "부산", "regionName": "중동",       "destName": "제다",              "destCode": "0101090302" },
