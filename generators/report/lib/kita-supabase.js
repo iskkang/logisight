@@ -5,6 +5,8 @@
 
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../../../.env.local') });
+// Node < 22: 네이티브 WebSocket 부재 시 ws 폴리필 (supabase-js RealtimeClient 요구)
+if (typeof globalThis.WebSocket === 'undefined') { try { globalThis.WebSocket = require('ws'); } catch (_) {} }
 
 function getClient() {
   const { createClient } = require('@supabase/supabase-js');
