@@ -74,14 +74,28 @@ function main() {
     '',
   ].join('\n');
 
-  const body = approved.map(s => s.body).join('\n\n---\n\n');
+  function injectSectionHeader(sec, body) {
+    // Inject parent heading if section body doesn't start with "## NN."
+    if (sec.title && /^\d{2}\./.test(sec.title) && !/^## \d{2}\./.test(body.trimStart())) {
+      return `## ${sec.title}\n\n${body}`;
+    }
+    return body;
+  }
 
-  const footer = [
-    '',
-    '---',
-    '*본 리포트는 공개 출처 기반 분석이며, 운임 구체 수치는 Logisight 지표 대시보드를 참조 바람. 무단 전재 금지.*',
-    '',
-  ].join('\n');
+  function numberRegionSubheadings(body) {
+    let n = 0;
+    return body.replace(/^### (.+)$/gm, (_m, title) => `## 05-${++n}. ${title}`);
+  }
+
+  const bodyParts = approved.map(s => {
+    let b = s.body;
+    b = injectSectionHeader(s, b);
+    if (s.id === 'region') b = numberRegionSubheadings(b);
+    return b;
+  });
+  const body = bodyParts.join('\n\n---\n\n');
+
+  const footer = '\n';
 
   fs.mkdirSync(OUT_DIR, { recursive: true });
   fs.writeFileSync(OUT_PATH, header + body + footer, 'utf-8');
