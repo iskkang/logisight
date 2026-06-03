@@ -5,8 +5,7 @@
 
 const fs   = require('fs');
 const path = require('path');
-const { callDeepSeek }    = require('../lib/deepseek');
-const { parseJsonRobust } = require('../lib/parse-json');
+const { callDeepSeekJson } = require('../lib/deepseek');
 
 const NEWS_PATH = path.resolve(__dirname, '../../content/drafts/latest-news.json');
 const OUT_PATH  = path.resolve(__dirname, '../../content/drafts/curated-air.json');
@@ -100,17 +99,11 @@ ${itemList}
   "excluded_count": ${Math.max(0, items.length - 3)}
 }`;
 
-  const msg = await callDeepSeek({
-    max_tokens: 2048,
-    responseFormat: { type: 'json_object' },
+  const result = await callDeepSeekJson({
+    max_tokens: 8192,
     messages: [{ role: 'user', content: prompt }],
+    debugPrefix: 'air',
   });
-  const raw = msg.content[0].text.trim();
-  const result = parseJsonRobust(raw);
-  if (!result) {
-    console.error('❌ DeepSeek 응답 원본 (앞 500자):', raw.slice(0, 500));
-    throw new Error('DeepSeek 응답에서 JSON 추출 실패');
-  }
   for (const field of ['what', 'why_now', 'checkpoint']) {
     if (result.main[field]?.length > 200) result.main[field] = result.main[field].slice(0, 197) + '…';
   }

@@ -5,8 +5,7 @@
 
 const fs      = require('fs');
 const path    = require('path');
-const { callDeepSeek }    = require('../lib/deepseek');
-const { parseJsonRobust } = require('../lib/parse-json');
+const { callDeepSeekJson } = require('../lib/deepseek');
 
 const NEWS_PATH   = path.resolve(__dirname, '../../content/drafts/latest-news.json');
 const OUT_PATH    = path.resolve(__dirname, '../../content/drafts/curated-rail.json');
@@ -114,24 +113,15 @@ ${itemList}
   "excluded_count": ${Math.max(0, items.length - 3)}
 }`;
 
-  async function callOnce() {
-    const msg = await callDeepSeek({
-      max_tokens: 2048,
-      responseFormat: { type: 'json_object' },
+  let result;
+  try {
+    result = await callDeepSeekJson({
+      max_tokens: 8192,
       messages: [{ role: 'user', content: prompt }],
+      debugPrefix: 'rail',
     });
-    const raw = msg.content[0].text.trim();
-    console.log('🔍 DeepSeek 응답 원본 (앞 300자):', raw.slice(0, 300));
-    return parseJsonRobust(raw);
-  }
-
-  let result = await callOnce();
-  if (!result) {
-    console.warn('⚠️ 1차 파싱 실패 — 재시도');
-    result = await callOnce();
-  }
-  if (!result) {
-    console.warn('⚠️ 2차 파싱도 실패 — 빈 결과로 폴백');
+  } catch (_) {
+    console.warn('⚠️ 큐레이션 최종 실패 — 빈 결과로 폴백');
     return {
       date: TODAY,
       curated_at: new Date().toISOString(),
