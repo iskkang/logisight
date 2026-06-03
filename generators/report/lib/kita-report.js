@@ -12,8 +12,9 @@ const path = require('path');
 const SEA_CACHE = path.resolve(__dirname, '../../../outputs/cache/kita-fare-sea.json');
 const AIR_CACHE = path.resolve(__dirname, '../../../outputs/cache/kita-fare-air.json');
 
-// 리포트 표에 노출할 부산발 주요 노선 (있는 것만 사용)
-const SEA_FEATURED = ['롱비치', '로테르담', '상하이', '싱가포르', '두바이', '보스토치니'];
+// 리포트 표에 노출할 부산발 대표 노선. 권역 편중을 피하고 최신월 값만 사용한다.
+const SEA_FEATURED = ['롱비치', '뉴욕', '로테르담', '상하이', '싱가포르', '두바이', '시드니', '산토스'];
+const AIR_FEATURED = ['시카고', '로스엔젤레스', '프랑크푸르트', '홍콩', '상하이', '두바이', '시드니', '도쿄'];
 
 const COLORS = ['#1E3A5F', '#2E86AB', '#E08E45', '#6A994E', '#BC4749'];
 
@@ -43,6 +44,14 @@ function latestRate(rates) {
   return null;
 }
 
+function latestYearMon(routes) {
+  return routes
+    .map(function(r) { var l = latestRate(r.rates || []); return l ? l.yearMon : ''; })
+    .filter(Boolean)
+    .sort()
+    .slice(-1)[0] || '';
+}
+
 // ── 해운 ─────────────────────────────────────────────────────────────────────
 
 function buildKitaSeaReport() {
@@ -52,20 +61,24 @@ function buildKitaSeaReport() {
   const ok = cache.routes.filter(function(r) { return !r.error && r.rates && r.rates.length; });
   if (!ok.length) return null;
 
-  // 주요 노선 우선 정렬 (SEA_FEATURED 순서), 그 외는 뒤에
+  // 최신월 값이 있는 대표 노선 우선 정렬. 오래된 노선은 현재월 표에서 제외한다.
+  const asOfYm = latestYearMon(ok);
+  const current = ok.filter(function(r) {
+    var l = latestRate(r.rates);
+    return l && l.yearMon === asOfYm;
+  });
   const featured = [];
   const rest     = [];
-  for (var i = 0; i < ok.length; i++) {
-    var idx = SEA_FEATURED.indexOf(ok[i].destName);
-    if (idx >= 0) featured.push({ idx: idx, route: ok[i] });
-    else          rest.push(ok[i]);
+  for (var i = 0; i < current.length; i++) {
+    var idx = SEA_FEATURED.indexOf(current[i].destName);
+    if (idx >= 0) featured.push({ idx: idx, route: current[i] });
+    else          rest.push(current[i]);
   }
   featured.sort(function(a, b) { return a.idx - b.idx; });
   const tableRoutes = featured.map(function(f) { return f.route; }).concat(rest).slice(0, 8);
 
   // 기준월 = 첫 노선의 최신 월
-  const sample = latestRate(tableRoutes[0].rates);
-  const asOf   = sample ? fmtYm(sample.yearMon) : '—';
+  const asOf = fmtYm(asOfYm) || '—';
 
   // ── 표 ──
   const header = '| 노선 (부산 출발) | TEU (USD) | FEU (USD) | TEU MoM | FEU MoM | 기준월 |';
@@ -139,7 +152,20 @@ function buildKitaAirReport() {
   const ok = cache.routes.filter(function(r) { return !r.error && r.rates && r.rates.length; });
   if (!ok.length) return null;
 
-  const tableRoutes = ok.slice(0, 8);
+  const asOfYm = latestYearMon(ok);
+  const current = ok.filter(function(r) {
+    var l = latestRate(r.rates);
+    return l && l.yearMon === asOfYm;
+  });
+  const featured = [];
+  const rest = [];
+  for (var i = 0; i < current.length; i++) {
+    var idx = AIR_FEATURED.indexOf(current[i].destName);
+    if (idx >= 0) featured.push({ idx: idx, route: current[i] });
+    else          rest.push(current[i]);
+  }
+  featured.sort(function(a, b) { return a.idx - b.idx; });
+  const tableRoutes = featured.map(function(f) { return f.route; }).concat(rest).slice(0, 8);
   const sample = latestRate(tableRoutes[0].rates);
   const asOf   = sample ? fmtYm(sample.yearMon) : '—';
 
@@ -149,17 +175,17 @@ function buildKitaAirReport() {
   const rows = tableRoutes.map(function(r) {
     var l = latestRate(r.rates);
     if (!l) return null;
-    var f = function(v) { return v != null ? '**' + Number(v).toFixed(0) + '**' : '—'; };
+    var f = function(v) { return v != null ? '**' + Number(v).toLocaleString('ko-KR', { maximumFractionDigits: 0 }) + '**' : '—'; };
     return '| ' + r.destName + ' | ' + f(l.kg100) + ' | ' + f(l.kg300) + ' | ' + f(l.kg500) + ' | ' +
            fmtDelta(l.chg100 != null ? Math.round(l.chg100) : null) + ' | ' + fmtYm(l.yearMon) + ' |';
   }).filter(Boolean);
 
-  const table = '*KITA 항공 참고운임 (인천 출발, USD/건), 기준 ' + asOf + '*\n\n' +
+  const table = '*KITA 항공 참고운임 (인천 출발, KRW(원/kg)), 기준 ' + asOf + '*\n\n' +
                 [header, sep].concat(rows).join('\n');
 
   // ── factText ──
   const factLines = ['## KITA 항공 참고운임 (인천 출발, 이 수치만 사용, 다른 운임 수치 생성 금지)'];
-  factLines.push('기준월 ' + asOf + ', 단위 USD. +100/+300/+500kg 중량 구간별 참고운임.');
+  factLines.push('기준월 ' + asOf + ', 단위 KRW(원/kg). +100/+300/+500kg 중량 구간별 참고운임.');
   tableRoutes.forEach(function(r) {
     var l = latestRate(r.rates);
     if (!l) return;
