@@ -136,10 +136,7 @@ function buildIndexTable(rows) {
   ];
   const facts = [];
   for (const r of rows) {
-    if (r.value == null) {
-      lines.push(`| ${LABEL[r.code] || r.code} | 데이터 미수집 | — | — | — |`);
-      continue;
-    }
+    if (r.value == null) continue; // 값 없는 지수는 행 삭제 (A-1b)
     const v = r.unit === '$/FEU'
       ? `$${Math.round(r.value).toLocaleString()}/FEU`
       : `${Math.round(r.value).toLocaleString()}p`;
