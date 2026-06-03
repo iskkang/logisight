@@ -5,10 +5,9 @@
 //   A-2 chart  : Superset BI (TAC Index $/kg time-series)  → null if unavailable (no 1-point fallback)
 //   A-1 table  : aircargoweek.com TAC roundup (BAI00 + origin WoW snapshot)
 //   A-3 table  : IATA Air Cargo Market Analysis (regional CTK/ACTK/CLF)
-//   A-4 text   : Xeneta public blog/press-release rate data
 //
 // Cache: outputs/cache/air-index.json  (TTL 7 days)
-// Schema: { fetched_at, source, chartData, baiTable, iataTable, xenetaFactText, table, factText }
+// Schema: { fetched_at, source, chartData, baiTable, iataTable, table, factText }
 
 const path = require('path');
 const fs   = require('fs');
@@ -19,6 +18,7 @@ const BI_CHARTS  = require('../config/bi-charts.json');
 
 const CACHE_PATH = path.resolve(__dirname, '../../../outputs/cache/air-index.json');
 const CACHE_TTL  = 7 * 24 * 60 * 60 * 1000;   // 7 days in ms
+const CACHE_SCHEMA = 2;
 
 // ── Cache I/O ─────────────────────────────────────────────────────────────────
 
@@ -26,6 +26,7 @@ function loadCache() {
   try {
     if (!fs.existsSync(CACHE_PATH)) return null;
     const raw = JSON.parse(fs.readFileSync(CACHE_PATH, 'utf-8'));
+    if (raw.schema_version !== CACHE_SCHEMA) return null;
     const age = Date.now() - new Date(raw.fetched_at).getTime();
     if (age > CACHE_TTL) return null;
     return raw;
@@ -37,7 +38,7 @@ function saveCache(payload) {
     fs.mkdirSync(path.dirname(CACHE_PATH), { recursive: true });
     fs.writeFileSync(
       CACHE_PATH,
-      JSON.stringify({ fetched_at: new Date().toISOString(), ...payload }, null, 2),
+      JSON.stringify({ schema_version: CACHE_SCHEMA, fetched_at: new Date().toISOString(), ...payload }, null, 2),
       'utf-8',
     );
   } catch (e) { console.warn('  air-indices: 캐시 저장 실패:', e.message); }
@@ -145,72 +146,6 @@ async function fetchTacBaiSnapshot() {
 
 // A-3: IATA Air Cargo Market Analysis は iata-cargo.js で処理 (buildIataCargo)
 
-// ── A-4: Xeneta public air cargo data ────────────────────────────────────────
-// Fetches Xeneta's latest blog/press release and extracts air freight rate numbers
-// as fact text for the LLM to reference in analysis.
-
-async function fetchXeneta() {
-  const BLOG_URLS = [
-    'https://www.xeneta.com/blog/category/air-freight/',
-    'https://www.xeneta.com/news/',
-    'https://www.xeneta.com/blog/',
-  ];
-
-  for (const blogUrl of BLOG_URLS) {
-    const html = await fetchPage(blogUrl);
-    if (!html) continue;
-
-    // Find article links mentioning air cargo / air freight
-    const linkRe = /<a[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi;
-    const airLinks = [];
-    let m;
-    while ((m = linkRe.exec(html)) !== null) {
-      const href  = m[1];
-      const label = stripHtml(m[2]).toLowerCase();
-      if ((label.includes('air') || label.includes('freight')) && href.includes('xeneta.com')) {
-        airLinks.push(href);
-      }
-    }
-
-    if (!airLinks.length) continue;
-
-    // Fetch the first matching article
-    const articleUrl = airLinks[0].startsWith('http') ? airLinks[0] : `https://www.xeneta.com${airLinks[0]}`;
-    const articleHtml = await fetchPage(articleUrl);
-    if (!articleHtml) continue;
-
-    const articleText = stripHtml(articleHtml);
-
-    // Extract rate mentions: "X USD/kg", "$X/kg", "X% YoY", etc.
-    const ratePats = [
-      /[\$]?([\d.]+)\s*(?:USD)?\s*\/\s*kg/gi,
-      /([\d.]+)\s*USD\s*per\s*kg/gi,
-      /(?:up|down|▲|▼|grew?|fell?|declined?|increased?)[^.]{0,60}([\d.]+)\s*%/gi,
-    ];
-
-    const snippets = [];
-    // Grab sentences containing rate data
-    const sentences = articleText.split(/(?<=[.!?])\s+/);
-    for (const sent of sentences) {
-      for (const pat of ratePats) {
-        pat.lastIndex = 0;
-        if (pat.test(sent) && sent.length > 20 && sent.length < 300) {
-          snippets.push(sent.trim());
-          break;
-        }
-      }
-      if (snippets.length >= 6) break;
-    }
-
-    if (!snippets.length) continue;
-
-    const today = new Date().toISOString().slice(0, 10);
-    return `## Xeneta 공개 운임 데이터 (${today}, ${articleUrl})\n` + snippets.map(s => `- ${s}`).join('\n');
-  }
-
-  return null;
-}
-
 // ── Table builder (Superset TAC — MoM + YoY) ──────────────────────────────────
 
 // TAC Index 항로 한국어 레이블
@@ -251,9 +186,8 @@ function buildSupersetTable(chartData, month) {
 
 // ── Fact text for LLM ─────────────────────────────────────────────────────────
 
-function buildFactText({ source, chartData, baiRows, iataTable, xenetaFactText, month }) {
+function buildFactText({ source, chartData, baiRows, iataTable, month }) {
   const lines = [];
-  const today = new Date().toISOString().slice(0, 10);
 
   if (source === 'superset' && chartData) {
     const asOf = chartData.labels.at(-1) || month;
@@ -284,11 +218,6 @@ function buildFactText({ source, chartData, baiRows, iataTable, xenetaFactText, 
   if (iataTable) {
     lines.push('## IATA 권역별 항공화물 수요·공급·적재율');
     lines.push(iataTable);
-    lines.push('');
-  }
-
-  if (xenetaFactText) {
-    lines.push(xenetaFactText);
     lines.push('');
   }
 
@@ -339,14 +268,8 @@ async function buildAirIndices({ force = false } = {}) {
   if (iataTable) console.log(`  air-indices: IATA OK (asOf=${iataBundle?.data?.asOf})`);
   else           console.warn('  air-indices: IATA 미수집 → A-3 생략');
 
-  // ── 4. Xeneta data (A-4) ──────────────────────────────────────────────────
-  console.log('  air-indices: Xeneta 데이터 수집...');
-  const xenetaFactText = await fetchXeneta();
-  if (xenetaFactText) console.log('  air-indices: Xeneta OK');
-  else                console.warn('  air-indices: Xeneta 미수집');
-
   // ── Abort if nothing at all ───────────────────────────────────────────────
-  if (!chartData && !baiTable && !iataTable && !xenetaFactText) {
+  if (!chartData && !baiTable && !iataTable) {
     console.warn('  air-indices: 모든 소스 미수집 → null 반환');
     return null;
   }
@@ -360,10 +283,10 @@ async function buildAirIndices({ force = false } = {}) {
   // combined legacy `table` field = Superset table first, then BAI table
   const table = [supersetTable, baiTable].filter(Boolean).join('\n\n');
 
-  const factText = buildFactText({ source, chartData, baiRows: baiTable, iataTable: iataFactText2 || iataTable, xenetaFactText, month });
+  const factText = buildFactText({ source, chartData, baiRows: baiTable, iataTable: iataFactText2 || iataTable, month });
 
   const asOf = (source === 'superset' && chartData) ? chartData.labels[chartData.labels.length - 1] : null;
-  const payload = { source, chartData, baiTable, iataTable, xenetaFactText, table, factText, ...(asOf ? { asOf } : {}) };
+  const payload = { source, chartData, baiTable, iataTable, supersetTable, table, factText, ...(asOf ? { asOf } : {}) };
   saveCache(payload);
   console.log(`  air-indices: 완료 (source=${source})`);
   return payload;

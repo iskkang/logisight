@@ -70,6 +70,7 @@ function stripCitations(md) {
 //  "NN. ..."  → 풀블리드 섹션 디바이더 (예: "02. 해운 시황")
 //  "주요 해운 기사" → 디바이더
 //  "NN-N. ..." 및 기타 헤딩 → 서브섹션 제목(자기 페이지, 블루 밑줄)
+//  숫자 하위 페이지 안의 일반 H3 → 같은 페이지 기사 제목
 //  디바이더 직후 첫 제목은 lead → 페이지 강제개행 없이 디바이더 다음 페이지에 자연 배치
 function transformBody(bodyHtml) {
   // ── Pre-processing ───────────────────────────────────────────────────────
@@ -102,6 +103,7 @@ function transformBody(bodyHtml) {
   // ── Heading classification ───────────────────────────────────────────────
   const toc = [];
   let leadNext = false;
+  let insideNumberedSub = false;
 
   // D3: marked 출력의 inner는 이미 HTML 인코딩됨(&amp; 등).
   // escapeHtml(text) 로 재인코딩하면 &amp;amp; 로 이중 인코딩되므로,
@@ -119,14 +121,19 @@ function transformBody(bodyHtml) {
         const title = mSec ? mSec[2] : "주요 해운 기사"; // text는 이미 HTML-encoded
         toc.push({ num, title });
         leadNext = true;
+        insideNumberedSub = false;
         return (
           `<section class="divider"><div class="dv-tag">SECTION ${num}</div>` +
           `<div class="dv-num">${num}</div><div class="dv-rule"></div>` +
           `<h2 class="dv-title">${title}</h2></section>`
         );
       }
+      if (tag.toLowerCase() === "h3" && !mSub && insideNumberedSub) {
+        return `<h3 class="article-title">${inner}</h3>`;
+      }
       const cls = leadNext ? "sub lead" : "sub";
       leadNext = false;
+      insideNumberedSub = Boolean(mSub);
       const t2 = mSub
         ? `<span class="sub-no">${mSub[1]}</span>${mSub[2]}` // 이미 HTML-encoded
         : text;

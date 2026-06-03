@@ -23,7 +23,7 @@ const SECTIONS = [
     id: 'ocean',
     title: '02. 해운 시황',
     focus:
-      '컨테이너·건화물 운임 시황. 아래 7개 소제목 구조 필수. ' +
+      '컨테이너·건화물 운임 시황. 아래 9개 소제목 구조 필수. ' +
       '지수 표·차트는 시스템이 자동 주입하므로 본문에 표나 수치를 그리지 말 것. ' +
       '제공된 "해운 운임 지수" 데이터의 수치만 인용하고, 그 외 운임 수치 창작 금지. ' +
       '## 02-1. KCCI (한국형 컨테이너 운임지수) — KCCI 종합 및 13개 항로 등락, 한국 수출입 운임 시사점. ' +
@@ -31,18 +31,32 @@ const SECTIONS = [
       '## 02-3. CCFI (중국 컨테이너운임지수) — 중국 수출 컨테이너 시장 전반 동향. ' +
       '## 02-4. WCI (드류리 세계 컨테이너 운임지수) — 주요 항로 현물 운임(USD/FEU) 월간 추이. ' +
       '## 02-5. BDI (건화물선운임지수) — 건화물 시황 및 컨테이너 시장 선행 시사점. ' +
-      '## 02-6. 블랭크 세일링(결항) — Drewry 트래커 기반 향후 N주 결항률·항로별 현황. ' +
-      '결항률↔유효 선복↔KCCI/SCFI 운임 수급 연계, 향후 N주 선복 영향 서술. ' +
-      '데이터 미수집 시 SCFI·KCCI 수급 연계 관점으로 공급 전망 대체. ' +
+      '## 02-6. 블랭크 세일링(결항) — Drewry Cancelled Sailings Tracker 기반 향후 5주 예정 출항·결항 편수·결항률. ' +
+      '미래 전망 구간임을 명확히 서술하고, 결항률↔유효 선복↔KCCI/SCFI 운임 수급 연계 서술. ' +
+      'Drewry 공개 헤드라인 미수집 시 02-6 블록 생략. 대체 proxy 수치 생성 금지. ' +
       '## 02-7. 역내(Intra-Asia) 운임 — KCCI 역내 항로(중국·일본·동남아) 기반 역내 운임 동향. ' +
       '글로벌 운임과의 디커플링 여부, 역내 수요·공급 시사점. 데이터 미수집 시 생략. ' +
-      '## 02-8. KITA 부산발 참고운임 — 제공된 "KITA 해상 참고운임" factText의 부산발 TEU/FEU 실측 운임을 ' +
+      '## 02-8. 벙커유 가격 추이 — 시스템이 주입하는 벙커유 차트의 위치를 확보. KITA 참고운임과 별도 블록으로 유지. ' +
+      '## 02-9. KITA 부산발 해상 운임 — 제공된 "KITA 해상 참고운임" factText의 부산발 TEU/FEU 참고운임을 ' +
       'KCCI·SCFI(중국 상하이발 기준)와 대비해 한국 수출 화주 관점의 운임 차이·시사점을 1문단으로 서술. ' +
       'KITA 수치 미제공 시 "KITA 참고운임 미수집"으로 정직 표기. 표·차트는 시스템 주입(본문에 표 금지). ' +
       '각 지수는 현상에서 원인·전망으로 자연스럽게 이어지는 산문으로 서술(대괄호 라벨·머리표 금지). ' +
-      '특정 기업·영업 관점·독자 행동 권유 없이 객관적 시장 전망으로 마무리. 항로 등락 원인은 주어진 기사에 근거. ' +
-      '분량 엄수: 지수 블록(02-N)은 표+차트+해설이 한 페이지에 들어가도록 해설을 2문단 이내로 압축(문단당 4~5줄). ' +
-      '마지막 문단 한 줄 때문에 다음 페이지로 넘어가지 않도록 문장을 줄여 fit.',
+      '각 페이지는 다른 지수/페이지를 최소 1회 참조하고, 마지막에 한국 화주·포워더 관점의 So-what을 `➔` 한 줄로 제시. 특정 회사 영업 문구는 금지. 항로 등락 원인은 주어진 기사에 근거. ' +
+      '분량 엄수: 02-1부터 02-9까지 각각 정확히 한 페이지 분량. 표·차트 행 수가 많은 주제는 해설을 먼저 줄이고, 표·차트가 짧은 주제는 주제별 기사 탐색 맵의 관련 기사 본문을 활용해 분석을 보강. ' +
+      '02-1 KCCI와 02-9 KITA는 표가 길므로 해설 1~2문단, 700자 이내. 02-2·02-4·02-7은 해설 2문단, 900자 이내. ' +
+      '02-3·02-5는 해설 2~3문단, 1,100자 이내. 02-6 블랭크 세일링과 02-8 벙커유는 표·차트가 짧으므로 관련 기사 근거를 활용한 해설 3문단, 1,200자 내외. ' +
+      '관련 기사 근거가 부족하면 숫자·원인을 창작하지 말고 확인 가능한 범위만 서술. 마지막 문단 한 줄 때문에 다음 페이지로 넘어가지 않도록 문장을 줄여 fit.',
+    topicGuides: [
+      { id: '02-1', title: 'KCCI', target: '긴 표: 핵심 원양·역내 대비만 압축', keywords: ['KCCI', 'KOBC', 'korea', 'peak season', 'container freight'] },
+      { id: '02-2', title: 'SCFI', target: '아시아-북미·유럽 현물 흐름 중심', keywords: ['SCFI', 'shanghai', 'transpacific', 'asia-us', 'asia-europe'] },
+      { id: '02-3', title: 'CCFI', target: '현물 대비 계약 운임 전이 분석', keywords: ['CCFI', 'contract rate', 'spot rate', 'china export', 'container freight'] },
+      { id: '02-4', title: 'WCI', target: 'Drewry 항로별 차별화 분석', keywords: ['WCI', 'world container index', 'drewry', 'shanghai-rotterdam', 'shanghai-los angeles'] },
+      { id: '02-5', title: 'BDI', target: '건화물 수급과 컨테이너 시사점', keywords: ['BDI', 'dry bulk', 'capesize', 'panamax', 'bulk carrier'] },
+      { id: '02-6', title: '블랭크 세일링', target: '짧은 표: 공급 관리·신뢰도 분석 보강', keywords: ['blank sailing', 'cancelled sailing', 'capacity management', 'schedule reliability', 'rolled'] },
+      { id: '02-7', title: '역내 운임', target: '원양 대비 탈동조화 여부 분석', keywords: ['intra-asia', 'regional cargo', 'feeder', 'southeast asia', 'bunker costs'] },
+      { id: '02-8', title: '벙커유', target: '차트 중심: 연료비·할증·지정학 분석 보강', keywords: ['bunker', 'VLSFO', 'HSFO', 'fuel cost', 'fuel surcharge', 'hormuz'] },
+      { id: '02-9', title: 'KITA 부산발 해상 운임', target: '긴 표: 한국발 권역 차이만 압축', keywords: ['busan', 'korea export', 'long beach', 'rotterdam', 'singapore', 'dubai'] },
+    ],
     filterItems: (items) => {
       const kw = [
         'freight', 'ocean', 'container', 'shipping', 'vessel', 'carrier',
@@ -65,19 +79,18 @@ const SECTIONS = [
     id: 'air',
     title: '03. 항공 화물',
     focus:
-      '항공 화물 운임·물동량 동향 — TAC/BAI 스냅샷, Superset 추세, IATA 권역별, Xeneta 분석. 아래 4개 소제목 구조 필수. ' +
-      '## 03-1. TAC/BAI 항공 운임 스냅샷 — 제공된 BAI00·출발지별(홍콩·상하이·프랑크푸르트) WoW 스냅샷 표 기반 현황 서술. 표는 시스템 주입. ' +
-      '## 03-2. 항공 운임 추세 — Superset 시계열 차트는 시스템 주입. 차트 미수집 시 "추세 차트 미수집" 정직 표기(수치 창작 금지). ' +
-      '## 03-3. IATA 권역별 공급·수요·적재율 — 제공된 CTK·ACTK·CLF 권역별 표 기반 수요(CTK) vs 공급(ACTK) 증감·적재율 분석. 표는 시스템 주입. ' +
+      '항공 화물 운임·물동량 동향 — IATA 권역별 통계를 최우선으로 정리하고, KITA 한국발 참고운임과 TAC/BAI 보조 추세를 순서대로 배치. 아래 3개 소제목 구조 필수. ' +
+      '## 03-1. IATA 권역별 공급·수요·적재율 — 제공된 CTK·ACTK·CLF 권역별 표 기반 수요(CTK) vs 공급(ACTK) 증감·적재율 분석. 표는 시스템 주입. ' +
+      '## 03-2. KITA 인천발 항공 운임 — 제공된 KITA 항공 참고운임 factText 기반 한국발 노선 동향 서술. 표·차트는 시스템 주입. ' +
+      '## 03-3. TAC/BAI 항공 운임 보조 추세 — Superset 시계열 차트와 BAI00·출발지별 스냅샷은 시스템 주입. 차트 미수집 시 "추세 차트 미수집" 정직 표기(수치 창작 금지). ' +
       '데이터 미수집 시 "IATA 데이터 미수집" 정직 표기 후 기사 기반 권역별 동향 서술. ' +
-      '## 03-4. Xeneta 공개 운임 분석 — 제공된 Xeneta factText 수치 기반 주요 노선 운임 동향 서술 + 분석. 수치 없을 경우 생략. ' +
       '전자상거래·특송 수요, 성수기 공급 전망. ' +
-      '각 소제목은 현상→원인→전망 산문(대괄호 라벨·영업 시사점 금지). ' +
-      '★ 운임 수치 창작 절대 금지: 제공된 TAC Index(Superset)·BAI(aircargoweek.com)·Xeneta factText에 있는 수치만 사용. ' +
+      '각 소제목은 현상→원인→배경→전망 산문(대괄호 라벨 금지)으로 쓰고, 마지막에 한국 화주·포워더 관점의 So-what을 `➔` 한 줄로 제시. ' +
+      '★ 운임 수치 창작 절대 금지: 제공된 KITA 참고운임·TAC Index(Superset)·BAI(aircargoweek.com)에 있는 수치만 사용. ' +
       '그 외 외부 운임 지수·데이터 소스 언급 및 수치 생성 금지.',
     filterItems: (items) => {
       const kw = [
-        'air cargo', 'airfreight', 'air freight', 'TAC', 'IATA', 'BAI', 'Xeneta',
+        'air cargo', 'airfreight', 'air freight', 'TAC', 'IATA', 'BAI',
         'e-commerce', 'express', 'charter', 'belly', 'air rate',
         '항공', '에어카고', '특송', '국제항공',
       ];
@@ -101,6 +114,7 @@ const SECTIONS = [
       '소스: China State Railway Group·RailFreight·CRCT·Landbridge·Xinhua 등. ' +
       '비교 가능한 핵심 수치 3개 이상이 있으면 도입 문단 뒤에 [[STATS: 값|라벨|up/down ; … :: 캡션(출처·기준일)]] 삽입. ' +
       '## 04-2. 러시아 TSR·중앙아 회랑 — RZD 동향, 러-중 국경, 중앙아시아 인프라(보조, 1개 단락 이내). ' +
+      '## 04-3. 이달의 주요 기사 — 철도 — 우한-바쿠 신규 노선과 미들 코리도어 부상 분석. ' +
       '각 소제목은 현상→원인→배경→전망 산문(대괄호 라벨·머리표 금지). ' +
       '특정 기업·영업 관점·행동 권유 없이 객관적 전망으로 마무리. ' +
       '시각자료 토큰: [[STATS:]]가 없는 소제목 블록에는 해당 블록 대표 출처 URL을 [[OGIMG: URL]] 한 줄로 삽입(도입 문단 뒤, 블록당 최대 1장). ' +

@@ -95,10 +95,10 @@ async function main() {
       else               console.warn('⚠️  [ocean] KITA 해상 운임 미수집 — notice 표시');
     }
 
-    // ── air: TAC/BAI·IATA·Xeneta·Superset 수집 + KITA 인천발 참고운임 ──
+    // ── air: IATA·KITA·TAC/BAI·Superset 수집 ──
     let airBundle = null, airTable = null, airFactText = null, kitaAirBundle = null;
     if (sec.id === 'air') {
-      console.log('▶ [air] 항공 데이터 수집 (BAI·IATA·Xeneta·Superset)...');
+      console.log('▶ [air] 항공 데이터 수집 (IATA·KITA·TAC/BAI·Superset)...');
       airBundle = await buildAirIndices();
       if (airBundle) {
         airTable    = airBundle.table;

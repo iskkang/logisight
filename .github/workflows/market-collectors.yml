@@ -1,5 +1,5 @@
 # .github/workflows/market-collectors.yml
-# 운임 지수 · 벙커 가격 · 블랭크 세일링 · 글로벌 뉴스 수집
+# 운임 지수 · 벙커 가격 · 글로벌 뉴스 수집
 # 스케줄: 매주 월요일 02:00 UTC (11:00 KST)
 name: Logisight Market Collectors
 
@@ -27,7 +27,7 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Collect market data (shipping_indices · bunker · blank_sailing)
+      - name: Collect market data (shipping_indices · bunker)
         run: npm run collect:shipping
         env:
           SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}

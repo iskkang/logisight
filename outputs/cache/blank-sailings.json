@@ -1,0 +1,18 @@
+{
+  "schema_version": 4,
+  "fetched_at": "2026-06-02T16:24:50.009Z",
+  "as_of": "29 May 2026",
+  "source": "Drewry Cancelled Sailings Tracker",
+  "url": "https://www.drewry.co.uk/supply-chain-advisors/supply-chain-expertise/cancelled-sailings-tracker",
+  "horizon_weeks": 5,
+  "forecast_window": "week 23 (1-7 June) to week 27 (29 June–5 July)",
+  "summary": {
+    "scheduled": 707,
+    "cancelled": 47,
+    "pct": 6.6,
+    "expected_to_sail": 660,
+    "expected_to_sail_pct": 93.35219236209336
+  },
+  "table": "| 발표 기준 | 전망 구간 | 예정 출항 | 예정 결항 | 결항률 | 정상 운항 예정 |\n|----------|----------|----------|----------|--------|--------------|\n| **29 May 2026** | week 23 (1-7 June) to week 27 (29 June–5 July) | **707편** | **47편** | **6.6%** | 660편 (93.4%) |\n\n※ 출처: [Drewry Cancelled Sailings Tracker](https://www.drewry.co.uk/supply-chain-advisors/supply-chain-expertise/cancelled-sailings-tracker). Drewry 공개 tracker의 동서 주요 항로 예정 출항 기준.",
+  "factText": "[Drewry Cancelled Sailings Tracker] 29 May 2026 발표 기준 week 23 (1-7 June) to week 27 (29 June–5 July), 동서 주요 항로 예정 출항 707편 중 47편 결항 예정 (6.6%). 정상 운항 예정 660편 (93.4%)."
+}

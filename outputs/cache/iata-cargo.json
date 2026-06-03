@@ -1,0 +1,73 @@
+{
+  "fetched_at": "2026-06-02T00:40:20.280Z",
+  "source": "2026-05-28-01-cargo.pdf",
+  "data": {
+    "asOf": "2026-05",
+    "headline": {
+      "ctk_yoy": 4,
+      "actk_yoy": -0.4,
+      "clf_level": 46,
+      "clf_ppt": 1.9
+    },
+    "regions": [
+      {
+        "region": "전체(글로벌)",
+        "share": 100,
+        "ctk_yoy": 4,
+        "actk_yoy": -0.4,
+        "clf_level": 46,
+        "clf_ppt": 1.9
+      },
+      {
+        "region": "아시아태평양",
+        "share": 35.9,
+        "ctk_yoy": 10.5,
+        "actk_yoy": 5.3,
+        "clf_level": 47,
+        "clf_ppt": 2.2
+      },
+      {
+        "region": "유럽",
+        "share": 21.4,
+        "ctk_yoy": 6,
+        "actk_yoy": 3,
+        "clf_level": 53.4,
+        "clf_ppt": 1.5
+      },
+      {
+        "region": "북미",
+        "share": 24.6,
+        "ctk_yoy": 5,
+        "actk_yoy": 1.2,
+        "clf_level": 40.9,
+        "clf_ppt": 1.5
+      },
+      {
+        "region": "중동",
+        "share": 13.2,
+        "ctk_yoy": -18.2,
+        "actk_yoy": -22.9,
+        "clf_level": 46,
+        "clf_ppt": 2.7
+      },
+      {
+        "region": "남미·카리브",
+        "share": 2.9,
+        "ctk_yoy": -2.8,
+        "actk_yoy": 1.2,
+        "clf_level": 37.4,
+        "clf_ppt": -1.6
+      },
+      {
+        "region": "아프리카",
+        "share": 2.1,
+        "ctk_yoy": 7.7,
+        "actk_yoy": -9.4,
+        "clf_level": 49.1,
+        "clf_ppt": 7.8
+      }
+    ]
+  },
+  "iataTable": "*IATA Air Cargo Market Analysis, 기준 2026-05*\n\n| 권역 | 점유율 | CTK YoY | ACTK YoY | CLF (수준) | CLF (ppt) |\n|------|--------|---------|---------|-----------|-----------|\n| 전체(글로벌) | — | ▲4.0% | ▼0.4% | 46% | ▲1.9pp |\n| 아시아태평양 | 35.9% | ▲10.5% | ▲5.3% | 47% | ▲2.2pp |\n| 유럽 | 21.4% | ▲6.0% | ▲3.0% | 53.4% | ▲1.5pp |\n| 북미 | 24.6% | ▲5.0% | ▲1.2% | 40.9% | ▲1.5pp |\n| 중동 | 13.2% | ▼18.2% | ▼22.9% | 46% | ▲2.7pp |\n| 남미·카리브 | 2.9% | ▼2.8% | ▲1.2% | 37.4% | ▼1.6pp |\n| 아프리카 | 2.1% | ▲7.7% | ▼9.4% | 49.1% | ▲7.8pp |",
+  "iataFactText": "## IATA 권역별 항공화물 수요·공급·적재율 (기준 2026-05)\n전체: CTK 4% YoY, ACTK -0.4% YoY, CLF 46%, (+1.9pp)\n아시아태평양: 점유율 35.9%, CTK 10.5% YoY, ACTK 5.3% YoY, CLF 47%, (+2.2pp)\n유럽: 점유율 21.4%, CTK 6% YoY, ACTK 3% YoY, CLF 53.4%, (+1.5pp)\n북미: 점유율 24.6%, CTK 5% YoY, ACTK 1.2% YoY, CLF 40.9%, (+1.5pp)\n중동: 점유율 13.2%, CTK -18.2% YoY, ACTK -22.9% YoY, CLF 46%, (+2.7pp)\n남미·카리브: 점유율 2.9%, CTK -2.8% YoY, ACTK 1.2% YoY, CLF 37.4%, (-1.6pp)\n아프리카: 점유율 2.1%, CTK 7.7% YoY, ACTK -9.4% YoY, CLF 49.1%, (+7.8pp)"
+}

@@ -114,22 +114,40 @@ ${itemList}
   "excluded_count": ${Math.max(0, items.length - 3)}
 }`;
 
-  const msg = await callDeepSeek({
-    max_tokens: 2048,
-    responseFormat: { type: 'json_object' },
-    messages: [{ role: 'user', content: prompt }],
-  });
+  async function callOnce() {
+    const msg = await callDeepSeek({
+      max_tokens: 2048,
+      responseFormat: { type: 'json_object' },
+      messages: [{ role: 'user', content: prompt }],
+    });
+    const raw = msg.content[0].text.trim();
+    console.log('🔍 DeepSeek 응답 원본 (앞 300자):', raw.slice(0, 300));
+    return parseJsonRobust(raw);
+  }
 
-  const raw = msg.content[0].text.trim();
-  const result = parseJsonRobust(raw);
+  let result = await callOnce();
   if (!result) {
-    console.error('❌ DeepSeek 응답 원본 (앞 500자):', raw.slice(0, 500));
-    throw new Error('DeepSeek 응답에서 JSON 추출 실패');
+    console.warn('⚠️ 1차 파싱 실패 — 재시도');
+    result = await callOnce();
+  }
+  if (!result) {
+    console.warn('⚠️ 2차 파싱도 실패 — 빈 결과로 폴백');
+    return {
+      date: TODAY,
+      curated_at: new Date().toISOString(),
+      section: 'rail',
+      main: { title: '', title_ko: '', url: '', source: '', image_url: null,
+              what: '', why_now: '', checkpoint: '', importance_score: 0 },
+      links: [],
+      total_collected: items.length,
+      excluded_count: items.length,
+      error: 'curate_failed',
+    };
   }
 
   // 200자 초과 필드 강제 단축
   for (const field of ['what', 'why_now', 'checkpoint']) {
-    if (result.main[field] && result.main[field].length > 200) {
+    if (result.main?.[field] && result.main[field].length > 200) {
       result.main[field] = result.main[field].slice(0, 197) + '…';
     }
   }
@@ -144,11 +162,14 @@ async function main() {
   const curated = await curate(items);
 
   fs.writeFileSync(OUT_PATH, JSON.stringify(curated, null, 2), 'utf-8');
-  // 날짜별 보존
   const archivePath = OUT_PATH.replace('curated-rail.json', `curated-rail-${TODAY}.json`);
   fs.writeFileSync(archivePath, JSON.stringify(curated, null, 2), 'utf-8');
 
-  console.log(`✅ curated-rail.json 생성 완료 (main: ${curated.main?.title_ko})`);
+  if (curated.error) {
+    console.warn(`⚠️ curated-rail.json 저장됨 (큐레이션 실패 — 빈 결과)`);
+  } else {
+    console.log(`✅ curated-rail.json 생성 완료 (main: ${curated.main?.title_ko})`);
+  }
 }
 
-main().catch(e => { console.error('❌ curate-rail 실패:', e.message); process.exit(1); });
+main().catch(e => { console.error('❌ curate-rail 치명 오류:', e.message); process.exit(1); });

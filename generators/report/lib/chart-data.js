@@ -6,7 +6,6 @@ if (typeof globalThis.WebSocket === 'undefined') { try { globalThis.WebSocket = 
 const { createClient } = require('@supabase/supabase-js');
 
 const AIR_CACHE = path.resolve(__dirname, '../../../outputs/cache/air-index.json');
-const BS_CACHE  = path.resolve(__dirname, '../../../outputs/cache/blank-sailings.json');
 const IA_CACHE  = path.resolve(__dirname, '../../../outputs/cache/intra-asia.json');
 const PT_CACHE  = path.resolve(__dirname, '../../../outputs/cache/port-throughput.json');
 
@@ -85,16 +84,6 @@ async function getAirRate() {
   } catch (_) { return null; }
 }
 
-async function getOceanBlankSailings() {
-  try {
-    if (!fs.existsSync(BS_CACHE)) return null;
-    const raw = JSON.parse(fs.readFileSync(BS_CACHE, 'utf-8'));
-    const cd  = raw.chartData;
-    if (!cd?.labels || !cd.datasets?.length) return null;
-    return cd;
-  } catch (_) { return null; }
-}
-
 async function getOceanIntraAsia() {
   try {
     if (!fs.existsSync(IA_CACHE)) return null;
@@ -162,7 +151,6 @@ const CHARTS = {
   ocean_bdi:    { title: 'BDI(건화물선운임지수) 추이',          loader: getOceanBdi,    yLabel: 'index' },
   ocean_wci:    { title: 'WCI(드류리) 종합·항로별 추이',        loader: getOceanWci,    yLabel: 'USD/FEU' },
   ocean_bunker:          { title: '벙커유(VLSFO·HSFO) 추이',                           loader: getOceanBunker,         yLabel: 'USD/ton' },
-  ocean_blank_sailings:  { title: '블랭크 세일링 결항률 추이 (EconDB)',                    loader: getOceanBlankSailings,  yLabel: '%' },
   ocean_intra_asia:      { title: '역내(Intra-Asia) 운임 추이 (KCCI 역내 항로 proxy)',    loader: getOceanIntraAsia,      yLabel: 'index' },
   macro_port_throughput: { title: '글로벌 컨테이너 항만 처리량 지수 추이 (ISL/RWI-ISL)', loader: getMacroPortThroughput, yLabel: 'index' },
   rail_otp:     { title: '유라시아 회랑별 정시율 (MTL Link 실측)', loader: getRailOtp,   yLabel: 'OTP %' },

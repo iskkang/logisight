@@ -45,10 +45,9 @@ function buildSectionSystemPrompt(styleGuide, focus) {
 ③ 현상에서 원인·배경·전망으로 자연스럽게 이어지는 **연결된 산문**으로 작성.
    ★★ [현상]·[원인]·[배경]·[전망] 같은 대괄호 라벨·머리표·구획 표지를 출력에 절대 쓰지 말 것.
    논리 전개는 문단의 흐름으로만 드러내고, 한 문단에서 다음 문단으로 매끄럽게 이어지게 작성.
-④ 각 분석은 **객관적 시장 전망**으로 마무리.
-   ★★ 특정 기업(MTL 등) 언급, 영업 권유, "MTL 영업팀은…", "☞/➔ 권고", "한국 화주는 …하라/검토하라" 식
-   독자 행동 지시·영업 시사점(So what)을 출력에 절대 포함하지 말 것 — 외부 중립 리포트.
-   분석은 시장 자체의 방향성·리스크·전망으로 끝낼 것(독자에게 행동을 지시하지 않음).
+④ 각 분석은 **객관적 시장 전망 + 실무 시사점**으로 마무리.
+   ★★ 특정 회사 영업 문구는 금지하되, 한국 화주·포워더 관점의 계약·부킹·BAF·환헤지 등 실무 함의를
+   마지막 한 줄에 '➔' 형태로 명시할 것.
 ⑤ 출처 표기 금지 — 본문에 괄호식 출처 표기 (매체, 날짜), 각주 마크 [n], 번호 참고자료 목록을 만들지 말 것.
    출처가 신뢰도상 꼭 필요하면 **문장 안에 매체명만 자연스럽게(날짜·괄호 없이) 1회** 녹여 쓰고, 그 외엔 생략.
 
@@ -63,7 +62,7 @@ ${styleGuide}
 
 # 데이터 사용 원칙 (환각 방지 — 최우선)
 1. 제공된 기사 제목·요약·본문에 명시된 사실만 사용. 출처에 없는 수치 절대 생성 금지.
-   ★★ 항공 운임 수치는 입력의 TAC Index(Superset)·BAI(aircargoweek.com)·Xeneta factText 블록에 있는 값만 인용.
+   ★★ 항공 운임 수치는 입력의 KITA 참고운임·TAC Index(Superset)·BAI(aircargoweek.com) 블록에 있는 값만 인용.
    이 블록이 없거나 비어 있으면 수치를 만들지 말고 "데이터 미수집"으로 표기. WorldACD를 포함한 일체의 외부 운임 소스를 학습 데이터 기반으로 생성 금지.
 2. 운임 수치는 입력의 '확정 운임 지수' 블록 값만 인용. 표·차트는 시스템이 삽입하므로 본문에 표를 그리지 말 것.
 3. 근거가 약한 내용은 [Logisight 분석] + (추정) 표기.
@@ -83,7 +82,44 @@ ${styleGuide}
 - "스페이스" → "선적 공간" 또는 "선복"`;
 }
 
-function buildSectionUserPrompt(title, items, month, indexFactText, railFactText, airFactText, portThroughputFactText, kitaFactText) {
+function topicArticleCandidates(items, keywords, limit = 3) {
+  return items
+    .map(item => {
+      const title   = String(item.title || '').toLowerCase();
+      const summary = String(item.summary_en || '').toLowerCase();
+      const content = String(item.content || '').toLowerCase();
+      const score = keywords.reduce((sum, keyword) => {
+        const k = keyword.toLowerCase();
+        return sum + (title.includes(k) ? 4 : 0) + (summary.includes(k) ? 2 : 0) + (content.includes(k) ? 1 : 0);
+      }, 0);
+      return { item, score };
+    })
+    .filter(x => x.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map(x => x.item);
+}
+
+function appendTopicArticleGuide(lines, items, topicGuides) {
+  if (!topicGuides?.length) return;
+  lines.push('## 주제별 기사 탐색 맵');
+  lines.push('아래 목록은 입력 기사에서 관련 주제어로 자동 검색한 후보입니다. 정량 표·차트만으로 페이지가 비는 주제는 해당 후보의 본문 근거를 우선 활용해 분석을 보강하세요. 관련 근거가 없으면 사실을 만들지 마세요.');
+  for (const guide of topicGuides) {
+    const candidates = topicArticleCandidates(items, guide.keywords);
+    lines.push(`### ${guide.id} ${guide.title} — ${guide.target}`);
+    if (!candidates.length) {
+      lines.push('- 관련 기사 후보 없음: 제공된 정량 데이터 범위 안에서만 간결하게 작성');
+      continue;
+    }
+    for (const item of candidates) {
+      lines.push(`- [${item.source}] ${item.title}`);
+      lines.push(`  URL: ${item.url}`);
+    }
+  }
+  lines.push('');
+}
+
+function buildSectionUserPrompt(title, items, month, indexFactText, railFactText, airFactText, portThroughputFactText, kitaFactText, topicGuides) {
   const lines = [`분석 기준월: ${month}`, ''];
 
   if (indexFactText) {
@@ -114,6 +150,8 @@ function buildSectionUserPrompt(title, items, month, indexFactText, railFactText
     lines.push(kitaFactText);
     lines.push('');
   }
+
+  appendTopicArticleGuide(lines, items, topicGuides);
 
   const causal  = items.filter(i => i.category === 'lane_causal');
   const carrier = items.filter(i => i.category === 'carrier_update');
@@ -184,8 +222,8 @@ ${styleGuide}
 - [ ] '확정 운임 지수' 블록 외 운임 수치를 생성하지 않았는가? (환각 방지 — 최우선)
 - [ ] 본문 안에 Markdown 표를 그리지 않았는가? (표는 시스템 삽입)
 - [ ] [현상]·[원인]·[배경]·[전망] 등 대괄호 라벨·머리표가 본문에 전혀 없는가? — 있으면 제거하고 자연스러운 산문으로 재서술
-- [ ] MTL·영업팀 언급, "☞/➔ 권고", "한국 화주는 …하라/검토하라" 식 독자 행동 지시·영업 시사점이 전혀 없는가? — 있으면 삭제하고 객관적 시장 전망으로 대체 (외부 중립 리포트)
-- [ ] 분석이 독자 행동 지시 없이 시장 전망으로 마무리되는가?
+- [ ] 특정 회사 영업 문구 없이 한국 화주·포워더 관점의 실무 시사점이 '➔' 한 줄로 포함됐는가?
+- [ ] 분석이 시장 전망과 실무 함의를 함께 제시하며 마무리되는가?
 - [ ] 수치에 ▲▼과 비교 기준(WoW/MoM/YoY)이 붙어 있는가?
 - [ ] 괄호식 출처 표기 (매체, 날짜), 각주 마크 [n], 참고자료 목록이 전혀 없는가? 있으면 제거. 매체명이 꼭 필요하면 문장 안에 자연스럽게 1회만 녹여 썼는가?
 - [ ] "~입니다/합니다" 경어체가 없는가? "~이다/했다" 평서체가 없는가?
@@ -195,6 +233,33 @@ ${styleGuide}
 
 function buildCritiqueUserPrompt(draft) {
   return `아래 초안을 체크리스트 기준으로 검수·수정하여 최종본을 출력하세요.\n\n---\n${draft}\n---`;
+}
+
+function replaceSectionContent(markdown, heading, content) {
+  const start = markdown.indexOf(heading);
+  if (start < 0) return markdown;
+  const bodyStart = start + heading.length;
+  const level = (heading.match(/^#+/) || ['###'])[0].length;
+  const nextHeading = markdown
+    .slice(bodyStart)
+    .match(new RegExp(`\\n#{1,${level}}\\s`));
+  const bodyEnd = nextHeading ? bodyStart + nextHeading.index : markdown.length;
+  return markdown.slice(0, bodyStart) + content + markdown.slice(bodyEnd);
+}
+
+function removeSection(markdown, heading) {
+  const start = markdown.indexOf(heading);
+  if (start < 0) return markdown;
+  const bodyStart = start + heading.length;
+  const level = (heading.match(/^#+/) || ['###'])[0].length;
+  const nextHeading = markdown
+    .slice(bodyStart)
+    .match(new RegExp(`\\n#{1,${level}}\\s`));
+  const bodyEnd = nextHeading ? bodyStart + nextHeading.index : markdown.length;
+  const prefix = markdown.slice(0, start);
+  const pageBreak = prefix.match(/\n<div class="page-break"><\/div>\n\n$/);
+  const sectionStart = pageBreak ? start - pageBreak[0].length : start;
+  return markdown.slice(0, sectionStart) + markdown.slice(bodyEnd);
 }
 
 // ── Retry helper ─────────────────────────────────────────────────────────────
@@ -297,7 +362,7 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
 
   const kitaFactText = (kitaSeaBundle && kitaSeaBundle.factText) || (kitaAirBundle && kitaAirBundle.factText) || null;
   const systemPrompt = buildSectionSystemPrompt(styleGuide, sectionConfig.focus);
-  const userPrompt   = buildSectionUserPrompt(sectionConfig.title, cappedItems, month, indexFactText, railFactText, airFactText, portThroughputFactText, kitaFactText);
+  const userPrompt   = buildSectionUserPrompt(sectionConfig.title, cappedItems, month, indexFactText, railFactText, airFactText, portThroughputFactText, kitaFactText, sectionConfig.topicGuides);
 
   // PASS 1: 초안 생성 — DEEPSEEK_API_KEY 설정 시 deepseek-v4-pro(스트리밍), 미설정 시 claude-sonnet-4-6
   const pass1Model = process.env.DEEPSEEK_API_KEY ? 'deepseek-v4-pro (stream)' : 'claude-sonnet-4-6';
@@ -343,7 +408,7 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
       const pb = idx > 0 ? '<div class="page-break"></div>\n\n' : '';
 
       if (!b.table) {
-        if (b.notice) {
+        if (b.notice || b.omitWhenEmpty) {
           let noticeAnchor = null;
           for (const kw of b.headingKw) {
             const safe = kw.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
@@ -351,7 +416,12 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
             if (m) { noticeAnchor = m[0]; break; }
           }
           if (noticeAnchor) {
-            revised = revised.replace(noticeAnchor, pb + noticeAnchor + '\n\n> ⚠️ **' + b.notice + '**\n\n');
+            if (b.omitWhenEmpty) {
+              revised = removeSection(revised, noticeAnchor);
+              return;
+            }
+            if (pb) revised = revised.replace(noticeAnchor, pb + noticeAnchor);
+            revised = replaceSectionContent(revised, noticeAnchor, '\n\n> ⚠️ **' + b.notice + '**\n\n');
           }
         }
         return;
@@ -362,29 +432,30 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
         const m = revised.match(new RegExp('#{2,3}[^\\n]*' + safe + '[^\\n]*'));
         if (m) { anchor = m[0]; break; }
       }
-      const inject = `\n\n[[CHART:${b.chart}]]\n\n${b.table}\n`;
+      const chart = b.chart ? `\n\n[[CHART:${b.chart}]]` : '';
+      const inject = `${chart}\n\n${b.table}\n`;
       if (anchor) revised = revised.replace(anchor, `${pb}${anchor}${inject}`);
       else        revised += `\n\n${pb}### (${b.id.toUpperCase()} 표)${inject}`;
     });
-    // 말미 또는 벙커유 소제목에 벙커유 차트 추가 (02-8 종합전망 삭제로 fallback 우선)
-    const bunkerM = revised.match(/#{2,3}[^\n]*(?:02-8|벙커유|벙커\s*유)[^\n]*/i);
+    // 벙커유는 KITA 참고운임과 별도 블록으로 분리한다.
+    const bunkerM = revised.match(/#{2,3}[^\n]*(?:벙커유|벙커\s*유)[^\n]*/i);
     if (bunkerM) {
       revised = revised.replace(bunkerM[0], `${bunkerM[0]}\n\n[[CHART:ocean_bunker]]\n`);
     } else {
-      revised += '\n\n[[CHART:ocean_bunker]]\n';
+      revised += '\n\n<div class="page-break"></div>\n\n### 02-8. 벙커유 가격 추이\n\n[[CHART:ocean_bunker]]\n';
     }
 
-    // KITA 부산발 참고운임 — LLM이 02-8 소제목을 쓰면 그 아래 주입, 없으면 신규 소절 추가
-    const kita08 = revised.match(/#{2,3}[^\n]*(?:02-8|KITA)[^\n]*/i);
+    // KITA 부산발 참고운임 — 벙커유와 분리된 02-9 블록으로 주입한다.
+    const kita09 = revised.match(/#{2,3}[^\n]*(?:02-9|KITA)[^\n]*/i);
     if (kitaSeaBundle && kitaSeaBundle.table) {
       const inject = '\n\n[[CHART:kita_sea]]\n\n' + kitaSeaBundle.table + '\n';
-      if (kita08) {
-        revised = revised.replace(kita08[0], '<div class="page-break"></div>\n\n' + kita08[0] + inject);
+      if (kita09) {
+        revised = revised.replace(kita09[0], '<div class="page-break"></div>\n\n' + kita09[0] + inject);
       } else {
-        revised += '\n\n<div class="page-break"></div>\n\n## 02-8. KITA 부산발 참고운임 (한국 수출 실측 운임)' + inject;
+        revised += '\n\n<div class="page-break"></div>\n\n## 02-9. KITA 부산발 해상 운임' + inject;
       }
-    } else if (!kita08) {
-      revised += '\n\n## 02-8. KITA 부산발 참고운임\n\n> ⚠️ **KITA 참고운임 미수집** — 다음 호 업데이트 예정.\n';
+    } else if (!kita09) {
+      revised += '\n\n## 02-9. KITA 부산발 해상 운임\n\n> ⚠️ **KITA 해상 운임 미수집** — 다음 호 업데이트 예정.\n';
     }
   } else if (indexTable) {
     // 운임 지수 표 삽입 (01. 핵심 시황 섹션)
@@ -417,60 +488,59 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
     }
   }
 
-  // air 섹션: A-1 BAI표, A-2 Superset차트, A-3 IATA표, A-4 Xeneta(LLM 처리) 주입
-  // 각 소제목 (## 03-1, 03-2, 03-3) 아래에 해당 데이터 삽입.
+  // air 섹션: 03-1 IATA, 03-2 KITA 한국발, 03-3 TAC/BAI 보조 추세 순서로 주입.
   // 섹션 제목(# NN.) 앞에 삽입하면 PDF에서 섹션 디바이더 이전 페이지에 렌더링되므로 반드시 제목 뒤에 삽입.
   if (sectionConfig.id === 'air') {
     const ab = airBundle;
 
-    // A-1: BAI/TAC 스냅샷 표 → ## 03-1. 소제목 아래
-    if (ab?.baiTable) {
-      const anchor = revised.match(/#{2,3}[^\n]*(?:03-1|BAI|TAC|스냅샷)[^\n]*/)
-                  || revised.match(/#{2,3}[^\n]*(?:운임)[^\n]*/);
+    // 03-1: IATA 권역별 표
+    if (ab?.iataTable) {
+      const anchor = revised.match(/#{2,3}[^\n]*(?:03-1|IATA|권역별)[^\n]*/);
       if (anchor) {
-        revised = revised.replace(anchor[0], anchor[0] + '\n\n' + ab.baiTable + '\n');
+        revised = revised.replace(anchor[0], anchor[0] + '\n\n' + ab.iataTable + '\n');
       }
     }
 
-    // A-2: Superset 차트 → ## 03-2. 소제목 아래 (없으면 notice만)
-    if (ab?.chartData) {
-      const anchor = revised.match(/#{2,3}[^\n]*(?:03-2|추세|시계열)[^\n]*/);
-      if (anchor) {
-        revised = revised.replace(anchor[0], anchor[0] + '\n\n[[CHART:air_rate]]\n');
-      }
-      // Superset 표도 있으면 차트 아래에 추가
-      if (ab.table && anchor) {
-        const anchorUpdated = revised.match(/#{2,3}[^\n]*(?:03-2|추세|시계열)[^\n]*/);
-        if (anchorUpdated) {
-          const afterChart = anchorUpdated[0] + '\n\n[[CHART:air_rate]]\n';
-          revised = revised.replace(afterChart, afterChart + '\n' + ab.table + '\n');
-        }
-      }
-    } else {
-      // Superset 없음 → 03-2 소제목 아래에 notice 삽입
-      const notice = '\n\n> ⚠️ **항공 운임 추세 차트 미수집** — Superset 접속 실패. BAI 스냅샷으로 현황 대체.\n\n';
-      const anchor = revised.match(/#{2,3}[^\n]*(?:03-2|추세|시계열)[^\n]*/);
-      if (anchor) {
-        const at = revised.indexOf(anchor[0]) + anchor[0].length;
-        revised = revised.slice(0, at) + notice + revised.slice(at);
-      }
-    }
-
-    // A-2 보강: KITA 인천발 참고운임 차트·표 → ## 03-2. 소제목 아래 (Superset 차트 다음)
+    // 03-2: KITA 인천발 참고운임
     if (kitaAirBundle && kitaAirBundle.table) {
-      const anchor = revised.match(/#{2,3}[^\n]*(?:03-2|추세|시계열)[^\n]*/);
-      const inject = '\n\n**KITA 인천발 참고운임 (한국 수출 실측)**\n\n[[CHART:kita_air]]\n\n' + kitaAirBundle.table + '\n';
+      const anchor = revised.match(/#{2,3}[^\n]*(?:03-2|KITA|한국발|인천발)[^\n]*/);
+      const inject = '\n\n[[CHART:kita_air]]\n\n' + kitaAirBundle.table + '\n';
       if (anchor) {
         const at = revised.indexOf(anchor[0]) + anchor[0].length;
         revised = revised.slice(0, at) + inject + revised.slice(at);
       }
     }
 
-    // A-3: IATA 권역별 표 → ## 03-3. 소제목 아래
-    if (ab?.iataTable) {
-      const anchor = revised.match(/#{2,3}[^\n]*(?:03-3|IATA|권역별)[^\n]*/);
+    // 03-3: Superset TAC 추세 차트와 표
+    if (ab?.chartData) {
+      const anchor = revised.match(/#{2,3}[^\n]*(?:03-3|TAC|BAI|추세|시계열)[^\n]*/);
       if (anchor) {
-        revised = revised.replace(anchor[0], anchor[0] + '\n\n' + ab.iataTable + '\n');
+        revised = revised.replace(anchor[0], anchor[0] + '\n\n[[CHART:air_rate]]\n');
+      }
+      // Superset 표도 있으면 차트 아래에 추가
+      if (ab.supersetTable && anchor) {
+        const anchorUpdated = revised.match(/#{2,3}[^\n]*(?:03-3|TAC|BAI|추세|시계열)[^\n]*/);
+        if (anchorUpdated) {
+          const afterChart = anchorUpdated[0] + '\n\n[[CHART:air_rate]]\n';
+          revised = revised.replace(afterChart, afterChart + '\n' + ab.supersetTable + '\n');
+        }
+      }
+    } else {
+      // Superset 없음 → 03-3 소제목 아래에 notice 삽입
+      const notice = '\n\n> ⚠️ **항공 운임 추세 차트 미수집** — Superset 접속 실패. BAI 스냅샷으로 현황 대체.\n\n';
+      const anchor = revised.match(/#{2,3}[^\n]*(?:03-3|TAC|BAI|추세|시계열)[^\n]*/);
+      if (anchor) {
+        const at = revised.indexOf(anchor[0]) + anchor[0].length;
+        revised = revised.slice(0, at) + notice + revised.slice(at);
+      }
+    }
+
+    // BAI 스냅샷 표는 TAC 보조 데이터로 03-3 하단에 배치한다.
+    if (ab?.baiTable) {
+      const anchor = revised.match(/#{2,3}[^\n]*(?:03-3|TAC|BAI|추세|시계열)[^\n]*/);
+      if (anchor) {
+        const at = revised.indexOf(anchor[0]) + anchor[0].length;
+        revised = revised.slice(0, at) + '\n\n' + ab.baiTable + '\n' + revised.slice(at);
       }
     }
 

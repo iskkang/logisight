@@ -148,7 +148,7 @@ function buildIndexTable(rows) {
     );
   }
   lines.push('');
-  lines.push('※ MoM은 약 4주 전 주간값 대비 근사치 (oneksa 격주 데이터 기준)');
+  lines.push('※ 기준주는 각 지수 최종 공표 주차. MoM은 약 4주 전 주간 종가 대비 근사치이며, 격주 공표 지수는 직전 공표치를 기준으로 환산함. 출처: SSE·KOBC·SSE/CCFC·Drewry·Baltic Exchange.');
   return { table: lines.join('\n'), factText: facts.join('\n') };
 }
 

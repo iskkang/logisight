@@ -101,10 +101,12 @@ color: blue
   5. 관세청 컨테이너 물동량
 
 항공:
-  1. Freightos Air Index (FAX)
-  2. WorldACD Market Data (주간 보고서)
-  3. IATA 통계
-  4. 항공사 실적 발표
+  1. WorldACD Market Data 주간 보고서 — worldacd.com (글로벌 스팟 $/kg, 지역별 물동량 WoW/YoY)
+  2. TAC Index / BAI (발틱 항공운임지수) — aircargoweek.com/market-data/ (BAI00 + 항로별 지수)
+  3. Freightos Air Index (FAX) — freightos.com
+  4. IATA 통계
+  5. 항공사 실적 발표
+  ※ aircargonews.net — 봇 차단(403) 확인, WebFetch 사용 금지
 
 공통:
   - 수집된 latest-news.json 내 관련 기사

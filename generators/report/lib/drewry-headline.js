@@ -1,7 +1,6 @@
 'use strict';
 // Drewry Cancelled Sailings Tracker — 헤드라인 1문장 경량 추출 (Playwright 불필요)
 // 용도: 블랭크 세일링 블록의 헤드라인 수치(결항 "편수"/East-West 항로)를 Drewry로 인용.
-//       추세 차트·region TEU는 EconDB가 담당 — 둘은 측정 대상이 달라 보완 관계.
 // 출처: https://www.drewry.co.uk/.../cancelled-sailings-tracker
 //   메타 description 에 "Across major East–West trades, M blank sailings ... out of N scheduled departures" 노출.
 

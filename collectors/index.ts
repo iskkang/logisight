@@ -9,7 +9,6 @@ dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
 import { collect as collectShipping }    from './shipping_indices';
 import { collect as collectBunker }      from './bunker';
 import { collect as collectAir }         from './air_indices';
-import { collect as collectBlankSailing } from './blank_sailing';
 import { collect as collectNewsGlobal }  from './news_global';
 import { collect as collectNewsKorea }   from './news_korea';
 import { collect as collectNewsRail }    from './news_rail';
@@ -38,7 +37,6 @@ const GROUPS = [
       { name: 'shipping_indices', fn: collectShipping },
       { name: 'bunker',           fn: collectBunker },
       { name: 'air_indices',      fn: collectAir },
-      { name: 'blank_sailing',    fn: collectBlankSailing },
     ],
   },
   {
