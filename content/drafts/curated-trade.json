@@ -1,0 +1,43 @@
+{
+  "date": "2026-06-04",
+  "curated_at": "2026-06-04T09:21:58.470Z",
+  "section": "trade",
+  "main": {
+    "title": "US eyes new tariffs for China, EU, Mexico and more after labor probes",
+    "title_ko": "美, 노동조사 후 중국·EU·멕시코 등에 추가 관세 검토",
+    "url": "https://www.supplychaindive.com/news/us-eyes-new-tariffs-for-china-eu-mexico-and-more-after-labor-probes/821865/",
+    "source": "Supply Chain Dive",
+    "image_url": null,
+    "what": "美 USTR이 강제노동 관련 60건의 Section 301 조사 결과를 발표하고, 중국·EU·멕시코 등에 대한 추가 관세 부과를 검토 중입니다. 기존 관세에 더해 새로운 관세가 부과될 가능성이 있습니다.",
+    "why_now": "한중미주 노선 화주·포워더는 중국발 화물의 관세율 추가 상승과 통관 리스크를 즉시 평가해야 합니다. EU·멕시코 노선도 영향을 받을 수 있습니다.",
+    "checkpoint": "관세 인상이 발효될 경우를 대비해 HS 코드별 관세율 영향을 분석하고, 공급원 다변화 또는 우회국 경유를 검토하세요.",
+    "importance_score": 10,
+    "published_at": "2026-06-03T15:21:00.000Z",
+    "image_source": null,
+    "image_credit": null
+  },
+  "links": [
+    {
+      "title": "Trump further tweaks steel, aluminum, copper tariffs",
+      "title_ko": "트럼프, 철강·알루미늄·구리 관세 추가 조정",
+      "url": "https://www.supplychaindive.com/news/trump-further-tweaks-steel-aluminum-copper-tariffs/821719/",
+      "source": "Supply Chain Dive",
+      "published_at": "2026-06-02T14:48:19.000Z",
+      "image_url": "https://imgproxy.divecdn.com/K_x0Nz_JIRUIcEnvCBUP7RigaMMSDv3Onmk-F-1bOBM/g:ce/rs:fit:770:435/Z3M6Ly9kaXZlc2l0ZS1zdG9yYWdlL2RpdmVpbWFnZS9HZXR0eUltYWdlcy0yMjcwMTIzMDI3LmpwZw==.webp",
+      "image_source": "original",
+      "image_credit": "Supply Chain Dive"
+    },
+    {
+      "title": "USTR Floats 25% Tariff on Brazil Imports",
+      "title_ko": "USTR, 브라질 수입품 25% 관세 부과 제안",
+      "url": "https://www.supplychaindive.com/news/ustr-floats-25-tariff-on-brazil-imports/821745/",
+      "source": "Supply Chain Dive",
+      "published_at": "2026-06-02T17:54:00.000Z",
+      "image_url": null,
+      "image_source": null,
+      "image_credit": null
+    }
+  ],
+  "total_collected": 24,
+  "excluded_count": 21
+}

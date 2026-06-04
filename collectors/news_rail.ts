@@ -1,162 +1,108 @@
-// collectors/news_rail.ts
-// CIS·러시아·중국·철도 뉴스 수집기
-// 대상: RailFreight, RZD-Partner, Vgudok, TASS (RSS) + TransportCorridors, Deliver-2, 一带一路, PortNews (스크래핑)
+// Rail news collector. Sources are shared with monthly analysis.
 
 import { chromium, type Browser, type Page } from 'playwright';
-import { rateLimited } from './utils/rate_limiter';
+
+import { sourcesFor, type NewsSource } from './news_sources';
 import type { CollectorResult, NewsItem } from './types';
+import {
+  enrichNewsItem,
+  parseNewsFeed,
+  persistCollectedNews,
+} from './utils/news_enrichment';
+import { rateLimited } from './utils/rate_limiter';
+import { snapshotWriter } from './utils/snapshot_writer';
 
-const RSS_SOURCES = [
-  // 기존
-  { name: 'RailFreight',             rss: 'https://www.railfreight.com/feed/',                    section: 'rail' as const },
-  { name: 'RailFreight BeltAndRoad', rss: 'https://www.railfreight.com/category/beltandroad/feed/', section: 'rail' as const },
-  // 신규: 러시아 철도 (RSS 검증 완료)
-  { name: 'RZD-Partner',  rss: 'https://www.rzd-partner.ru/news/xml.php', section: 'rail' as const },
-  { name: 'Vgudok',       rss: 'https://vgudok.com/rss.xml',              section: 'rail' as const },
-  { name: 'TASS Economy', rss: 'https://tass.com/rss/v2.xml',             section: 'rail' as const },
-];
-
-const SCRAPE_SOURCES = [
-  // 기존
-  { name: 'TransportCorridors CentralAsia', url: 'https://www.transportcorridors.com/category/regions/central-asia',        section: 'rail' as const, listSelector: 'article a, .post-title a, h2 a' },
-  { name: 'TransportCorridors Rail',        url: 'https://www.transportcorridors.com/category/modalities/rail-freight-en', section: 'rail' as const, listSelector: 'article a, .post-title a, h2 a' },
-  { name: 'Deliver-2',                      url: 'https://deliver-2.com/news/',                                            section: 'rail' as const, listSelector: '.news-item a, article a, h2 a, h3 a' },
-  // 신규: 중국 철도 (nra.gov.cn / rail.people.com.cn 은 robots 차단 → 일대일로 포털로 대체)
-  { name: '一带一路 中欧班列', url: 'https://www.yidaiyilu.gov.cn/news', section: 'rail' as const, listSelector: 'a' },
-  // 신규: 러시아 해운·철도 영문판
-  { name: 'PortNews EN',       url: 'https://en.portnews.ru/news/',      section: 'rail' as const, listSelector: 'a.news-list__link, article a, h2 a, h3 a' },
-];
-
-const BROWSER_HEADERS = {
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
-  'Accept': 'application/rss+xml, application/xml, text/xml, */*;q=0.8',
-  'Accept-Language': 'en-US,en;q=0.9',
-};
-
-async function parseRss(url: string, sourceName: string): Promise<NewsItem[]> {
-  const res = await fetch(url, { headers: BROWSER_HEADERS });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const text = await res.text();
-  const items: NewsItem[] = [];
-  const matches = text.matchAll(/<item>([\s\S]*?)<\/item>/g);
-
-  for (const m of matches) {
-    const b = m[1];
-    const title = (b.match(/<title><!\[CDATA\[(.*?)\]\]>/)?.[1] || b.match(/<title>(.*?)<\/title>/)?.[1] || '').trim();
-    const link = (b.match(/<link>(.*?)<\/link>/)?.[1] || '').trim();
-    if (title && link) {
-      // 수집 시점을 published_at으로 사용 — RSS pubDate는 과거 날짜일 수 있어
-      // 큐레이션 window 필터를 통과하려면 항상 오늘 날짜여야 함
-      items.push({
-        title, url: link,
-        published_at: new Date().toISOString(),
-        summary_en: '',
-        source: sourceName,
-      });
-    }
-    if (items.length >= 5) break;
-  }
-  return items;
-}
-
-async function scrapePage(page: Page, source: typeof SCRAPE_SOURCES[0]): Promise<NewsItem[]> {
+async function scrapePage(page: Page, source: NewsSource): Promise<NewsItem[]> {
   await page.goto(source.url, { waitUntil: 'domcontentloaded', timeout: 25000 });
-
   const items = await page.evaluate((selector) => {
-    const links = Array.from(document.querySelectorAll(selector));
     const seen = new Set<string>();
-    return links
-      .map(a => ({
-        title: (a as HTMLElement).textContent?.trim() || '',
-        url: (a as HTMLAnchorElement).href || '',
-      }))
-      .filter(item => {
-        if (item.title.length < 10 || item.title.length > 150) return false;
-        if (!item.url || item.url.includes('#') || item.url.includes('javascript')) return false;
-        if (seen.has(item.title)) return false;
-        seen.add(item.title);
+    return Array.from(document.querySelectorAll(selector))
+      .map((anchor) => {
+        const container = anchor.closest('article, li, tr, .post, .news-item');
+        const dateElement = container?.querySelector('time');
+        return {
+          title: (anchor.textContent || '').trim().replace(/\s+/g, ' '),
+          url: (anchor as HTMLAnchorElement).href || '',
+          published_at: dateElement?.getAttribute('datetime') || dateElement?.textContent?.trim() || null,
+        };
+      })
+      .filter((item) => {
+        if (item.title.length < 10 || item.title.length > 200 || !/^https?:\/\//.test(item.url)) return false;
+        if (seen.has(item.url)) return false;
+        seen.add(item.url);
         return true;
       })
-      .slice(0, 5);
-  }, source.listSelector);
+      .slice(0, 8);
+  }, source.selector || 'article a, h2 a, h3 a');
 
-  return items.map(item => ({
-    ...item,
-    published_at: new Date().toISOString(),
-    summary_en: '',
-    source: source.name,
-  }));
+  return items.map((item) => {
+    const date = item.published_at ? new Date(item.published_at) : null;
+    return {
+      title: item.title,
+      url: item.url,
+      published_at: date && !Number.isNaN(date.getTime()) ? date.toISOString() : null,
+      summary_en: '',
+      source: source.name,
+    };
+  });
 }
-
-import { snapshotWriter } from './utils/snapshot_writer';
 
 export async function collect(): Promise<CollectorResult> {
   const result: CollectorResult = { section: 'rail', data: [] };
   let browser: Browser | null = null;
 
   try {
-    // 1. RSS 수집
-    for (const src of RSS_SOURCES) {
+    for (const source of sourcesFor(['rail'], 'rss')) {
       try {
-        const items = await rateLimited(src.rss, () => parseRss(src.rss, src.name));
-        for (const item of items) {
+        const items = await rateLimited(source.url, () => parseNewsFeed(source));
+        const enriched = await Promise.all(items.map(enrichNewsItem));
+        for (const item of enriched) {
           result.data.push({
             data_type: 'news',
-            data_key: `${src.name}_${Date.now()}`,
-            data_value: { ...item, section: src.section, language: 'en' },
-            source: src.name,
-            source_url: src.rss,
+            data_key: `${source.name}_${item.url}`,
+            data_value: { ...item, section: 'rail', language: source.language },
+            source: source.name,
+            source_url: source.url,
             is_complete: true,
           });
         }
-        console.log(`✅ ${src.name}: ${items.length}건`);
-      } catch (e) {
-        console.error(`❌ ${src.name}:`, (e as Error).message);
-        result.data.push({
-          data_type: 'news', data_key: `${src.name}_error`, data_value: {},
-          source: src.name, source_url: src.rss, is_complete: false,
-          error_message: (e as Error).message,
-        });
+        console.log(`✅ ${source.name}: ${enriched.length}건`);
+      } catch (error) {
+        console.error(`❌ ${source.name}:`, (error as Error).message);
       }
     }
 
-    // 2. 스크래핑
     browser = await chromium.launch({ headless: true });
     const page = await browser.newPage();
-    await page.setExtraHTTPHeaders({
-      'User-Agent': 'Logisight/1.0 (logisight.mtlship.com; news-bot)',
-    });
-
-    for (const src of SCRAPE_SOURCES) {
+    for (const source of sourcesFor(['rail'], 'html')) {
       try {
-        const items = await rateLimited(src.url, () => scrapePage(page, src));
-        for (const item of items) {
+        const items = await rateLimited(source.url, () => scrapePage(page, source));
+        const enriched = await Promise.all(items.map(enrichNewsItem));
+        for (const item of enriched) {
           result.data.push({
             data_type: 'news',
-            data_key: `${src.name}_${Date.now()}`,
-            data_value: { ...item, section: src.section, language: 'en' },
-            source: src.name,
-            source_url: src.url,
+            data_key: `${source.name}_${item.url}`,
+            data_value: { ...item, section: 'rail', language: source.language },
+            source: source.name,
+            source_url: source.url,
             is_complete: true,
           });
         }
-        console.log(`✅ ${src.name}: ${items.length}건`);
-      } catch (e) {
-        console.error(`❌ ${src.name}:`, (e as Error).message);
-        result.data.push({
-          data_type: 'news', data_key: `${src.name}_error`, data_value: {},
-          source: src.name, source_url: src.url, is_complete: false,
-          error_message: (e as Error).message,
-        });
+        console.log(`✅ ${source.name}: ${enriched.length}건`);
+      } catch (error) {
+        console.error(`❌ ${source.name}:`, (error as Error).message);
       }
     }
   } finally {
     if (browser) await browser.close();
   }
 
+  await persistCollectedNews(result).catch((error) =>
+    console.warn('[maritime_news] Supabase persist skipped:', (error as Error).message),
+  );
   return result;
 }
 
 if (require.main === module) {
-  collect().then(r => snapshotWriter(r)).catch(console.error);
+  collect().then(snapshotWriter).catch(console.error);
 }

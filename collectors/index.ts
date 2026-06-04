@@ -85,7 +85,7 @@ const GROUPS = [
       { name: 'carrier_advisories',  fn: collectCarrierAdvisories },
       { name: 'ocean_news_daily',    fn: () => collectOceanNews({ frequency: 'daily' }) },
       { name: 'chokepoints_daily',   fn: () => collectChokepoints({ frequency: 'daily' }) },
-      { name: 'news_global',         fn: collectNewsGlobal },
+      { name: 'news_global_ocean',   fn: () => collectNewsGlobal(['shipping']) },
     ],
   },
   {
@@ -100,16 +100,14 @@ const GROUPS = [
   {
     name: 'air-daily',
     collectors: [
-      // news_global includes AirCargoNews + CNBC Logistics (section='air') and SupplyChainDive+TTNews (section='trade')
-      { name: 'news_global', fn: collectNewsGlobal },
+      { name: 'news_global_air', fn: () => collectNewsGlobal(['air']) },
     ],
   },
   {
     name: 'policy-daily',
     collectors: [
-      { name: 'policy_us',  fn: collectPolicyUS  },
-      { name: 'policy_eu',  fn: collectPolicyEU  },
-      { name: 'policy_imo', fn: collectPolicyIMO },
+      { name: 'news_global_trade', fn: () => collectNewsGlobal(['trade']) },
+      { name: 'news_industry_trade', fn: collectNewsIndustry },
     ],
   },
   {

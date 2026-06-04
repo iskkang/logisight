@@ -6,6 +6,7 @@
 const fs        = require('fs');
 const path      = require('path');
 const { callDeepSeekJson } = require('../lib/deepseek');
+const { attachSourceMetadata } = require('./lib/curation-metadata');
 
 const NEWS_PATH   = path.resolve(__dirname, '../../content/drafts/latest-news.json');
 const OUT_PATH    = path.resolve(__dirname, '../../content/drafts/curated-ocean.json');
@@ -168,7 +169,7 @@ async function main() {
   const portCtx    = await loadPortContext();
   console.log(`📰 ocean 뉴스 ${items.length}건 로드 (window: ${windowDays}d)`);
 
-  const curated = await curate(items, portCtx);
+  const curated = attachSourceMetadata(await curate(items, portCtx), items);
 
   fs.writeFileSync(OUT_PATH, JSON.stringify(curated, null, 2), 'utf-8');
   const archivePath = OUT_PATH.replace('curated-ocean.json', `curated-ocean-${TODAY}.json`);

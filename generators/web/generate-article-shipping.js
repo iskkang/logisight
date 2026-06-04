@@ -9,9 +9,9 @@
 
 const fs        = require('fs');
 const path      = require('path');
-const https     = require('https');
 const { callDeepSeek } = require('../lib/deepseek');
 const { insertArticle } = require('../../lib/supabase-insert');
+const { categoryFor, resolveArticle } = require('./lib/news-pipeline');
 
 const TODAY        = new Date().toISOString().slice(0, 10);
 const DRAFTS_DIR   = path.resolve(__dirname, '../../content/drafts');
@@ -42,41 +42,16 @@ const DEFAULT_KEYWORD = {
   logistics: 'logistics warehouse dhl fedex',
 };
 
-// ── Unsplash 이미지 fetch ──────────────────────────────────────────────────
-function fetchUnsplashImage(keyword) {
-  const key = process.env.UNSPLASH_ACCESS_KEY;
-  if (!key) {
-    console.warn('⚠️ UNSPLASH_ACCESS_KEY 없음 — 이미지 스킵');
-    return Promise.resolve(null);
-  }
-  const url = `https://api.unsplash.com/photos/random?query=${encodeURIComponent(keyword)}&orientation=landscape&client_id=${key}`;
-  return new Promise((resolve) => {
-    https.get(url, { headers: { 'Accept-Version': 'v1' } }, (res) => {
-      let data = '';
-      res.on('data', c => data += c);
-      res.on('end', () => {
-        try {
-          const json = JSON.parse(data);
-          const base = json.urls?.regular;
-          if (!base) return resolve(null);
-          resolve(base + '&w=800&h=450&fit=crop');
-        } catch { resolve(null); }
-      });
-    }).on('error', () => resolve(null));
-  });
-}
-
 // ── Claude 기사 생성 ──────────────────────────────────────────────────────
-async function generateArticle(curated, imageUrl, imageKeyword) {
+async function generateArticle(curated, asset, imageKeyword) {
 
   const linksText = (curated.links || [])
     .map(l => `- [${l.source}] ${l.title_ko || l.title} — ${l.url}`)
     .join('\n');
 
   const LABELS = { rail: '철도', ocean: '해운', air: '항공화물', trade: '무역·정책', logistics: '글로벌 물류' };
-  const CATS   = { rail: '철도', ocean: '해상', air: '항공',    trade: '물류',     logistics: '물류' };
   const sectionLabel = LABELS[SECTION] ?? SECTION;
-  const category     = CATS[SECTION]   ?? '물류';
+  const category     = categoryFor(SECTION);
 
   // ── 시스템 프롬프트: 스타일 가이드 전체 주입 ──────────────────────────
   const systemPrompt = `당신은 15년 경력의 해운·물류 전문 기자입니다.
@@ -100,7 +75,7 @@ ${STYLE_GUIDE}`;
 ${linksText || '(없음)'}
 
 ## 이미지
-image_url: ${imageUrl || 'null'}
+image_url: ${asset.imageUrl || 'null'}
 image_keyword: ${imageKeyword}
 
 ## 출력 형식 (YAML front-matter + 마크다운 본문만, 다른 설명 없이)
@@ -114,23 +89,15 @@ tags: ["태그1", "태그2", "태그3"]
 author: "Logisight 편집팀"
 date: ${TODAY}
 sources: ["출처1", "출처2"]
-image_url: "${imageUrl || ''}"
+image_url: "${asset.imageUrl || ''}"
 image_keyword: "${imageKeyword}"
-image_credit: "Photo: Unsplash"
+image_source: "${asset.imageSource || ''}"
+image_credit: "${asset.imageCredit || ''}"
 agent_type: "shipping"
 status: draft
 ---
 
-# 제목
-## 부제
-
-![제목](${imageUrl || ''})
-*Photo: Unsplash*
-
-{기사 본문 — 4단 구성, 600~1000자, H2 소제목 2~3개}
-
----
-*출처: 출처1, 출처2*
+{기사 본문 — 현상, 원인 또는 배경, 한국 화주·포워더 영향의 3개 구역. H1·부제·이미지·이미지 credit·중복 출처 문장은 넣지 말 것. 원문 사실만 사용하고 원문 전체 번역·장문 복제 금지.}
 \`\`\``;
 
   const msg = await callDeepSeek({ max_tokens: 3000, system: systemPrompt, messages: [{ role: 'user', content: userPrompt }] });
@@ -165,13 +132,16 @@ async function main() {
   }
 
   const keyword  = DEFAULT_KEYWORD[SECTION];
-  console.log(`🖼️  Unsplash 이미지 수집 (keyword: ${keyword})`);
-  const imageUrl = await fetchUnsplashImage(keyword);
-  if (imageUrl) console.log(`   → ${imageUrl.slice(0, 60)}...`);
-  else          console.log('   → 이미지 없음 (null)');
+  console.log(`🖼️  원문 대표 이미지 확인 (fallback keyword: ${keyword})`);
+  const asset = await resolveArticle(curated.main.url, {
+    source: curated.main.source,
+    keyword,
+    title: curated.main.title_ko || curated.main.title,
+  });
+  console.log(`   → ${asset.imageSource || '이미지 없음'}`);
 
   console.log(`✍️  Claude 기사 생성 중... (스타일 가이드 주입됨)`);
-  const article = await generateArticle(curated, imageUrl, keyword);
+  const article = await generateArticle(curated, asset, keyword);
 
   if (!fs.existsSync(ARTICLES_DIR)) fs.mkdirSync(ARTICLES_DIR, { recursive: true });
 
@@ -184,11 +154,13 @@ async function main() {
 
   // maritime_news upsert
   const canonicalUrl    = `https://logisight.mtlship.com/article/${TODAY}-${SECTION}-${slug}`;
-  const CATS2 = { rail: '철도', ocean: '해상', air: '항공', trade: '물류', logistics: '물류' };
-  const defaultCategory = CATS2[SECTION] ?? '물류';
+  const defaultCategory = categoryFor(SECTION);
   await insertArticle({
     markdownContent: article,
     canonicalUrl,
+    sourceUrl: curated.main.url,
+    sourceName: curated.main.source,
+    publishedAt: curated.main.published_at || null,
     agentType: 'shipping',
     defaultCategory,
   });

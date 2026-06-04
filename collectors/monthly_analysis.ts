@@ -10,6 +10,7 @@ import { rateLimited } from './utils/rate_limiter';
 import { snapshotWriter } from './utils/snapshot_writer';
 import { fetchArticleBody } from './utils/article_body';
 import type { CollectorResult, NewsItem } from './types';
+import { NEWS_SOURCES } from './news_sources';
 
 const BOT_HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
@@ -29,7 +30,7 @@ interface MonthlySource {
   topicFilter?: RegExp;  // rss 전용: 이 패턴에 매칭되는 항목만 보관 (일반 소스 노이즈 제거)
 }
 
-const MONTHLY_SOURCES: MonthlySource[] = [
+const MONTHLY_SOURCES_BASE: MonthlySource[] = [
   // ── deep_analysis: RSS (검증 완료, 요약 포함 40건) ──
   {
     name: 'JOC',
@@ -127,6 +128,19 @@ const MONTHLY_SOURCES: MonthlySource[] = [
     category: 'deep_analysis',
     urlPattern: /xeneta\.com\/blog\/[a-z0-9][a-z0-9-]+$/,
   },
+];
+
+const MONTHLY_SOURCES: MonthlySource[] = [
+  ...MONTHLY_SOURCES_BASE,
+  ...NEWS_SOURCES
+    .filter((source) => source.monthly && !MONTHLY_SOURCES_BASE.some((item) => item.name === source.name))
+    .map((source): MonthlySource => ({
+      name: source.name,
+      url: source.url,
+      type: source.kind,
+      section: source.section === 'logistics' ? 'trade' : source.section,
+      category: 'deep_analysis',
+    })),
 ];
 
 // ocean_news.ts 원본을 건드리지 않기 위해 monthly 전용 파서를 여기에 둔다.

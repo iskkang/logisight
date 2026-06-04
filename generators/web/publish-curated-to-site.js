@@ -1,313 +1,168 @@
-// scripts/publish-curated-to-site.js
-// 큐레이션된 rail/ocean 뉴스를 maritime_news에 upsert
-// 입력: content/drafts/curated-rail.json, content/drafts/curated-ocean.json
-// 환경변수: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, DEEPSEEK_API_KEY
-
 'use strict';
 
-const fs   = require('fs');
+const fs = require('fs');
 const path = require('path');
-
 const ws = require('ws');
 globalThis.WebSocket = ws;
 
 const { createClient } = require('@supabase/supabase-js');
 const { callDeepSeek } = require('../lib/deepseek');
+const {
+  buildMainContent,
+  categoryFor,
+  generateKoreanAnalysis,
+  resolveArticle,
+} = require('./lib/news-pipeline');
 
-const DRAFTS_DIR = path.resolve(__dirname, '../content/drafts');
-const TODAY      = new Date().toISOString().slice(0, 10);
+const DRAFTS_DIR = path.resolve(__dirname, '../../content/drafts');
+const TODAY = new Date().toISOString().slice(0, 10);
+const SECTIONS = ['rail', 'ocean', 'air', 'trade', 'logistics'];
+const KEYWORDS = {
+  rail: 'freight train railway china',
+  ocean: 'container port cargo ship',
+  air: 'air cargo aircraft freighter',
+  trade: 'customs tariff global trade',
+  logistics: 'logistics warehouse supply chain',
+};
 
-// .env.local 로드 (로컬 실행 시)
-function loadEnvLocal() {
-  const envPath = path.resolve(__dirname, '../.env.local');
-  if (!fs.existsSync(envPath)) return;
-  const lines = fs.readFileSync(envPath, 'utf-8').split(/\r?\n/);
-  for (const line of lines) {
-    const m = line.match(/^([A-Z_][A-Z0-9_]*)=(.*)$/);
-    if (m && !process.env[m[1]]) process.env[m[1]] = m[2].trim();
-  }
-}
-loadEnvLocal();
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env.local') });
+const supabase = createClient(
+  process.env.SUPABASE_URL || '',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+  { auth: { persistSession: false }, realtime: { enabled: false } },
+);
 
-const SUPABASE_URL  = process.env.SUPABASE_URL ?? '';
-const SERVICE_KEY   = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
+const stats = {
+  published: Object.fromEntries(SECTIONS.map((section) => [section, 0])),
+  images: { original: 0, unsplash: 0, missing: 0 },
+};
 
-const CATEGORY_MAP = { rail: '철도', ocean: '해상', air: '항공', trade: '물류', logistics: '물류' };
-
-// og:image / twitter:image 추출, 없으면 첫 <img> fallback. 상대경로 → 절대경로 변환
-async function fetchOgImage(url) {
-  try {
-    const origin = new URL(url).origin;
-    const res = await fetch(url, {
-      signal: AbortSignal.timeout(8000),
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Logisight/1.0)' },
-    });
-    const html = await res.text();
-
-    const toAbsolute = (img) => {
-      if (!img || img === 'null') return null;
-      if (img.startsWith('http')) return img;
-      if (img.startsWith('//'))   return `https:${img}`;
-      if (img.startsWith('/'))    return `${origin}${img}`;
-      return `${origin}/${img}`;
-    };
-
-    const metaPatterns = [
-      /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i,
-      /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i,
-      /<meta[^>]+name=["']twitter:image(?::src)?["'][^>]+content=["']([^"']+)["']/i,
-      /<meta[^>]+content=["']([^"']+)["'][^>]+name=["']twitter:image/i,
-    ];
-
-    for (const pattern of metaPatterns) {
-      const match = html.match(pattern);
-      if (match?.[1]) {
-        const result = toAbsolute(match[1].trim());
-        if (result) return result;
-      }
-    }
-
-    // fallback: 첫 번째 <img src>
-    const imgMatch = html.match(/<img[^>]+src=["']([^"']+\.(?:jpg|jpeg|png|webp)(?:[^"']*)?)["']/i);
-    if (imgMatch?.[1]) {
-      const result = toAbsolute(imgMatch[1].trim());
-      if (result) return result;
-    }
-
-    console.log(`ℹ️  og:image 없음: ${url.slice(0, 80)}`);
-    return null;
-  } catch (e) {
-    console.log(`ℹ️  og:image fetch 실패 (${url.slice(0, 60)}): ${e.message}`);
-    return null;
-  }
-}
-
-// 본문 텍스트 추출 (번역용). 실패 시 "" 반환
-async function fetchArticleText(url) {
-  try {
-    const res = await fetch(url, {
-      signal: AbortSignal.timeout(8000),
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Logisight/1.0)' },
-    });
-    const html = await res.text();
-
-    // style/script 블록 먼저 제거
-    const cleaned = html
-      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
-
-    const texts = [...cleaned.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)]
-      .map(m => m[1].replace(/<[^>]+>/g, '').trim())
-      .filter(t => t.length > 40);
-
-    const result = texts.join(' ').slice(0, 3000);
-
-    // CSS처럼 보이면 빈 문자열 반환
-    const looksLikeCss = (result.match(/[{};]/g) || []).length > 10;
-    return looksLikeCss ? '' : result;
-  } catch { return ''; }
-}
-
-// DeepSeek으로 한국어 2문장 요약
-async function summarizeKorean(articleText) {
-  if (!process.env.DEEPSEEK_API_KEY) return null;
-  try {
-    const msg = await callDeepSeek({
-      max_tokens: 300,
-      messages: [{
-        role: 'user',
-        content: `다음 텍스트가 CSS나 HTML 코드이면 "SKIP"이라고만 답해라.
-실제 기사라면 한국어 2문장 이내 요약. 화주·포워더 시각. 요약 텍스트만 출력:
-
-${articleText}`,
-      }],
-    });
-    const response = msg.content[0].text.trim();
-    if (!response || response === 'SKIP' || response.includes('CSS')) return null;
-    return response;
-  } catch (e) {
-    console.error('⚠️ Claude 요약 실패:', e.message);
-    return null;
-  }
-}
-
-// 웹 기사 본문 생성. checkpoint는 뉴스레터 전용이므로 제외
-function buildContent(main) {
-  return [main.what, main.why_now]
-    .filter(Boolean)
-    .join('\n\n');
-}
-
-// slug 생성: "{date}-{title_ko 공백→하이픈, 60자 제한}"
-function makeSlug(date, titleKo) {
-  const slugified = titleKo
+function makeSlug(date, title) {
+  return `${date}-${String(title || '')
     .toLowerCase()
     .replace(/[^a-z0-9가-힣\s-]/g, '')
     .trim()
     .replace(/\s+/g, '-')
-    .slice(0, 60);
-  return `${date}-${slugified}`;
+    .slice(0, 60)}`;
 }
 
-// main 기사 upsert
-async function upsertMain(supabase, curated) {
-  const { main, section, date } = curated;
-  if (!main?.url || !(main.importance_score > 0)) {
-    console.log(`⏭️  [${section}] main 기사 스킵 (importance_score=${main?.importance_score})`);
-    return;
-  }
-  if (!main.title_ko || !main.source) {
-    console.warn(`⚠️  [${section}] main 스킵 — title_ko 또는 source 누락`);
-    return;
-  }
+function recordImage(asset) {
+  if (asset.imageSource === 'original') stats.images.original++;
+  else if (asset.imageSource === 'unsplash') stats.images.unsplash++;
+  else stats.images.missing++;
+}
 
-  const category = CATEGORY_MAP[section] ?? '물류';
-  const imageUrl = await fetchOgImage(main.url);
-  const content  = buildContent(main);
-
-  const row = {
-    title:        main.title_ko,
-    summary:      main.what,
-    content,
-    url:          main.url,
-    source:       main.source,
-    category,
-    lang:         'ko',
-    is_hero:      true,
-    agent_type:   'brief',
-    tags:         [section],
-    slug:         makeSlug(date, main.title_ko),
-    published_at: new Date().toISOString(),
-    fetched_at:   new Date().toISOString(),
-  };
-  // 기존 image_url을 null로 덮어쓰지 않음
-  if (imageUrl) row.image_url = imageUrl;
-
+async function upsert(row, section, mode) {
   const { error } = await supabase
     .from('maritime_news')
     .upsert(row, { onConflict: 'url', ignoreDuplicates: false });
-
-  if (error) {
-    console.error(`❌ [${section}] main upsert 실패:`, error.message);
-  } else {
-    console.log(`✅ [${section}] main 저장: ${main.title_ko.slice(0, 40)}`);
-  }
+  if (error) throw new Error(error.message);
+  stats.published[section]++;
+  console.log(`✅ [${section}][${mode}] ${row.title.slice(0, 50)}`);
 }
 
-// link 기사 upsert
-async function upsertLink(supabase, link, section, date) {
-  // 필수 필드 검증
-  if (!link.title_ko || !link.url || !link.source) {
-    console.warn(`⏭️  [${section}] link 스킵 — 필수 필드 누락 (title/url/source)`);
-    return;
-  }
+async function publishMain(curated) {
+  const { main, section } = curated;
+  if (!main?.url || !(main.importance_score > 0) || !main.title_ko || !main.source) return;
 
-  const category = CATEGORY_MAP[section] ?? '물류';
+  const asset = await resolveArticle(main.url, {
+    source: main.source,
+    keyword: KEYWORDS[section],
+    title: main.title_ko,
+  });
+  recordImage(asset);
 
-  const imageUrl = await fetchOgImage(link.url);
-  // fetchOgImage 내부에서 null 시 이미 로그 출력
-
-  const articleText = await fetchArticleText(link.url);
-  if (!articleText) {
-    console.log(`ℹ️  [${section}] 본문 없음 (JS 렌더링 또는 접근 불가): ${link.url.slice(0, 60)}`);
-  }
-
-  const translatedSummary = articleText.length >= 100 ? await summarizeKorean(articleText) : null;
-
-  // content: Claude 요약 우선, 없으면 원문 텍스트 앞 1000자
-  const content = translatedSummary || (articleText.length >= 100 ? articleText.slice(0, 1000) : null);
-  const summary = translatedSummary || link.title_ko;
-
-  // content가 없으면 내부 기사 페이지 생성 안 함 (slug=null, agent_type=external)
-  const isInternal = content !== null;
-
+  const date = curated.date || TODAY;
   const row = {
-    title:        link.title_ko,
-    summary,
-    content,
-    url:          link.url,
-    source:       link.source,
-    category,
-    lang:         'ko',
-    is_hero:      false,
-    agent_type:   isInternal ? 'brief' : 'external',
-    tags:         [section],
-    slug:         isInternal ? makeSlug(date, link.title_ko) : null,
-    published_at: new Date().toISOString(),
-    fetched_at:   new Date().toISOString(),
+    title: main.title_ko,
+    summary: main.what || null,
+    content: buildMainContent(main) || null,
+    url: main.url,
+    source: main.source,
+    category: categoryFor(section),
+    lang: 'ko',
+    is_hero: true,
+    agent_type: 'brief',
+    tags: [section],
+    slug: makeSlug(date, main.title_ko),
+    published_at: main.published_at || null,
+    fetched_at: new Date().toISOString(),
+    image_url: asset.imageUrl,
+    image_source: asset.imageSource,
+    image_credit: asset.imageCredit,
   };
-  // 기존 image_url을 null로 덮어쓰지 않음
-  if (imageUrl) row.image_url = imageUrl;
-
-  const { error } = await supabase
-    .from('maritime_news')
-    .upsert(row, { onConflict: 'url', ignoreDuplicates: false });
-
-  if (error) {
-    console.error(`❌ [${section}] link upsert 실패 (${link.url}):`, error.message);
-  } else {
-    const mode = isInternal ? '내부기사' : '외부링크';
-    console.log(`✅ [${section}][${mode}] link 저장: ${link.title_ko.slice(0, 40)}`);
-  }
+  await upsert(row, section, '내부기사');
 }
 
-async function processSection(supabase, filename) {
-  const filePath = path.join(DRAFTS_DIR, filename);
-  if (!fs.existsSync(filePath)) {
-    console.warn(`⚠️ ${filename} 없음 — 스킵`);
+async function publishLink(link, section, date) {
+  if (!link.title_ko || !link.url || !link.source) return;
+  const asset = await resolveArticle(link.url, {
+    source: link.source,
+    keyword: KEYWORDS[section],
+    title: link.title_ko,
+  });
+  recordImage(asset);
+
+  const content = await generateKoreanAnalysis(
+    callDeepSeek,
+    asset.articleText,
+    `${link.source} / ${link.title_ko}`,
+  );
+  const isInternal = Boolean(content);
+  const row = {
+    title: link.title_ko,
+    summary: link.summary_ko || link.title_ko,
+    content,
+    url: link.url,
+    source: link.source,
+    category: categoryFor(section),
+    lang: 'ko',
+    is_hero: false,
+    agent_type: isInternal ? 'brief' : 'external',
+    tags: [section],
+    slug: isInternal ? makeSlug(date, link.title_ko) : null,
+    published_at: link.published_at || null,
+    fetched_at: new Date().toISOString(),
+    image_url: asset.imageUrl,
+    image_source: asset.imageSource,
+    image_credit: asset.imageCredit,
+  };
+  await upsert(row, section, isInternal ? '내부기사' : '외부링크');
+}
+
+async function processSection(section) {
+  const file = path.join(DRAFTS_DIR, `curated-${section}.json`);
+  if (!fs.existsSync(file)) {
+    console.warn(`⚠️ [${section}] curated 파일 없음`);
     return;
   }
-
-  const curated = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-  const section = curated.section;
-  const date    = curated.date ?? TODAY;
-
-  console.log(`\n📰 [${section}] 처리 시작 (${date})`);
-
-  await upsertMain(supabase, curated);
-
-  const links = curated.links ?? [];
-  for (const link of links) {
+  const curated = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const date = curated.date || TODAY;
+  await publishMain(curated);
+  for (const link of curated.links || []) {
     try {
-      await upsertLink(supabase, link, section, date);
-    } catch (e) {
-      console.error(`❌ [${section}] link 처리 중 예외:`, e.message);
+      await publishLink(link, section, date);
+    } catch (error) {
+      console.error(`❌ [${section}] ${link.url}: ${error.message}`);
     }
   }
-
-  console.log(`✅ [${section}] 완료 (links: ${links.length}건)`);
-}
-
-async function cleanStaleData(supabase) {
-  const { error } = await supabase
-    .from('maritime_news')
-    .update({ summary: null })
-    .like('summary', '기사 본문 내용이 CSS%');
-  if (error) console.error('cleanup error:', error.message);
-  else console.log('🧹 오염 데이터 정리 완료');
 }
 
 async function main() {
-  if (!SUPABASE_URL || !SERVICE_KEY) {
-    console.error('❌ SUPABASE_URL 또는 SUPABASE_SERVICE_ROLE_KEY 없음');
-    process.exit(1);
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error('SUPABASE_URL 또는 SUPABASE_SERVICE_ROLE_KEY 없음');
   }
-
-  const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
-    realtime: { enabled: false },
-  });
-
-  await cleanStaleData(supabase);
-  await processSection(supabase, 'curated-rail.json');
-  await processSection(supabase, 'curated-ocean.json');
-  await processSection(supabase, 'curated-air.json');
-  await processSection(supabase, 'curated-trade.json');
-  await processSection(supabase, 'curated-logistics.json');
-
-  console.log('\n🎉 publish-curated-to-site 완료');
+  for (const section of SECTIONS) await processSection(section);
+  console.log(`📊 게시 건수: ${JSON.stringify(stats.published)}`);
+  console.log(`🖼️ 이미지: ${JSON.stringify(stats.images)}`);
+  for (const section of SECTIONS) {
+    if (stats.published[section] === 0) {
+      console.warn(`⚠️ [${section}] 게시 0건: curated 파일 누락 또는 적격 기사 없음`);
+    }
+  }
 }
 
-main().catch(e => {
-  console.error('❌ publish-curated-to-site 실패:', e.message);
+main().catch((error) => {
+  console.error(`❌ publish-curated-to-site 실패: ${error.message}`);
   process.exit(1);
 });

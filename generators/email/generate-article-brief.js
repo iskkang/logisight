@@ -10,9 +10,9 @@
 
 const fs      = require('fs');
 const path    = require('path');
-const https   = require('https');
 const { callDeepSeek } = require('../lib/deepseek');
 const { insertArticle } = require('../../lib/supabase-insert');
+const { resolveArticle } = require('../web/lib/news-pipeline');
 
 const TODAY      = new Date().toISOString().slice(0, 10);
 const NEWS_PATH  = path.resolve(__dirname, '../../content/drafts/latest-news.json');
@@ -30,30 +30,6 @@ const KEYWORD_MAP = {
   brief: 'global logistics shipping port',
   trend: 'supply chain logistics global trade',
 };
-
-// ── Unsplash 이미지 fetch ──────────────────────────────────────────────────
-function fetchUnsplashImage(keyword) {
-  const key = process.env.UNSPLASH_ACCESS_KEY;
-  if (!key) {
-    console.warn('⚠️ UNSPLASH_ACCESS_KEY 없음 — 이미지 스킵');
-    return Promise.resolve(null);
-  }
-  const url = `https://api.unsplash.com/photos/random?query=${encodeURIComponent(keyword)}&orientation=landscape&client_id=${key}`;
-  return new Promise((resolve) => {
-    https.get(url, { headers: { 'Accept-Version': 'v1' } }, (res) => {
-      let data = '';
-      res.on('data', c => data += c);
-      res.on('end', () => {
-        try {
-          const json = JSON.parse(data);
-          const base = json.urls?.regular;
-          if (!base) return resolve(null);
-          resolve(base + '&w=800&h=450&fit=crop');
-        } catch { resolve(null); }
-      });
-    }).on('error', () => resolve(null));
-  });
-}
 
 // ── 뉴스 로드 (전체 섹션 합산) ─────────────────────────────────────────────
 function loadAllItems() {
@@ -79,7 +55,7 @@ function loadAllItems() {
 }
 
 // ── Claude 브리핑 기사 생성 ───────────────────────────────────────────────
-async function generateBriefArticle(items, imageUrl, keyword) {
+async function generateBriefArticle(items, asset, keyword) {
 
   // 최대 20건만 제공 (토큰 절약)
   const itemList = items.slice(0, 20).map((i, idx) =>
@@ -127,7 +103,7 @@ ${ARTICLE_TYPE === 'trend'
 - ${ARTICLE_TYPE === 'brief' ? '패턴 D면 마지막에 핵심 키워드 3개 필수' : '수치 없이 트렌드만 서술 금지'}
 
 이미지:
-image_url: ${imageUrl || ''}
+image_url: ${asset.imageUrl || ''}
 image_keyword: ${keyword}
 
 아래 형식으로만 출력하세요 (설명 없이):
@@ -142,22 +118,14 @@ author: "Logisight 편집팀"
 date: ${TODAY}
 article_type: "${ARTICLE_TYPE}"
 sources: ["출처1", "출처2"]
-image_url: "${imageUrl || ''}"
+image_url: "${asset.imageUrl || ''}"
 image_keyword: "${keyword}"
-image_credit: "Photo: Unsplash"
+image_source: "${asset.imageSource || ''}"
+image_credit: "${asset.imageCredit || ''}"
 status: draft
 ---
 
-# 제목
-## 부제
-
-![제목](${imageUrl || ''})
-*Photo: Unsplash*
-
-{기사 본문}
-
----
-*출처: 출처1, 출처2*
+{기사 본문. H1·부제·이미지·이미지 credit·중복 출처 문장은 넣지 말 것.}
 \`\`\``;
 
   const msg = await callDeepSeek({ max_tokens: 4000, messages: [{ role: 'user', content: prompt }] });
@@ -178,13 +146,19 @@ async function main() {
   }
 
   const keyword  = KEYWORD_MAP[ARTICLE_TYPE] || KEYWORD_MAP.brief;
-  console.log(`🖼️  Unsplash 이미지 수집 (keyword: ${keyword})`);
-  const imageUrl = await fetchUnsplashImage(keyword);
-  if (imageUrl) console.log(`   → ${imageUrl.slice(0, 60)}...`);
-  else          console.log('   → 이미지 없음 (null)');
+  console.log(`🖼️  원문 대표 이미지 확인 (fallback keyword: ${keyword})`);
+  const representative = items.find(item => item.url);
+  const asset = representative
+    ? await resolveArticle(representative.url, {
+      source: representative.source,
+      keyword,
+      title: representative.title_en || representative.title,
+    })
+    : { imageUrl: null, imageSource: null, imageCredit: null };
+  console.log(`   → ${asset.imageSource || '이미지 없음'}`);
 
   console.log(`✍️  Claude 브리핑 기사 생성 중...`);
-  const article = await generateBriefArticle(items, imageUrl, keyword);
+  const article = await generateBriefArticle(items, asset, keyword);
 
   if (!fs.existsSync(ARTICLES_DIR)) fs.mkdirSync(ARTICLES_DIR, { recursive: true });
 

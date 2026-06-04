@@ -1,0 +1,43 @@
+{
+  "date": "2026-06-04",
+  "curated_at": "2026-06-04T09:21:48.362Z",
+  "section": "air",
+  "main": {
+    "title": "Jet fuel costs and tech demand keep pressure on Asia airfreight",
+    "title_ko": "제트연료비와 기술 수요가 아시아 항공화물에 압력 가중",
+    "url": "https://www.aircargonews.net/supply-chains/2026/06/jet-fuel-costs-and-tech-demand-keep-pressure-on-asia-airfreight/",
+    "source": "Air Cargo News",
+    "image_url": "https://www.aircargonews.net/wp-content/uploads/2026/02/Copyright-Summit-Art-Creations-Shutterstock_2037311816-960-by-640-edited.jpg",
+    "what": "기사는 제트연료비 상승과 기술 제품 수요가 아시아 항공화물 시장에 가격 상승 압력을 가하고 있다고 보도.",
+    "why_now": "한국·중국발 노선 화주는 운임 상승 압력에 직접 노출; 포워더는 즉시 요금 재협상 필요.",
+    "checkpoint": "BAI/TAC 수치를 확인하고 장기 계약 시 연료 할증료 조항을 검토하세요.",
+    "importance_score": 5,
+    "published_at": "2026-06-02T15:57:02.000Z",
+    "image_source": "original",
+    "image_credit": "Air Cargo News"
+  },
+  "links": [
+    {
+      "title": "Swissport launches operations at Shanghai Pudong Airport",
+      "title_ko": "Swissport, 상하이 푸동공항에서 운영 개시",
+      "url": "https://www.aircargonews.net/ground-handler/2026/06/swissport-launches-operations-at-shanghai-pudong-airport/",
+      "source": "Air Cargo News",
+      "published_at": "2026-06-03T10:00:50.000Z",
+      "image_url": "https://www.aircargonews.net/wp-content/uploads/2026/06/Swissport-Digital-Intelligent-International-Cargo-Terminal-at-Shanghai-Pudong-International-Airport-Photo-Swissport.jpg-resized.jpg",
+      "image_source": "original",
+      "image_credit": "Air Cargo News"
+    },
+    {
+      "title": "Silk Way West extends with dnata in Singapore",
+      "title_ko": "Silk Way West, 싱가포르에서 dnata와 계약 연장",
+      "url": "https://www.aircargonews.net/ground-handler/2026/06/silk-way-west-extends-with-dnata-in-singapore/",
+      "source": "Air Cargo News",
+      "published_at": "2026-06-03T10:53:27.000Z",
+      "image_url": "https://www.aircargonews.net/wp-content/uploads/2026/06/dnata-x-Silk-Way-c-dnata.jpg",
+      "image_source": "original",
+      "image_credit": "Air Cargo News"
+    }
+  ],
+  "total_collected": 8,
+  "excluded_count": 5
+}

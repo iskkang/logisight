@@ -9,9 +9,9 @@
 
 const fs        = require('fs');
 const path      = require('path');
-const https     = require('https');
 const { callDeepSeek } = require('../lib/deepseek');
 const { insertArticle } = require('../../lib/supabase-insert');
+const { resolveArticle } = require('./lib/news-pipeline');
 
 const TODAY        = new Date().toISOString().slice(0, 10);
 const NEWS_PATH    = path.resolve(__dirname, '../../content/drafts/latest-news.json');
@@ -39,30 +39,6 @@ const KEYWORD_MAP = {
   '물류센터':    'logistics warehouse distribution center',
   '기본':        'shipping company logistics cargo',
 };
-
-// ── Unsplash 이미지 fetch ──────────────────────────────────────────────────
-function fetchUnsplashImage(keyword) {
-  const key = process.env.UNSPLASH_ACCESS_KEY;
-  if (!key) {
-    console.warn('⚠️ UNSPLASH_ACCESS_KEY 없음 — 이미지 스킵');
-    return Promise.resolve(null);
-  }
-  const url = `https://api.unsplash.com/photos/random?query=${encodeURIComponent(keyword)}&orientation=landscape&client_id=${key}`;
-  return new Promise((resolve) => {
-    https.get(url, { headers: { 'Accept-Version': 'v1' } }, (res) => {
-      let data = '';
-      res.on('data', c => data += c);
-      res.on('end', () => {
-        try {
-          const json = JSON.parse(data);
-          const base = json.urls?.regular;
-          if (!base) return resolve(null);
-          resolve(base + '&w=800&h=450&fit=crop');
-        } catch { resolve(null); }
-      });
-    }).on('error', () => resolve(null));
-  });
-}
 
 // ── 뉴스 로드 ────────────────────────────────────────────────────────────
 function loadCorpItems() {
@@ -124,7 +100,7 @@ JSON으로만 응답:
 }
 
 // ── Step 2: 기사 작성 (Sonnet — 스타일 가이드 주입) ──────────────────────
-async function writeArticle(selectedItem, selection, imageUrl) {
+async function writeArticle(selectedItem, selection, asset) {
   const keyword      = selection.unsplash_keyword || KEYWORD_MAP[selection.article_type] || KEYWORD_MAP['기본'];
   const patternGuide = selection.pattern === 'C'
     ? `패턴 C (노선 개설): ① 노선 개요 리드 → ② 노선 세부 → ③ 전략적 의미 → ④ 향후 계획`
@@ -150,7 +126,7 @@ ${patternGuide}
 분량: ${wordCount}
 
 ## 이미지
-image_url: ${imageUrl || ''}
+image_url: ${asset.imageUrl || ''}
 image_keyword: ${keyword}
 
 ## 제목 형식
@@ -168,23 +144,15 @@ tags: ["태그1", "태그2", "태그3"]
 author: "Logisight 편집팀"
 date: ${TODAY}
 sources: ["${selectedItem.source}"]
-image_url: "${imageUrl || ''}"
+image_url: "${asset.imageUrl || ''}"
 image_keyword: "${keyword}"
-image_credit: "Photo: Unsplash"
+image_source: "${asset.imageSource || ''}"
+image_credit: "${asset.imageCredit || ''}"
 agent_type: "corp"
 status: draft
 ---
 
-# 제목
-## 부제
-
-![제목](${imageUrl || ''})
-*Photo: Unsplash*
-
-{기사 본문}
-
----
-*출처: ${selectedItem.source}*
+{기사 본문. H1·부제·이미지·이미지 credit·중복 출처 문장은 넣지 말 것. 원문 사실만 사용하고 원문 전체 번역·장문 복제 금지.}
 \`\`\``;
 
   const msg = await callDeepSeek({ max_tokens: 3000, system: systemPrompt, messages: [{ role: 'user', content: userPrompt }] });
@@ -221,14 +189,16 @@ async function main() {
 
   console.log(`📌 선정: [${selectedItem.source}] ${(selectedItem.title_en || selectedItem.title).slice(0, 60)}`);
   console.log(`📂 유형: ${selection.article_type} (패턴 ${selection.pattern})`);
-  console.log(`🖼️  Unsplash 키워드: ${keyword}`);
-
-  const imageUrl = await fetchUnsplashImage(keyword);
-  if (imageUrl) console.log(`   → ${imageUrl.slice(0, 60)}...`);
-  else          console.log('   → 이미지 없음 (null)');
+  console.log(`🖼️  원문 대표 이미지 확인 (fallback keyword: ${keyword})`);
+  const asset = await resolveArticle(selectedItem.url, {
+    source: selectedItem.source,
+    keyword,
+    title: selectedItem.title_en || selectedItem.title,
+  });
+  console.log(`   → ${asset.imageSource || '이미지 없음'}`);
 
   console.log(`✍️  Claude 기사 생성 중... (스타일 가이드 주입됨)`);
-  const { article } = await writeArticle(selectedItem, selection, imageUrl);
+  const { article } = await writeArticle(selectedItem, selection, asset);
 
   if (!fs.existsSync(ARTICLES_DIR)) fs.mkdirSync(ARTICLES_DIR, { recursive: true });
 
@@ -245,6 +215,9 @@ async function main() {
   await insertArticle({
     markdownContent: article,
     canonicalUrl,
+    sourceUrl: selectedItem.url,
+    sourceName: selectedItem.source,
+    publishedAt: selectedItem.published_at || null,
     agentType: 'corp',
     defaultCategory: '물류',
   });

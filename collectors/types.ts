@@ -3,11 +3,13 @@
 export interface NewsItem {
   title: string;
   url: string;
-  published_at: string;
+  published_at: string | null;
   summary_en: string;
   source: string;
   content?: string;          // 기사 본문 발췌 (최대 ~2500자)
   og_image?: string;
+  image_source?: 'original' | 'unsplash';
+  image_credit?: string;
   importance_score?: number;
   translated_ko?: string;
 }
@@ -23,6 +25,6 @@ export interface CollectorData {
 }
 
 export interface CollectorResult {
-  section: 'shipping' | 'air' | 'rail' | 'trade' | 'carrier_advisory' | 'risk';
+  section: 'shipping' | 'air' | 'rail' | 'trade' | 'logistics' | 'carrier_advisory' | 'risk';
   data: CollectorData[];
 }

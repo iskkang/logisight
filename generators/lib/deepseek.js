@@ -10,6 +10,10 @@
 const fs   = require('fs');
 const path = require('path');
 
+if (!process.env.DEEPSEEK_API_KEY) {
+  require('dotenv').config({ path: path.resolve(__dirname, '../../.env.local') });
+}
+
 async function callDeepSeek({ system, messages, max_tokens = 4096, responseFormat }) {
   const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) throw new Error('DEEPSEEK_API_KEY 미설정');

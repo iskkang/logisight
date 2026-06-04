@@ -6,6 +6,7 @@
 const fs   = require('fs');
 const path = require('path');
 const { callDeepSeekJson } = require('../lib/deepseek');
+const { attachSourceMetadata } = require('./lib/curation-metadata');
 
 const NEWS_PATH = path.resolve(__dirname, '../../content/drafts/latest-news.json');
 const OUT_PATH  = path.resolve(__dirname, '../../content/drafts/curated-air.json');
@@ -114,7 +115,7 @@ async function main() {
   const items = loadAirItems();
   console.log(`📰 air 뉴스 ${items.length}건 로드 (window: ${windowDays}d)`);
 
-  const curated = await curate(items);
+  const curated = attachSourceMetadata(await curate(items), items);
   fs.writeFileSync(OUT_PATH, JSON.stringify(curated, null, 2), 'utf-8');
   fs.writeFileSync(
     OUT_PATH.replace('curated-air.json', `curated-air-${TODAY}.json`),

@@ -1,96 +1,46 @@
-// collectors/news_industry.ts
-// 업계·정부·기관 뉴스 수집기
-// 대상: Maersk, DHL, SCANGL, KITA, NLIC, KOTRA, Tradlinx
+// HTML news collector for the shared air/trade source registry.
 
 import { chromium, type Browser, type Page } from 'playwright';
-import { rateLimited } from './utils/rate_limiter';
+
+import { sourcesFor, type NewsSource } from './news_sources';
 import type { CollectorResult, NewsItem } from './types';
+import { enrichNewsItem, persistCollectedNews } from './utils/news_enrichment';
+import { rateLimited } from './utils/rate_limiter';
+import { snapshotWriter } from './utils/snapshot_writer';
 
-const SOURCES = [
-  {
-    name: 'Maersk',
-    url: 'https://www.maersk.com/news',
-    selector: 'a[href*="/news/"], article a, .news-card a',
-    section: 'shipping' as const,
-    language: 'en',
-  },
-  {
-    name: 'DHL Forwarding',
-    url: 'https://www.dhl.com/sg-en/home/global-forwarding/latest-news-and-webinars.html',
-    selector: 'a[href*="news"], .news-item a, article a',
-    section: 'shipping' as const,
-    language: 'en',
-  },
-  {
-    name: 'SCANGL',
-    url: 'https://www.scangl.com/news/?news-list_search=&tag=News&currentPage=1',
-    selector: '.news-list a, article a, h2 a, h3 a',
-    section: 'shipping' as const,
-    language: 'en',
-  },
-  {
-    name: 'KITA',
-    url: 'https://www.kita.net/shippers/board/newsList.do',
-    selector: '.board-list a, td a, .title a',
-    section: 'trade' as const,
-    language: 'ko',
-  },
-  {
-    name: 'NLIC',
-    url: 'https://www.nlic.go.kr/nlic/newsArticleList.action',
-    selector: '.list a, td a, .title a, .subject a',
-    section: 'trade' as const,
-    language: 'ko',
-  },
-  {
-    name: 'KOTRA 물류',
-    url: 'https://dream.kotra.or.kr/kotranews/cms/com/index.do?MENU_ID=70',
-    selector: '.list-title a, .tit a, td a',
-    section: 'trade' as const,
-    language: 'ko',
-  },
-  {
-    name: 'Tradlinx Blog',
-    url: 'https://www.tradlinx.com/blog/guide/',
-    selector: 'article a, .post-title a, h2 a, h3 a',
-    section: 'shipping' as const,
-    language: 'ko',
-  },
-];
-
-async function scrapePage(page: Page, source: typeof SOURCES[0]): Promise<NewsItem[]> {
+async function scrapePage(page: Page, source: NewsSource): Promise<NewsItem[]> {
   await page.goto(source.url, { waitUntil: 'domcontentloaded', timeout: 25000 });
-
-  // 정부 사이트는 로딩이 느릴 수 있으므로 추가 대기
-  if (source.name === 'KITA' || source.name === 'NLIC' || source.name === 'KOTRA 물류') {
-    await page.waitForTimeout(2000);
-  }
-
-  const items = await page.evaluate((selector) => {
-    const links = Array.from(document.querySelectorAll(selector));
+  const rows = await page.evaluate((selector) => {
     const seen = new Set<string>();
-
-    return links
-      .map(a => ({
-        title: (a as HTMLElement).textContent?.trim().replace(/\s+/g, ' ') || '',
-        url: (a as HTMLAnchorElement).href || '',
-      }))
-      .filter(item => {
-        if (item.title.length < 8 || item.title.length > 200) return false;
-        if (!item.url || item.url.includes('#') || item.url.includes('javascript:')) return false;
-        if (seen.has(item.title)) return false;
-        seen.add(item.title);
+    return Array.from(document.querySelectorAll(selector))
+      .map((anchor) => {
+        const container = anchor.closest('article, li, tr, .post, .news-item');
+        const time = container?.querySelector('time');
+        return {
+          title: (anchor.textContent || '').trim().replace(/\s+/g, ' '),
+          url: (anchor as HTMLAnchorElement).href || '',
+          date: time?.getAttribute('datetime') || time?.textContent?.trim() || null,
+        };
+      })
+      .filter((item) => {
+        if (item.title.length < 8 || item.title.length > 200 || !/^https?:\/\//.test(item.url)) return false;
+        if (seen.has(item.url)) return false;
+        seen.add(item.url);
         return true;
       })
-      .slice(0, 5);
-  }, source.selector);
+      .slice(0, 8);
+  }, source.selector || 'article a, h2 a, h3 a');
 
-  return items.map(item => ({
-    ...item,
-    published_at: new Date().toISOString(),
-    summary_en: '',
-    source: source.name,
-  }));
+  return rows.map((row) => {
+    const date = row.date ? new Date(row.date) : null;
+    return {
+      title: row.title,
+      url: row.url,
+      published_at: date && !Number.isNaN(date.getTime()) ? date.toISOString() : null,
+      summary_en: '',
+      source: source.name,
+    };
+  });
 }
 
 export async function collect(): Promise<CollectorResult> {
@@ -100,43 +50,40 @@ export async function collect(): Promise<CollectorResult> {
   try {
     browser = await chromium.launch({ headless: true });
     const page = await browser.newPage();
-    await page.setExtraHTTPHeaders({
-      'User-Agent': 'Logisight/1.0 (logisight.mtlship.com; news-bot)',
-      'Accept-Language': 'ko-KR,ko;q=0.9,en;q=0.8',
-    });
-
-    for (const source of SOURCES) {
+    const sources = sourcesFor(['air', 'trade'], 'html');
+    for (const source of sources) {
       try {
         const items = await rateLimited(source.url, () => scrapePage(page, source));
-
-        for (const item of items) {
+        const enriched = await Promise.all(items.map(enrichNewsItem));
+        for (const item of enriched) {
           result.data.push({
             data_type: 'news',
-            data_key: `${source.name}_${Date.now()}`,
-            data_value: { ...item, section: source.section, language: source.language },
+            data_key: `${source.name}_${item.url}`,
+            data_value: {
+              ...item,
+              section: source.section,
+              language: source.language,
+            },
             source: source.name,
             source_url: source.url,
             is_complete: true,
           });
         }
-
-        console.log(`✅ ${source.name}: ${items.length}건`);
+        console.log(`✅ ${source.name}: ${enriched.length}건`);
       } catch (error) {
         console.error(`❌ ${source.name}:`, (error as Error).message);
-        result.data.push({
-          data_type: 'news',
-          data_key: `${source.name}_error`,
-          data_value: {},
-          source: source.name,
-          source_url: source.url,
-          is_complete: false,
-          error_message: (error as Error).message,
-        });
       }
     }
   } finally {
     if (browser) await browser.close();
   }
 
+  await persistCollectedNews(result).catch((error) =>
+    console.warn('[maritime_news] Supabase persist skipped:', (error as Error).message),
+  );
   return result;
+}
+
+if (require.main === module) {
+  collect().then(snapshotWriter).catch(console.error);
 }
