@@ -7,10 +7,10 @@
 const fs   = require('fs');
 const path = require('path');
 
-const RAIL_PATH  = path.resolve(__dirname, '../content/drafts/curated-rail.json');
-const OCEAN_PATH = path.resolve(__dirname, '../content/drafts/curated-ocean.json');
+const RAIL_PATH  = path.resolve(__dirname, '../../content/drafts/curated-rail.json');
+const OCEAN_PATH = path.resolve(__dirname, '../../content/drafts/curated-ocean.json');
 const TODAY      = new Date().toISOString().slice(0, 10);
-const OUT        = path.resolve(__dirname, `../content/drafts/newsletter-${TODAY}.html`);
+const OUT        = path.resolve(__dirname, `../../content/drafts/newsletter-${TODAY}.html`);
 
 const BLOCKED_DOMAINS = ['freightwaves.com', 'wsj.com', 'ft.com', 'bloomberg.com', 'lloydslist.com'];
 
