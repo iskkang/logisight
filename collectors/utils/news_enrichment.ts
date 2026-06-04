@@ -73,8 +73,11 @@ export async function parseNewsFeed(source: NewsSource, limit = 8): Promise<News
 
 function absoluteUrl(value: string | undefined, pageUrl: string): string | null {
   if (!value || value === 'null') return null;
+  const raw = value.trim();
+  if (!raw || /["'<>]|%(?:22|27|3c|3e)|&(?:quot|apos|#0*3[49]);/i.test(raw)) return null;
   try {
-    return new URL(value, pageUrl).href;
+    const url = new URL(raw, pageUrl);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : null;
   } catch {
     return null;
   }

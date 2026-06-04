@@ -16,8 +16,23 @@ function categoryFor(section) {
 
 function absoluteUrl(value, pageUrl) {
   if (!value || value === 'null') return null;
+  const raw = String(value).trim();
+  if (!raw || /["'<>]|%(?:22|27|3c|3e)|&(?:quot|apos|#0*3[49]);/i.test(raw)) return null;
   try {
-    return new URL(value, pageUrl).href;
+    const url = new URL(raw, pageUrl);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
+function sanitizeImageUrl(value) {
+  if (!value) return null;
+  const raw = String(value).trim();
+  if (!raw || /["'<>]|%(?:22|27|3c|3e)|&(?:quot|apos|#0*3[49]);/i.test(raw)) return null;
+  try {
+    const url = new URL(raw);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : null;
   } catch {
     return null;
   }
@@ -184,4 +199,5 @@ module.exports = {
   generateKoreanAnalysis,
   normalizeMarkdownBody,
   resolveArticle,
+  sanitizeImageUrl,
 };

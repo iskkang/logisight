@@ -6,7 +6,7 @@ globalThis.WebSocket = ws;
 require('dotenv').config({ path: path.resolve(__dirname, '../.env.local') });
 
 const { createClient } = require('@supabase/supabase-js');
-const { resolveArticle } = require('../generators/web/lib/news-pipeline');
+const { resolveArticle, sanitizeImageUrl } = require('../generators/web/lib/news-pipeline');
 
 const VALID = new Set(['해상', '항공', '철도', '무역', '물류']);
 const SOURCE_RULES = [
@@ -71,18 +71,19 @@ async function main() {
   for (const row of rows) {
     const [inferredCategory, section] = infer(row);
     const patch = {};
+    const validImageUrl = sanitizeImageUrl(row.image_url);
     if (!VALID.has(row.category) || (row.category === '물류' && inferredCategory === '무역')) {
       patch.category = inferredCategory;
     }
     if ((!row.tags || row.tags.length === 0) && section) patch.tags = [section];
     if (!row.content?.trim() && row.agent_type == null) patch.agent_type = 'external';
     if (!row.content?.trim() && row.slug) patch.slug = null;
-    if (row.image_url && !row.image_source) {
-      patch.image_source = row.image_url.includes('unsplash') ? 'unsplash' : 'original';
-      patch.image_credit = row.image_url.includes('unsplash') ? 'Photo: Unsplash' : row.source;
+    if (validImageUrl && !row.image_source) {
+      patch.image_source = validImageUrl.includes('unsplash') ? 'unsplash' : 'original';
+      patch.image_credit = validImageUrl.includes('unsplash') ? 'Photo: Unsplash' : row.source;
     }
 
-    if (withImages && !row.image_url && (!internalImages || row.slug)) {
+    if (withImages && !validImageUrl && (!internalImages || row.slug)) {
       const asset = await resolveArticle(row.url, {
         source: row.source,
         keyword: `${section} ${row.source}`,
@@ -92,7 +93,15 @@ async function main() {
         patch.image_source = asset.imageSource;
         patch.image_credit = asset.imageCredit;
         stats.images[asset.imageSource]++;
+      } else if (row.image_url) {
+        patch.image_url = null;
+        patch.image_source = null;
+        patch.image_credit = null;
       }
+    } else if (row.image_url && !validImageUrl) {
+      patch.image_url = null;
+      patch.image_source = null;
+      patch.image_credit = null;
     }
 
     if (Object.keys(patch).length === 0) continue;
