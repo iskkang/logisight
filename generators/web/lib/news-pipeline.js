@@ -102,6 +102,27 @@ async function fetchUnsplash(keyword) {
   }
 }
 
+async function fetchUnsplashFallback({ keyword, title, source } = {}) {
+  const queries = [
+    [keyword, title].filter(Boolean).join(' '),
+    keyword,
+    title,
+    source,
+    'global logistics cargo supply chain',
+  ]
+    .map((value) => String(value || '').replace(/\s+/g, ' ').trim())
+    .filter(Boolean);
+  const seen = new Set();
+  for (const query of queries) {
+    const key = query.toLocaleLowerCase('en-US');
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const image = await fetchUnsplash(query);
+    if (image) return image;
+  }
+  return null;
+}
+
 async function resolveArticle(url, { source, keyword, title } = {}) {
   let html = '';
   let extracted = null;
@@ -140,7 +161,7 @@ async function resolveArticle(url, { source, keyword, title } = {}) {
     };
   }
 
-  const unsplash = await fetchUnsplash(`${keyword || ''} ${title || ''}`.trim());
+  const unsplash = await fetchUnsplashFallback({ keyword, title, source });
   return {
     imageUrl: unsplash?.imageUrl || null,
     imageSource: unsplash?.imageSource || null,
@@ -150,22 +171,24 @@ async function resolveArticle(url, { source, keyword, title } = {}) {
 }
 
 function buildMainContent(main) {
-  return [
-    main.what && `## 현상\n\n${main.what}`,
-    main.why_now && `## 원인과 배경\n\n${main.why_now}`,
-    main.checkpoint && `## 한국 화주·포워더 영향\n\n${main.checkpoint}`,
-  ].filter(Boolean).join('\n\n');
+  return [main.what, main.why_now, main.checkpoint]
+    .map((value) => String(value || '').trim())
+    .filter(Boolean)
+    .join('\n\n');
 }
 
 async function generateKoreanAnalysis(callDeepSeek, articleText, context) {
   if (!articleText || articleText.length < 150 || !process.env.DEEPSEEK_API_KEY) return null;
   const message = await callDeepSeek({
-    max_tokens: 900,
+    max_tokens: 1200,
     messages: [{
       role: 'user',
-      content: `아래 원문 기사에서 확인되는 사실만 사용해 한국어 요약·분석 본문을 작성하라.
+      content: `아래 원문 기사에서 확인되는 사실만 사용해 한국어 기사 본문을 작성하라.
 원문 전체 번역이나 장문 복제는 금지한다. 출처에 없는 수치나 사실을 만들지 마라.
-반드시 "## 현상", "## 원인과 배경", "## 한국 화주·포워더 영향" 세 구역으로 작성하고, 제목·부제·이미지·credit·출처 문장은 넣지 마라.
+KSG·카고뉴스 스타일의 전문기자 문체로 5~7개 문단, 600~1,000자 안팎의 자연스러운 산문으로 작성하라.
+첫 문단은 핵심 사실을 바로 제시하고, 중간 문단은 배경과 원인을 자연스럽게 연결하며, 마지막 문단은 한국 화주·포워더 관점의 실무 영향을 녹여 쓴다.
+"현상", "원인과 배경", "한국 화주·포워더 영향" 같은 라벨형 소제목이나 H2 구획을 쓰지 마라.
+제목·부제·이미지·credit·중복 출처 문장은 넣지 마라.
 
 기사 맥락: ${context}
 
@@ -189,7 +212,10 @@ function normalizeMarkdownBody(markdown, { title, summary, imageUrl, imageCredit
   if (imageCredit) {
     body = body.replace(new RegExp(`\\*?${imageCredit.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\*?\\s*`, 'gi'), '');
   }
-  return body.replace(/\n{3,}/g, '\n\n').trim();
+  return body
+    .replace(/^##\s*(현상|원인과 배경|한국 화주[·ㆍ\-\s]*포워더 영향)\s*$/gim, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 module.exports = {

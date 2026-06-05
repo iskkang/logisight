@@ -71,12 +71,17 @@ async function publishMain(curated) {
     title: main.title_ko,
   });
   recordImage(asset);
+  const content = await generateKoreanAnalysis(
+    callDeepSeek,
+    asset.articleText,
+    `${main.source} / ${main.title_ko}`,
+  );
 
   const date = curated.date || TODAY;
   const row = {
     title: main.title_ko,
     summary: main.what || null,
-    content: buildMainContent(main) || null,
+    content: content || buildMainContent(main) || null,
     url: main.url,
     source: main.source,
     category: categoryFor(section),

@@ -6,7 +6,13 @@ globalThis.WebSocket = ws;
 require('dotenv').config({ path: path.resolve(__dirname, '../.env.local') });
 
 const { createClient } = require('@supabase/supabase-js');
-const { resolveArticle, sanitizeImageUrl } = require('../generators/web/lib/news-pipeline');
+const { callDeepSeek } = require('../generators/lib/deepseek');
+const {
+  generateKoreanAnalysis,
+  normalizeMarkdownBody,
+  resolveArticle,
+  sanitizeImageUrl,
+} = require('../generators/web/lib/news-pipeline');
 
 const VALID = new Set(['해상', '항공', '철도', '무역', '물류']);
 const SOURCE_RULES = [
@@ -55,16 +61,43 @@ function infer(row) {
   return ['물류', 'logistics'];
 }
 
+function makeSlug(date, title) {
+  return `${date}-${String(title || '')
+    .toLowerCase()
+    .replace(/[^\p{Script=Hangul}a-z0-9\s-]/gu, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .slice(0, 60)}`;
+}
+
+function needsStyleRewrite(content) {
+  const text = String(content || '').trim();
+  if (!text) return true;
+  if (/^##\s*(현상|원인과 배경|한국 화주[·ㆍ\-\s]*포워더 영향)\s*$/gim.test(text)) return true;
+  return text.length < 500;
+}
+
 async function main() {
   const internalImages = process.argv.includes('--internal-images');
   const withImages = internalImages || process.argv.includes('--images');
+  const rewriteContent = process.argv.includes('--rewrite-content');
+  const idsArg = process.argv.find((arg) => arg.startsWith('--ids='));
+  const ids = idsArg
+    ? idsArg
+        .slice('--ids='.length)
+        .split(',')
+        .map((value) => Number(value.trim()))
+        .filter(Number.isFinite)
+    : null;
   const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
     auth: { persistSession: false },
     realtime: { enabled: false },
   });
-  const { data: rows, error } = await supabase
+  let query = supabase
     .from('maritime_news')
-    .select('id,title,url,source,category,tags,content,slug,agent_type,image_url,image_source,image_credit');
+    .select('id,title,summary,url,source,category,tags,content,slug,agent_type,published_at,image_url,image_source,image_credit');
+  if (ids?.length) query = query.in('id', ids);
+  const { data: rows, error } = await query;
   if (error) throw error;
 
   const stats = { scanned: rows.length, updated: 0, categories: {}, images: { original: 0, unsplash: 0 } };
@@ -72,28 +105,64 @@ async function main() {
     const [inferredCategory, section] = infer(row);
     const patch = {};
     const validImageUrl = sanitizeImageUrl(row.image_url);
+    let articleAsset = null;
+    async function getArticleAsset() {
+      if (!articleAsset) {
+        articleAsset = await resolveArticle(row.url, {
+          source: row.source,
+          keyword: `${section} ${row.source || ''}`.trim(),
+          title: row.title,
+        });
+      }
+      return articleAsset;
+    }
+
     if (!VALID.has(row.category) || (row.category === '물류' && inferredCategory === '무역')) {
       patch.category = inferredCategory;
     }
     if ((!row.tags || row.tags.length === 0) && section) patch.tags = [section];
     if (!row.content?.trim() && row.agent_type == null) patch.agent_type = 'external';
     if (!row.content?.trim() && row.slug) patch.slug = null;
+    if (row.content?.trim()) {
+      const normalizedContent = normalizeMarkdownBody(row.content, {
+        title: row.title,
+        summary: row.summary,
+        imageUrl: validImageUrl,
+        imageCredit: row.image_credit,
+      });
+      if (normalizedContent !== row.content) patch.content = normalizedContent;
+    }
+    if (rewriteContent && needsStyleRewrite(row.content)) {
+      const asset = await getArticleAsset();
+      const generated = await generateKoreanAnalysis(
+        callDeepSeek,
+        asset.articleText,
+        `${row.source || ''} / ${row.title || ''}`,
+      );
+      if (generated && generated.length >= 300) {
+        patch.content = generated;
+        if (!row.slug) {
+          patch.slug = makeSlug(
+            (row.published_at || new Date().toISOString()).slice(0, 10),
+            row.title,
+          );
+        }
+        if (!row.agent_type || row.agent_type === 'external') patch.agent_type = 'brief';
+      }
+    }
     if (validImageUrl && !row.image_source) {
       patch.image_source = validImageUrl.includes('unsplash') ? 'unsplash' : 'original';
       patch.image_credit = validImageUrl.includes('unsplash') ? 'Photo: Unsplash' : row.source;
     }
 
-    if (withImages && !validImageUrl && (!internalImages || row.slug)) {
-      const asset = await resolveArticle(row.url, {
-        source: row.source,
-        keyword: `${section} ${row.source}`,
-      });
-      if (asset.imageUrl) {
+    if (withImages && (!validImageUrl || row.image_source === 'unsplash') && (!internalImages || row.slug)) {
+      const asset = await getArticleAsset();
+      if (asset.imageSource === 'original' || (!validImageUrl && asset.imageUrl)) {
         patch.image_url = asset.imageUrl;
         patch.image_source = asset.imageSource;
         patch.image_credit = asset.imageCredit;
         stats.images[asset.imageSource]++;
-      } else if (row.image_url) {
+      } else if (!validImageUrl && row.image_url) {
         patch.image_url = null;
         patch.image_source = null;
         patch.image_credit = null;

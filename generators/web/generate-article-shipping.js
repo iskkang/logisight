@@ -97,7 +97,7 @@ agent_type: "shipping"
 status: draft
 ---
 
-{기사 본문 — 현상, 원인 또는 배경, 한국 화주·포워더 영향의 3개 구역. H1·부제·이미지·이미지 credit·중복 출처 문장은 넣지 말 것. 원문 사실만 사용하고 원문 전체 번역·장문 복제 금지.}
+{기사 본문 — KSG·카고뉴스 스타일의 자연스러운 산문. H1·부제·이미지·이미지 credit·중복 출처 문장은 넣지 말 것. "현상", "원인과 배경", "한국 화주·포워더 영향" 같은 라벨형 구획 없이 원문 사실만 사용하고 원문 전체 번역·장문 복제 금지.}
 \`\`\``;
 
   const msg = await callDeepSeek({ max_tokens: 3000, system: systemPrompt, messages: [{ role: 'user', content: userPrompt }] });
