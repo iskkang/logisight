@@ -1,6 +1,7 @@
 // collectors/shipping_indices.ts
 // 컨테이너 운임 지수 수집기 — fetch 기반 (Playwright 미사용)
-// 대상: BDI (stooq), WCI (Drewry), FBX (Freightos), SCFI/KCCI/CCFI (dashboard-data API)
+// 대상: WCI (Drewry, 주간), FBX (Freightos, 주간), SCFI/KCCI/CCFI (dashboard-data API)
+// BDI는 freight_index_excel(oneksa)가 담당 — stooq는 봇 차단으로 사용 불가
 
 import { rateLimited } from './utils/rate_limiter';
 import { snapshotWriter } from './utils/snapshot_writer';
@@ -8,7 +9,8 @@ import { dbUpsert } from './utils/supabase_writer';
 import type { CollectorResult } from './types';
 
 interface IndexData {
-  name: string;
+  code: string;            // freight_indices.index_code 그대로 (예: 'WCI', 'WCI_SHA_LAX')
+  name: string;            // 스냅샷용 표시명
   value: number | null;
   change_pct: number | null;
   date: string;
@@ -21,6 +23,9 @@ interface IndexData {
 const TODAY = new Date().toISOString().slice(0, 10);
 
 const DASHBOARD_URL = 'https://zidkckbabtajpgkhxmfm.supabase.co/functions/v1/dashboard-data';
+// 공개 anon key (role: anon — 프론트엔드 번들과 동일하게 공개 가능). env 우선, 미설정 시 fallback.
+const DASHBOARD_ANON_KEY_FALLBACK =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppZGtja2JhYnRhanBna2h4bWZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MzAyMjMsImV4cCI6MjA5MzEwNjIyM30.1Q0S_HrqUPCo6TH5Yym753mnW4xVYHzLRl1nBqG14KU';
 
 // Converts any date string to the Monday of its ISO week (YYYY-MM-DD)
 function toMonday(dateStr: string): string {
@@ -31,35 +36,23 @@ function toMonday(dateStr: string): string {
   return d.toISOString().slice(0, 10);
 }
 
-// ── BDI (Baltic Dry Index) — stooq.com 무료 CSV ─────────────────
-async function fetchBDI(): Promise<IndexData[]> {
-  const url = 'https://stooq.com/q/l/?s=^bdi&f=sd2t2ohlcv&e=csv';
-  const res = await fetch(url, {
-    headers: { 'User-Agent': 'Logisight/1.0' },
-    signal: AbortSignal.timeout(10000),
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const csv = await res.text();
-  // Format: Symbol,Date,Open,High,Low,Close,Volume
-  //         ^BDI,2026-05-23,1234.00,...,1245.00,0
-  const lines = csv.trim().split('\n');
-  if (lines.length < 2) throw new Error('BDI CSV: too short');
-  const parts = lines[1].split(',');
-  const dateStr = parts[1]?.trim();
-  const close   = parts[5]?.trim();
-  if (!close || close === 'N/D' || !dateStr) throw new Error('BDI: N/D or missing');
-  return [{
-    name: 'BDI_종합',
-    value: parseFloat(close),
-    change_pct: null,
-    date: dateStr,
-    unit: 'point',
-    source: 'stooq.com',
-    source_url: 'https://stooq.com/q/?s=^bdi',
-  }];
-}
+// ── WCI (Drewry) — 무료 공개 주간 헤드라인 (목요일 발표) ────────────
+// Drewry 페이지 본문 예:
+//   "Our detailed assessment for Thursday, 04 Jun 2026 The Drewry World Container Index (WCI) ...
+//    surged 23% to $3,433 per 40ft container ... Shanghai to Los Angeles rising 31% to $4,565 ..."
+const WCI_LANES: Array<{ phrase: string; code: string; name: string }> = [
+  { phrase: 'Shanghai to Rotterdam',   code: 'WCI_SHA_RTM', name: 'WCI 상하이-로테르담' },
+  { phrase: 'Shanghai to Genoa',       code: 'WCI_SHA_GOA', name: 'WCI 상하이-제노바' },
+  { phrase: 'Shanghai to Los Angeles', code: 'WCI_SHA_LAX', name: 'WCI 상하이-로스앤젤레스' },
+  { phrase: 'Shanghai to New York',    code: 'WCI_SHA_NYC', name: 'WCI 상하이-뉴욕' },
+];
+const MONTHS: Record<string, string> = {
+  jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
+  jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12',
+};
+const WCI_UP = /surg|jump|ros|rise|risen|rising|clim|increas|gain|grew|grow|up\b/i;
+const WCI_DOWN = /fell|fall|drop|declin|decreas|slip|eas|sank|sink|down\b|lower/i;
 
-// ── WCI (Drewry) — 무료 공개 헤드라인 ────────────────────────────
 async function fetchWCI(): Promise<IndexData[]> {
   const url = 'https://www.drewry.co.uk/supply-chain-advisors/supply-chain-expertise/world-container-index-assessed-by-drewry';
   const res = await fetch(url, {
@@ -72,69 +65,103 @@ async function fetchWCI(): Promise<IndexData[]> {
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const html = await res.text();
+  // 태그/스크립트 제거 후 평문에서 파싱 (마크업 변동에 강함)
+  const text = html
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
-  // Drewry HTML format: "$2,711.77 per FEU" (not "/FEU")
-  // WCI_Index_20241.png 같은 이미지 파일명을 잘못 잡지 않도록 per/slash FEU만 허용
-  const valuePats = [
-    /\$\s*([\d,]+(?:\.\d+)?)\s+per\s+(?:FEU|40')/i,  // $2,711.77 per FEU
-    /\$\s*([\d,]+(?:\.\d+)?)\s*\/\s*FEU/i,            // $2,712/FEU (슬래시형)
-    /composite[^<$]{0,120}\$([\d,]+(?:\.\d+)?)/i,     // composite ... $2,712
-    /"composite"\s*:\s*([\d.]+)/i,                     // JSON "composite": 2711.77
-  ];
-  const changePats = [
-    /([+-]?\d+(?:\.\d+)?)\s*%\s*w[\s/]?w/i,           // +3.1% w/w
-    /([+-]?\d+(?:\.\d+)?)\s*%\s*week/i,
-    /week[^<$]{0,60}?([+-]?\d+(?:\.\d+)?)\s*%/i,
-  ];
+  // 발표일: "assessment for Thursday, 04 Jun 2026" → 2026-06-04
+  let date = TODAY;
+  const dm = text.match(/assessment for\s+\w+,\s+(\d{1,2})\s+([A-Za-z]{3,})\s+(\d{4})/i);
+  if (dm) {
+    const mm = MONTHS[dm[2].slice(0, 3).toLowerCase()];
+    if (mm) date = `${dm[3]}-${mm}-${dm[1].padStart(2, '0')}`;
+  }
 
-  let value: number | null = null;
+  // 종합: "$3,433 per 40ft" (Drewry는 FEU 대신 "40ft container" 표기)
+  const compM = text.match(/\$\s*([\d,]+(?:\.\d+)?)\s*per\s*40\s*ft/i);
+  const composite = compM ? parseFloat(compM[1].replace(/,/g, '')) : null;
+
+  // 종합 변화율: "(WCI) ... surged 23% to $3,433" — 동사로 부호 결정
   let change_pct: number | null = null;
-
-  for (const p of valuePats) {
-    const m = html.match(p);
-    if (m) { value = parseFloat(m[1].replace(/,/g, '')); break; }
-  }
-  for (const p of changePats) {
-    const m = html.match(p);
-    if (m) { change_pct = parseFloat(m[1]); break; }
+  const chgM = text.match(
+    /World Container Index[\s\S]{0,120}?\b([A-Za-z]+)\s+(\d+(?:\.\d+)?)\s*%\s+to\s+\$/i
+  );
+  if (chgM) {
+    const mag = parseFloat(chgM[2]);
+    change_pct = WCI_DOWN.test(chgM[1]) ? -mag : (WCI_UP.test(chgM[1]) ? mag : mag);
   }
 
-  if (value === null) {
-    console.log('[WCI] 파싱 실패 — HTML 앞 500자:', html.slice(0, 500));
+  if (composite === null) {
+    console.log('[WCI] 종합 파싱 실패 — 평문 앞 400자:', text.slice(0, 400));
   }
 
-  return [{
-    name: 'WCI_종합',
-    value,
-    change_pct,
-    date: TODAY,
-    unit: '$/FEU',
-    source: 'Drewry WCI',
-    source_url: url,
+  const rows: IndexData[] = [{
+    code: 'WCI', name: 'WCI_종합', value: composite, change_pct,
+    date, unit: '$/40ft', source: 'Drewry WCI', source_url: url,
   }];
+
+  // 레인별: "Shanghai to Los Angeles rising 31% to $4,565"
+  for (const lane of WCI_LANES) {
+    const re = new RegExp(lane.phrase.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&') + '[^$]{0,80}\\$\\s*([\\d,]+(?:\\.\\d+)?)', 'i');
+    const m = text.match(re);
+    if (!m) continue;
+    rows.push({
+      code: lane.code, name: lane.name,
+      value: parseFloat(m[1].replace(/,/g, '')),
+      change_pct: null, date, unit: '$/40ft',
+      source: 'Drewry WCI', source_url: url,
+    });
+  }
+
+  return rows;
 }
 
-// ── FBX (Freightos) — 공개 데이터 ────────────────────────────────
+// ── FBX (Freightos) — 홈페이지에 임베드된 글로벌 시계열 JSON ────────
+// 임베드 형식: {"ticker":"FBX","indexDate":"2026-05-29","value":2234.75}
+// 시계열을 단일 진실원천으로 사용: 최신 점(값·날짜)과 직전 점으로 WoW 변화율을 자체 계산.
+//   (헤드라인 위젯은 최신 점보다 한 주 늦게 갱신될 수 있어 신뢰하지 않음)
+// 값이 안 잡히면 value=null 로 반환 → persist 가 건너뛰어 빈 행을 만들지 않는다.
 async function fetchFBX(): Promise<IndexData[]> {
   const url = 'https://fbx.freightos.com/';
+  const empty: IndexData[] = [{
+    code: 'FBX', name: 'FBX_글로벌', value: null, change_pct: null,
+    date: TODAY, unit: '$/FEU', source: 'Freightos FBX', source_url: url,
+  }];
   try {
     const res = await fetch(url, {
-      headers: { 'User-Agent': 'Logisight/1.0 (logisight.mtlship.com; bot)' },
-      signal: AbortSignal.timeout(10000),
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Logisight/1.0; +https://logisight.mtlship.com)' },
+      signal: AbortSignal.timeout(12000),
     });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const html = await res.text();
-    const match = html.match(/FBX.*?([\d,]+(?:\.\d+)?)/i);
+
+    // 글로벌 FBX 시계열(날짜 오름차순 정렬)
+    const pts = [...html.matchAll(/\{"ticker":"FBX","indexDate":"(\d{4}-\d{2}-\d{2})","value":([\d.]+)\}/g)]
+      .map(m => ({ date: m[1], value: parseFloat(m[2]) }))
+      .filter(p => Number.isFinite(p.value))
+      .sort((a, b) => (a.date < b.date ? -1 : 1));
+    if (pts.length === 0) {
+      console.log('[FBX] 시계열 파싱 실패 — 빈 값 반환');
+      return empty;
+    }
+    const latest = pts[pts.length - 1];
+    const prev = pts.length >= 2 ? pts[pts.length - 2] : null;
+    const change_pct = prev && prev.value
+      ? Math.round((latest.value / prev.value - 1) * 10000) / 100  // 소수 2자리 %
+      : null;
+
     return [{
-      name: 'FBX_글로벌',
-      value: match ? parseFloat(match[1].replace(/,/g, '')) : null,
-      change_pct: null,
-      date: TODAY,
-      unit: '$/FEU',
-      source: 'Freightos FBX',
-      source_url: url,
+      code: 'FBX', name: 'FBX_글로벌', value: latest.value, change_pct,
+      date: latest.date, unit: '$/FEU', source: 'Freightos FBX', source_url: url,
     }];
-  } catch {
-    return [{ name: 'FBX_글로벌', value: null, change_pct: null, date: TODAY, unit: '$/FEU', source: 'Freightos FBX', source_url: url }];
+  } catch (e) {
+    console.log(`[FBX] 수집 실패: ${(e as Error).message}`);
+    return empty;
   }
 }
 
@@ -148,21 +175,7 @@ interface DashboardResponse {
 }
 
 async function fetchDashboardData(): Promise<IndexData[]> {
-  const key = process.env.DASHBOARD_ANON_KEY;
-  if (!key) {
-    console.log('⚠️ DASHBOARD_ANON_KEY 미설정 — SCFI/KCCI/CCFI 수집 스킵');
-    return [
-      { name: 'SCFI_종합', value: null, change_pct: null, date: TODAY, unit: 'point',
-        source: 'Shanghai Shipping Exchange', source_url: 'https://en.sse.net.cn/indices/scfinew.jsp',
-        note: 'DASHBOARD_ANON_KEY 미설정' },
-      { name: 'KCCI_종합', value: null, change_pct: null, date: TODAY, unit: 'point',
-        source: 'KOBC', source_url: 'https://www.kobc.or.kr/index/kcci',
-        note: 'DASHBOARD_ANON_KEY 미설정' },
-      { name: 'CCFI_종합', value: null, change_pct: null, date: TODAY, unit: 'point',
-        source: 'Shanghai Shipping Exchange', source_url: 'https://en.sse.net.cn/indices/ccfinew.jsp',
-        note: 'DASHBOARD_ANON_KEY 미설정' },
-    ];
-  }
+  const key = process.env.DASHBOARD_ANON_KEY || DASHBOARD_ANON_KEY_FALLBACK;
   const res = await fetch(DASHBOARD_URL, {
     headers: { Authorization: `Bearer ${key}` },
     signal: AbortSignal.timeout(10000),
@@ -172,7 +185,7 @@ async function fetchDashboardData(): Promise<IndexData[]> {
 
   return [
     {
-      name: 'SCFI_종합',
+      code: 'SCFI', name: 'SCFI_종합',
       value: data.scfi?.current ?? null,
       change_pct: data.scfi?.weeklyGrowth ?? null,
       date: data.scfi?.date ?? TODAY,
@@ -181,7 +194,7 @@ async function fetchDashboardData(): Promise<IndexData[]> {
       source_url: 'https://en.sse.net.cn/indices/scfinew.jsp',
     },
     {
-      name: 'KCCI_종합',
+      code: 'KCCI', name: 'KCCI_종합',
       value: data.kcci?.current ?? null,
       change_pct: data.kcci?.weeklyGrowth ?? null,
       date: data.kcci?.date ?? TODAY,
@@ -190,7 +203,7 @@ async function fetchDashboardData(): Promise<IndexData[]> {
       source_url: 'https://www.kobc.or.kr/index/kcci',
     },
     {
-      name: 'CCFI_종합',
+      code: 'CCFI', name: 'CCFI_종합',
       value: data.ccfi?.current ?? null,
       change_pct: data.ccfi?.weeklyGrowth ?? null,
       date: data.ccfi?.date ?? TODAY,
@@ -206,13 +219,13 @@ async function persistFreightIndices(result: CollectorResult): Promise<void> {
   const rows: Record<string, unknown>[] = [];
   for (const d of result.data) {
     const v = d.data_value as IndexData;
-    if (v.value == null) continue;                     // null → 저장 안 함
-    const code = v.name.split('_')[0];                 // 'BDI_종합' → 'BDI'
+    // null/NaN/Infinity → 저장 안 함 (빈 행·쓰레기 값 방지)
+    if (v.value == null || !Number.isFinite(v.value)) continue;
     rows.push({
-      index_code: code,
+      index_code: v.code,                              // 명시적 코드 ('WCI', 'WCI_SHA_LAX' 등)
       value:      v.value,
       week_date:  toMonday(v.date),
-      change_pct: v.change_pct ?? null,
+      change_pct: Number.isFinite(v.change_pct as number) ? v.change_pct : null,
       source:     v.source,
       source_url: v.source_url ?? null,
     });
@@ -234,9 +247,9 @@ export async function collect(): Promise<CollectorResult> {
   const result: CollectorResult = { section: 'shipping', data: [] };
 
   // SCFI + KCCI + CCFI — dashboard-data API (병렬 중 첫 번째)
-  const [dashRes, bdiRes, wciRes, fbxRes] = await Promise.allSettled([
+  // BDI는 freight_index_excel(oneksa)가 담당하므로 여기서 수집하지 않음
+  const [dashRes, wciRes, fbxRes] = await Promise.allSettled([
     rateLimited(DASHBOARD_URL, () => fetchDashboardData()),
-    rateLimited('https://stooq.com',          () => fetchBDI()),
     rateLimited('https://www.drewry.co.uk',   () => fetchWCI()),
     rateLimited('https://fbx.freightos.com',  () => fetchFBX()),
   ]);
@@ -248,7 +261,7 @@ export async function collect(): Promise<CollectorResult> {
     for (const name of ['SCFI_종합', 'KCCI_종합', 'CCFI_종합']) {
       result.data.push({
         data_type: 'index', data_key: name,
-        data_value: { name, value: null, change_pct: null, date: TODAY, unit: 'point', source: 'dashboard-data', source_url: DASHBOARD_URL },
+        data_value: { code: name.split('_')[0], name, value: null, change_pct: null, date: TODAY, unit: 'point', source: 'dashboard-data', source_url: DASHBOARD_URL },
         source: 'dashboard-data', source_url: DASHBOARD_URL,
         is_complete: false, error_message: (dashRes.reason as Error).message,
       });
@@ -264,8 +277,8 @@ export async function collect(): Promise<CollectorResult> {
     }
   }
 
-  // BDI + WCI + FBX 결과 처리
-  for (const [label, res] of [['BDI', bdiRes], ['WCI', wciRes], ['FBX', fbxRes]] as const) {
+  // WCI + FBX 결과 처리
+  for (const [label, res] of [['WCI', wciRes], ['FBX', fbxRes]] as const) {
     if (res.status === 'rejected') {
       console.log(`⚠️ ${label} 실패: ${(res.reason as Error).message}`);
       continue;

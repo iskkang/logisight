@@ -34,9 +34,10 @@ const GROUPS = [
   {
     name: '운임 지수',
     collectors: [
-      { name: 'shipping_indices', fn: collectShipping },
-      { name: 'bunker',           fn: collectBunker },
-      { name: 'air_indices',      fn: collectAir },
+      { name: 'shipping_indices',    fn: collectShipping },     // WCI · FBX · SCFI · KCCI · CCFI
+      { name: 'freight_index_excel', fn: collectFreightIndexExcel }, // oneksa: BDI · SCFI 레인 · HSFO · VLSFO (주간)
+      { name: 'bunker',              fn: collectBunker },
+      { name: 'air_indices',         fn: collectAir },
     ],
   },
   {

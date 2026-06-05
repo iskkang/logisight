@@ -1,11 +1,13 @@
 # .github/workflows/market-collectors.yml
 # 운임 지수 · 벙커 가격 · 글로벌 뉴스 수집
-# 스케줄: 매주 월요일 02:00 UTC (11:00 KST)
+# 스케줄: 월요일 02:00 UTC (11:00 KST) + 금요일 06:00 UTC (15:00 KST)
+#   - 금요일 실행: 목요일 발표 WCI, 금요일 발표 SCFI를 발표 +1일 내 적재
 name: Logisight Market Collectors
 
 on:
   schedule:
     - cron: '0 2 * * 1'   # 월요일 02:00 UTC
+    - cron: '0 6 * * 5'   # 금요일 06:00 UTC (WCI 목/SCFI 금 발표 직후)
   workflow_dispatch:        # 수동 실행 허용
 
 jobs:
@@ -27,13 +29,20 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Collect market data (shipping_indices · bunker)
+      - name: Collect market data (shipping_indices · oneksa · bunker)
         run: npm run collect:shipping
         env:
           SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           DASHBOARD_ANON_KEY:        ${{ secrets.DASHBOARD_ANON_KEY }}
           KOSIS_API_KEY:             ${{ secrets.KOSIS_API_KEY }}
+
+      - name: Check freight index freshness (non-blocking)
+        continue-on-error: true
+        run: node scripts/check-freight-freshness.mjs
+        env:
+          SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
       - name: Collect news (news_global · news_korea · news_rail · news_industry)
         run: npm run collect:news
