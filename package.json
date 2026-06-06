@@ -32,6 +32,7 @@
     "publish:curated": "node generators/web/publish-curated-to-site.js",
     "publish:daily-cards": "node generators/web/publish-daily-cards-to-site.js",
     "generate:forecasts": "node generators/web/forecast/generate.js",
+    "adjudicate:forecasts": "node generators/web/forecast/adjudicate.js",
     "test:forecast": "node --test generators/web/forecast/",
     "forecast:smoke": "node generators/web/forecast/smoke-assemble.js",
     "backfill:news": "node scripts/backfill-maritime-news.js",
