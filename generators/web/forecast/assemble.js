@@ -5,6 +5,7 @@ const { fetchBlankSailing } = require('./inputs/blank-sailing');
 const { fetchFuel } = require('./inputs/fuel');
 const { fetchDemand } = require('./inputs/demand');
 const { regionOf, fetchRegionDemand } = require('./inputs/demand-region');
+const { fetchDiversion } = require('./inputs/diversion');
 const { seasonalityFlag } = require('./calendar');
 const { spreadContextEvent, fetchSpread } = require('./inputs/spread');
 const { buildContextHeadlines } = require('./inputs/context-headlines');
@@ -56,12 +57,26 @@ async function assembleInput(supabase, target, { asof = new Date(), shared } = {
   const rate_series = await fetchRateSeries(supabase, target, asof);
   // 존재 여부로 판정 — fetchFuel 등이 정상적으로 null(결측)을 반환해도 재조회하지 않도록(?? 금지).
   const has = (k) => shared != null && k in shared;
-  const supply = has('supply') ? shared.supply : { blank_sailing: await fetchBlankSailing(supabase, asof) };
+  let supply = has('supply') ? shared.supply : { blank_sailing: await fetchBlankSailing(supabase, asof) };
   const cost = has('cost') ? shared.cost : await fetchFuel(supabase, asof);
   let demand = has('demand') ? shared.demand : await fetchDemand(supabase, asof);
+  const region = regionOf(target);
+
+  // Red Sea 우회는 asia_europe(EU) 노선 유효 선복에만 영향(H5) → effective_capacity_chg_pct 주입.
+  // 테이블 비어있으면 fetchDiversion이 null → 결측(더미 금지). shared.supply는 안 건드리고 복사.
+  if (region === 'EU') {
+    const div = has('diversion') ? shared.diversion : await fetchDiversion(supabase, asof);
+    if (div && div.effective_capacity_chg_pct != null && supply.blank_sailing) {
+      supply = {
+        ...supply,
+        blank_sailing: { ...supply.blank_sailing, effective_capacity_chg_pct: div.effective_capacity_chg_pct },
+        diversion: div,
+      };
+    }
+  }
+
   // 타깃 권역이 판별되고 관세청 잠정 권역 수출 모멘텀이 있으면 전국 모멘텀 대신 권역치 사용.
   // seasonality_flag·frontloading_flag는 권역 무관(달력·정책)이라 기존 값 유지.
-  const region = regionOf(target);
   if (region) {
     // 권역 판별 시 seasonality는 권역별 구간으로 override(미주 7~10 peak 등). 모멘텀은 잠정치 있으면 교체.
     demand = { ...demand, seasonality_flag: seasonalityFlag(asof, region), region };
@@ -122,6 +137,7 @@ async function buildShared(supabase, asof = new Date()) {
     demand: await fetchDemand(supabase, asof),
     spread: await fetchSpread(supabase),
     news: await fetchNews14d(supabase, asof),
+    diversion: await fetchDiversion(supabase, asof),
   };
 }
 

@@ -13,6 +13,8 @@
 //   - scorer는 fuel_mom_pct 키를 기대하지만, 항공 cost 팩터는 별도 score 확장 시까지 참고용.
 //   - 기록: fuel_wow_pct(WoW%), price_usd_bbl, as_of, span_label='weekly'.
 
+const { buildFuel } = require('./fuel');
+
 const IATA_URL = 'https://www.iata.org/en/publications/economics/fuel-monitor/';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 const SOURCE_ATTRIBUTION = 'IATA / S&P Global Platts Jet Fuel Price Monitor';
@@ -105,30 +107,41 @@ async function persistIataReading(supabase) {
   return { ok: true, as_of, price_usd_bbl: h.price_usd_bbl, fuel_wow_pct: h.fuel_wow_pct };
 }
 
-// cost 팩터용 조립: iata_jet_fuel_weekly 최신 2건 → {fuel_wow_pct, price_usd_bbl, span_label, source}
-// 항공(air) mode 전용. MoM으로 위장하지 않음.
-function buildIataFuel(rows) {
+// 항공 cost 조립(결정 2): 새 의미체계 없이 fuel.js 누적 패턴 재사용.
+// 주간 적재분이 4~5주 쌓여 ≥21일 구간이 되면 fuel_mom_pct 산출(≥28일 정상 / 21~27일 approx / 미만 결측).
+// 그 전까지 fuel_mom_pct=null(항공 cost 결측). 현재 WoW는 채점 미반영 — note(서사·참고)로만, span 명시.
+function buildIataFuel(rows, asof = new Date()) {
   const valid = (rows || [])
     .filter((r) => r.price_usd_bbl != null)
     .sort((a, b) => (a.as_of < b.as_of ? 1 : -1));
   if (!valid.length) return null;
   const latest = valid[0];
+  const mom = buildFuel(valid.map((r) => ({ price_usd: r.price_usd_bbl, obs_date: r.as_of })), asof);
+  const wowNote =
+    latest.fuel_wow_pct != null
+      ? `IATA 제트유 WoW ${latest.fuel_wow_pct > 0 ? '+' : ''}${latest.fuel_wow_pct}% ($${latest.price_usd_bbl}/bbl, ${latest.span_label || 'weekly'})`
+      : null;
   return {
+    fuel_mom_pct: mom ? mom.fuel_mom_pct : null, // 4~5주 누적 전엔 결측(채점 미반영)
+    fuel_obs_lag_weeks: mom ? mom.fuel_obs_lag_weeks : null,
+    obs_span_days: mom ? mom.obs_span_days : null,
+    approx: mom ? !!mom.approx : false,
     price_usd_bbl: latest.price_usd_bbl,
     fuel_wow_pct: latest.fuel_wow_pct ?? null,
     span_label: latest.span_label || 'weekly',
     source: latest.source || SOURCE_ATTRIBUTION,
     as_of: latest.as_of,
+    note: wowNote, // 채점 아님 — 서사·참고용
   };
 }
 
-async function fetchIataFuel(supabase) {
+async function fetchIataFuel(supabase, asof = new Date()) {
   const { data } = await supabase
     .from('iata_jet_fuel_weekly')
     .select('as_of,price_usd_bbl,fuel_wow_pct,span_label,source')
     .order('as_of', { ascending: false })
-    .limit(2);
-  return buildIataFuel(data || []);
+    .limit(8);
+  return buildIataFuel(data || [], asof);
 }
 
 module.exports = {

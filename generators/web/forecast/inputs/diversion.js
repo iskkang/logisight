@@ -6,45 +6,40 @@
 //   우회 확대 = 유효 선복 −10~15% 효과 → effective_capacity_chg_pct.
 // 참고 문헌: 케이프 루트 추가 항해일 ≈ 10~14일 → 유효 선복 −10~15% (SSOT 밴드).
 
-// cape_share_pct(케이프 경유 선복 비율, 0~100) → effective_capacity_chg_pct 산출.
-// 기준선: 수에즈 완전 정상화 시 cape_share_pct ≈ 20%(역사적 평시 기준).
-// 우회 초과분(cape_share_pct - 20)이 유효 선복 감소로 전환.
-// 10% 초과분당 −1.5% 유효 선복 감소(SSOT 밴드 −10~15% / 우회 초과 ~67~80% 기반).
-// 케이프 비율 ≤ 20%: 정상화 → 선복 영향 없음(0). 케이프 비율 = 100%: 완전 우회 → −12%(밴드 중앙값).
-const NORMAL_CAPE_SHARE = 20; // % — 수에즈 평시 케이프 비율 기준선
-const SCALE_PCT_PER_EXCESS_10 = -1.5; // 10% 초과 케이프 비율당 유효 선복 변화(%)
+// 결정 1 공식: eff_cap_chg = COEF × Δcape_share(pt, 최근 2회분 변화).
+// 초기 계수(v1): 완전 우회(Δcape +100pt) ≈ −12%(H5 밴드 −10~15% 중앙). 분기 보정 대상.
+// Δ가 음수(우회 완화)면 양수(유효 선복 회복). 클램프 [−15, +15].
+const COEF_PER_CAPE_PT = -0.12;
 
-function capeToCapacityChg(cape_share_pct) {
-  if (cape_share_pct == null || !Number.isFinite(cape_share_pct)) return null;
-  const excess = cape_share_pct - NORMAL_CAPE_SHARE;
-  if (excess <= 0) return 0; // 정상화 → 영향 없음
-  // 선형 매핑, SSOT 밴드 −10~15% 클램프
-  const raw = (excess / 10) * SCALE_PCT_PER_EXCESS_10;
-  return Math.round(Math.max(-15, Math.min(0, raw)) * 10) / 10;
+function diversionToCapacityChg(deltaCapePt) {
+  if (deltaCapePt == null || !Number.isFinite(deltaCapePt)) return null;
+  const raw = COEF_PER_CAPE_PT * deltaCapePt;
+  return Math.round(Math.max(-15, Math.min(15, raw)) * 10) / 10;
 }
 
-// rows: red_sea_diversion 행. asof: Date.
-// 반환: {effective_capacity_chg_pct, source_type, cape_share_pct, as_of, signal_age_days, source} | null
+// rows: red_sea_diversion 행. asof: Date. Δ 산출에 최근 2건 필요.
+// 반환: {effective_capacity_chg_pct, delta_cape_pt, source_type, cape_share_pct, as_of, signal_age_days, source} | null
 function buildDiversion(rows, asof) {
   const valid = (rows || []).filter((r) => {
     if (r.cape_share_pct == null) return false;
     const t = new Date(`${r.as_of}T00:00:00Z`).getTime();
     return Number.isFinite(t) && t <= (asof ? asof.getTime() : Date.now());
   });
-  if (!valid.length) return null;
+  if (valid.length < 2) return null; // Δ(최근 2회분 변화) 불가 → 결측(더미 금지)
   const sorted = valid.sort((a, b) => new Date(b.as_of) - new Date(a.as_of));
   const latest = sorted[0];
+  const prev = sorted[1];
+  const delta = latest.cape_share_pct - prev.cape_share_pct;
   const t = new Date(`${latest.as_of}T00:00:00Z`).getTime();
   const asofMs = asof ? asof.getTime() : Date.now();
-  const signalAgeDays = Math.round((asofMs - t) / 86400000);
-  const cap = capeToCapacityChg(latest.cape_share_pct);
   return {
-    effective_capacity_chg_pct: cap,
+    effective_capacity_chg_pct: diversionToCapacityChg(delta),
+    delta_cape_pt: Math.round(delta * 10) / 10,
     source_type: 'admin_input',
     cape_share_pct: latest.cape_share_pct,
     suez_share_pct: latest.suez_share_pct ?? null,
     as_of: latest.as_of,
-    signal_age_days: signalAgeDays,
+    signal_age_days: Math.round((asofMs - t) / 86400000),
     source: latest.source || 'Drewry Red Sea Diversion Tracker (admin-input)',
     note: latest.note || null,
   };
@@ -60,4 +55,4 @@ async function fetchDiversion(supabase, asof = new Date()) {
   return buildDiversion(data || [], asof);
 }
 
-module.exports = { buildDiversion, fetchDiversion, capeToCapacityChg, NORMAL_CAPE_SHARE };
+module.exports = { buildDiversion, fetchDiversion, diversionToCapacityChg, COEF_PER_CAPE_PT };
