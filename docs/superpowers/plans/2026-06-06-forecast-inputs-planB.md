@@ -507,7 +507,7 @@ test('buildDemand: combines momentum + seasonality + frontloading', () => {
   ];
   const d = buildDemand({ totals, policies: [{ effective_date: '2026-07-01' }], asof });
   assert.equal(d.export_momentum_yoy_pct, 6);
-  assert.equal(d.seasonality_flag, 'none'); // June 5 → none (calendar)
+  assert.equal(d.seasonality_flag, 'peak_approaching'); // June → peak_approaching (calendar Task 1)
   assert.equal(d.frontloading_flag, true);
   assert.ok(['accelerating', 'stable', 'decelerating'].includes(d.momentum_trend));
 });
