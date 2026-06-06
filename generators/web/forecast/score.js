@@ -1,5 +1,5 @@
 'use strict';
-const { SUPPLY_SIGNAL_MAX_AGE_DAYS } = require('./config/forecast-model');
+const { SUPPLY_SIGNAL_MAX_AGE_DAYS, WEIGHTS, THRESHOLDS } = require('./config/forecast-model');
 
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
@@ -81,4 +81,49 @@ function scorePricing(p) {
   return 1; // 공지 존재, 관철률 불명
 }
 
-module.exports = { scoreMomentum, scoreSupply, scoreDemand, scoreCost, scorePricing, clamp };
+function round2(v) { return Math.round(v * 100) / 100; }
+
+// 결측 팩터(null)는 제외하고 가중치를 재분배(renormalize)한 가중합.
+function composite(scores, weights) {
+  let active = 0;
+  for (const f of Object.keys(weights)) if (scores[f] != null) active += weights[f];
+  if (active === 0) return null;
+  let sum = 0;
+  for (const f of Object.keys(weights)) {
+    if (scores[f] == null) continue;
+    sum += scores[f] * (weights[f] / active);
+  }
+  return round2(sum);
+}
+
+// composite → THRESHOLDS 버킷. 경계는 문서 그대로(flat = 개구간).
+function classify(c) {
+  if (c >= 0.8) return THRESHOLDS.upHigh;
+  if (c >= 0.4) return THRESHOLDS.upLean;
+  if (c > -0.4) return THRESHOLDS.flat;
+  if (c > -0.8) return THRESHOLDS.downLean;
+  return THRESHOLDS.downHigh;
+}
+
+function confidence(scores, weights) {
+  const factors = Object.keys(weights);
+  const present = factors.filter((f) => scores[f] != null);
+  const missing = factors.length - present.length;
+  const nonZero = present.map((f) => scores[f]).filter((v) => v !== 0);
+  const pos = nonZero.filter((v) => v > 0).length;
+  const neg = nonZero.filter((v) => v < 0).length;
+
+  if (missing >= 2) return 'low';
+  // 충돌 규칙 5: 3개 이상 부호 충돌
+  if (pos >= 1 && neg >= 1 && pos + neg >= 3) return 'medium';
+  // 취약한 상승: 공급 우위(+) & 수요 약화(-)
+  if (scores.supply != null && scores.supply >= 1 && scores.demand != null && scores.demand <= -1) return 'medium';
+  if (missing === 1) return 'medium';
+  if (present.length >= 4 && (pos === 0 || neg === 0)) return 'high';
+  return 'medium';
+}
+
+module.exports = {
+  scoreMomentum, scoreSupply, scoreDemand, scoreCost, scorePricing, clamp,
+  composite, classify, confidence, round2,
+};
