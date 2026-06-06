@@ -4,6 +4,7 @@ const { buildRateSeries } = require('./inputs/rate-series');
 const { fetchBlankSailing } = require('./inputs/blank-sailing');
 const { fetchFuel } = require('./inputs/fuel');
 const { fetchDemand } = require('./inputs/demand');
+const { regionOf, fetchRegionDemand } = require('./inputs/demand-region');
 const { horizonDate } = require('./targets');
 
 async function fetchRateSeries(supabase, target, asof) {
@@ -36,7 +37,16 @@ async function assembleInput(supabase, target, { asof = new Date(), shared } = {
   const has = (k) => shared != null && k in shared;
   const supply = has('supply') ? shared.supply : { blank_sailing: await fetchBlankSailing(supabase, asof) };
   const cost = has('cost') ? shared.cost : await fetchFuel(supabase, asof);
-  const demand = has('demand') ? shared.demand : await fetchDemand(supabase, asof);
+  let demand = has('demand') ? shared.demand : await fetchDemand(supabase, asof);
+  // 타깃 권역이 판별되고 관세청 잠정 권역 수출 모멘텀이 있으면 전국 모멘텀 대신 권역치 사용.
+  // seasonality_flag·frontloading_flag는 권역 무관(달력·정책)이라 기존 값 유지.
+  const region = regionOf(target);
+  if (region) {
+    const rd = await fetchRegionDemand(supabase, region, asof);
+    if (rd.export_momentum_yoy_pct != null) {
+      demand = { ...demand, export_momentum_yoy_pct: rd.export_momentum_yoy_pct, momentum_trend: rd.momentum_trend, region };
+    }
+  }
   return {
     metric_ref: target.metric_ref,
     label: target.label,

@@ -32,6 +32,7 @@ function fakeSupabase(captured) {
     const api = {
       select() { return api; },
       eq(col, val) { rows = rows.filter((r) => r[col] === val); return api; },
+      in(col, vals) { rows = rows.filter((r) => vals.includes(r[col])); return api; },
       gte(col, val) { rows = rows.filter((r) => String(r[col]) >= String(val)); return api; },
       order() { return api; },
       limit() { return Promise.resolve({ data: rows }); },
