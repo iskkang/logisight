@@ -1,5 +1,7 @@
 'use strict';
 // verdict + prose + input → forecasts 행(status='draft'). 순수 함수.
+const { buildWatchPoints } = require('./watch-points');
+
 const EDITOR_PLACEHOLDER = '[AI 초안 · 에디터 검수 필요 — 본문 작성]';
 
 function buildBasis(input) {
@@ -13,9 +15,10 @@ function buildBasis(input) {
   return b;
 }
 
-function mapVerdictToRow(input, verdict, prose) {
+function mapVerdictToRow(input, verdict, prose, asof = new Date()) {
   return {
     module: 'rates',
+    watch_points: buildWatchPoints(input, asof),
     metric_ref: input.metric_ref,
     cadence: input.cadence,
     horizon_date: input.horizon_date,

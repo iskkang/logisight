@@ -40,7 +40,7 @@ async function generateDrafts(supabase, callLLM, { asof = new Date() } = {}) {
     if (verdict.abstain) { res.abstained++; continue; }
     const prose = await narrate(callLLM, input, verdict, { news });
     if (prose.needs_editor) res.needsEditor++;
-    const row = mapVerdictToRow(input, verdict, prose);
+    const row = mapVerdictToRow(input, verdict, prose, asof);
 
     // (metric_ref, horizon_date, model_version) 기준 dedup — DB onConflict 인덱스에 의존하지 않고,
     // 이미 발행/판정된 행은 절대 덮어쓰지 않는다(불변성). 같은 키의 draft만 갱신.
