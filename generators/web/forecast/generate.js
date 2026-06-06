@@ -5,6 +5,8 @@
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config({ path: path.resolve(__dirname, '../../../.env.local') });
+// Node < 22: supabase-js RealtimeClient가 네이티브 WebSocket을 요구 → ws 폴리필(저장소 공통 패턴).
+if (typeof globalThis.WebSocket === 'undefined') { try { globalThis.WebSocket = require('ws'); } catch (_) {} }
 
 const { WEEKLY_TARGETS, fetchMonthlyTargets } = require('./targets');
 const { assembleInput, buildShared } = require('./assemble');
