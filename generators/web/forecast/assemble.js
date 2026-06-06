@@ -50,6 +50,7 @@ async function assembleInput(supabase, target, { asof = new Date(), shared } = {
       demand = { ...demand, export_momentum_yoy_pct: rd.export_momentum_yoy_pct, momentum_trend: rd.momentum_trend };
     }
   }
+  const data_freshness = buildDataFreshness({ rate_series, supply, cost, demand }, asof);
   return {
     metric_ref: target.metric_ref,
     label: target.label,
@@ -61,7 +62,26 @@ async function assembleInput(supabase, target, { asof = new Date(), shared } = {
     cost,
     demand,
     pricing_actions: null,
+    data_freshness,
   };
+}
+
+// 필드별 기준일·D-n(asof 기준 경과일) — 기존 조립 결과에서 파생.
+function buildDataFreshness(input, asof) {
+  const f = {};
+  const dateAgo = (d) => new Date(asof.getTime() - d * 86400000).toISOString().slice(0, 10);
+  const rs = input.rate_series;
+  if (rs && rs.asof_age_days != null) f.rate_series = { d_n: rs.asof_age_days, as_of: dateAgo(rs.asof_age_days) };
+  const bs = input.supply && input.supply.blank_sailing;
+  if (bs && bs.signal_age_days != null) f.blank_sailing = { d_n: bs.signal_age_days, as_of: dateAgo(bs.signal_age_days) };
+  if (input.cost && input.cost.fuel_obs_lag_weeks != null) {
+    const dn = Math.round(input.cost.fuel_obs_lag_weeks * 7);
+    f.cost = { d_n: dn, as_of: dateAgo(dn), span_days: input.cost.obs_span_days, approx: !!input.cost.approx };
+  }
+  if (input.demand && input.demand.export_momentum_yoy_pct != null) {
+    f.demand = { source: input.demand.region ? `관세청 잠정(${input.demand.region})` : '관세청 잠정', note: '10일 잠정 수출' };
+  }
+  return f;
 }
 
 // 공통 입력 1회 조립(여러 타깃 공유).
