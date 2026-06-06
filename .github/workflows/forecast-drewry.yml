@@ -1,0 +1,26 @@
+name: Forecast — Weekly Drewry Blank-Sailing Persist
+
+# 주간: Drewry Cancelled Sailings Tracker 헤드라인 → blank_sailings(region='Drewry East-West') 적재.
+# forecast supply tracker_quoted 소스. generate(월 06:00) 이전에 돌려 최신화.
+on:
+  schedule:
+    - cron: '0 5 * * 1'   # 월요일 05:00 UTC (generate 1시간 전)
+  workflow_dispatch:
+
+jobs:
+  drewry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Persist Drewry blank-sailing reading
+        run: npm run forecast:drewry
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

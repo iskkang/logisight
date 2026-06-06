@@ -95,10 +95,12 @@ function aggregateNewsDerived(signals, asof) {
 
 // 1순위 테이블(신선분), 없으면 뉴스 폴백. extractSignal(article)=>signal (Stage1, 주입형; 없으면 폴백 생략).
 async function fetchBlankSailing(supabase, asof = new Date(), { extractSignal } = {}) {
+  // Drewry 헤드라인 적재분(region='Drewry East-West')을 비율 소스로 사용.
+  // EconDB 'East Asia'(예정 스케줄·null 비율)는 쓰지 않는다. (Wave 1.5)
   const { data } = await supabase
     .from('blank_sailings')
     .select('week_start,region,blank_pct,source')
-    .eq('region', 'East Asia')
+    .eq('region', 'Drewry East-West')
     .order('week_start', { ascending: false })
     .limit(8);
   const tracker = buildBlankSailing(data || [], asof);
