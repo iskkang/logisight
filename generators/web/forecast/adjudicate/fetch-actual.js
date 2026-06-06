@@ -3,8 +3,10 @@
 
 function parseMetricRef(ref) {
   if (ref && ref.startsWith('kita_sea_rates:')) {
-    const [origin, dest] = ref.slice('kita_sea_rates:'.length).split('-');
-    return { kind: 'kita', origin, dest };
+    const lane = ref.slice('kita_sea_rates:'.length);
+    // 첫 하이픈에서 분리 — origin(한국 항구)은 하이픈이 없고, dest는 하이픈 포함 가능(예: Los-Angeles).
+    const i = lane.indexOf('-');
+    return { kind: 'kita', origin: i >= 0 ? lane.slice(0, i) : lane, dest: i >= 0 ? lane.slice(i + 1) : '' };
   }
   return { kind: 'index', code: ref };
 }

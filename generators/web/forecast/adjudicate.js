@@ -25,13 +25,17 @@ async function adjudicateDue(supabase, { asof = new Date() } = {}) {
   const res = { due: (rows || []).length, resolved: 0, pending: 0, errors: 0 };
   for (const f of rows || []) {
     const actual = await fetchActual(supabase, f.metric_ref, f.horizon_date);
-    if (actual == null || f.metric_value_at_publish == null || f.metric_value_at_publish === 0) {
-      res.pending++; // 실측 아직 없음 → 다음 회차 재시도
-      continue;
+    if (actual == null) { res.pending++; continue; } // 실측 아직 없음 → 다음 회차 재시도
+    if (f.metric_value_at_publish == null || f.metric_value_at_publish === 0) {
+      console.warn(`⚠️ ${f.metric_ref}: 기준값(metric_value_at_publish) ${f.metric_value_at_publish} → 판정 보류`);
+      res.pending++; continue;
     }
     const realizedPct = round2(((actual - f.metric_value_at_publish) / f.metric_value_at_publish) * 100);
     const outcome = classifyOutcome(f, realizedPct);
-    if (!outcome) { res.pending++; continue; }
+    if (!outcome) {
+      console.warn(`⚠️ ${f.metric_ref}: 방향값 이상('${f.direction}') → 판정 불가`);
+      res.pending++; continue;
+    }
     const { error: uerr } = await supabase
       .from('forecasts')
       .update({ outcome, realized_pct: realizedPct, status: 'resolved', resolved_at: new Date().toISOString() })

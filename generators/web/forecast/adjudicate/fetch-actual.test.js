@@ -10,6 +10,10 @@ test('parseMetricRef: kita lane', () => {
   assert.deepEqual(parseMetricRef('kita_sea_rates:부산-로스앤젤레스'),
     { kind: 'kita', origin: '부산', dest: '로스앤젤레스' });
 });
+test('parseMetricRef: kita lane with hyphen in dest (split on first hyphen only)', () => {
+  assert.deepEqual(parseMetricRef('kita_sea_rates:부산-Los-Angeles'),
+    { kind: 'kita', origin: '부산', dest: 'Los-Angeles' });
+});
 
 test('pickRealized: first row on/after horizon (rows desc by date)', () => {
   const rows = [
