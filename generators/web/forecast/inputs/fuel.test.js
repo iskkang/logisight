@@ -25,14 +25,21 @@ test('zero prior price → null (no Infinity into scorer)', () => {
   const rows = [{ obs_date: '2026-06-04', price_usd: 600 }, { obs_date: '2026-05-01', price_usd: 0 }];
   assert.equal(buildFuel(rows, asof), null);
 });
-test('short history (<28d) → fallback to longest available span, approx=true', () => {
+test('sub-monthly span (<21d) → null (no disguised MoM)', () => {
   const rows = [
     { obs_date: '2026-06-05', price_usd: 605 },
-    { obs_date: '2026-05-26', price_usd: 500 }, // ~10d 전, ≥28d 행 없음
+    { obs_date: '2026-05-26', price_usd: 500 }, // ~10d 전 — 월간 근사 안 됨
+  ];
+  assert.equal(buildFuel(rows, asof), null);
+});
+test('near-monthly span (21–27d) → value with approx=true + span', () => {
+  const rows = [
+    { obs_date: '2026-06-05', price_usd: 605 },
+    { obs_date: '2026-05-12', price_usd: 500 }, // 24d 전
   ];
   const f = buildFuel(rows, asof);
   assert.ok(f);
   assert.equal(f.approx, true);
-  assert.equal(f.obs_span_days, 10);
-  assert.equal(Math.round(f.fuel_mom_pct), 21); // (605-500)/500 = 21%
+  assert.equal(f.obs_span_days, 24);
+  assert.equal(Math.round(f.fuel_mom_pct), 21);
 });

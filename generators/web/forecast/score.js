@@ -184,9 +184,14 @@ function scoreForecast(input) {
     factor_scores: Object.keys(weights).map((f) => ({
       factor: f, score: scores[f], weight: weights[f], missing: scores[f] == null,
     })),
-    data_quality_flags: Object.keys(weights)
-      .filter((f) => scores[f] == null)
-      .map((f) => `${f}: 결측 — 가중치 재분배`),
+    data_quality_flags: [
+      ...Object.keys(weights)
+        .filter((f) => scores[f] == null)
+        .map((f) => `${f}: 결측 — 가중치 재분배`),
+      ...(input.cost && input.cost.approx
+        ? [`비용: 유가 비교 구간 ${input.cost.obs_span_days}일(월간 미만, 근사)`]
+        : []),
+    ],
     model_version: MODEL_VERSION,
   };
 }

@@ -12,14 +12,14 @@ function buildFuel(rows, asof) {
   const latestDate = new Date(`${latest.obs_date}T00:00:00Z`);
   const ageOf = (r) => latestDate - new Date(`${r.obs_date}T00:00:00Z`);
   const PREF = 28 * 86400000;
-  const MIN = 7 * 86400000;
-  // 우선 ~1개월(≥28일) 전 관측. 없으면 ≥7일 전 중 가장 오래된 관측으로 fallback(approx 플래그) —
-  // 벙커 이력이 28일 미만일 때 cost를 결측에서 빼내기 위함. 더미·이전값 대체가 아니라 실측 단축 구간.
+  const MIN = 21 * 86400000;
+  // 우선 ~1개월(≥28일) 전 관측. 없으면 ≥21일(~3주, 월간 근사) 전 중 가장 오래된 관측(approx).
+  // 21일 미만 구간은 월간 MoM으로 위장 금지 → 결측 반환(점수 미반영). 위장 방지가 결측 해소보다 우선.
   let prior = sorted.find((r) => ageOf(r) >= PREF);
   let approx = false;
   if (!prior) {
     const cand = sorted.filter((r) => ageOf(r) >= MIN);
-    prior = cand.length ? cand[cand.length - 1] : null; // 가용 범위 내 최장 구간
+    prior = cand.length ? cand[cand.length - 1] : null; // 21~27일 중 가장 긴 구간
     approx = true;
   }
   if (!prior || prior.price_usd === 0) return null; // 0 division 방지(불량 ETL 행)
