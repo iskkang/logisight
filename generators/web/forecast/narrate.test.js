@@ -55,9 +55,13 @@ test('validateProse: 단위 — 운임 metric인데 달러 없음 → 실패; �
   assert.equal(validateProse({ statement: '상승 가능성이 크다', impact_note: 'x', direction_echo: 'up' }, verdict, { isRate: true }).ok, false);
   assert.equal(validateProse({ statement: 'KCCI 1,200달러 상승 가능성', impact_note: 'x', direction_echo: 'up' }, verdict, { isRate: false }).ok, false);
 });
-test('validateProse: 분량 초과 → 실패', () => {
-  const longS = '가'.repeat(481);
+test('validateProse: 자수 560 초과 → 실패', () => {
+  const longS = '가'.repeat(561);
   assert.equal(validateProse({ statement: `${longS} 달러 가능성`, impact_note: 'x', direction_echo: 'up' }, verdict, { isRate: true }).ok, false);
+});
+test('validateProse: 5문장 초과 → 실패', () => {
+  const six = '운임은 강세다. 공급은 안정세다. 수요는 견조하다. 중국발은 강세다. 유가는 확인이 필요하다. 종합 달러 상승이다.';
+  assert.equal(validateProse({ statement: six, impact_note: 'x', direction_echo: 'up' }, verdict, { isRate: true }).ok, false);
 });
 
 test('narrate: 검증 통과 시 산문 반환', async () => {

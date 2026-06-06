@@ -91,8 +91,13 @@ function validateProse(parsed, verdict, opts = {}) {
   // 4. 단위
   if (opts.isRate === true && s && !s.includes('달러')) issues.push('운임 metric인데 "달러" 없음');
   if (opts.isRate === false && s && s.includes('달러')) issues.push('지수 metric에 "달러" 사용');
-  // 5. 분량 (5문장 ≈ 480자 / impact 160자)
-  if (s.length > 480) issues.push(`statement 분량 초과(${s.length}>480)`);
+  // 5. 분량 — 바인딩 규칙은 "5문장 이내". 자수(560)는 폭주 방지용 느슨한 가드.
+  //    종결부호 카운트: 소수점(20.7%)·천단위 쉼표를 오인하지 않도록 뒤에 공백/끝이 오는 [.!?。]만.
+  if (s) {
+    const sentences = (s.match(/[.!?。](?=\s|$)/g) || []).length;
+    if (sentences > 5) issues.push(`statement 5문장 초과(${sentences}문장)`);
+  }
+  if (s.length > 560) issues.push(`statement 분량 초과(${s.length}>560)`);
   if (note.length > 160) issues.push(`impact_note 분량 초과(${note.length}>160)`);
   return { ok: issues.length === 0, issues };
 }
