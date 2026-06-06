@@ -31,6 +31,7 @@
     "article:trend": "node generators/email/generate-article-brief.js --type=trend",
     "publish:curated": "node generators/web/publish-curated-to-site.js",
     "publish:daily-cards": "node generators/web/publish-daily-cards-to-site.js",
+    "generate:forecasts": "node generators/web/generate-forecasts.js",
     "backfill:news": "node scripts/backfill-maritime-news.js",
     "backfill:news:images": "node scripts/backfill-maritime-news.js --images",
     "backfill:news:internal-images": "node scripts/backfill-maritime-news.js --internal-images",
