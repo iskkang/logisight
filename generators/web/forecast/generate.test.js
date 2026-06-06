@@ -23,6 +23,9 @@ function fakeSupabase(captured) {
       { grade: 'VLSFO', port: 'Singapore', price_usd: 550, obs_date: todayMinus(30) },
     ],
     trade_statistics: [], policies: [], kita_sea_rates: [],
+    maritime_news: [
+      { title: '홍해 우회 지속, 아시아-유럽 항행거리 증가', summary: '수에즈 회피 장기화', published_at: todayMinus(2) },
+    ],
   };
   function from(table) {
     let rows = (data[table] || []).slice();

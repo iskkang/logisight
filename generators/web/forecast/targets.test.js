@@ -3,9 +3,11 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { WEEKLY_TARGETS, horizonDate, MAJOR_DEST_KEYWORDS } = require('./targets');
 
-test('weekly targets: KCCI primary, SCFI secondary, ocean/weekly', () => {
+test('weekly targets: KCCI/SCFI/WCI present, all ocean/weekly', () => {
   const codes = WEEKLY_TARGETS.map((t) => t.metric_ref);
-  assert.deepEqual(codes, ['KCCI', 'SCFI']);
+  assert.ok(codes.includes('KCCI'));
+  assert.ok(codes.includes('SCFI'));
+  assert.ok(codes.includes('WCI'));
   assert.ok(WEEKLY_TARGETS.every((t) => t.mode === 'ocean' && t.cadence === 'weekly'));
 });
 test('horizonDate: asof + weeks', () => {

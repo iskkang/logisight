@@ -25,6 +25,14 @@ test('buildNarratePrompt: system enforces constraints, user carries facts', () =
   assert.match(user, /\+3~7/);
 });
 
+test('buildNarratePrompt: includes recent news as qualitative context', () => {
+  const { user } = buildNarratePrompt(input, verdict, [
+    { title: '홍해 우회 지속', summary: '수에즈 회피로 항행거리 증가' },
+  ]);
+  assert.match(user, /최근 관련 해운 뉴스/);
+  assert.match(user, /홍해 우회 지속/);
+});
+
 test('validateProse: good prose passes', () => {
   const r = validateProse({
     statement: '한국발 해상운임은 향후 2~4주 추가 상승 가능성이 높은 것으로 추정된다.',

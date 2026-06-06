@@ -5,6 +5,9 @@
 const WEEKLY_TARGETS = [
   { metric_ref: 'KCCI', source: 'freight_indices', mode: 'ocean', cadence: 'weekly', horizon_weeks: 4, label: 'KCCI 종합(한국발 해상)' },
   { metric_ref: 'SCFI', source: 'freight_indices', mode: 'ocean', cadence: 'weekly', horizon_weeks: 4, label: 'SCFI 종합' },
+  { metric_ref: 'WCI', source: 'freight_indices', mode: 'ocean', cadence: 'weekly', horizon_weeks: 4, label: 'WCI 종합' },
+  { metric_ref: 'WCI_SHA_LAX', source: 'freight_indices', mode: 'ocean', cadence: 'weekly', horizon_weeks: 4, label: 'WCI 상하이→LA' },
+  { metric_ref: 'WCI_SHA_RTM', source: 'freight_indices', mode: 'ocean', cadence: 'weekly', horizon_weeks: 4, label: 'WCI 상하이→로테르담' },
 ];
 
 // 월간 KITA 항로는 데이터에서 발견(아래 fetchMonthlyTargets). 주요 도착지 키워드(부분일치)로 한정.

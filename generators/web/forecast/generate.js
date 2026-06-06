@@ -15,9 +15,22 @@ const { narrate } = require('./narrate');
 const { mapVerdictToRow } = require('./row');
 const { callClaude } = require('./llm');
 
+// 최근 해운 뉴스(정성 근거) — narrate에 컨텍스트로 1회 주입. 점수에는 영향 없음.
+async function fetchRecentNews(supabase, asof = new Date()) {
+  const since = new Date(asof.getTime() - 14 * 86400000).toISOString();
+  const { data } = await supabase
+    .from('maritime_news')
+    .select('title,summary,published_at')
+    .gte('published_at', since)
+    .order('published_at', { ascending: false })
+    .limit(12);
+  return (data || []).map((n) => ({ title: n.title, summary: n.summary }));
+}
+
 // 핵심 루프 — supabase/callLLM 주입(테스트 가능).
 async function generateDrafts(supabase, callLLM, { asof = new Date() } = {}) {
   const shared = await buildShared(supabase, asof);
+  const news = await fetchRecentNews(supabase, asof);
   const monthly = await fetchMonthlyTargets(supabase);
   const targets = [...WEEKLY_TARGETS, ...monthly];
   const res = { total: targets.length, inserted: 0, updated: 0, skipped: 0, abstained: 0, needsEditor: 0, errors: 0 };
@@ -25,7 +38,7 @@ async function generateDrafts(supabase, callLLM, { asof = new Date() } = {}) {
     const input = await assembleInput(supabase, t, { asof, shared });
     const verdict = scoreForecast(input);
     if (verdict.abstain) { res.abstained++; continue; }
-    const prose = await narrate(callLLM, input, verdict);
+    const prose = await narrate(callLLM, input, verdict, { news });
     if (prose.needs_editor) res.needsEditor++;
     const row = mapVerdictToRow(input, verdict, prose);
 

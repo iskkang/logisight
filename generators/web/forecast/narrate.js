@@ -5,7 +5,7 @@
 const FORBIDDEN = ['때문에', '확실', '반드시', '틀림없', '분명히'];
 const HEDGES = ['가능성', '추정', '정합', '전망', '예상', '우세', '보인다', '보임'];
 
-function buildNarratePrompt(input, verdict) {
+function buildNarratePrompt(input, verdict, news = []) {
   const system = [
     '당신은 한국 화주·포워더를 위한 물류 인텔리전스 애널리스트다. 아래 계산된 판정과 근거 수치만 사용해 산문을 쓴다.',
     '규칙(엄수):',
@@ -13,6 +13,7 @@ function buildNarratePrompt(input, verdict) {
     '- 방향·범위·수치를 새로 만들지 마라. 주어진 판정(direction/expected_range_pct)과 근거 수치만 사용.',
     '- 단정·인과 단정 금지("때문에"·"확실"·"반드시" 등 불가). 확률·추정 표현 강제("가능성"·"추정"·"정합").',
     '- 선행/후행 판정 금지.',
+    '- 최근 뉴스가 주어지면 시황의 원인·배경을 설명하는 정성 근거로만 활용한다. 뉴스에서 새 수치·방향을 만들지 말고, 주어진 판정과 어긋나는 해석을 하지 마라.',
     '- impact_note는 독자 단위 3단 변환 필수: 지수 변화 → FEU/kg당 비용·리드타임 영향(구간) → 권장 행동 1개.',
     '- 출력은 JSON 하나: {"statement":"...","impact_note":"...","direction_echo":"up|flat|down"}. direction_echo는 주어진 판정 방향을 그대로 반향.',
   ].join('\n');
@@ -28,7 +29,14 @@ function buildNarratePrompt(input, verdict) {
       수출모멘텀: input.demand && input.demand.export_momentum_yoy_pct,
     },
   };
-  const user = `다음 판정과 근거로 전망 산문을 작성하라(JSON만 출력).\n${JSON.stringify(facts, null, 2)}`;
+  const newsBlock =
+    news && news.length
+      ? `\n\n[최근 관련 해운 뉴스 — 정성 근거]\n${news
+          .slice(0, 12)
+          .map((n, i) => `${i + 1}. ${n.title}${n.summary ? ` — ${n.summary}` : ""}`)
+          .join("\n")}`
+      : "";
+  const user = `다음 판정과 근거로 전망 산문을 작성하라(JSON만 출력).\n${JSON.stringify(facts, null, 2)}${newsBlock}`;
   return { system, user };
 }
 
@@ -55,8 +63,8 @@ function validateProse(parsed, verdict) {
 }
 
 // callLLM: async ({system,user}) => string. 검증 통과까지 1회 재생성, 실패 시 산문 없는 draft.
-async function narrate(callLLM, input, verdict, { maxRetries = 1 } = {}) {
-  const prompt = buildNarratePrompt(input, verdict);
+async function narrate(callLLM, input, verdict, { maxRetries = 1, news = [] } = {}) {
+  const prompt = buildNarratePrompt(input, verdict, news);
   let last = { issues: ['미실행'] };
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     const raw = await callLLM(prompt);
