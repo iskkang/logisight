@@ -37,7 +37,14 @@ async function fetchRateSeries(supabase, target, asof) {
       .eq('index_code', target.metric_ref)
       .order('week_date', { ascending: false })
       .limit(52);
-    const points = (data || []).map((r) => ({ value: r.value, change_pct: r.change_pct, date: r.week_date }));
+    // 저장된 change_pct는 신뢰 불가(예: WCI는 비인접 주 대비로 계산돼 레벨과 불일치) →
+    // 인접 관측 레벨에서 직접 % 산출(KCCI/SCFI는 기존 저장값과 일치, WCI만 교정).
+    const irows = data || [];
+    const points = irows.map((r, i) => {
+      const prev = irows[i + 1]; // week_date 내림차순 → 다음 인덱스가 한 관측 이전
+      const pct = prev && prev.value ? Math.round(((r.value - prev.value) / prev.value) * 1000) / 10 : null;
+      return { value: r.value, change_pct: pct, date: r.week_date };
+    });
     return buildRateSeries(points, { unit: 'index', asof });
   }
   // kita_sea_rates
@@ -65,7 +72,12 @@ async function assembleInput(supabase, target, { asof = new Date(), shared } = {
   const has = (k) => shared != null && k in shared;
   let supply = has('supply') ? shared.supply : { blank_sailing: await fetchBlankSailing(supabase, asof) };
   const cost = has('cost') ? shared.cost : await fetchFuel(supabase, asof);
-  let demand = has('demand') ? shared.demand : await fetchDemand(supabase, asof);
+  // demand(한국 수출)는 한국발 타깃에만 지리 정합. 상하이발(WCI_SHA_*)·중국/글로벌 지수(SCFI/WCI)엔
+  // 한국 수출이 지리 불일치 → 모멘텀 결측(seasonality는 항로 단위라 권역에서 유지).
+  const koreaOrigin = isKoreaOrigin(target);
+  let demand = koreaOrigin
+    ? (has('demand') ? shared.demand : await fetchDemand(supabase, asof))
+    : { export_momentum_yoy_pct: null, momentum_trend: null, export_geo_na: true };
   const region = regionOf(target);
 
   // Red Sea 우회는 asia_europe(EU) 노선 유효 선복에만 영향(H5) → effective_capacity_chg_pct 주입.
@@ -84,11 +96,13 @@ async function assembleInput(supabase, target, { asof = new Date(), shared } = {
   // 타깃 권역이 판별되고 관세청 잠정 권역 수출 모멘텀이 있으면 전국 모멘텀 대신 권역치 사용.
   // seasonality_flag·frontloading_flag는 권역 무관(달력·정책)이라 기존 값 유지.
   if (region) {
-    // 권역 판별 시 seasonality는 권역별 구간으로 override(미주 7~10 peak 등). 모멘텀은 잠정치 있으면 교체.
+    // 권역 판별 시 seasonality는 권역별 구간으로 override(미주 7~10 peak 등). 모멘텀은 한국발만 잠정치 교체.
     demand = { ...demand, seasonality_flag: seasonalityFlag(asof, region), region };
-    const rd = await fetchRegionDemand(supabase, region, asof);
-    if (rd.export_momentum_yoy_pct != null) {
-      demand = { ...demand, export_momentum_yoy_pct: rd.export_momentum_yoy_pct, momentum_trend: rd.momentum_trend };
+    if (koreaOrigin) {
+      const rd = await fetchRegionDemand(supabase, region, asof);
+      if (rd.export_momentum_yoy_pct != null) {
+        demand = { ...demand, export_momentum_yoy_pct: rd.export_momentum_yoy_pct, momentum_trend: rd.momentum_trend };
+      }
     }
   }
   const spread = shared && 'spread' in shared ? shared.spread : await fetchSpread(supabase);
@@ -100,7 +114,7 @@ async function assembleInput(supabase, target, { asof = new Date(), shared } = {
   const context_headlines = buildContextHeadlines(news, target, region);
 
   // china_factor: 한국발 해상 타깃만(중국 경유항 구조). 그 외(WCI 상하이발 등)는 null.
-  const china_factor = (target.mode === 'ocean' && isKoreaOrigin(target))
+  const china_factor = (target.mode === 'ocean' && koreaOrigin)
     ? (has('china_factor') ? shared.china_factor : await fetchChinaFactor(supabase))
     : null;
 

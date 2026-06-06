@@ -67,6 +67,10 @@ test('validateProse: 기준 월 불특정("최근 월") → 실패 (v1.4.1 #6)',
   const s = { statement: '부산발 함부르크향 운임은 최근 월 기준 FEU당 2,300달러로 보합권이다.', impact_note: 'x', direction_echo: 'flat' };
   assert.equal(validateProse(s, { direction: 'flat', data_quality_flags: [] }, { isRate: true }).ok, false);
 });
+test('validateProse: trend enum 누설(up_2) → 실패', () => {
+  const s = { statement: '부산발 LA향 운임은 5월 기준 FEU당 2,900달러로 보합권(up_2)이다.', impact_note: 'x', direction_echo: 'flat' };
+  assert.equal(validateProse(s, { direction: 'flat', data_quality_flags: [] }, { isRate: true }).ok, false);
+});
 test('validateProse: 관측 1건 신호에 추세 동사 → 실패 (v1.4.1 #7)', () => {
   const v = { direction: 'flat', data_quality_flags: ['공급: 방향 미산출(관측 1건) — 기본값 stable'] };
   const s = { statement: '5월 기준 결항률은 5.5%로 안정세를 유지하고 있어 달러 보합권이다.', impact_note: 'x', direction_echo: 'flat' };

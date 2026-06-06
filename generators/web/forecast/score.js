@@ -217,6 +217,9 @@ function scoreForecast(input) {
       ...(chinaAdjusted
         ? [`공급: 중국 수급 보정 ${squeeze > 0 ? '+' : ''}${0.5 * squeeze}(b-3, ${(input.china_factor.evidence || []).join('; ')})`]
         : []),
+      ...(input.demand && input.demand.export_geo_na
+        ? ['수요: 한국 수출 비적용(상하이발 등 지리 불일치) — 모멘텀 결측']
+        : []),
     ],
     model_version: MODEL_VERSION,
   };

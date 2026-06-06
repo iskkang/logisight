@@ -4,7 +4,7 @@
 // narration_validation 7종: 1)enum 누설 2)결측 단정 3)방향 일치 4)단위 5)분량 6)기준 월 명시 7)관측1건 추세동사.
 
 const FORBIDDEN = ['확실', '반드시', '틀림없', '분명히', '할 것이다'];
-const ENUM_LEAK = /(stable|expanding|easing|mixed|proxy|tracker)/i;
+const ENUM_LEAK = /(stable|expanding|easing|mixed|proxy|tracker|up_[23]|down_[23])/i;
 // 결측 팩터 '가설 표지' — 일반 헤지('가능성' 등)가 아니라, 결측을 확인 포인트로 전환하는 특정 표지만.
 const HYPOTHESIS = ['원인 후보', '여부', '확인', '판별', '가설', '후보'];
 // 결측 팩터를 현재 사실로 단정하면 실패(가설 표지 동반 시 허용).
