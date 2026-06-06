@@ -13,7 +13,7 @@ const verdict = {
   direction: 'up', strength: '상승 가능성 높음', composite_score: 1.6,
   range_low_pct: 3, range_high_pct: 7, expected_range_pct: '+3~7', confidence: 'high',
   factor_scores: [{ factor: 'supply', score: 1, weight: 0.3, missing: false }],
-  data_quality_flags: [], model_version: 'v1.1',
+  data_quality_flags: [], model_version: 'v1.4',
 };
 const prose = { statement: '상승 가능성', impact_note: 'FEU 비용 상승', needs_editor: false };
 
@@ -33,7 +33,7 @@ test('mapVerdictToRow: maps verdict+prose+input → forecasts row', () => {
   assert.equal(row.direction, 'up');
   assert.equal(row.composite_score, 1.6);
   assert.equal(row.range_low_pct, 3);
-  assert.equal(row.model_version, 'v1.1');
+  assert.equal(row.model_version, 'v1.4');
   assert.equal(row.metric_value_at_publish, 1200);
   assert.equal(row.status, 'draft');
   assert.equal(row.statement, '상승 가능성');

@@ -1,42 +1,61 @@
 'use strict';
-// 전망 산문 생성 — LLM은 statement/impact_note만 작성. 방향·수치는 코드(verdict)에서 온다.
-// 검증(Decision 1b): LLM이 echo한 방향이 verdict와 일치 + 금지어 없음 + 확률 표현 존재. 1회 재생성 후 실패 시 산문 없는 draft.
+// v1.4 전망 산문 생성 — LLM은 statement/impact_note만. 방향·수치·watch_points는 코드(verdict).
+// 기준: docs/specs/freight-rate-forecast-prompt-v1.4.md (style_rules 5문장 구조, H1~H13, 한국발 중국변수 우선).
+// narration_validation 5종 통과 필수: 1)enum 누설 2)결측 단정 3)방향 일치 4)단위 5)분량.
 
-const FORBIDDEN = ['때문에', '확실', '반드시', '틀림없', '분명히'];
-const HEDGES = ['가능성', '추정', '정합', '전망', '예상', '우세', '보인다', '보임'];
+const FORBIDDEN = ['확실', '반드시', '틀림없', '분명히', '할 것이다'];
+const ENUM_LEAK = /(stable|expanding|easing|mixed|proxy|tracker)/i;
+// 결측 팩터 '가설 표지' — 일반 헤지('가능성' 등)가 아니라, 결측을 확인 포인트로 전환하는 특정 표지만.
+const HYPOTHESIS = ['원인 후보', '여부', '확인', '판별', '가설', '후보'];
+// 결측 팩터를 현재 사실로 단정하면 실패(가설 표지 동반 시 허용).
+const MISSING_KEYWORDS = {
+  cost: ['유가', '벙커', '연료'],
+  pricing: ['GRI', 'PSS', '할증', '인하'],
+  demand: ['수출', '모멘텀', '계절', '성수기'],
+  supply: ['결항', '선복'],
+  momentum: [],
+};
 
-function buildNarratePrompt(input, verdict, news = []) {
+function isRateMetric(metricRef) {
+  return typeof metricRef === 'string' && metricRef.startsWith('kita_sea_rates');
+}
+
+function buildNarratePrompt(input, verdict, { news = [] } = {}) {
+  const koreaOrigin = input.china_factor != null;
   const system = [
-    '당신은 한국 화주·포워더를 위한 물류 인텔리전스 애널리스트다. 아래 계산된 판정과 근거 수치만 사용해 산문을 쓴다.',
-    '규칙(엄수):',
-    '- statement는 "현상 → 원인 → 배경 → 전망" 흐름의 자연스러운 산문(라벨/소제목 금지).',
-    '- 방향·범위·수치를 새로 만들지 마라. 주어진 판정(direction/expected_range_pct)과 근거 수치만 사용.',
-    '- 단정·인과 단정 금지("때문에"·"확실"·"반드시" 등 불가). 확률·추정 표현 강제("가능성"·"추정"·"정합").',
-    '- 선행/후행 판정 금지.',
-    '- 최근 뉴스가 주어지면 시황의 원인·배경을 설명하는 정성 근거로만 활용한다. 뉴스에서 새 수치·방향을 만들지 말고, 주어진 판정과 어긋나는 해석을 하지 마라.',
-    '- impact_note는 독자 단위 3단 변환 필수: 지수 변화 → FEU/kg당 비용·리드타임 영향(구간) → 권장 행동 1개.',
-    '- 출력은 JSON 하나: {"statement":"...","impact_note":"...","direction_echo":"up|flat|down"}. direction_echo는 주어진 판정 방향을 그대로 반향.',
-  ].join('\n');
+    '당신은 한국발 국제물류 운임 분석가다. 아래 계산된 판정과 근거 수치만 사용해 산문을 쓴다. 입력에 없는 사실·수치를 만들지 않는다.',
+    '[statement — 5문장 이내, 애널리스트 구조]',
+    '1) 현상(압축): "[출발지]발 [도착지]향 해상운임은 N월 기준 FEU당 X,XXX달러로 전월 대비 Y%↑/↓(절대값)." 형식.',
+    '2) 원인 — 세 종류 구분: ①사실(점수 산정 입력 인용) ②패턴("통상/일반적으로" 조건부, 어떤 입력 때문에 거론하는지 근거 동반) ③가설(결측 원인 후보는 "원인 후보는 …, 전자는 [데이터·발표시점]으로 판별된다" 형태로 판별 방법과 함께).',
+    '3) 전망: 기본 시나리오(방향·범위·판정일) + 전환 조건("~가 나타나면 ~시나리오로 전환") 1개.',
+    'impact_note는 2문장 이내(160자): 화주 비용·협상 포지션 → 행동 트리거 1개. 신뢰도 등급 산문 반복 금지.',
+    '[수치] 운임은 단위 완전체("FEU당 2,300달러"). 변화는 "전월 대비 21%↓(600달러 하락)" 형식. 정밀수치+"가량/약" 병용 금지.',
+    '[번역투 금지] "정합적"→"맞물린다/뒷받침한다"; "관측된다"→"나타났다"; "~로 추정된다"는 최대 1회.',
+    '[enum 한글화 — 원문 노출 금지] stable→안정세, expanding→확대, easing→완화, mixed→엇갈림, trade_level_proxy→"기간항로 단위 대용", tracker_quoted→"주간 트래커 집계".',
+    '[금지어] "확실/반드시/~할 것이다"류 단정, 근거 없는 인과 단정. 결측 팩터를 현재 사실로 단정 금지(가설 표지와 함께면 허용·권장).',
+    koreaOrigin
+      ? '[한국발 핵심 — H11~H13] 부산 등 한국발은 중국발 기간항로의 경유항이다. 수급·결항 원인을 쓸 때 중국 변수(SCFI·중국 수출)를 우선 점검하고, 한국 수출만으로 원인을 단정하지 마라. 중국 물량 급증기엔 선복 잠식·기항 생략으로 한국발 스페이스가 먼저 조인다(한국 수출이 늘지 않아도). SCFI는 한국발 지수에 약 2주 선행한다(백테스트).'
+      : '',
+    '출력은 JSON 하나: {"statement":"...","impact_note":"...","direction_echo":"up|flat|down"}. direction_echo는 주어진 판정 방향 그대로.',
+  ].filter(Boolean).join('\n');
 
+  const bs = input.supply && input.supply.blank_sailing;
   const facts = {
     지표: input.metric_ref, 라벨: input.label, 케이던스: input.cadence, horizon: input.horizon_date,
     판정: { 방향: verdict.direction, 강도: verdict.strength, 예상범위: verdict.expected_range_pct, 신뢰도: verdict.confidence },
-    근거: {
-      최신값: input.rate_series && input.rate_series.latest,
-      변화율: input.rate_series && input.rate_series.mom_pct,
-      결항: input.supply && input.supply.blank_sailing,
-      유가MoM: input.cost && input.cost.fuel_mom_pct,
-      수출모멘텀: input.demand && input.demand.export_momentum_yoy_pct,
-    },
+    운임: input.rate_series && { 최신: input.rate_series.latest, 단위: input.rate_series.unit, 전월대비: input.rate_series.mom_pct, 추세: input.rate_series.trend_3p },
+    공급_결항: bs && { 출처: bs.source_type, 비율: bs.ratio_pct, 방향: bs.direction, 유효선복: bs.effective_capacity_chg_pct },
+    china_factor: input.china_factor || null,
+    수요: input.demand && { 수출모멘텀YoY: input.demand.export_momentum_yoy_pct, 추세: input.demand.momentum_trend, 계절: input.demand.seasonality_flag, 권역: input.demand.region },
+    비용_유가MoM: input.cost && input.cost.fuel_mom_pct,
+    가격행동: input.pricing_actions,
+    context_events: input.context_events || [],
+    결측·플래그: verdict.data_quality_flags || [],
   };
-  const newsBlock =
-    news && news.length
-      ? `\n\n[최근 관련 해운 뉴스 — 정성 근거]\n${news
-          .slice(0, 12)
-          .map((n, i) => `${i + 1}. ${n.title}${n.summary ? ` — ${n.summary}` : ""}`)
-          .join("\n")}`
-      : "";
-  const user = `다음 판정과 근거로 전망 산문을 작성하라(JSON만 출력).\n${JSON.stringify(facts, null, 2)}${newsBlock}`;
+  const newsBlock = news && news.length
+    ? `\n\n[최근 관련 뉴스 — 서사 인용은 이 목록에 한정]\n${news.slice(0, 10).map((n, i) => `${i + 1}. ${n.title}${n.summary ? ` — ${n.summary}` : ''}`).join('\n')}`
+    : '';
+  const user = `다음 판정과 근거로 전망 산문을 작성하라(JSON만).\n${JSON.stringify(facts, null, 2)}${newsBlock}`;
   return { system, user };
 }
 
@@ -49,31 +68,49 @@ function safeParse(raw) {
   } catch (_) { return null; }
 }
 
-function validateProse(parsed, verdict) {
+// narration_validation 5종. opts: { missingFactors:[], isRate:bool }
+function validateProse(parsed, verdict, opts = {}) {
   const issues = [];
   if (!parsed) return { ok: false, issues: ['파싱 실패'] };
   const s = typeof parsed.statement === 'string' ? parsed.statement.trim() : '';
   const note = typeof parsed.impact_note === 'string' ? parsed.impact_note.trim() : '';
   if (!s) issues.push('statement 비어있음');
   if (!note) issues.push('impact_note 비어있음');
-  if (parsed.direction_echo !== verdict.direction) issues.push(`방향 불일치(${parsed.direction_echo} ≠ ${verdict.direction})`);
-  if (s && FORBIDDEN.some((w) => s.includes(w))) issues.push('인과/단정 표현 포함');
-  if (s && !HEDGES.some((w) => s.includes(w))) issues.push('확률/추정 표현 없음');
+  // 3. 방향 일치
+  if (parsed.direction_echo !== verdict.direction) issues.push(`방향 불일치(${parsed.direction_echo}≠${verdict.direction})`);
+  // 1. enum 누설
+  if (s && ENUM_LEAK.test(s)) issues.push('enum 원문 누설');
+  // 단정 금지
+  if (s && FORBIDDEN.some((w) => s.includes(w))) issues.push('단정 표현 포함');
+  // 2. 결측 팩터 단정 서술(가설 표지 없을 때)
+  const hasHyp = HYPOTHESIS.some((h) => s.includes(h));
+  for (const f of opts.missingFactors || []) {
+    const kws = MISSING_KEYWORDS[f] || [];
+    if (kws.some((k) => s.includes(k)) && !hasHyp) { issues.push(`결측 팩터(${f}) 단정 서술`); break; }
+  }
+  // 4. 단위
+  if (opts.isRate === true && s && !s.includes('달러')) issues.push('운임 metric인데 "달러" 없음');
+  if (opts.isRate === false && s && s.includes('달러')) issues.push('지수 metric에 "달러" 사용');
+  // 5. 분량 (5문장 ≈ 480자 / impact 160자)
+  if (s.length > 480) issues.push(`statement 분량 초과(${s.length}>480)`);
+  if (note.length > 160) issues.push(`impact_note 분량 초과(${note.length}>160)`);
   return { ok: issues.length === 0, issues };
 }
 
 // callLLM: async ({system,user}) => string. 검증 통과까지 1회 재생성, 실패 시 산문 없는 draft.
 async function narrate(callLLM, input, verdict, { maxRetries = 1, news = [] } = {}) {
-  const prompt = buildNarratePrompt(input, verdict, news);
+  const prompt = buildNarratePrompt(input, verdict, { news });
+  const missingFactors = (verdict.factor_scores || []).filter((f) => f.missing).map((f) => f.factor);
+  const opts = { missingFactors, isRate: isRateMetric(input.metric_ref) };
   let last = { issues: ['미실행'] };
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     const raw = await callLLM(prompt);
     const parsed = safeParse(raw);
-    const v = validateProse(parsed, verdict);
+    const v = validateProse(parsed, verdict, opts);
     last = v;
     if (v.ok) return { statement: parsed.statement.trim(), impact_note: parsed.impact_note.trim(), needs_editor: false };
   }
   return { statement: null, impact_note: null, needs_editor: true, validation_issues: last.issues };
 }
 
-module.exports = { buildNarratePrompt, validateProse, narrate, safeParse, FORBIDDEN, HEDGES };
+module.exports = { buildNarratePrompt, validateProse, narrate, safeParse, isRateMetric, FORBIDDEN, ENUM_LEAK };

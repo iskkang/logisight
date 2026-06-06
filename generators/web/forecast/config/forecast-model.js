@@ -1,8 +1,8 @@
 'use strict';
-// 스코어링 모델 상수 — 프롬프트 문서 docs(또는 freight-rate-forecast-prompt.md) v1.1 과 버전 동기화.
+// 스코어링 모델 상수 — docs/specs/freight-rate-forecast-prompt-v1.4.md 와 버전 동기화.
 // 분기 보정 시 이 파일 상수만 바꾸고 MODEL_VERSION을 함께 올린다(코드 수술 금지).
 
-const MODEL_VERSION = 'v1.1';
+const MODEL_VERSION = 'v1.4';
 
 // 팩터 가중치 — 합 1.0. 결측 팩터는 composite()에서 재분배.
 const WEIGHTS = {

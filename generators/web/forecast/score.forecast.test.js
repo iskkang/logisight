@@ -24,7 +24,7 @@ test('scoreForecast: golden case → up / 1.6 / +3~7 / high', () => {
   assert.equal(r.range_high_pct, 7);
   assert.equal(r.expected_range_pct, '+3~7');
   assert.equal(r.confidence, 'high');
-  assert.equal(r.model_version, 'v1.1');
+  assert.equal(r.model_version, 'v1.4');
   assert.equal(r.factor_scores.length, 5);
 });
 

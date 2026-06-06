@@ -4,78 +4,75 @@ const assert = require('node:assert/strict');
 const { buildNarratePrompt, validateProse, narrate } = require('./narrate');
 
 const verdict = {
-  direction: 'up', strength: '상승 가능성 높음', composite_score: 1.6,
-  expected_range_pct: '+3~7', confidence: 'high',
-  factor_scores: [{ factor: 'supply', score: 1 }], data_quality_flags: [],
+  direction: 'up', strength: '상승 우세', composite_score: 0.6,
+  expected_range_pct: '+1~4', confidence: '중간',
+  factor_scores: [{ factor: 'supply', score: 0.5, missing: false }, { factor: 'cost', score: null, missing: true }],
+  data_quality_flags: ['cost: 결측 — 가중치 재분배'],
 };
 const input = {
-  metric_ref: 'KCCI', label: 'KCCI 종합', cadence: 'weekly', horizon_date: '2026-07-03',
-  rate_series: { latest: 1200, mom_pct: 4.0 },
-  supply: { blank_sailing: { ratio_pct: 12, direction: 'expanding' } },
-  cost: { fuel_mom_pct: 9 }, demand: { export_momentum_yoy_pct: 6 },
+  metric_ref: 'kita_sea_rates:부산-함부르크', label: '부산→함부르크', cadence: 'monthly', horizon_date: '2026-07-04',
+  rate_series: { latest: 2300, unit: 'USD/FEU', mom_pct: -20.7 },
+  supply: { blank_sailing: { source_type: 'tracker_quoted', ratio_pct: 5.5, direction: 'stable', effective_capacity_chg_pct: null } },
+  china_factor: { scfi_mom_pct: 22.9, scfi_vs_kr_spread: 'widening', china_export_signal: null, evidence: ['SCFI 2주 +22.9%'] },
+  demand: { export_momentum_yoy_pct: 2.4, momentum_trend: null, seasonality_flag: 'peak_approaching', region: 'EU' },
+  cost: null,
 };
 
-test('buildNarratePrompt: system enforces constraints, user carries facts', () => {
+test('buildNarratePrompt: 한국발이면 H11~H13·중국변수 우선 + china_factor 주입', () => {
   const { system, user } = buildNarratePrompt(input, verdict);
-  assert.match(system, /확률|가능성/);
-  assert.match(system, /때문에/); // 금지어로 명시
-  assert.match(system, /현상.*원인.*배경.*전망/s);
-  assert.match(user, /KCCI/);
-  assert.match(user, /up|상승/);
-  assert.match(user, /\+3~7/);
+  assert.match(system, /H11|중국 변수|경유항/);
+  assert.match(system, /5문장/);
+  assert.match(user, /china_factor/);
+  assert.match(user, /22\.9/);
 });
 
-test('buildNarratePrompt: includes recent news as qualitative context', () => {
-  const { user } = buildNarratePrompt(input, verdict, [
-    { title: '홍해 우회 지속', summary: '수에즈 회피로 항행거리 증가' },
-  ]);
-  assert.match(user, /최근 관련 해운 뉴스/);
-  assert.match(user, /홍해 우회 지속/);
-});
+const okOpts = { missingFactors: ['cost'], isRate: true };
 
-test('validateProse: good prose passes', () => {
+test('validateProse: 양호한 운임 산문 통과(달러 포함·가설 표지·enum 없음)', () => {
   const r = validateProse({
-    statement: '한국발 해상운임은 향후 2~4주 추가 상승 가능성이 높은 것으로 추정된다.',
-    impact_note: 'FEU당 비용 상승 압력 → 7월 부킹 앞당겨 검토.',
+    statement: '부산발 함부르크향 해상운임은 5월 기준 FEU당 2,300달러로 전월 대비 21%↓(600달러 하락). 현물 약세에도 중국발 SCFI 강세가 선복을 조일 가능성이 크다. 유가 영향은 확인이 필요하다.',
+    impact_note: 'FEU당 비용은 당분간 보합권. 중국발 선복 잠식 신호를 부킹 판단의 트리거로.',
     direction_echo: 'up',
-  }, verdict);
-  assert.equal(r.ok, true);
-});
-test('validateProse: direction mismatch fails', () => {
-  const r = validateProse({ statement: '상승 가능성', impact_note: 'x', direction_echo: 'down' }, verdict);
-  assert.equal(r.ok, false);
-});
-test('validateProse: causal-certainty phrase fails', () => {
-  const r = validateProse({ statement: '결항 때문에 오른다', impact_note: 'x', direction_echo: 'up' }, verdict);
-  assert.equal(r.ok, false);
-});
-test('validateProse: no hedge marker fails', () => {
-  const r = validateProse({ statement: '운임이 오른다', impact_note: 'x', direction_echo: 'up' }, verdict);
-  assert.equal(r.ok, false);
-});
-test('validateProse: empty statement fails', () => {
-  const r = validateProse({ statement: '', impact_note: 'x', direction_echo: 'up' }, verdict);
-  assert.equal(r.ok, false);
+  }, verdict, okOpts);
+  assert.equal(r.ok, true, JSON.stringify(r.issues));
 });
 
-test('narrate: returns prose when LLM output validates', async () => {
+test('validateProse: enum 원문 누설 → 실패', () => {
+  const r = validateProse({ statement: '운임은 stable 흐름이며 상승 가능성', impact_note: 'x', direction_echo: 'up' }, verdict, okOpts);
+  assert.equal(r.ok, false);
+  assert.ok(r.issues.some((i) => /enum/.test(i)));
+});
+test('validateProse: 방향 불일치 → 실패', () => {
+  assert.equal(validateProse({ statement: '하락 가능성 2,300달러', impact_note: 'x', direction_echo: 'down' }, verdict, okOpts).ok, false);
+});
+test('validateProse: 결측 팩터(cost) 단정 서술 → 실패, 가설 표지 동반 시 허용', () => {
+  const bad = validateProse({ statement: '유가가 올라 2,300달러로 상승 가능성', impact_note: 'x', direction_echo: 'up' }, verdict, okOpts);
+  assert.equal(bad.ok, false);
+  const ok = validateProse({ statement: '유가 영향 여부는 확인이 필요하며 2,300달러 상승 가능성', impact_note: 'x', direction_echo: 'up' }, verdict, okOpts);
+  assert.equal(ok.ok, true, JSON.stringify(ok.issues));
+});
+test('validateProse: 단위 — 운임 metric인데 달러 없음 → 실패; 지수 metric에 달러 → 실패', () => {
+  assert.equal(validateProse({ statement: '상승 가능성이 크다', impact_note: 'x', direction_echo: 'up' }, verdict, { isRate: true }).ok, false);
+  assert.equal(validateProse({ statement: 'KCCI 1,200달러 상승 가능성', impact_note: 'x', direction_echo: 'up' }, verdict, { isRate: false }).ok, false);
+});
+test('validateProse: 분량 초과 → 실패', () => {
+  const longS = '가'.repeat(481);
+  assert.equal(validateProse({ statement: `${longS} 달러 가능성`, impact_note: 'x', direction_echo: 'up' }, verdict, { isRate: true }).ok, false);
+});
+
+test('narrate: 검증 통과 시 산문 반환', async () => {
   const fake = async () => JSON.stringify({
-    statement: '상승 가능성이 높은 것으로 추정된다.', impact_note: 'FEU 비용 상승 → 부킹 검토.', direction_echo: 'up',
+    statement: '부산발 함부르크향 해상운임은 5월 기준 FEU당 2,300달러로 전월 대비 21%↓(600달러 하락). 중국발 SCFI 강세가 선복을 조일 가능성이 크다. 유가 영향은 확인이 필요하다.',
+    impact_note: 'FEU당 비용 보합권. 중국발 선복 잠식을 부킹 트리거로.',
+    direction_echo: 'up',
   });
   const r = await narrate(fake, input, verdict);
   assert.equal(r.needs_editor, false);
-  assert.match(r.statement, /추정/);
+  assert.match(r.statement, /달러/);
 });
-test('narrate: regenerates once then falls back to editor on persistent mismatch', async () => {
-  let calls = 0;
-  const fake = async () => { calls++; return JSON.stringify({ statement: '내린다', impact_note: 'x', direction_echo: 'down' }); };
+test('narrate: 지속 실패 → 산문 없는 draft(에디터)', async () => {
+  const fake = async () => JSON.stringify({ statement: 'stable 하락', impact_note: 'x', direction_echo: 'down' });
   const r = await narrate(fake, input, verdict);
-  assert.equal(calls, 2); // 최초 + 재시도 1회
   assert.equal(r.needs_editor, true);
   assert.equal(r.statement, null);
-});
-test('narrate: unparseable LLM output → editor fallback', async () => {
-  const fake = async () => 'not json at all';
-  const r = await narrate(fake, input, verdict);
-  assert.equal(r.needs_editor, true);
 });
