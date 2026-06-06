@@ -25,8 +25,11 @@ function buildBlankSailing(rows, asof) {
   const sorted = valid.sort((a, b) => new Date(b.week_start) - new Date(a.week_start));
   const latest = sorted[0];
   const prev = sorted[1];
+  // 관측 1건이면 direction=stable은 기본값(관측 아님). 2건부터 실제 산출.
   let direction = 'stable';
+  let direction_observed = false;
   if (prev && latest.blank_pct != null && prev.blank_pct != null) {
+    direction_observed = true;
     const delta = latest.blank_pct - prev.blank_pct;
     if (delta > 1) direction = 'expanding';
     else if (delta < -1) direction = 'easing';
@@ -37,6 +40,7 @@ function buildBlankSailing(rows, asof) {
     source_type: 'tracker_quoted',
     ratio_pct: latest.blank_pct != null ? latest.blank_pct : null,
     direction,
+    direction_observed,
     magnitude_class: magnitudeClass(latest.blank_pct),
     independent_sources: 1,
     geo_scope: 'trade_level_proxy',

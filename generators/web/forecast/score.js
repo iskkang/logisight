@@ -191,6 +191,12 @@ function scoreForecast(input) {
       ...(input.cost && input.cost.approx
         ? [`비용: 유가 비교 구간 ${input.cost.obs_span_days}일(월간 미만, 근사)`]
         : []),
+      ...(input.supply
+        && input.supply.blank_sailing
+        && input.supply.blank_sailing.source_type !== 'none'
+        && input.supply.blank_sailing.direction_observed === false
+        ? ['공급: 방향 미산출(관측 1건) — 기본값 stable']
+        : []),
     ],
     model_version: MODEL_VERSION,
   };

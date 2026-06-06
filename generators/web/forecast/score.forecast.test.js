@@ -28,6 +28,16 @@ test('scoreForecast: golden case → up / 1.6 / +3~7 / high', () => {
   assert.equal(r.factor_scores.length, 5);
 });
 
+test('scoreForecast: single-reading blank_sailing → 방향 미산출 flag', () => {
+  const r = scoreForecast({
+    mode: 'ocean', cadence: 'weekly',
+    rate_series: { latest: 1000, trend_3p: 'up_2', percentile_52w: 60, asof_age_days: 3 },
+    supply: { blank_sailing: { source_type: 'tracker_quoted', ratio_pct: 5.5, direction: 'stable', direction_observed: false, signal_age_days: 2 } },
+    demand: { export_momentum_yoy_pct: 3, momentum_trend: 'stable' },
+  });
+  assert.ok(r.data_quality_flags.some((f) => /방향 미산출/.test(f)));
+});
+
 test('scoreForecast: missing rate_series → abstain', () => {
   const r = scoreForecast({ mode: 'ocean', cadence: 'weekly', rate_series: null });
   assert.equal(r.abstain, true);

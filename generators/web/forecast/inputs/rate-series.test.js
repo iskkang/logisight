@@ -3,18 +3,18 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { trend3p, percentile, buildRateSeries, toDate } = require('./rate-series');
 
-test('toDate: parses KITA YYYYMM (6-digit) → valid date (not NaN)', () => {
+test('toDate: KITA YYYYMM → 월말 기준(관측이 월 전체 대표)', () => {
   assert.equal(Number.isNaN(toDate('202605').getTime()), false);
-  assert.equal(toDate('202605').toISOString().slice(0, 10), '2026-05-01');
+  assert.equal(toDate('202605').toISOString().slice(0, 10), '2026-05-31');
 });
-test('buildRateSeries: YYYYMM points yield finite asof_age_days', () => {
+test('buildRateSeries: YYYYMM age는 월말 기준(월초 과대평가 수정)', () => {
   const points = [
     { value: 2850, change_pct: 6.2, date: '202605' },
     { value: 2684, change_pct: 3.0, date: '202604' },
   ];
   const rs = buildRateSeries(points, { unit: 'USD/FEU', asof: new Date('2026-06-05T00:00:00Z') });
   assert.equal(Number.isFinite(rs.asof_age_days), true);
-  assert.equal(rs.asof_age_days, 35); // 2026-05-01 → 2026-06-05
+  assert.equal(rs.asof_age_days, 5); // 2026-05-31 → 2026-06-05
 });
 
 test('trend3p: 3 consecutive positive change_pct → up_3', () => {

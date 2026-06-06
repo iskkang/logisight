@@ -2,12 +2,17 @@
 // rate_series 조립 — {value, change_pct, date} 포인트 배열(최신순)에서 파생.
 // date는 'YYYY-MM' | 'YYYY-MM-DD' | Date 허용.
 
+// 월간(YYYYMM·YYYY-MM)은 관측이 해당 월 전체를 대표 → 월말 기준.
+// 월초로 두면 d_n(경과일)이 ~1개월 과대평가돼 월간 타깃이 D-60 경계에서 잘못 abstain될 수 있다.
+function monthEnd(y, mo /* 1..12 */) {
+  return new Date(Date.UTC(y, mo, 0)); // 해당 월 말일
+}
 function toDate(d) {
   if (d instanceof Date) return d;
   const s = String(d).trim();
-  if (/^\d{6}$/.test(s)) return new Date(`${s.slice(0, 4)}-${s.slice(4, 6)}-01T00:00:00Z`); // 'YYYYMM'(KITA year_mon)
-  if (/^\d{4}-\d{2}$/.test(s)) return new Date(`${s}-01T00:00:00Z`); // 'YYYY-MM' → 월초
-  return new Date(`${s}T00:00:00Z`); // 'YYYY-MM-DD'
+  if (/^\d{6}$/.test(s)) return monthEnd(Number(s.slice(0, 4)), Number(s.slice(4, 6))); // 'YYYYMM'(KITA)
+  if (/^\d{4}-\d{2}$/.test(s)) return monthEnd(Number(s.slice(0, 4)), Number(s.slice(5, 7))); // 'YYYY-MM'
+  return new Date(`${s}T00:00:00Z`); // 'YYYY-MM-DD'(주간·일간)
 }
 
 // 최근 3개 포인트의 change_pct 부호로 추세 분류.

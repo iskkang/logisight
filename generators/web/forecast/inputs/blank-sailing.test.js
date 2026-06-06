@@ -39,6 +39,15 @@ test('flat (±1pp) → stable', () => {
 test('no rows → source_type none', () => {
   assert.equal(buildBlankSailing([], asof).source_type, 'none');
 });
+test('single reading → direction_observed=false (default stable, not observed)', () => {
+  const bs = buildBlankSailing([{ week_start: '2026-06-01', blank_pct: 5.5, source: 'Drewry' }], asof);
+  assert.equal(bs.direction, 'stable');
+  assert.equal(bs.direction_observed, false);
+});
+test('two readings → direction_observed=true', () => {
+  const bs = buildBlankSailing([{ week_start: '2026-06-01', blank_pct: 12 }, { week_start: '2026-05-25', blank_pct: 8 }], asof);
+  assert.equal(bs.direction_observed, true);
+});
 test('tracker output carries evidence [{source,published,claim}]', () => {
   const bs = buildBlankSailing([{ week_start: '2026-06-01', blank_pct: 12, source: 'Drewry' }], asof);
   assert.ok(Array.isArray(bs.evidence) && bs.evidence.length >= 1);
