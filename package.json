@@ -33,6 +33,7 @@
     "publish:daily-cards": "node generators/web/publish-daily-cards-to-site.js",
     "generate:forecasts": "node generators/web/generate-forecasts.js",
     "test:forecast": "node --test generators/web/forecast/",
+    "forecast:smoke": "node generators/web/forecast/smoke-assemble.js",
     "backfill:news": "node scripts/backfill-maritime-news.js",
     "backfill:news:images": "node scripts/backfill-maritime-news.js --images",
     "backfill:news:internal-images": "node scripts/backfill-maritime-news.js --internal-images",
