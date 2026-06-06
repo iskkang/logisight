@@ -18,9 +18,10 @@ alter table forecasts
   add column if not exists realized_pct numeric;             -- 판정 시 기록되는 실측 변화율
 
 -- 재실행 중복 방지: 같은 지표·기준일·모델버전 전망은 1건.
+-- non-partial unique — Supabase upsert onConflict가 partial index를 arbiter로 못 잡으므로 부분조건 제거.
+-- (metric_ref/model_version이 null인 행은 Postgres unique에서 distinct 처리되어 중복 허용, 생성 draft는 항상 채움)
 create unique index if not exists forecasts_dedup_idx
-  on forecasts (metric_ref, horizon_date, model_version)
-  where metric_ref is not null and model_version is not null;
+  on forecasts (metric_ref, horizon_date, model_version);
 
 -- 불변 트리거 갱신: 신규 채점 필드도 발행 후 불변. 단 outcome/outcome_note/realized_pct/resolved_at은 변경 허용.
 create or replace function forecasts_guard_published()

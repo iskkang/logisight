@@ -51,3 +51,15 @@ test('generateDrafts: scores targets and upserts drafts (fake LLM/DB)', async ()
   assert.equal(captured.every((r) => r.status === 'draft'), true);
   assert.equal(captured.every((r) => r.model_version === 'v1.1'), true);
 });
+
+test('generateDrafts: persistent LLM mismatch → needs_editor drafts still upserted (not skipped)', async () => {
+  const captured = [];
+  // 항상 방향 불일치 → narrate가 needs_editor 반환. draft는 placeholder로 여전히 적재돼야 함.
+  const badLLM = async () => JSON.stringify({ statement: '내린다', impact_note: 'x', direction_echo: 'down' });
+  const res = await generateDrafts(fakeSupabase(captured), badLLM, { asof: new Date() });
+  assert.equal(res.inserted, captured.length);
+  assert.equal(res.needsEditor, captured.length); // 비-abstain 전부 에디터 필요
+  assert.ok(captured.length >= 1);
+  assert.equal(captured.every((r) => r.status === 'draft'), true);
+  assert.equal(captured.every((r) => /검수/.test(r.statement) && r.impact_note === null), true);
+});
