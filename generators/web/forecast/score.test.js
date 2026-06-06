@@ -52,6 +52,16 @@ test('demand: -6 decelerating → -2', () => {
   assert.equal(scoreDemand({ export_momentum_yoy_pct: -6, momentum_trend: 'decelerating' }), -2);
 });
 
+test('demand: momentum absent + peak_approaching → +1', () => {
+  assert.equal(scoreDemand({ seasonality_flag: 'peak_approaching' }), 1);
+});
+test('demand: momentum absent, no signals → null (missing)', () => {
+  assert.equal(scoreDemand({ momentum_trend: 'stable' }), null);
+});
+test('demand: momentum absent + frontloading only (no m>0 confirm) → 0', () => {
+  assert.equal(scoreDemand({ frontloading_flag: true }), 0);
+});
+
 test('cost: fuel +9 → +1', () => {
   assert.equal(scoreCost({ fuel_mom_pct: 9 }, 1), 1);
 });

@@ -47,13 +47,17 @@ function scoreSupply(bs) {
 }
 
 // C. 수요 (-2..+2).
-// 우선순위 주의: seasonality_flag=peak_approaching는 문서 규칙상 크기 무관 +1(m 가드 없음)이라
-// 보합(±2%) 가드보다 먼저 평가한다. 그 외 ±2% 이내는 보합 → 0(문서 "0: 보합 ±2% 이내, stable").
+// 우선순위: frontloading+양(+) 또는 ≥5%&accelerating → +2; peak_approaching는 크기 무관 +1(보합 가드 앞);
+// 그 외 ±2%는 보합=0. 모멘텀이 결측이면 m 기반 규칙은 건너뛴다(계절성/프론트로딩만으로 판단).
 function scoreDemand(d) {
-  if (!d || d.export_momentum_yoy_pct == null) return null;
+  if (!d) return null;
   const m = d.export_momentum_yoy_pct;
-  if ((m >= 5 && d.momentum_trend === 'accelerating') || (d.frontloading_flag && m > 0)) return 2;
-  if (d.seasonality_flag === 'peak_approaching') return 1;
+  const hasM = m != null;
+  const peak = d.seasonality_flag === 'peak_approaching';
+  if (!hasM && !peak && !d.frontloading_flag) return null; // 전부 결측
+  if ((hasM && m >= 5 && d.momentum_trend === 'accelerating') || (d.frontloading_flag && hasM && m > 0)) return 2;
+  if (peak) return 1;
+  if (!hasM) return 0; // 모멘텀 결측 + (frontloading만) → 보합
   if (Math.abs(m) <= 2) return 0;
   if (m > 0 && (d.momentum_trend === 'stable' || d.momentum_trend === 'accelerating')) return 1;
   if (m <= -5 && d.momentum_trend === 'decelerating') return -2;
