@@ -4,9 +4,10 @@
 
 function toDate(d) {
   if (d instanceof Date) return d;
-  const s = String(d);
-  const iso = s.length === 7 ? `${s}-01` : s; // 'YYYY-MM' → 월초
-  return new Date(`${iso}T00:00:00Z`);
+  const s = String(d).trim();
+  if (/^\d{6}$/.test(s)) return new Date(`${s.slice(0, 4)}-${s.slice(4, 6)}-01T00:00:00Z`); // 'YYYYMM'(KITA year_mon)
+  if (/^\d{4}-\d{2}$/.test(s)) return new Date(`${s}-01T00:00:00Z`); // 'YYYY-MM' → 월초
+  return new Date(`${s}T00:00:00Z`); // 'YYYY-MM-DD'
 }
 
 // 최근 3개 포인트의 change_pct 부호로 추세 분류.
