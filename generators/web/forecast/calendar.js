@@ -6,6 +6,7 @@ function seasonalityFlag(date) {
   const m = date.getUTCMonth() + 1; // 1..12
   if (m === 6 || m === 7) return 'peak_approaching';
   if (m >= 8 && m <= 10) return 'peak';
+  if (m === 11) return 'off'; // 성수기(8~10월) 직후 비수기 진입 — v1.3 enum
   if (m === 12) return 'peak_approaching';
   return 'none';
 }

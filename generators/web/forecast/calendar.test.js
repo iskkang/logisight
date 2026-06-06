@@ -15,6 +15,9 @@ test('Aug–Oct → peak', () => {
 test('Dec → peak_approaching (pre-CNY frontloading)', () => {
   assert.equal(seasonalityFlag(d('2026-12-20')), 'peak_approaching');
 });
+test('Nov → off (post-peak wind-down, v1.3 enum)', () => {
+  assert.equal(seasonalityFlag(d('2026-11-15')), 'off');
+});
 test('Mar → none', () => {
   assert.equal(seasonalityFlag(d('2026-03-15')), 'none');
 });
