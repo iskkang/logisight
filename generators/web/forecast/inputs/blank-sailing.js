@@ -13,10 +13,16 @@ function magnitudeClass(ratio) {
 
 const RANK = { major: 3, moderate: 2, minor: 1, unknown: 0 };
 
-// rows: blank_sailings 행(최신순). asof: Date. → tracker_quoted(+evidence)
+// rows: blank_sailings 행. asof: Date. → tracker_quoted(+evidence)
+// blank_pct가 채워진 과거/당주 행만 유효(미래 예정 주차·null 비율은 결항 데이터 아님 → 결측).
 function buildBlankSailing(rows, asof) {
-  if (!rows || !rows.length) return { source_type: 'none' };
-  const sorted = [...rows].sort((a, b) => new Date(b.week_start) - new Date(a.week_start));
+  const valid = (rows || []).filter((r) => {
+    if (r.blank_pct == null) return false;
+    const t = new Date(`${r.week_start}T00:00:00Z`).getTime();
+    return Number.isFinite(t) && t <= asof.getTime();
+  });
+  if (!valid.length) return { source_type: 'none' };
+  const sorted = valid.sort((a, b) => new Date(b.week_start) - new Date(a.week_start));
   const latest = sorted[0];
   const prev = sorted[1];
   let direction = 'stable';

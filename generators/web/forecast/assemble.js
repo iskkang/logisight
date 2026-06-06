@@ -27,7 +27,13 @@ async function fetchRateSeries(supabase, target, asof) {
     .eq('dest', target.dest)
     .order('year_mon', { ascending: false })
     .limit(13);
-  const points = (data || []).map((r) => ({ value: r.feu, change_pct: r.feu_chg, date: r.year_mon }));
+  // 주의: kita_sea_rates.feu_chg는 절댓값(USD)이지 %가 아니다 → feu 레벨에서 실제 MoM %를 산출.
+  const rows = data || [];
+  const points = rows.map((r, i) => {
+    const prev = rows[i + 1]; // 내림차순이므로 다음 인덱스가 한 달 이전
+    const pct = prev && prev.feu ? Math.round(((r.feu - prev.feu) / prev.feu) * 1000) / 10 : null;
+    return { value: r.feu, change_pct: pct, date: r.year_mon };
+  });
   return buildRateSeries(points, { unit: 'USD/FEU', asof });
 }
 
