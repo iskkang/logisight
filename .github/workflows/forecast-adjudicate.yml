@@ -1,0 +1,29 @@
+name: Forecast — Daily Auto-Adjudication
+
+# 매일: horizon 도래 + 미판정(published) 전망을 실측으로 자동 판정(hit/partial/miss).
+# 복기(outcome_note)는 쓰지 않음 — 에디터가 /admin/forecasts 에서 작성("복기 작성 중").
+on:
+  schedule:
+    - cron: '0 21 * * *'  # 매일 21:00 UTC (익일 06:00 KST)
+  workflow_dispatch:
+
+jobs:
+  adjudicate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Adjudicate due forecasts
+        run: npm run adjudicate:forecasts
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

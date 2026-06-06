@@ -20,7 +20,7 @@ async function generateDrafts(supabase, callLLM, { asof = new Date() } = {}) {
   const shared = await buildShared(supabase, asof);
   const monthly = await fetchMonthlyTargets(supabase);
   const targets = [...WEEKLY_TARGETS, ...monthly];
-  const res = { total: targets.length, inserted: 0, abstained: 0, needsEditor: 0, errors: 0 };
+  const res = { total: targets.length, inserted: 0, updated: 0, skipped: 0, abstained: 0, needsEditor: 0, errors: 0 };
   for (const t of targets) {
     const input = await assembleInput(supabase, t, { asof, shared });
     const verdict = scoreForecast(input);
@@ -28,9 +28,34 @@ async function generateDrafts(supabase, callLLM, { asof = new Date() } = {}) {
     const prose = await narrate(callLLM, input, verdict);
     if (prose.needs_editor) res.needsEditor++;
     const row = mapVerdictToRow(input, verdict, prose);
-    const { error } = await supabase.from('forecasts').upsert(row, { onConflict: 'metric_ref,horizon_date,model_version' });
-    if (error) { res.errors++; console.error(`❌ upsert [${t.metric_ref}]: ${error.message}`); }
-    else { res.inserted++; console.log(`✅ draft [${t.metric_ref}] ${verdict.direction} ${verdict.expected_range_pct ?? ''}${prose.needs_editor ? ' (에디터 작성 필요)' : ''}`); }
+
+    // (metric_ref, horizon_date, model_version) 기준 dedup — DB onConflict 인덱스에 의존하지 않고,
+    // 이미 발행/판정된 행은 절대 덮어쓰지 않는다(불변성). 같은 키의 draft만 갱신.
+    const { data: existing } = await supabase
+      .from('forecasts')
+      .select('id,status')
+      .eq('metric_ref', row.metric_ref)
+      .eq('horizon_date', row.horizon_date)
+      .eq('model_version', row.model_version)
+      .limit(1);
+    let error = null;
+    let action = 'insert';
+    if (existing && existing.length) {
+      if (existing[0].status !== 'draft') {
+        res.skipped++;
+        console.log(`↩︎ skip [${t.metric_ref}] 이미 ${existing[0].status} (보존)`);
+        continue;
+      }
+      action = 'update';
+      ({ error } = await supabase.from('forecasts').update(row).eq('id', existing[0].id));
+    } else {
+      ({ error } = await supabase.from('forecasts').insert(row));
+    }
+    if (error) { res.errors++; console.error(`❌ ${action} [${t.metric_ref}]: ${error.message}`); }
+    else {
+      if (action === 'update') res.updated++; else res.inserted++;
+      console.log(`✅ draft [${t.metric_ref}] ${verdict.direction} ${verdict.expected_range_pct ?? ''}${prose.needs_editor ? ' (에디터 작성 필요)' : ''}`);
+    }
   }
   return res;
 }
@@ -41,7 +66,7 @@ async function main() {
     auth: { persistSession: false }, realtime: { enabled: false },
   });
   const res = await generateDrafts(supabase, callClaude);
-  console.log(`📊 ${res.inserted}/${res.total} draft 적재 · abstain ${res.abstained} · 에디터필요 ${res.needsEditor} · 오류 ${res.errors}`);
+  console.log(`📊 신규 ${res.inserted} · 갱신 ${res.updated} · 보존 ${res.skipped} / ${res.total} 타깃 · abstain ${res.abstained} · 에디터필요 ${res.needsEditor} · 오류 ${res.errors}`);
 }
 
 if (require.main === module) {

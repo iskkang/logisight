@@ -33,7 +33,8 @@ function fakeSupabase(captured) {
       order() { return api; },
       limit() { return Promise.resolve({ data: rows }); },
       then(res, rej) { return Promise.resolve({ data: rows }).then(res, rej); }, // await builder 지원
-      async upsert(row) { captured.push(row); return { error: null }; },
+      async insert(row) { captured.push(row); return { error: null }; },
+      update(patch) { return { eq() { captured.push(patch); return Promise.resolve({ error: null }); } }; },
     };
     return api;
   }
