@@ -1,5 +1,7 @@
 'use strict';
-const { SUPPLY_SIGNAL_MAX_AGE_DAYS, WEIGHTS, THRESHOLDS } = require('./config/forecast-model');
+const {
+  SUPPLY_SIGNAL_MAX_AGE_DAYS, WEIGHTS, THRESHOLDS, STALE_DAYS, MODEL_VERSION,
+} = require('./config/forecast-model');
 
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
@@ -123,7 +125,63 @@ function confidence(scores, weights) {
   return 'medium';
 }
 
+function fmtRange(range) {
+  if (!range) return null;
+  const [lo, hi] = range;
+  const sLo = lo > 0 ? `+${lo}` : `${lo}`;
+  return `${sLo}~${hi}`;
+}
+
+// input: { mode, cadence, rate_series, supply:{blank_sailing}, demand, cost, pricing_actions }
+function scoreForecast(input) {
+  const rs = input.rate_series;
+  if (!rs || rs.latest == null) return { abstain: true, reason: 'rate_series 결측' };
+  const staleMax = STALE_DAYS[input.cadence] || STALE_DAYS.weekly;
+  if (rs.asof_age_days != null && rs.asof_age_days > staleMax) {
+    return { abstain: true, reason: `기준일 과도(>${staleMax}d)` };
+  }
+
+  const weights = WEIGHTS[input.mode] || WEIGHTS.ocean;
+  const scores = {
+    momentum: scoreMomentum(rs),
+    supply: scoreSupply(input.supply && input.supply.blank_sailing),
+    demand: scoreDemand(input.demand),
+    pricing: scorePricing(input.pricing_actions),
+    cost: null,
+  };
+  scores.cost = scoreCost(input.cost, scores.demand);
+
+  if (scores.supply == null && scores.demand == null) {
+    return { abstain: true, reason: 'supply·demand 동시 결측' };
+  }
+
+  const comp = composite(scores, weights);
+  if (comp == null) return { abstain: true, reason: '활성 팩터 없음' };
+
+  const cls = classify(comp);
+  const conf = confidence(scores, weights);
+  return {
+    abstain: false,
+    mode: input.mode,
+    cadence: input.cadence,
+    direction: cls.direction,
+    strength: cls.strength,
+    composite_score: comp,
+    range_low_pct: cls.range ? cls.range[0] : null,
+    range_high_pct: cls.range ? cls.range[1] : null,
+    expected_range_pct: fmtRange(cls.range),
+    confidence: conf,
+    factor_scores: Object.keys(weights).map((f) => ({
+      factor: f, score: scores[f], weight: weights[f], missing: scores[f] == null,
+    })),
+    data_quality_flags: Object.keys(weights)
+      .filter((f) => scores[f] == null)
+      .map((f) => `${f}: 결측 — 가중치 재분배`),
+    model_version: MODEL_VERSION,
+  };
+}
+
 module.exports = {
   scoreMomentum, scoreSupply, scoreDemand, scoreCost, scorePricing, clamp,
-  composite, classify, confidence, round2,
+  composite, classify, confidence, round2, scoreForecast, fmtRange,
 };
