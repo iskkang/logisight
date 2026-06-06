@@ -1,0 +1,27 @@
+name: Forecast — Weekly IATA Jet Fuel Price Persist
+
+# 주간: IATA Jet Fuel Price Monitor 헤드라인 → iata_jet_fuel_weekly 적재.
+# 출처: IATA / S&P Global Platts (https://www.iata.org/en/publications/economics/fuel-monitor/)
+# 공개 페이지, 등록 불필요. 매주 목요일(IATA 통상 발행 이후) 수집.
+on:
+  schedule:
+    - cron: '0 6 * * 4'   # 목요일 06:00 UTC (IATA 발행 D+1)
+  workflow_dispatch:
+
+jobs:
+  iata-fuel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Persist IATA jet fuel price reading
+        run: npm run forecast:iata-fuel
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
