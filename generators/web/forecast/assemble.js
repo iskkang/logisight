@@ -32,9 +32,11 @@ async function fetchRateSeries(supabase, target, asof) {
 // 공통 입력(supply/cost/demand)은 타깃마다 재조회를 피하려 호출부에서 1회 만들어 주입할 수 있음.
 async function assembleInput(supabase, target, { asof = new Date(), shared } = {}) {
   const rate_series = await fetchRateSeries(supabase, target, asof);
-  const supply = shared?.supply ?? { blank_sailing: await fetchBlankSailing(supabase, asof) };
-  const cost = shared?.cost ?? await fetchFuel(supabase, asof);
-  const demand = shared?.demand ?? await fetchDemand(supabase, asof);
+  // 존재 여부로 판정 — fetchFuel 등이 정상적으로 null(결측)을 반환해도 재조회하지 않도록(?? 금지).
+  const has = (k) => shared != null && k in shared;
+  const supply = has('supply') ? shared.supply : { blank_sailing: await fetchBlankSailing(supabase, asof) };
+  const cost = has('cost') ? shared.cost : await fetchFuel(supabase, asof);
+  const demand = has('demand') ? shared.demand : await fetchDemand(supabase, asof);
   return {
     metric_ref: target.metric_ref,
     label: target.label,

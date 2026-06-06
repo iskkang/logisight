@@ -11,8 +11,9 @@ function buildFuel(rows, asof) {
   const latest = sorted[0];
   const latestDate = new Date(`${latest.obs_date}T00:00:00Z`);
   const prior = sorted.find((r) => (latestDate - new Date(`${r.obs_date}T00:00:00Z`)) >= 28 * 86400000);
-  if (!prior) return null;
+  if (!prior || prior.price_usd === 0) return null; // 0 division 방지(불량 ETL 행)
   const momPct = ((latest.price_usd - prior.price_usd) / prior.price_usd) * 100;
+  if (!Number.isFinite(momPct)) return null;
   const lagWeeks = Math.round(((asof - latestDate) / 86400000 / 7) * 10) / 10;
   return { fuel_mom_pct: Math.round(momPct * 10) / 10, fuel_obs_lag_weeks: lagWeeks };
 }

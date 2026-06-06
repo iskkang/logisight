@@ -45,6 +45,9 @@ test('demand: seasonality peak_approaching → +1 regardless of small/zero/neg m
   assert.equal(scoreDemand({ export_momentum_yoy_pct: 0, seasonality_flag: 'peak_approaching' }), 1);
   assert.equal(scoreDemand({ export_momentum_yoy_pct: -1, seasonality_flag: 'peak_approaching' }), 1);
 });
+test('demand: peak_approaching overrides STRONG negative momentum → +1 (documents rule precedence)', () => {
+  assert.equal(scoreDemand({ export_momentum_yoy_pct: -8, momentum_trend: 'decelerating', seasonality_flag: 'peak_approaching' }), 1);
+});
 test('demand: larger positive stable (m>2) → +1', () => {
   assert.equal(scoreDemand({ export_momentum_yoy_pct: 3, momentum_trend: 'stable' }), 1);
 });

@@ -10,8 +10,9 @@ function priorYear(period) {
 // totals: [{period:'YYYY-MM', total}] (정렬 무관). 최신 period의 YoY와 최근 3개월 추세.
 function exportMomentum(totals) {
   if (!totals || !totals.length) return { yoy_pct: null, trend: null };
-  const map = new Map(totals.map((t) => [t.period, t.total]));
-  const periods = [...map.keys()].sort().reverse(); // 최신순
+  // 'YYYY-MM'(zero-padded)만 사용 — 연간 'YYYY' 등은 제외(문자열 정렬·priorYear 가정 보호).
+  const map = new Map(totals.filter((t) => /^\d{4}-\d{2}$/.test(t.period)).map((t) => [t.period, t.total]));
+  const periods = [...map.keys()].sort().reverse(); // 최신순(zero-padded 가정)
   const latest = periods[0];
   const yoyOf = (p) => {
     const cur = map.get(p);
@@ -33,11 +34,13 @@ function exportMomentum(totals) {
 
 function frontloadingFlag(policies, asof) {
   if (!policies || !policies.length) return false;
-  const horizon = new Date(asof.getTime() + 60 * 86400000);
+  // 날짜 문자열(YYYY-MM-DD)로 비교 — asof 시각/타임존에 따라 당일 정책이 플립되지 않도록.
+  const asofStr = asof.toISOString().slice(0, 10);
+  const horizonStr = new Date(asof.getTime() + 60 * 86400000).toISOString().slice(0, 10);
   return policies.some((p) => {
     if (!p.effective_date) return false;
-    const eff = new Date(`${p.effective_date}T00:00:00Z`);
-    return eff >= asof && eff <= horizon;
+    const eff = String(p.effective_date).slice(0, 10);
+    return eff >= asofStr && eff <= horizonStr;
   });
 }
 

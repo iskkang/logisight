@@ -146,8 +146,9 @@ function scoreForecast(input) {
   const rs = input.rate_series;
   if (!rs || rs.latest == null) return { abstain: true, reason: 'rate_series 결측' };
   const staleMax = STALE_DAYS[input.cadence] || STALE_DAYS.weekly;
-  if (rs.asof_age_days != null && rs.asof_age_days > staleMax) {
-    return { abstain: true, reason: `기준일 과도(>${staleMax}d)` };
+  // 음수(미래일자)·NaN·과도(>max) 전부 차단. 정상 범위 [0, staleMax]만 통과.
+  if (rs.asof_age_days != null && !(rs.asof_age_days >= 0 && rs.asof_age_days <= staleMax)) {
+    return { abstain: true, reason: `기준일 오류/과도(${rs.asof_age_days}d, max ${staleMax})` };
   }
 
   const weights = WEIGHTS[input.mode] || WEIGHTS.ocean;

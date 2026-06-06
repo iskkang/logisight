@@ -20,15 +20,17 @@ async function fetchMonthlyTargets(supabase) {
   const { data } = await supabase
     .from('kita_sea_rates')
     .select('origin,dest,year_mon');
+  // 키는 JSON 배열 문자열 — origin/dest 어떤 문자가 와도 (origin,dest) 쌍이 안전하게 유일.
   const byLane = new Map();
   for (const r of data || []) {
-    const key = `${r.origin}__${r.dest}`;
-    byLane.set(key, (byLane.get(key) || 0) + 1);
+    const key = JSON.stringify([r.origin, r.dest]);
+    const e = byLane.get(key) || { origin: r.origin, dest: r.dest, count: 0 };
+    e.count += 1;
+    byLane.set(key, e);
   }
   const targets = [];
-  for (const [key, count] of byLane.entries()) {
+  for (const { origin, dest, count } of byLane.values()) {
     if (count < 3) continue;
-    const [origin, dest] = key.split('__');
     if (!MAJOR_DEST_KEYWORDS.some((k) => dest.includes(k))) continue;
     targets.push({
       metric_ref: `kita_sea_rates:${origin}-${dest}`,

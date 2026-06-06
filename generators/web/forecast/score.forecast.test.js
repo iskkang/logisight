@@ -33,6 +33,16 @@ test('scoreForecast: missing rate_series → abstain', () => {
   assert.equal(r.abstain, true);
 });
 
+test('scoreForecast: future-dated rate (negative age) → abstain', () => {
+  const r = scoreForecast({
+    mode: 'ocean', cadence: 'weekly',
+    rate_series: { latest: 1000, trend_3p: 'up_2', percentile_52w: 60, asof_age_days: -7 },
+    supply: { blank_sailing: { source_type: 'tracker_quoted', ratio_pct: 9, direction: 'expanding', signal_age_days: 3 } },
+    demand: { export_momentum_yoy_pct: 3, momentum_trend: 'stable' },
+  });
+  assert.equal(r.abstain, true);
+});
+
 test('scoreForecast: stale rate (weekly D-21+) → abstain', () => {
   const r = scoreForecast({
     mode: 'ocean', cadence: 'weekly',

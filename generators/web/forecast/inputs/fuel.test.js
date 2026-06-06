@@ -21,3 +21,7 @@ test('insufficient history → null', () => {
 test('empty → null', () => {
   assert.equal(buildFuel([], asof), null);
 });
+test('zero prior price → null (no Infinity into scorer)', () => {
+  const rows = [{ obs_date: '2026-06-04', price_usd: 600 }, { obs_date: '2026-05-01', price_usd: 0 }];
+  assert.equal(buildFuel(rows, asof), null);
+});

@@ -21,7 +21,8 @@ function buildBlankSailing(rows, asof) {
     if (delta > 1) direction = 'expanding';
     else if (delta < -1) direction = 'easing';
   }
-  const ageDays = Math.round((asof - new Date(`${latest.week_start}T00:00:00Z`)) / 86400000);
+  const t = new Date(`${latest.week_start}T00:00:00Z`).getTime();
+  const ageDays = Number.isFinite(t) ? Math.round((asof - t) / 86400000) : null;
   return {
     source_type: 'tracker_quoted',
     ratio_pct: latest.blank_pct != null ? latest.blank_pct : null,

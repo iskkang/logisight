@@ -36,6 +36,7 @@ function buildRateSeries(points, { unit, asof }) {
   const latest = sorted[0];
   const values = sorted.map((p) => p.value).filter((v) => v != null);
   const pct = percentile(latest.value, values);
+  // vs_normal_band: 표시/투명성용 파생(스코어러는 percentile_52w만 사용).
   let band = 'within';
   if (pct != null && pct >= 70) band = 'above';
   else if (pct != null && pct <= 30) band = 'below';
