@@ -6,7 +6,13 @@ const { fetchFuel } = require('./inputs/fuel');
 const { fetchDemand } = require('./inputs/demand');
 const { regionOf, fetchRegionDemand } = require('./inputs/demand-region');
 const { fetchDiversion } = require('./inputs/diversion');
+const { fetchChinaFactor } = require('./inputs/china-factor');
 const { seasonalityFlag } = require('./calendar');
+
+// 한국발(부산 출발 / KCCI) 해상 타깃만 china_factor 적용 — 중국발 경유항 구조(v1.4 b-3).
+function isKoreaOrigin(target) {
+  return target.origin === '부산' || target.metric_ref === 'KCCI';
+}
 const { spreadContextEvent, fetchSpread } = require('./inputs/spread');
 const { buildContextHeadlines } = require('./inputs/context-headlines');
 const { horizonDate } = require('./targets');
@@ -93,6 +99,11 @@ async function assembleInput(supabase, target, { asof = new Date(), shared } = {
   const news = shared && 'news' in shared ? shared.news : await fetchNews14d(supabase, asof);
   const context_headlines = buildContextHeadlines(news, target, region);
 
+  // china_factor: 한국발 해상 타깃만(중국 경유항 구조). 그 외(WCI 상하이발 등)는 null.
+  const china_factor = (target.mode === 'ocean' && isKoreaOrigin(target))
+    ? (has('china_factor') ? shared.china_factor : await fetchChinaFactor(supabase))
+    : null;
+
   const data_freshness = buildDataFreshness({ rate_series, supply, cost, demand }, asof);
   return {
     metric_ref: target.metric_ref,
@@ -105,6 +116,7 @@ async function assembleInput(supabase, target, { asof = new Date(), shared } = {
     cost,
     demand,
     pricing_actions: null,
+    china_factor,
     context_events,
     context_headlines,
     data_freshness,
@@ -138,6 +150,7 @@ async function buildShared(supabase, asof = new Date()) {
     spread: await fetchSpread(supabase),
     news: await fetchNews14d(supabase, asof),
     diversion: await fetchDiversion(supabase, asof),
+    china_factor: await fetchChinaFactor(supabase),
   };
 }
 

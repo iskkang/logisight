@@ -141,7 +141,16 @@ function fmtRange(range) {
   return `${sLo}~${hi}`;
 }
 
-// input: { mode, cadence, rate_series, supply:{blank_sailing}, demand, cost, pricing_actions }
+// (b-3) china_squeeze: 한국발 중국 수급 보정 신호 (-1|0|+1). china_factor 결측이면 0.
+function chinaSqueeze(cf) {
+  if (!cf) return 0;
+  const scfi = cf.scfi_mom_pct;
+  if ((scfi != null && scfi >= 3 && cf.scfi_vs_kr_spread === 'widening') || cf.china_export_signal === 'surge') return 1;
+  if (scfi != null && scfi <= -3 && cf.china_export_signal === 'slump') return -1;
+  return 0;
+}
+
+// input: { mode, cadence, rate_series, supply:{blank_sailing}, demand, cost, pricing_actions, china_factor }
 function scoreForecast(input) {
   const rs = input.rate_series;
   if (!rs || rs.latest == null) return { abstain: true, reason: 'rate_series 결측' };
@@ -160,6 +169,14 @@ function scoreForecast(input) {
     cost: null,
   };
   scores.cost = scoreCost(input.cost, scores.demand);
+
+  // (b-3) 한국발 중국 수급 보정: B_final = clamp(B + 0.5×china_squeeze). supply가 있을 때만 적용.
+  const squeeze = chinaSqueeze(input.china_factor);
+  let chinaAdjusted = false;
+  if (scores.supply != null && squeeze !== 0) {
+    scores.supply = clamp(scores.supply + 0.5 * squeeze, -2, 2);
+    chinaAdjusted = true;
+  }
 
   if (scores.supply == null && scores.demand == null) {
     return { abstain: true, reason: 'supply·demand 동시 결측' };
@@ -196,6 +213,9 @@ function scoreForecast(input) {
         && input.supply.blank_sailing.source_type !== 'none'
         && input.supply.blank_sailing.direction_observed === false
         ? ['공급: 방향 미산출(관측 1건) — 기본값 stable']
+        : []),
+      ...(chinaAdjusted
+        ? [`공급: 중국 수급 보정 ${squeeze > 0 ? '+' : ''}${0.5 * squeeze}(b-3, ${(input.china_factor.evidence || []).join('; ')})`]
         : []),
     ],
     model_version: MODEL_VERSION,

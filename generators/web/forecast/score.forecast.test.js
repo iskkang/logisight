@@ -38,6 +38,30 @@ test('scoreForecast: single-reading blank_sailing → 방향 미산출 flag', ()
   assert.ok(r.data_quality_flags.some((f) => /방향 미산출/.test(f)));
 });
 
+// (b-3) 중국 수급 보정
+const b3base = {
+  mode: 'ocean', cadence: 'weekly',
+  rate_series: { latest: 1000, trend_3p: 'up_2', percentile_52w: 60, asof_age_days: 3 },
+  supply: { blank_sailing: { source_type: 'tracker_quoted', ratio_pct: 5.5, direction: 'stable', direction_observed: true, signal_age_days: 2 } },
+  demand: { export_momentum_yoy_pct: 3, momentum_trend: 'stable' },
+};
+const supScore = (r) => r.factor_scores.find((f) => f.factor === 'supply').score;
+
+test('b-3: SCFI 강세 + widening → china_squeeze +1 → supply +0.5', () => {
+  const r = scoreForecast({ ...b3base, china_factor: { scfi_mom_pct: 4, scfi_vs_kr_spread: 'widening', china_export_signal: null } });
+  assert.equal(supScore(r), 0.5); // 0 + 0.5×1
+  assert.ok(r.data_quality_flags.some((f) => /중국 수급 보정/.test(f)));
+});
+test('b-3: SCFI 약세 + slump → china_squeeze -1 → supply -0.5', () => {
+  const r = scoreForecast({ ...b3base, china_factor: { scfi_mom_pct: -4, scfi_vs_kr_spread: 'narrowing', china_export_signal: 'slump' } });
+  assert.equal(supScore(r), -0.5);
+});
+test('b-3: china_factor 결측 → supply 보정 없음', () => {
+  const r = scoreForecast({ ...b3base });
+  assert.equal(supScore(r), 0);
+  assert.equal(r.data_quality_flags.some((f) => /중국 수급 보정/.test(f)), false);
+});
+
 test('scoreForecast: missing rate_series → abstain', () => {
   const r = scoreForecast({ mode: 'ocean', cadence: 'weekly', rate_series: null });
   assert.equal(r.abstain, true);
