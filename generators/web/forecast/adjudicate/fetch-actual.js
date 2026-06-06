@@ -1,5 +1,6 @@
 'use strict';
 // metric_ref → 실측값. 'KCCI'/'SCFI'(freight_indices) 또는 'kita_sea_rates:origin-dest'.
+const { toDate } = require('../inputs/rate-series');
 
 function parseMetricRef(ref) {
   if (ref && ref.startsWith('kita_sea_rates:')) {
@@ -37,8 +38,9 @@ async function fetchActual(supabase, metricRef, horizonDate) {
     .eq('dest', m.dest)
     .order('year_mon', { ascending: false })
     .limit(6);
-  // year_mon은 'YYYYMM' → 비교 위해 'YYYY-MM-01'로 정규화
-  const norm = (ym) => `${String(ym).slice(0, 4)}-${String(ym).slice(4, 6)}-01`;
+  // year_mon('YYYYMM')은 해당 월 전체를 대표 → 월말 기준으로 정규화(월초로 두면 horizon이
+  // 월 중순일 때 그 달 실측이 < horizon으로 밀려 다음 달로 판정되는 오프셋 버그). rate-series.toDate 재사용.
+  const norm = (ym) => toDate(ym).toISOString().slice(0, 10);
   return pickRealized((data || []).map((r) => ({ value: r.feu, date: norm(r.year_mon) })), horizonDate);
 }
 
