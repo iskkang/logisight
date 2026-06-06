@@ -6,6 +6,7 @@ const { fetchFuel } = require('./inputs/fuel');
 const { fetchDemand } = require('./inputs/demand');
 const { regionOf, fetchRegionDemand } = require('./inputs/demand-region');
 const { seasonalityFlag } = require('./calendar');
+const { spreadContextEvent, fetchSpread } = require('./inputs/spread');
 const { horizonDate } = require('./targets');
 
 async function fetchRateSeries(supabase, target, asof) {
@@ -56,6 +57,11 @@ async function assembleInput(supabase, target, { asof = new Date(), shared } = {
       demand = { ...demand, export_momentum_yoy_pct: rd.export_momentum_yoy_pct, momentum_trend: rd.momentum_trend };
     }
   }
+  const spread = shared && 'spread' in shared ? shared.spread : await fetchSpread(supabase);
+  const context_events = [];
+  const spreadEv = spreadContextEvent(spread);
+  if (spreadEv) context_events.push(spreadEv);
+
   const data_freshness = buildDataFreshness({ rate_series, supply, cost, demand }, asof);
   return {
     metric_ref: target.metric_ref,
@@ -68,6 +74,7 @@ async function assembleInput(supabase, target, { asof = new Date(), shared } = {
     cost,
     demand,
     pricing_actions: null,
+    context_events,
     data_freshness,
   };
 }
@@ -96,6 +103,7 @@ async function buildShared(supabase, asof = new Date()) {
     supply: { blank_sailing: await fetchBlankSailing(supabase, asof) },
     cost: await fetchFuel(supabase, asof),
     demand: await fetchDemand(supabase, asof),
+    spread: await fetchSpread(supabase),
   };
 }
 
