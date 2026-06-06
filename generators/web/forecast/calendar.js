@@ -1,14 +1,23 @@
 'use strict';
-// 달력 기반 성수기 플래그(외부 데이터 불필요, 상수). Decision 3 cheap win.
-// 근거: 미주/유럽 해상 성수기 8~10월 → 6~7월 선행 부킹; 춘절 전(12월) 공장 가동중단 대비 프론트로딩.
-// CNY는 매년 변동(1월말~2월) — v1은 12월을 선행 근사로 둔다(분기 보정 시 정교화).
-function seasonalityFlag(date) {
+// 권역별 성수기 플래그(외부 데이터 불필요, 상수). v1.3 enum: peak_approaching | peak | off | none.
+// 노선·권역별 성수기 구간이 다르므로 region을 받아 분기한다(미주 연말 성수기 선적 7~10월 등, H10 정합).
+// 12월은 춘절(설)前 선행 부킹으로 미주 외 권역은 peak_approaching(한국발 공장 가동중단 대비).
+
+// region → { peak:[월], peak_approaching:[월], off:[월] } (그 외 월 = none)
+const SEASON_WINDOWS = {
+  미주: { peak: [7, 8, 9, 10], peak_approaching: [5, 6], off: [11, 12] }, // 미주 연말 성수기 선적
+  EU: { peak: [8, 9, 10], peak_approaching: [6, 7, 12], off: [11] }, // 가을 성수기 + 12월 선행
+  동남아: { peak: [8, 9, 10], peak_approaching: [6, 7, 12], off: [11] },
+};
+const DEFAULT_WINDOW = { peak: [8, 9, 10], peak_approaching: [6, 7, 12], off: [11] }; // 권역 불명(종합 지수)
+
+function seasonalityFlag(date, region) {
   const m = date.getUTCMonth() + 1; // 1..12
-  if (m === 6 || m === 7) return 'peak_approaching';
-  if (m >= 8 && m <= 10) return 'peak';
-  if (m === 11) return 'off'; // 성수기(8~10월) 직후 비수기 진입 — v1.3 enum
-  if (m === 12) return 'peak_approaching';
+  const w = SEASON_WINDOWS[region] || DEFAULT_WINDOW;
+  if (w.peak.includes(m)) return 'peak';
+  if (w.peak_approaching.includes(m)) return 'peak_approaching';
+  if (w.off.includes(m)) return 'off';
   return 'none';
 }
 
-module.exports = { seasonalityFlag };
+module.exports = { seasonalityFlag, SEASON_WINDOWS, DEFAULT_WINDOW };

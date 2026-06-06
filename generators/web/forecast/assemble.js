@@ -5,6 +5,7 @@ const { fetchBlankSailing } = require('./inputs/blank-sailing');
 const { fetchFuel } = require('./inputs/fuel');
 const { fetchDemand } = require('./inputs/demand');
 const { regionOf, fetchRegionDemand } = require('./inputs/demand-region');
+const { seasonalityFlag } = require('./calendar');
 const { horizonDate } = require('./targets');
 
 async function fetchRateSeries(supabase, target, asof) {
@@ -42,9 +43,11 @@ async function assembleInput(supabase, target, { asof = new Date(), shared } = {
   // seasonality_flag·frontloading_flag는 권역 무관(달력·정책)이라 기존 값 유지.
   const region = regionOf(target);
   if (region) {
+    // 권역 판별 시 seasonality는 권역별 구간으로 override(미주 7~10 peak 등). 모멘텀은 잠정치 있으면 교체.
+    demand = { ...demand, seasonality_flag: seasonalityFlag(asof, region), region };
     const rd = await fetchRegionDemand(supabase, region, asof);
     if (rd.export_momentum_yoy_pct != null) {
-      demand = { ...demand, export_momentum_yoy_pct: rd.export_momentum_yoy_pct, momentum_trend: rd.momentum_trend, region };
+      demand = { ...demand, export_momentum_yoy_pct: rd.export_momentum_yoy_pct, momentum_trend: rd.momentum_trend };
     }
   }
   return {
