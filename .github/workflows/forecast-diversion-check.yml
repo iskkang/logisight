@@ -1,0 +1,28 @@
+name: Forecast — Biweekly Red Sea Diversion Freshness Check
+
+# 격주: red_sea_diversion 테이블 최신 행이 14일 이내인지 확인.
+# Drewry Red Sea Diversion Tracker는 로그인 게이트(무료) → 자동 수집 불가.
+# 어드민이 격주 화요일 Drewry 사이트 로그인 후 수기 입력 필요.
+# 이 워크플로는 입력 누락 시 경보(exit 1)로 파이프라인을 알림.
+on:
+  schedule:
+    - cron: '0 4 * * 2'   # 격주 화요일 04:00 UTC (forecast-generate 2시간 전)
+  workflow_dispatch:
+
+jobs:
+  diversion-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Check red_sea_diversion freshness
+        run: node generators/web/forecast/check-diversion.js
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
