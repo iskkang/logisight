@@ -1,7 +1,7 @@
 'use strict';
-// v1.4 전망 산문 생성 — LLM은 statement/impact_note만. 방향·수치·watch_points는 코드(verdict).
-// 기준: docs/specs/freight-rate-forecast-prompt-v1.4.md (style_rules 5문장 구조, H1~H13, 한국발 중국변수 우선).
-// narration_validation 5종 통과 필수: 1)enum 누설 2)결측 단정 3)방향 일치 4)단위 5)분량.
+// v1.4.1 전망 산문 생성 — LLM은 statement/impact_note만. 방향·수치·watch_points는 코드(verdict).
+// 기준: docs/specs/freight-rate-forecast-prompt-v1.4.1.md (style_rules 5문장 구조, H1~H13, 한국발 중국변수 우선).
+// narration_validation 7종: 1)enum 누설 2)결측 단정 3)방향 일치 4)단위 5)분량 6)기준 월 명시 7)관측1건 추세동사.
 
 const FORBIDDEN = ['확실', '반드시', '틀림없', '분명히', '할 것이다'];
 const ENUM_LEAK = /(stable|expanding|easing|mixed|proxy|tracker)/i;
@@ -29,7 +29,8 @@ function buildNarratePrompt(input, verdict, { news = [] } = {}) {
     '2) 원인 — 세 종류 구분: ①사실(점수 산정 입력 인용) ②패턴("통상/일반적으로" 조건부, 어떤 입력 때문에 거론하는지 근거 동반) ③가설(결측 원인 후보는 "원인 후보는 …, 전자는 [데이터·발표시점]으로 판별된다" 형태로 판별 방법과 함께).',
     '3) 전망: 기본 시나리오(방향·범위·판정일) + 전환 조건("~가 나타나면 ~시나리오로 전환") 1개.',
     'impact_note는 2문장 이내(160자): 화주 비용·협상 포지션 → 행동 트리거 1개. 신뢰도 등급 산문 반복 금지.',
-    '[수치] 운임은 단위 완전체("FEU당 2,300달러"). 변화는 "전월 대비 21%↓(600달러 하락)" 형식. 정밀수치+"가량/약" 병용 금지.',
+    '[수치] 운임은 단위 완전체("FEU당 2,300달러"). 변화는 "전월 대비 21%↓(600달러 하락)" 형식. 정밀수치+"가량/약" 병용 금지. 기준 기간은 월 이름으로 명시("5월 기준") — "최근 월" 등 불특정 표현 금지.',
+    '[관측 1건 신호] 결항 등 방향 미산출(관측 1건) 신호엔 "유지/지속/이어졌다" 같은 추세 동사 금지 — 한 점을 추세로 위장하지 말고 수준만 서술("결항률 5.5%로 평시 수준").',
     '[번역투 금지] "정합적"→"맞물린다/뒷받침한다"; "관측된다"→"나타났다"; "~로 추정된다"는 최대 1회.',
     '[enum 한글화 — 원문 노출 금지] stable→안정세, expanding→확대, easing→완화, mixed→엇갈림, trade_level_proxy→"기간항로 단위 대용", tracker_quoted→"주간 트래커 집계".',
     '[금지어] "확실/반드시/~할 것이다"류 단정, 근거 없는 인과 단정. 결측 팩터를 현재 사실로 단정 금지(가설 표지와 함께면 허용·권장).',
@@ -99,6 +100,11 @@ function validateProse(parsed, verdict, opts = {}) {
   }
   if (s.length > 560) issues.push(`statement 분량 초과(${s.length}>560)`);
   if (note.length > 160) issues.push(`impact_note 분량 초과(${note.length}>160)`);
+  // 6. [v1.4.1] 기준 월 명시 — 불특정 "최근 월" 금지.
+  if (s && /최근\s*월/.test(s)) issues.push('기준 월 불특정("최근 월")');
+  // 7. [v1.4.1] 관측 1건 신호(방향 미산출)에 추세 동사 금지 — 한 점을 추세로 위장.
+  const oneObs = (verdict.data_quality_flags || []).some((f) => /방향 미산출/.test(f));
+  if (s && oneObs && /결항.{0,40}(유지|지속|이어졌|이어지)/.test(s)) issues.push('관측 1건 신호에 추세 동사');
   return { ok: issues.length === 0, issues };
 }
 

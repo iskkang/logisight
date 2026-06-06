@@ -54,7 +54,7 @@ test('generateDrafts: scores targets and upserts drafts (fake LLM/DB)', async ()
   assert.equal(res.total >= 2, true);
   assert.equal(captured.length, res.inserted);
   assert.equal(captured.every((r) => r.status === 'draft'), true);
-  assert.equal(captured.every((r) => r.model_version === 'v1.4'), true);
+  assert.equal(captured.every((r) => r.model_version === 'v1.4.1'), true);
 });
 
 test('generateDrafts: persistent LLM mismatch → needs_editor drafts still upserted (not skipped)', async () => {

@@ -63,6 +63,15 @@ test('validateProse: 5문장 초과 → 실패', () => {
   const six = '운임은 강세다. 공급은 안정세다. 수요는 견조하다. 중국발은 강세다. 유가는 확인이 필요하다. 종합 달러 상승이다.';
   assert.equal(validateProse({ statement: six, impact_note: 'x', direction_echo: 'up' }, verdict, { isRate: true }).ok, false);
 });
+test('validateProse: 기준 월 불특정("최근 월") → 실패 (v1.4.1 #6)', () => {
+  const s = { statement: '부산발 함부르크향 운임은 최근 월 기준 FEU당 2,300달러로 보합권이다.', impact_note: 'x', direction_echo: 'flat' };
+  assert.equal(validateProse(s, { direction: 'flat', data_quality_flags: [] }, { isRate: true }).ok, false);
+});
+test('validateProse: 관측 1건 신호에 추세 동사 → 실패 (v1.4.1 #7)', () => {
+  const v = { direction: 'flat', data_quality_flags: ['공급: 방향 미산출(관측 1건) — 기본값 stable'] };
+  const s = { statement: '5월 기준 결항률은 5.5%로 안정세를 유지하고 있어 달러 보합권이다.', impact_note: 'x', direction_echo: 'flat' };
+  assert.equal(validateProse(s, v, { isRate: true }).ok, false);
+});
 
 test('narrate: 검증 통과 시 산문 반환', async () => {
   const fake = async () => JSON.stringify({
