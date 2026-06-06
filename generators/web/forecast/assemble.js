@@ -7,7 +7,20 @@ const { fetchDemand } = require('./inputs/demand');
 const { regionOf, fetchRegionDemand } = require('./inputs/demand-region');
 const { seasonalityFlag } = require('./calendar');
 const { spreadContextEvent, fetchSpread } = require('./inputs/spread');
+const { buildContextHeadlines } = require('./inputs/context-headlines');
 const { horizonDate } = require('./targets');
+
+// maritime_news 최근 14일(여러 타깃 공유).
+async function fetchNews14d(supabase, asof = new Date()) {
+  const since = new Date(asof.getTime() - 14 * 86400000).toISOString();
+  const { data } = await supabase
+    .from('maritime_news')
+    .select('title,summary,source,published_at')
+    .gte('published_at', since)
+    .order('published_at', { ascending: false })
+    .limit(60);
+  return data || [];
+}
 
 async function fetchRateSeries(supabase, target, asof) {
   if (target.source === 'freight_indices') {
@@ -62,6 +75,9 @@ async function assembleInput(supabase, target, { asof = new Date(), shared } = {
   const spreadEv = spreadContextEvent(spread);
   if (spreadEv) context_events.push(spreadEv);
 
+  const news = shared && 'news' in shared ? shared.news : await fetchNews14d(supabase, asof);
+  const context_headlines = buildContextHeadlines(news, target, region);
+
   const data_freshness = buildDataFreshness({ rate_series, supply, cost, demand }, asof);
   return {
     metric_ref: target.metric_ref,
@@ -75,6 +91,7 @@ async function assembleInput(supabase, target, { asof = new Date(), shared } = {
     demand,
     pricing_actions: null,
     context_events,
+    context_headlines,
     data_freshness,
   };
 }
@@ -104,6 +121,7 @@ async function buildShared(supabase, asof = new Date()) {
     cost: await fetchFuel(supabase, asof),
     demand: await fetchDemand(supabase, asof),
     spread: await fetchSpread(supabase),
+    news: await fetchNews14d(supabase, asof),
   };
 }
 

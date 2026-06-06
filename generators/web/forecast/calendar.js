@@ -4,12 +4,13 @@
 // 12월은 춘절(설)前 선행 부킹으로 미주 외 권역은 peak_approaching(한국발 공장 가동중단 대비).
 
 // region → { peak:[월], peak_approaching:[월], off:[월] } (그 외 월 = none)
+// 춘절(설) 전 밀어내기(12~1월)는 권역 불문(한국발 공장·중국 모두 가동중단 대비) → 전 권역 1·12월 선행.
 const SEASON_WINDOWS = {
-  미주: { peak: [7, 8, 9, 10], peak_approaching: [5, 6], off: [11, 12] }, // 미주 연말 성수기 선적
-  EU: { peak: [8, 9, 10], peak_approaching: [6, 7, 12], off: [11] }, // 가을 성수기 + 12월 선행
-  동남아: { peak: [8, 9, 10], peak_approaching: [6, 7, 12], off: [11] },
+  미주: { peak: [7, 8, 9, 10], peak_approaching: [1, 5, 6, 12], off: [11] }, // 미주 연말 성수기 + 춘절前
+  EU: { peak: [8, 9, 10], peak_approaching: [1, 6, 7, 12], off: [11] },
+  동남아: { peak: [8, 9, 10], peak_approaching: [1, 6, 7, 12], off: [11] },
 };
-const DEFAULT_WINDOW = { peak: [8, 9, 10], peak_approaching: [6, 7, 12], off: [11] }; // 권역 불명(종합 지수)
+const DEFAULT_WINDOW = { peak: [8, 9, 10], peak_approaching: [1, 6, 7, 12], off: [11] }; // 권역 불명(종합 지수)
 
 function seasonalityFlag(date, region) {
   const m = date.getUTCMonth() + 1; // 1..12

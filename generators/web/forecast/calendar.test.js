@@ -23,9 +23,11 @@ test('region-aware: 미주 vs EU differ in July', () => {
   assert.equal(seasonalityFlag(d('2026-07-15'), '미주'), 'peak');
   assert.equal(seasonalityFlag(d('2026-07-15'), 'EU'), 'peak_approaching');
 });
-test('region-aware: 미주 June=peak_approaching, Dec=off', () => {
+test('region-aware: 미주 June·Dec·Jan=peak_approaching (춘절前 미주 포함), Nov=off', () => {
   assert.equal(seasonalityFlag(d('2026-06-06'), '미주'), 'peak_approaching');
-  assert.equal(seasonalityFlag(d('2026-12-10'), '미주'), 'off');
+  assert.equal(seasonalityFlag(d('2026-12-10'), '미주'), 'peak_approaching'); // 춘절前 밀어내기 미주 적용
+  assert.equal(seasonalityFlag(d('2026-01-15'), '미주'), 'peak_approaching');
+  assert.equal(seasonalityFlag(d('2026-11-15'), '미주'), 'off');
 });
 test('Mar → none', () => {
   assert.equal(seasonalityFlag(d('2026-03-15')), 'none');
