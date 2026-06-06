@@ -14,6 +14,7 @@ const { scoreForecast } = require('./score');
 const { narrate } = require('./narrate');
 const { mapVerdictToRow } = require('./row');
 const { callClaude } = require('./llm');
+const { assertSchema } = require('./preflight');
 
 // 최근 해운 뉴스(정성 근거) — narrate에 컨텍스트로 1회 주입. 점수에는 영향 없음.
 async function fetchRecentNews(supabase, asof = new Date()) {
@@ -78,6 +79,7 @@ async function main() {
   const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
     auth: { persistSession: false }, realtime: { enabled: false },
   });
+  await assertSchema(supabase); // 마이그레이션 가드 — 누락 시 여기서 명시적 실패.
   const res = await generateDrafts(supabase, callClaude);
   console.log(`📊 신규 ${res.inserted} · 갱신 ${res.updated} · 보존 ${res.skipped} / ${res.total} 타깃 · abstain ${res.abstained} · 에디터필요 ${res.needsEditor} · 오류 ${res.errors}`);
 }
