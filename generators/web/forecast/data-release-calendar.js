@@ -10,7 +10,9 @@ const RELEASE_CALENDAR = [
   // KCCI: freight_indices.week_date가 전부 월요일 anchored(지수 기준일). // confirmed 2026-06-07
   //   단 이는 지수 기준일이며 실제 발표 요일(KOBC)은 미확인 → publish_unverified.
   { id: 'kcci_weekly', label: 'KCCI 주간', cadence: 'weekly', weekday: 1, publish_unverified: true, source: 'KOBC/KCCI' },
-  { id: 'scfi_weekly', label: 'SCFI 주간', cadence: 'weekly', weekday: 1, publish_unverified: true, source: 'Shanghai SE' },
+  // weekday:1은 SCFI 지수 기준일(월). 실제 발표는 통상 금요일 가능성 → publish_unverified.
+  //   플래그 해소 시 due 산식을 발표일 기준으로 갱신할 것(현재 due=지수 기준일).
+  { id: 'scfi_weekly', label: 'SCFI 주간', cadence: 'weekly', weekday: 1, publish_unverified: true, source: '상하이해운거래소' },
   // Drewry 결항: 적재 as_of 2026-06-05 = 금요일. // confirmed 2026-06-07 (drewry-headline as_of)
   { id: 'drewry_blank', label: 'Drewry 결항 트래커', cadence: 'weekly', weekday: 5, source: 'Drewry' },
   // Drewry 우회(격주)·IATA 제트유(주간): T1-1·T1-2에서 페이지 실측 시 확인 → 현재 미확인.

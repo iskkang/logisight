@@ -47,6 +47,7 @@ function buildRateSeries(points, { unit, asof }) {
   if (pct != null && pct >= 70) band = 'above';
   else if (pct != null && pct <= 30) band = 'below';
   const ageDays = Math.round((asof - toDate(latest.date)) / 86400000);
+  const latestDate = toDate(latest.date);
   return {
     latest: latest.value,
     unit,
@@ -55,6 +56,8 @@ function buildRateSeries(points, { unit, asof }) {
     percentile_52w: pct,
     vs_normal_band: band,
     asof_age_days: ageDays,
+    // 기준 기간 라벨 — narrate가 "N월 기준"으로 명시(v1.4.1 #6). 불특정 "최근 월" 방지.
+    period_label: `${latestDate.getUTCMonth() + 1}월`,
   };
 }
 

@@ -44,7 +44,7 @@ function buildNarratePrompt(input, verdict, { news = [] } = {}) {
   const facts = {
     지표: input.metric_ref, 라벨: input.label, 케이던스: input.cadence, horizon: input.horizon_date,
     판정: { 방향: verdict.direction, 강도: verdict.strength, 예상범위: verdict.expected_range_pct, 신뢰도: verdict.confidence },
-    운임: input.rate_series && { 최신: input.rate_series.latest, 단위: input.rate_series.unit, 전월대비: input.rate_series.mom_pct, 추세: input.rate_series.trend_3p },
+    운임: input.rate_series && { 기준월: input.rate_series.period_label, 최신: input.rate_series.latest, 단위: input.rate_series.unit, 전월대비: input.rate_series.mom_pct, 추세: input.rate_series.trend_3p },
     공급_결항: bs && { 출처: bs.source_type, 비율: bs.ratio_pct, 방향: bs.direction, 유효선복: bs.effective_capacity_chg_pct },
     china_factor: input.china_factor || null,
     수요: input.demand && { 수출모멘텀YoY: input.demand.export_momentum_yoy_pct, 추세: input.demand.momentum_trend, 계절: input.demand.seasonality_flag, 권역: input.demand.region },

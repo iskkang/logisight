@@ -15,6 +15,7 @@ test('buildRateSeries: YYYYMM age는 월말 기준(월초 과대평가 수정)',
   const rs = buildRateSeries(points, { unit: 'USD/FEU', asof: new Date('2026-06-05T00:00:00Z') });
   assert.equal(Number.isFinite(rs.asof_age_days), true);
   assert.equal(rs.asof_age_days, 5); // 2026-05-31 → 2026-06-05
+  assert.equal(rs.period_label, '5월'); // 기준월 라벨(v1.4.1 #6) — 202605 → 5월
 });
 
 test('trend3p: 3 consecutive positive change_pct → up_3', () => {
