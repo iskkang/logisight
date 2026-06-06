@@ -41,3 +41,7 @@ test('confidence: vulnerable rally (supply>=1 & demand<=-1) → medium', () => {
   const scores = { momentum: 1, supply: 1, demand: -1, cost: 0, pricing: 1 };
   assert.equal(confidence(scores, WEIGHTS.ocean), 'medium');
 });
+test('confidence: 4 present + aligned but 1 missing → medium (high requires all 5)', () => {
+  const scores = { momentum: 2, supply: 1, demand: 1, cost: null, pricing: 2 };
+  assert.equal(confidence(scores, WEIGHTS.ocean), 'medium');
+});

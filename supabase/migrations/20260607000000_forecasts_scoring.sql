@@ -49,6 +49,8 @@ begin
        or new.range_high_pct is distinct from old.range_high_pct
        or new.composite_score is distinct from old.composite_score
        or new.factor_scores is distinct from old.factor_scores
+       or new.confidence_reason is distinct from old.confidence_reason
+       or new.data_quality_flags is distinct from old.data_quality_flags
        or new.model_version is distinct from old.model_version
        or new.metric_value_at_publish is distinct from old.metric_value_at_publish then
       raise exception 'published forecasts are immutable except status/outcome/realized fields';
@@ -57,3 +59,6 @@ begin
   return new;
 end;
 $$;
+
+-- 트리거 본체(forecasts_guard)는 베이스 마이그레이션 20260606010000_forecasts.sql 에서 생성됨.
+-- 여기서는 함수 본문만 갱신(CREATE OR REPLACE) — 같은 repo에서 순서대로 적용되므로 재부착 불필요.

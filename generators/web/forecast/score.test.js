@@ -40,6 +40,17 @@ test('demand: flat (|m|<=2) → 0', () => {
 test('demand: missing → null', () => {
   assert.equal(scoreDemand({}), null);
 });
+test('demand: seasonality peak_approaching → +1 regardless of small/zero/neg momentum', () => {
+  assert.equal(scoreDemand({ export_momentum_yoy_pct: 1, seasonality_flag: 'peak_approaching' }), 1);
+  assert.equal(scoreDemand({ export_momentum_yoy_pct: 0, seasonality_flag: 'peak_approaching' }), 1);
+  assert.equal(scoreDemand({ export_momentum_yoy_pct: -1, seasonality_flag: 'peak_approaching' }), 1);
+});
+test('demand: larger positive stable (m>2) → +1', () => {
+  assert.equal(scoreDemand({ export_momentum_yoy_pct: 3, momentum_trend: 'stable' }), 1);
+});
+test('demand: -6 decelerating → -2', () => {
+  assert.equal(scoreDemand({ export_momentum_yoy_pct: -6, momentum_trend: 'decelerating' }), -2);
+});
 
 test('cost: fuel +9 → +1', () => {
   assert.equal(scoreCost({ fuel_mom_pct: 9 }, 1), 1);

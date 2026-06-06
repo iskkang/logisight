@@ -19,7 +19,7 @@ const THRESHOLDS = {
   downHigh: { direction: 'down', strength: '하락 가능성 높음', range: [-7, -3] },
 };
 
-// 신선도 임계(일) — 케이던스별. 문서 그대로.
+// 신선도 임계(일) — 케이던스별. 문서 그대로. (Plan B 입력 조립기에서 신호 최신성 판정에 사용)
 const FRESHNESS_DAYS = { weekly: 14, monthly: 45 };
 // abstain 기준일 과도 임계(일).
 const STALE_DAYS = { weekly: 21, monthly: 60 };

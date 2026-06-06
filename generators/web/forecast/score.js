@@ -47,13 +47,16 @@ function scoreSupply(bs) {
 }
 
 // C. 수요 (-2..+2).
+// 우선순위 주의: seasonality_flag=peak_approaching는 문서 규칙상 크기 무관 +1(m 가드 없음)이라
+// 보합(±2%) 가드보다 먼저 평가한다. 그 외 ±2% 이내는 보합 → 0(문서 "0: 보합 ±2% 이내, stable").
 function scoreDemand(d) {
   if (!d || d.export_momentum_yoy_pct == null) return null;
   const m = d.export_momentum_yoy_pct;
   if ((m >= 5 && d.momentum_trend === 'accelerating') || (d.frontloading_flag && m > 0)) return 2;
-  if (m <= -5 && d.momentum_trend === 'decelerating') return -2;
+  if (d.seasonality_flag === 'peak_approaching') return 1;
   if (Math.abs(m) <= 2) return 0;
-  if ((m > 0 && (d.momentum_trend === 'stable' || d.momentum_trend === 'accelerating')) || d.seasonality_flag === 'peak_approaching') return 1;
+  if (m > 0 && (d.momentum_trend === 'stable' || d.momentum_trend === 'accelerating')) return 1;
+  if (m <= -5 && d.momentum_trend === 'decelerating') return -2;
   if (d.momentum_trend === 'decelerating' || m < 0) return -1;
   return 0;
 }
@@ -68,7 +71,7 @@ function scoreCost(c, demandScore) {
   else if (f > -5) s = 0;
   else if (f > -10) s = -1;
   else s = -2;
-  if (demandScore != null && demandScore <= -1) s = s * 0.5; // 전가 실패
+  if (demandScore != null && demandScore <= -1) s = s * 0.5; // 전가 실패 → ±1이면 ±0.5(소수 점수 허용)
   return s;
 }
 
@@ -121,6 +124,8 @@ function confidence(scores, weights) {
   // 취약한 상승: 공급 우위(+) & 수요 약화(-)
   if (scores.supply != null && scores.supply >= 1 && scores.demand != null && scores.demand <= -1) return 'medium';
   if (missing === 1) return 'medium';
+  // 'high'는 5개 팩터 전부 최신(missing===0)이고 부호가 일치할 때만. 1개라도 결측이면 위에서 medium 확정.
+  // (문서 confidence 규칙의 "4개 이상 최신"과 "일부 결측→중간"이 겹쳐 보수적으로 해석.)
   if (present.length >= 4 && (pos === 0 || neg === 0)) return 'high';
   return 'medium';
 }
