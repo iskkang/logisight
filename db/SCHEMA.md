@@ -23,7 +23,7 @@
 | maritime_news | 009,013,015 | pipeline/generators/web | Lovable /news | ✅ | agent_type으로 웹/이메일 구분 |
 | weekly_briefings | 018 | pipeline/generators/email | Lovable /news | ✅ | |
 | weekly_briefing_points | 018 | pipeline/generators/email | Lovable /news | ✅ | |
-| trade_statistics | 017,023 | collectors/trade_stats.ts (월간 확정치), collectors/trade_provisional.ts (10일 잠정치) | Lovable (지도) | ✅ | stat_type: country/provisional_exp/provisional_imp |
+| trade_statistics | 017,023,030 | collectors/trade_stats.ts (월간 확정치), collectors/trade_provisional.ts (10일 잠정치), collectors/trade_categories.ts (대륙/품목/신성질) | Lovable (지도) | ✅ | stat_type: country/provisional_exp/provisional_imp/continent/item/item_country/newnature |
 | policy_alerts | 019 | 수동 or pipeline | Lovable /policy | ✅ | CBAM, EU ETS 등 |
 | newsletter_subscribers | 020 | Lovable (구독 폼) | pipeline/publishers | ❌ | 개인정보 — service_role만 |
 | user_roles | 021 | Lovable (auth) | Lovable | 인증만 | app_role enum |
@@ -35,13 +35,18 @@
 
 | 값 | 수집기 | 주기 | 비고 |
 |----|--------|------|------|
-| `country` | collectors/trade_stats.ts | 월 1회 (16일) | 관세청 nationtrade API 확정치 |
-| `provisional_exp` | collectors/trade_provisional.ts | 월 3회 (1/11/21일) | 관세청 10일단위 수출 잠정치 |
-| `provisional_imp` | collectors/trade_provisional.ts | 월 3회 (1/11/21일) | 관세청 10일단위 수입 잠정치 |
+| `country` | collectors/trade_stats.ts | 월 1회 (16일) | 관세청 nationtrade API 확정치 (15101612) |
+| `provisional_exp` | collectors/trade_provisional.ts | 월 3회 (1/11/21일) | 관세청 10일단위 수출 잠정치 (15157941) |
+| `provisional_imp` | collectors/trade_provisional.ts | 월 3회 (1/11/21일) | 관세청 10일단위 수입 잠정치 (15157909) |
+| `continent` | collectors/trade_categories.ts | 월 1회 (16일) | 관세청 대륙별 (15101630). country_code=대륙코드(10/20/…), country_name=대륙명. 중량 미제공 |
+| `item` | collectors/trade_categories.ts | 월 1회 (16일) | 관세청 품목별 (15101609). hs_code=10자리 HS, hs_name=품목명, country_* = NULL |
+| `item_country` | collectors/trade_categories.ts | 월 1회 (16일) | 관세청 품목별 국가별 (15100475). hs_code + country_code 동시 보유. 전체 교역국 |
+| `newnature` | collectors/trade_categories.ts | 월 1회 (16일) | 관세청 신성질별 국가별 (15101607). hs_code=신성질 분류코드(8자리), hs_name=분류명. 전체 교역국 |
 
 - `priod_dt`: `'01~10'` | `'01~20'` | `'01~말일'` (provisional_* 행에서만 사용)
 - `direction`: `'exp'` | `'imp'` (provisional_* 행에서만 사용)
 - `country_code = 'ALL'`: 전체 합계 — 지도 히트맵 제외, 합계 검증용
+- `continent` / `item` / `item_country` / `newnature` 는 기존 컬럼 재사용 (마이그레이션 030, 신규 컬럼 없음)
 
 ## 뷰(View)
 
