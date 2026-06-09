@@ -1,6 +1,7 @@
 'use strict';
 const fs   = require('fs');
 const path = require('path');
+const { normalizeMonthlyReportMarkdown } = require('./report-style-normalizer');
 
 // ── Frontmatter helpers ──────────────────────────────────────────────────────
 
@@ -50,6 +51,14 @@ function buildSectionSystemPrompt(styleGuide, focus) {
    마지막 한 줄에 '➔' 형태로 명시할 것.
 ⑤ 출처 표기 금지 — 본문에 괄호식 출처 표기 (매체, 날짜), 각주 마크 [n], 번호 참고자료 목록을 만들지 말 것.
    출처가 신뢰도상 꼭 필요하면 **문장 안에 매체명만 자연스럽게(날짜·괄호 없이) 1회** 녹여 쓰고, 그 외엔 생략.
+⑥ Bold 강조 규칙 — 문단 리드 소제목은 별도 줄 \`**소제목**\`으로 쓰고 마침표를 붙이지 말 것.
+   본문 Bold는 단어·지수명 단독 강조가 아니라 판단을 담은 2~10어절 핵심 구절에만 적용.
+   좋은 예: \`**2026년 5월 시장**\`, \`**동시에 강세**\`, \`**같은 방향으로 움직인 점**\`, \`**구조적 비용 충격**\`.
+   금지 예: \`**SCFI**\`, \`**KCCI**\`, \`**BAF**\`, \`**IATA**\`, \`**동반 상승의 의미.**\`.
+⑦ PDF 레이아웃 규칙 — \`NN-N.\` 하위 페이지 제목은 한 줄로 들어가도록 짧게 작성.
+   표·차트가 함께 들어가는 페이지는 본문이 다음 페이지로 넘어가지 않게 해설을 줄일 것.
+   \`[[STATS]]\` 카드 토큰은 \`값|라벨|up/down\` 순서이며, 라벨은 18자 안팎으로 축약.
+   내용이 짧거나 직접 연결되는 인접 하위 페이지는 병합될 수 있으므로 병합 그룹(02-5+02-6, 02-7+02-8, 03-2+03-3, 05-2+05-3+05-4, 06-1+06-2)은 각 블록을 2문단 이내로 압축.
 
 # 기사 선정·사용 기준
 - 운임·물동량·정책·인프라 등 시장 분석성 기사 우선(JOC·Drewry·Linerlytica·Flexport·gCaptain 등 전문 매체).
@@ -228,6 +237,13 @@ ${styleGuide}
 - [ ] 괄호식 출처 표기 (매체, 날짜), 각주 마크 [n], 참고자료 목록이 전혀 없는가? 있으면 제거. 매체명이 꼭 필요하면 문장 안에 자연스럽게 1회만 녹여 썼는가?
 - [ ] "~입니다/합니다" 경어체가 없는가? "~이다/했다" 평서체가 없는가?
 - [ ] 벙커비/벙커연료비 → 벙커유로, 트랜스퍼시픽 → 아시아-북미 항로로 교체됐는가?
+- [ ] 문단 리드 소제목은 별도 줄 \`**소제목**\` 형식이며 마침표가 없는가?
+- [ ] \`**SCFI**\`, \`**KCCI**\`, \`**BAF**\`, \`**IATA**\`처럼 키워드·지수명만 단독으로 Bold 처리하지 않았는가?
+- [ ] 본문 Bold는 문장을 읽고 이해해야 드러나는 핵심 구절(예: \`**구조적 비용 충격**\`)에만 적용됐는가?
+- [ ] \`NN-N.\` 하위 페이지 제목이 한 줄에 들어갈 만큼 짧은가?
+- [ ] 표·차트가 긴 페이지에서 본문이 다음 페이지로 넘어가지 않도록 문단 수와 문장 수를 줄였는가?
+- [ ] \`[[STATS]]\` 카드가 \`값|라벨|up/down\` 순서이며 카드 라벨이 짧은가?
+- [ ] 내용이 짧은 인접 하위 페이지는 무리하게 독립 페이지 분량으로 늘리지 않고 병합 가능한 밀도로 압축했는가?
 - [ ] 출력에 한자(中文) 잔존 0건인가? 있으면 한국어로 번역.`;
 }
 
@@ -348,7 +364,7 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
                             oceanBlocks = null,
                             airBundle = null,
                             airTable = null, airFactText = null,
-                            portThroughputTable = null, portThroughputFactText = null,
+                            portThroughputTable = null, portThroughputFactText = null, portCongestionTable = null,
                             kitaSeaBundle = null, kitaAirBundle = null }) {
   if (items.length === 0) {
     console.log(`⚠️  [${sectionConfig.id}] 관련 기사 없음 → status: no-data`);
@@ -544,6 +560,13 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
       }
     }
 
+    // 03-3 보조: IATA 제트유 (cost 팩터)
+    if (ab?.jetFuelTable) {
+      const fa = revised.match(/#{2,3}[^\n]*(?:03-3|TAC|BAI|추세|시계열|항공유|연료)[^\n]*/);
+      if (fa) { const at = revised.indexOf(fa[0]) + fa[0].length; revised = revised.slice(0, at) + '\n\n' + ab.jetFuelTable + '\n' + revised.slice(at); }
+      else    { revised += '\n\n' + ab.jetFuelTable + '\n'; }
+    }
+
     // 완전 미수집인 경우 (airBundle 자체가 null)
     if (!ab) {
       const notice = '\n\n> ⚠️ **이번 회차 항공 데이터 미수집** — TAC/BAI·IATA 수집 실패. 다음 호 업데이트 예정.\n\n';
@@ -571,15 +594,14 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
                   || revised.match(/#{2,3}[^\n]*/);
       if (anchor) revised = revised.replace(anchor[0], anchor[0] + inject);
       else        revised = '[[CHART:macro_port_throughput]]\n\n' + portThroughputTable + '\n\n' + revised;
-    } else {
-      const notice = '\n\n> ⚠️ **이번 회차 항만 물동량 데이터 미수집** — RWI-ISL·ISL 수집 실패. 운임 데이터로 대체 분석.\n\n';
-      const anchor = revised.match(/\n#{2,3}[^\n]*/);
-      if (anchor) {
-        const at = revised.indexOf(anchor[0]) + anchor[0].length;
-        revised = revised.slice(0, at) + notice + revised.slice(at);
-      } else {
-        revised = notice + revised;
-      }
+    }
+    // 06-3 항만 혼잡도 (Portcast median 대기일)
+    if (portCongestionTable) {
+      const ca = revised.match(/#{2,3}[^\n]*(?:06-3|혼잡|체선|congestion|대기)[^\n]*/i)
+              || revised.match(/#{2,3}[^\n]*(?:06-2|물동량|처리량|throughput)[^\n]*/i);
+      const inject = '\n\n#### 항만 혼잡도\n\n' + portCongestionTable + '\n';
+      if (ca) { const at = revised.indexOf(ca[0]) + ca[0].length; revised = revised.slice(0, at) + inject + revised.slice(at); }
+      else    { revised += inject; }
     }
   }
 
@@ -592,7 +614,17 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
       .replace(/^\|[^\n]+\|\n\|[-| ]+\|\s*\n(?!\|)/gm, '')
       .replace(/\n{3,}/g, '\n\n').trim();
     console.log(`   ✓ air 섹션 WorldACD 스트립 완료`);
+    // 검증된 WorldACD 실데이터가 있으면 주입(스트립으로 지운 자리 대체). 없으면 스트립만 유지.
+    if (airBundle?.worldacdTable) {
+      const wa = revised.match(/#{2,3}[^\n]*(?:03-3|TAC|BAI|추세|시계열|운임)[^\n]*/i);
+      const inject = '\n\n#### WorldACD 글로벌 주간 운임\n\n' + airBundle.worldacdTable + '\n';
+      if (wa) { const at = revised.indexOf(wa[0]) + wa[0].length; revised = revised.slice(0, at) + inject + revised.slice(at); }
+      else    { revised += inject; }
+      console.log(`   ✓ air 섹션 WorldACD 실데이터 주입`);
+    }
   }
+
+  revised = normalizeMonthlyReportMarkdown(revised);
 
   return { status: 'draft', text: revised, pass1Tokens: p1Out, pass2Tokens: p2Out };
 }
@@ -602,6 +634,7 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
 function saveSectionFile(outDir, sectionId, month, status, text, extra = {}) {
   fs.mkdirSync(outDir, { recursive: true });
   const outPath = path.join(outDir, `${sectionId}.md`);
+  const normalizedText = normalizeMonthlyReportMarkdown(text);
   const frontmatter = buildFrontmatter({
     section:      sectionId,
     month,
@@ -609,7 +642,7 @@ function saveSectionFile(outDir, sectionId, month, status, text, extra = {}) {
     generated:    new Date().toISOString(),
     ...extra,
   });
-  fs.writeFileSync(outPath, frontmatter + text + '\n', 'utf-8');
+  fs.writeFileSync(outPath, frontmatter + normalizedText + '\n', 'utf-8');
   return outPath;
 }
 

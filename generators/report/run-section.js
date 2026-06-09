@@ -18,6 +18,7 @@ const { buildOceanIndices }   = require('./lib/ocean-indices');
 const { buildAirIndices }     = require('./lib/air-indices');
 const { buildRailIndices }    = require('./lib/rail-indices');
 const { buildPortThroughput } = require('./lib/port-throughput');
+const { buildPortCongestion } = require('./lib/port-congestion'); // ①
 const { buildKitaSeaReport, buildKitaAirReport } = require('./lib/kita-report');
 const { loadStyleGuide }      = require('./lib/style');
 const { runSection, saveSectionFile, parseFrontmatter } = require('./lib/section-runner');
@@ -111,13 +112,17 @@ async function main() {
       else               console.warn('⚠️  [air] KITA 항공 운임 미수집 — notice 표시');
     }
 
-    // ── macro: Container Port Throughput 수집 ──
-    let portThroughputTable = null, portThroughputFactText = null;
+    // ── macro: Container Port Throughput + Port Congestion 수집 ──
+    let portThroughputTable = null, portThroughputFactText = null, portCongestionTable = null;
     if (sec.id === 'macro') {
       console.log('▶ [macro] Port Throughput 데이터 수집...');
       const ptData = await buildPortThroughput();
       if (ptData) { portThroughputTable = ptData.table; portThroughputFactText = ptData.factText; }
       else console.warn('⚠️  [macro] Port Throughput 미수집 — ⚠️ notice 표시');
+
+      const pcData = await buildPortCongestion();
+      if (pcData) { portCongestionTable = pcData.table; }   // ① 항만 혼잡도
+      else console.warn('⚠️  [macro] 항만 혼잡도 미수집');
     }
 
     // ── rail: Landbridge 중국 철도·中欧班列 정량 데이터 수집 ──
@@ -137,7 +142,7 @@ async function main() {
       railTable, railFactText, oceanBlocks,
       airBundle,
       airTable, airFactText,
-      portThroughputTable, portThroughputFactText,
+      portThroughputTable, portThroughputFactText, portCongestionTable,
       kitaSeaBundle, kitaAirBundle,
     });
     const saved   = saveSectionFile(OUT_DIR, sec.id, MONTH, result.status, result.text, {

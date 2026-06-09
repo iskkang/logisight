@@ -12,6 +12,12 @@
 const path = require('path');
 const fs   = require('fs');
 
+// Node 20: @supabase/supabase-js Realtime 초기화용 WebSocket shim (③ 제트유 Supabase 조회)
+if (typeof globalThis.WebSocket === 'undefined') { try { globalThis.WebSocket = require('ws'); } catch (_) {} }
+const { createClient } = require('@supabase/supabase-js');
+const { fetchIataFuel } = require('../../web/forecast/inputs/iata-jet-fuel'); // ③
+const { buildWorldACD } = require('./worldacd');                             // ②
+
 const { fetchSupersetAirIndex } = require('./superset-fetch');
 const { buildIataCargo }        = require('./iata-cargo');
 const BI_CHARTS  = require('../config/bi-charts.json');
@@ -268,8 +274,35 @@ async function buildAirIndices({ force = false } = {}) {
   if (iataTable) console.log(`  air-indices: IATA OK (asOf=${iataBundle?.data?.asOf})`);
   else           console.warn('  air-indices: IATA 미수집 → A-3 생략');
 
+  // ── 4. IATA Jet Fuel (cost 팩터) — Supabase iata_jet_fuel_weekly (③) ───────
+  let jetFuelTable = null;
+  try {
+    if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+      const jf = await fetchIataFuel(sb);
+      if (jf && jf.price_usd_bbl != null) {
+        const wow = jf.fuel_wow_pct != null ? `${jf.fuel_wow_pct > 0 ? '▲' : '▼'}${Math.abs(jf.fuel_wow_pct).toFixed(1)}%` : '—';
+        jetFuelTable = [
+          '| 항공유 (Jet Fuel) | 가격 | WoW |',
+          '|------|------|-----|',
+          `| 글로벌 평균 | $${jf.price_usd_bbl.toFixed(2)}/bbl | ${wow} |`,
+          '',
+          `※ ${jf.as_of} 기준(주간). 출처: [IATA / S&P Global Platts](https://www.iata.org/en/publications/economics/fuel-monitor/). 항공 cost 팩터.`,
+        ].join('\n');
+        console.log(`  air-indices: 제트유 OK ($${jf.price_usd_bbl}/bbl)`);
+      }
+    }
+  } catch (e) { console.warn('  air-indices: 제트유 수집 실패 —', e.message); }
+
+  // ── 5. WorldACD 주간 구조화 데이터 (②) ─────────────────────────────────────
+  let worldacdTable = null;
+  try {
+    const wacd = await buildWorldACD();
+    if (wacd && wacd.table) { worldacdTable = wacd.table; console.log('  air-indices: WorldACD OK'); }
+  } catch (e) { console.warn('  air-indices: WorldACD 수집 실패 —', e.message); }
+
   // ── Abort if nothing at all ───────────────────────────────────────────────
-  if (!chartData && !baiTable && !iataTable) {
+  if (!chartData && !baiTable && !iataTable && !jetFuelTable && !worldacdTable) {
     console.warn('  air-indices: 모든 소스 미수집 → null 반환');
     return null;
   }
@@ -286,7 +319,7 @@ async function buildAirIndices({ force = false } = {}) {
   const factText = buildFactText({ source, chartData, baiRows: baiTable, iataTable: iataFactText2 || iataTable, month });
 
   const asOf = (source === 'superset' && chartData) ? chartData.labels[chartData.labels.length - 1] : null;
-  const payload = { source, chartData, baiTable, iataTable, supersetTable, table, factText, ...(asOf ? { asOf } : {}) };
+  const payload = { source, chartData, baiTable, iataTable, supersetTable, jetFuelTable, worldacdTable, table, factText, ...(asOf ? { asOf } : {}) };
   saveCache(payload);
   console.log(`  air-indices: 완료 (source=${source})`);
   return payload;
