@@ -586,22 +586,20 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
     }
   }
 
-  // macro 섹션: 항만 물동량 차트+표 주입 (06-2 소제목 아래) 또는 미수집 notice
+  // macro 섹션: 항만 물동량(06-2) + 혼잡도(06-3) 주입.
+  // 둘은 같은 06-2 앵커를 공유하므로 단일 블록으로 묶어 throughput→혼잡도 순서를 보장한다
+  // (분리 주입 시 혼잡도가 헤딩 직후로 끼어들어 throughput 위로 올라오는 문제 방지).
   if (sectionConfig.id === 'macro') {
-    if (portThroughputTable) {
-      const inject = '\n\n[[CHART:macro_port_throughput]]\n\n' + portThroughputTable + '\n';
-      const anchor = revised.match(/#{2,3}[^\n]*(?:06-2|물동량|처리량|throughput)[^\n]*/i)
+    const macroBlocks = [];
+    if (portThroughputTable) macroBlocks.push('[[CHART:macro_port_throughput]]\n\n' + portThroughputTable);
+    if (portCongestionTable)  macroBlocks.push('#### 항만 혼잡도\n\n' + portCongestionTable);
+    if (macroBlocks.length) {
+      const inject = '\n\n' + macroBlocks.join('\n\n') + '\n';
+      const anchor = revised.match(/#{2,3}[^\n]*(?:06-3|혼잡|체선|congestion|대기)[^\n]*/i)
+                  || revised.match(/#{2,3}[^\n]*(?:06-2|물동량|처리량|throughput)[^\n]*/i)
                   || revised.match(/#{2,3}[^\n]*/);
-      if (anchor) revised = revised.replace(anchor[0], anchor[0] + inject);
-      else        revised = '[[CHART:macro_port_throughput]]\n\n' + portThroughputTable + '\n\n' + revised;
-    }
-    // 06-3 항만 혼잡도 (Portcast median 대기일)
-    if (portCongestionTable) {
-      const ca = revised.match(/#{2,3}[^\n]*(?:06-3|혼잡|체선|congestion|대기)[^\n]*/i)
-              || revised.match(/#{2,3}[^\n]*(?:06-2|물동량|처리량|throughput)[^\n]*/i);
-      const inject = '\n\n#### 항만 혼잡도\n\n' + portCongestionTable + '\n';
-      if (ca) { const at = revised.indexOf(ca[0]) + ca[0].length; revised = revised.slice(0, at) + inject + revised.slice(at); }
-      else    { revised += inject; }
+      if (anchor) { const at = revised.indexOf(anchor[0]) + anchor[0].length; revised = revised.slice(0, at) + inject + revised.slice(at); }
+      else        revised += inject;
     }
   }
 

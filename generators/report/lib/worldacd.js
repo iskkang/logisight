@@ -129,7 +129,7 @@ function mergeTrend(cur, oldCache) {
 function buildTable(d) {
   const f = (x, suf) => (x == null ? '—' : (suf === '%' ? (x >= 0 ? '▲' : '▼') + Math.abs(x).toFixed(0) + '%' : '$' + x.toFixed(2)));
   const rows = [];
-  if (d.spot_usd_kg != null)       rows.push(`| 글로벌 스팟 운임 | ${f(d.spot_usd_kg)}/kg | ${f(d.spot_wow_pct, '%')} | ${f(d.spot_yoy_pct, '%')} YoY |`);
+  if (d.spot_usd_kg != null)       rows.push(`| 글로벌 평균 항공운임 | ${f(d.spot_usd_kg)}/kg | ${f(d.spot_wow_pct, '%')} | ${f(d.spot_yoy_pct, '%')} YoY |`);
   if (d.fullmarket_usd_kg != null) rows.push(`| 글로벌 종합(full-market) 운임 | ${f(d.fullmarket_usd_kg)}/kg | — | — |`);
   if (!rows.length) return null;
   const wk = d.week_no != null ? `week ${d.week_no}${d.period ? ` (${d.period})` : ''}` : (d.period || '');
