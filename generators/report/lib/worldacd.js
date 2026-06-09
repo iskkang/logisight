@@ -94,6 +94,17 @@ function parseWeeklyPost(text) {
   const fm = text.match(/full-market\s+(?:air\s+cargo\s+)?rates[\s\S]{0,120}?US\$([\d.]+)/i);
   if (fm) out.fullmarket_usd_kg = parseFloat(fm[1]);
 
+  // 2026 포맷 폴백: "airfreight rate in week 22 climbed +2% WoW to US$3.29" (구 'spot rates per kilo' 표현 폐지)
+  if (out.spot_usd_kg == null) {
+    const ar = text.match(/airfreight\s+rate\s+in\s+week\s+(\d+)\s+(climbed|rose|increased|jumped|gained|fell|dropped|declined|slipped|decreased|eased)\s+([+-]?[\d.]+)\s*%\s+WoW\s+to\s+US\$([\d.]+)/i);
+    if (ar) {
+      if (out.week_no == null) out.week_no = parseInt(ar[1], 10);
+      out.spot_usd_kg = parseFloat(ar[4]);
+      const down = /fell|dropped|declined|slipped|decreased|eased/i.test(ar[2]);
+      out.spot_wow_pct = (down ? -1 : 1) * Math.abs(parseFloat(ar[3]));
+    }
+  }
+
   // tonnage WoW 방향(서사용)
   const tonUnchanged = /[Ww]orldwide\s+air\s+cargo\s+tonnage[\s\S]{0,80}?unchanged/i.test(text);
   const tonMove = text.match(/[Ww]orldwide\s+(?:air\s+cargo\s+)?(?:tonnage|volumes)[\s\S]{0,80}?([+-]\d+)\s*%\s*(?:WoW|week-on-week)/i);
@@ -153,6 +164,33 @@ function buildFactText(d) {
   return lines.length > 1 ? lines.join('\n') : null;
 }
 
+// ISO 8601 year-week
+function isoYearWeek(d) {
+  const t = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  const day = (t.getUTCDay() + 6) % 7;            // Mon=0
+  t.setUTCDate(t.getUTCDate() - day + 3);          // 목요일로
+  const firstThu = new Date(Date.UTC(t.getUTCFullYear(), 0, 4));
+  const week = 1 + Math.round(((t - firstThu) / 86400000 - 3 + ((firstThu.getUTCDay() + 6) % 7)) / 7);
+  return { year: t.getUTCFullYear(), week };
+}
+
+// 최신 주간 트렌드 포스트 URL: 1) RSS, 2) 실패 시 발행지연 고려해 최근 4주 슬러그 직접 시도.
+async function findLatestWeeklyUrl() {
+  const rss = await fetchText(RSS_URL);
+  const fromRss = latestWeeklyLink(rss);
+  if (fromRss) return fromRss;
+
+  const { year, week } = isoYearWeek(new Date());
+  for (let i = 0; i < 4; i++) {
+    let y = year, w = week - i;
+    if (w < 1) { y -= 1; w += 52; }
+    const url = `https://www.worldacd.com/trend-reports/weekly/worldacd-weekly-air-cargo-trends-${y}-week-${w}/`;
+    const html = await fetchText(url);
+    if (html && /weekly air cargo trends/i.test(html)) { console.log(`  worldacd: 주차 URL 매치 week ${w}`); return url; }
+  }
+  return null;
+}
+
 // ── Main ────────────────────────────────────────────────────────────────────────
 async function buildWorldACD({ force = false } = {}) {
   if (!force) {
@@ -160,9 +198,8 @@ async function buildWorldACD({ force = false } = {}) {
     if (cached) { console.log('  worldacd: 캐시 사용 (' + cached.as_of + ')'); return cached; }
   }
 
-  const rss = await fetchText(RSS_URL);
-  const link = latestWeeklyLink(rss);
-  if (!link) { console.warn('  worldacd: RSS에서 Weekly Trends 포스트 미발견 — null'); return null; }
+  const link = await findLatestWeeklyUrl();
+  if (!link) { console.warn('  worldacd: 주간 트렌드 포스트 미발견(RSS·URL 모두) — null(스트립 유지)'); return null; }
 
   const html = await fetchText(link);
   if (!html) return null;

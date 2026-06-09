@@ -71,6 +71,14 @@ function stripHtml(html) {
     .replace(/\s+/g, ' ');
 }
 
+// Current/Last week median 값 추출 → WoW 직접 계산용. 표시된 부호없는 %는 신뢰하지 않음.
+// 라이브 페이지 패턴(검증): "Median Waiting Time {±X%} {current} {last} Current Week Last Week"
+function parseWeekMedians(text) {
+  const m = text.match(/Median\s+Waiting\s+Time\s+(?:[+\-]?\s*[\d.]+\s*%\s+)?([\d.]+)\s+([\d.]+)\s+Current\s+Week\s+Last\s+Week/i);
+  if (!m) return { current: null, last: null };
+  return { current: parseFloat(m[1]), last: parseFloat(m[2]) };
+}
+
 // 개요 문장 우선 파싱 — category·median·WoW·long-tail이 한 문장에 있음.
 function parsePortPage(html, port) {
   const text = stripHtml(html);
@@ -80,7 +88,6 @@ function parsePortPage(html, port) {
 
   let category = ov ? ov[1].toLowerCase() : null;
   let median   = ov ? parseFloat(ov[2]) : null;
-  let wow      = ov ? parseFloat(ov[3].replace(/\s+/g, '')) : null;
 
   // fallback: 라벨 기반
   if (category == null) {
@@ -96,6 +103,11 @@ function parsePortPage(html, port) {
     const m = text.match(/([\d.]+)\s+days?\s+as\s+the\s+median\s+waiting\s+time/i);
     if (m) median = parseFloat(m[1]);
   }
+  // WoW: 표시된 %(부호 불명) 대신 Current/Last median 값에서 직접 계산
+  const wkMed = parseWeekMedians(text);
+  if (median == null && wkMed.current != null) median = wkMed.current;
+  let wow = (wkMed.current != null && wkMed.last) ? ((wkMed.current - wkMed.last) / wkMed.last) * 100 : null;
+
   const longTail = /exhibiting\s+long\s+tail\s+congestion/i.test(text)
                 || /Long\s+Tail\s+Congestion\s+Yes/i.test(text);
 
