@@ -35,6 +35,7 @@
     "adjudicate:forecasts": "node generators/web/forecast/adjudicate.js",
     "forecast:drewry": "node generators/web/forecast/persist-drewry.js",
     "forecast:iata-fuel": "node generators/web/forecast/persist-iata-fuel.js",
+    "forecast:diversion": "node generators/web/forecast/persist-diversion.js",
     "test:forecast": "node --test generators/web/forecast/",
     "forecast:smoke": "node generators/web/forecast/smoke-assemble.js",
     "backfill:news": "node scripts/backfill-maritime-news.js",
