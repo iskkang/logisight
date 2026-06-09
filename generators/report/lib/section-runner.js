@@ -348,7 +348,7 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
                             oceanBlocks = null,
                             airBundle = null,
                             airTable = null, airFactText = null,
-                            portThroughputTable = null, portThroughputFactText = null,
+                            portThroughputTable = null, portThroughputFactText = null, portCongestionTable = null,
                             kitaSeaBundle = null, kitaAirBundle = null }) {
   if (items.length === 0) {
     console.log(`⚠️  [${sectionConfig.id}] 관련 기사 없음 → status: no-data`);
@@ -544,6 +544,13 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
       }
     }
 
+    // 03-3 보조: IATA 제트유 (cost 팩터)
+    if (ab?.jetFuelTable) {
+      const fa = revised.match(/#{2,3}[^\n]*(?:03-3|TAC|BAI|추세|시계열|항공유|연료)[^\n]*/);
+      if (fa) { const at = revised.indexOf(fa[0]) + fa[0].length; revised = revised.slice(0, at) + '\n\n' + ab.jetFuelTable + '\n' + revised.slice(at); }
+      else    { revised += '\n\n' + ab.jetFuelTable + '\n'; }
+    }
+
     // 완전 미수집인 경우 (airBundle 자체가 null)
     if (!ab) {
       const notice = '\n\n> ⚠️ **이번 회차 항공 데이터 미수집** — TAC/BAI·IATA 수집 실패. 다음 호 업데이트 예정.\n\n';
@@ -563,14 +570,20 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
     }
   }
 
-  // macro 섹션: 항만 물동량 차트+표 주입 (06-2 소제목 아래) 또는 미수집 notice
+  // macro 섹션: 항만 물동량(06-2) + 혼잡도(06-3) 주입.
+  // 둘은 같은 06-2 앵커를 공유하므로 단일 블록으로 묶어 throughput→혼잡도 순서를 보장한다
+  // (분리 주입 시 혼잡도가 헤딩 직후로 끼어들어 throughput 위로 올라오는 문제 방지).
   if (sectionConfig.id === 'macro') {
-    if (portThroughputTable) {
-      const inject = '\n\n[[CHART:macro_port_throughput]]\n\n' + portThroughputTable + '\n';
-      const anchor = revised.match(/#{2,3}[^\n]*(?:06-2|물동량|처리량|throughput)[^\n]*/i)
+    const macroBlocks = [];
+    if (portThroughputTable) macroBlocks.push('[[CHART:macro_port_throughput]]\n\n' + portThroughputTable);
+    if (portCongestionTable)  macroBlocks.push('#### 항만 혼잡도\n\n' + portCongestionTable);
+    if (macroBlocks.length) {
+      const inject = '\n\n' + macroBlocks.join('\n\n') + '\n';
+      const anchor = revised.match(/#{2,3}[^\n]*(?:06-3|혼잡|체선|congestion|대기)[^\n]*/i)
+                  || revised.match(/#{2,3}[^\n]*(?:06-2|물동량|처리량|throughput)[^\n]*/i)
                   || revised.match(/#{2,3}[^\n]*/);
-      if (anchor) revised = revised.replace(anchor[0], anchor[0] + inject);
-      else        revised = '[[CHART:macro_port_throughput]]\n\n' + portThroughputTable + '\n\n' + revised;
+      if (anchor) { const at = revised.indexOf(anchor[0]) + anchor[0].length; revised = revised.slice(0, at) + inject + revised.slice(at); }
+      else        revised += inject;
     } else {
       const notice = '\n\n> ⚠️ **이번 회차 항만 물동량 데이터 미수집** — RWI-ISL·ISL 수집 실패. 운임 데이터로 대체 분석.\n\n';
       const anchor = revised.match(/\n#{2,3}[^\n]*/);
@@ -592,6 +605,14 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
       .replace(/^\|[^\n]+\|\n\|[-| ]+\|\s*\n(?!\|)/gm, '')
       .replace(/\n{3,}/g, '\n\n').trim();
     console.log(`   ✓ air 섹션 WorldACD 스트립 완료`);
+    // 검증된 WorldACD 실데이터가 있으면 주입(스트립으로 지운 자리 대체). 없으면 스트립만 유지.
+    if (airBundle?.worldacdTable) {
+      const wa = revised.match(/#{2,3}[^\n]*(?:03-3|TAC|BAI|추세|시계열|운임)[^\n]*/i);
+      const inject = '\n\n#### WorldACD 글로벌 주간 운임\n\n' + airBundle.worldacdTable + '\n';
+      if (wa) { const at = revised.indexOf(wa[0]) + wa[0].length; revised = revised.slice(0, at) + inject + revised.slice(at); }
+      else    { revised += inject; }
+      console.log(`   ✓ air 섹션 WorldACD 실데이터 주입`);
+    }
   }
 
   return { status: 'draft', text: revised, pass1Tokens: p1Out, pass2Tokens: p2Out };
