@@ -11,6 +11,10 @@ const path = require('path');
 // 로컬 실행 시 .env.local 로드 (GitHub Actions는 env 블록으로 주입, 덮어쓰지 않음)
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env.local') });
 
+// Node 20에는 native WebSocket이 없음 — @supabase/supabase-js(Realtime 초기화)용 shim.
+// 없으면 buildIndexFeatures()의 freight_indices 조회가 throw되어 지표 블록이 통째로 생략됨.
+if (!globalThis.WebSocket) { try { globalThis.WebSocket = require('ws'); } catch { /* ws 미설치 시 무시 */ } }
+
 const ANTHROPIC_KEY    = process.env.ANTHROPIC_API_KEY;
 const NEWS_PATH        = path.resolve(__dirname, '../../content/drafts/latest-news.json');
 const STYLE_GUIDE_PATH = path.resolve(__dirname, 'MONTHLY_REPORT_STYLE.md');
@@ -66,7 +70,100 @@ function loadMonthlyItems() {
   });
 }
 
-function buildUserPrompt(items) {
+// Supabase freight_indices에서 지표 시계열을 끌어와 WoW/MoM/QoQ·발산 피처 생성.
+// index_code를 가정하지 않고 존재하는 모든 코드(route-level 포함)에 대해 계산한다.
+// SUPABASE 미설정·조회 실패 시 빈 문자열 반환 → 분석은 기사 기반으로만 진행(기존 동작 보존).
+async function buildIndexFeatures() {
+  const url    = process.env.SUPABASE_URL;
+  const svcKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !svcKey) {
+    console.warn('⚠️ SUPABASE_URL/KEY 없음 — [지표 수치 & 발산] 블록 생략');
+    return '';
+  }
+  let rows;
+  try {
+    const { createClient } = require('@supabase/supabase-js');
+    const sb = createClient(url, svcKey, { auth: { persistSession: false } });
+    const { data, error } = await sb
+      .from('freight_indices')
+      .select('index_code,value,week_date')
+      .order('week_date', { ascending: false })
+      .limit(1200);
+    if (error) throw error;
+    rows = data || [];
+  } catch (e) {
+    console.warn(`⚠️ freight_indices 조회 실패 — 블록 생략: ${e.message}`);
+    return '';
+  }
+  if (rows.length === 0) return '';
+
+  const byCode = {};
+  for (const r of rows) {
+    if (r.value == null) continue;
+    (byCode[r.index_code] ||= []).push(r);
+  }
+  const dayMs = 86400000;
+  const pct = (cur, base) => (base ? ((cur - base) / base) * 100 : null);
+  // 날짜 기준 근사 조회. base와 latest의 *실제 간격*이 [lo,hi]일 밴드 안일 때만 유효(아니면 null).
+  // 격주·결측 지표에서 "자기 자신 대비 0%"·"14일 변화를 WoW로 위장"하는 것을 방지.
+  const pick = (arr, latestDate, target, lo, hi) => {
+    const lt = new Date(latestDate).getTime();
+    let best = null, bestDiff = Infinity;
+    for (const r of arr) {
+      const gap = (lt - new Date(r.week_date).getTime()) / dayMs;
+      if (gap < lo || gap > hi) continue; // 밴드 밖(자기 자신 gap≈0 포함) 제외
+      const d = Math.abs(gap - target);
+      if (d < bestDiff) { bestDiff = d; best = r; }
+    }
+    return best;
+  };
+
+  const feats = [];
+  for (const [code, arr] of Object.entries(byCode)) {
+    arr.sort((a, b) => (a.week_date < b.week_date ? 1 : -1)); // 최신순
+    const latest = arr[0];
+    const b1  = pick(arr, latest.week_date, 7,  4, 11);   // WoW: 간격 4~11일 (격주 지표는 base 없음 → n/a)
+    const b4  = pick(arr, latest.week_date, 28, 21, 38);  // MoM: 간격 21~38일
+    const b13 = pick(arr, latest.week_date, 91, 74, 110); // QoQ: 간격 74~110일
+    feats.push({
+      code, value: latest.value, week: latest.week_date,
+      wow: b1 ? pct(latest.value, b1.value) : null,
+      mom: b4 ? pct(latest.value, b4.value) : null,
+      qoq: b13 ? pct(latest.value, b13.value) : null,
+    });
+  }
+  if (feats.length === 0) return '';
+
+  const f1 = (x) => (x == null ? 'n/a' : `${x >= 0 ? '▲' : '▼'}${Math.abs(x).toFixed(1)}%`);
+  const lines = ['## 지표 수치 & 발산 (Supabase freight_indices — 정량 분석의 유일한 수치 근거)'];
+  lines.push('★ 아래 값만 인용 가능. 이 블록에 없는 수치·% 생성 금지.');
+  lines.push('| 지표 | 최신값 | 기준주 | WoW | MoM(~4주) | QoQ(~13주) |');
+  lines.push('|---|---|---|---|---|---|');
+  for (const f of feats.slice().sort((a, b) => a.code.localeCompare(b.code))) {
+    lines.push(`| ${f.code} | ${f.value} | ${f.week} | ${f1(f.wow)} | ${f1(f.mom)} | ${f1(f.qoq)} |`);
+  }
+  // 발산 자동 적시 — 컨센서스 해체·이상치 추적의 출발 재료
+  const momUp = feats.filter(f => f.mom != null && f.mom > 0).map(f => f.code);
+  const momDn = feats.filter(f => f.mom != null && f.mom < 0).map(f => f.code);
+  const split = feats
+    .filter(f => f.mom != null && f.qoq != null && Math.sign(f.mom) !== Math.sign(f.qoq))
+    .map(f => `${f.code}(MoM ${f1(f.mom)} vs QoQ ${f1(f.qoq)})`);
+  lines.push('');
+  lines.push('☞ 발산 점검 (단일 동인 환원 전 반드시 검토):');
+  if (momUp.length && momDn.length) {
+    lines.push(`- MoM 방향 분열: 상승 [${momUp.join(', ')}] vs 하락 [${momDn.join(', ')}] — 단일 변수로 설명되는지 검증`);
+  }
+  if (split.length) {
+    lines.push(`- 단기·분기 방향 상반: ${split.join('; ')} — 현물 급등 vs 계약/분기 평균 시차 가능성`);
+  }
+  if ((!momUp.length || !momDn.length) && !split.length) {
+    lines.push('- 뚜렷한 지표 간 발산 없음(동반 추세) — 그래도 항로·표본 구성차는 점검');
+  }
+  lines.push('');
+  return lines.join('\n');
+}
+
+function buildUserPrompt(items, indexBlock = '') {
   const causal  = items.filter(i => i.category === 'lane_causal');
   const carrier = items.filter(i => i.category === 'carrier_update');
   const deep    = items.filter(i => i.category === 'deep_analysis');
@@ -75,6 +172,7 @@ function buildUserPrompt(items) {
   lines.push(`분석 기준월: ${MONTH}`);
   lines.push(`수집일: ${TODAY}`);
   lines.push('');
+  if (indexBlock) { lines.push(indexBlock); }
 
   // 항로별 원인 코멘트를 가장 먼저 — 리포트의 "원인" 서술은 이 블록에만 근거해야 함
   if (causal.length > 0) {
@@ -118,7 +216,13 @@ function buildSystemPrompt(styleGuide) {
 ① 명사형 객관체 종결(~함/됨/임/전망/예상) — 경어체("습니다")·평서체("이다/했다") 금지
 ② 정량 비교(WoW/MoM/YoY + ▲▼) — 수치엔 항상 단위·비교 기준
 ③ 현상→원인→배경→전망 4단 논리 — 사실 나열로 끝내지 말 것
-④ 각 분석 블록 끝에 ☞ 또는 ➔ 시사점(So what)으로 마무리
+④ 각 분석 블록은 단순 시사점이 아니라 **인사이트**로 마무리한다. 아래 중 데이터가 뒷받침하는 1개를 ☞로 제시(근거 없으면 생략 — 억지 금지):
+   · 컨센서스 점검 — 지배적 서사(예: 단일 지정학 변수)로 설명 안 되는 부분. 공급 충격 vs 수요 선행(풀포워드) 등 동인 분해
+   · 이상치 — 통합 서사에 안 맞는 지표 발산([지표 수치 & 발산] 블록 참조: 동일 충격인데 항로·지수별 방향 상반 등) 지목
+   · 리스크 비대칭 — 시장에 이미 반영된 것 vs 아직 아닌 것 → 상·하방 어느 쪽이 비대칭인지
+   · 스윙 변수 + 관측 시그널 — 이 국면을 가르는 단일 변수와, 그 향방이 *먼저* 드러나는 관측 가능한 신호
+   ※ 처방(부킹·계약 등 행동 지시) 금지 — Logisight는 인텔리전스이며 함의·좌표만 제시한다(객관성=차별화).
+   ※ 인사이트가 입력 사실·수치를 넘는 추론이면 반드시 [Logisight 분석]+(추정) 표기.
 ⑤ 모든 수치·인용에 출처(기관/날짜) 명기
 
 --- 스타일 가이드 시작 ---
@@ -127,12 +231,13 @@ ${styleGuide}
 
 # 데이터 사용 원칙 (환각 방지 — 최우선)
 1. 제공된 기사 제목·요약에 **명시된 사실만** 사용. 출처에 없는 수치·운임값·% 절대 생성 금지.
-2. 운임 지수 수치(SCFI/WCI/FBX 등)는 이 입력에 포함되지 않음 → "구체 수치는 Logisight 지표 대시보드 참조"로 처리하고 임의 숫자 쓰지 말 것.
+2. 운임 지수 수치는 아래 **[지표 수치 & 발산]** 블록에 포함됨 → 그 블록의 값만 인용. 블록에 없는 수치·운임값·% 생성은 금지. (블록이 없으면 "구체 수치는 Logisight 지표 대시보드 참조"로 처리.)
 3. 근거가 약하거나 추정인 내용은 [Logisight 분석] 마커 + (추정) 표기.
 4. 물류·해운·공급망과 무관한 기사는 제외.
 5. 입력 기사가 적으면 무리하게 분량을 늘리지 말 것 — 있는 기사 기반으로만.
 6. 항로별 등락 "원인"은 입력의 "항로별 시황 코멘트" 블록에 명시된 내용에만 근거한다. 해당 항로의 원인이 코멘트에 없으면 반드시 "원인 미확인 — 추가 자료 필요"로 표기. 그럴듯한 원인 창작 금지 — 이것이 이 리포트의 핵심 품질 기준.
 7. 코멘트의 항로명과 지표 코드를 아래 항로 명칭 매핑으로 대조한 후, 명확히 일치할 때만 연결한다. 애매하면 "종합 지수 수준" 설명으로 후퇴하고 특정 항로 원인으로 단정하지 말 것.
+8. **단일 변수로 모든 등락을 환원하지 말 것.** [지표 수치 & 발산] 블록에 방향 분열·단기/분기 상반이 있으면 경쟁 동인(공급 충격 vs 수요 선행 등)으로 분해하고, 어느 쪽이 큰지 입력 근거로 가늠한다. 근거를 넘는 인과 비중 판단은 (추정) 표기.
 
 # 항로 명칭 매핑 (지표 코드 ↔ 코멘트 동의어 — 수치와 원인을 연결하는 핵심 테이블)
 - **미주서안** (SCFI_USWC): US West Coast, USWC, FE-WCNA, Transpacific West Coast, Shanghai-Los Angeles, Asia-WCNA, WCNA
@@ -300,8 +405,9 @@ async function main() {
   console.log(`📊 monthly ${items.length}건 (deep ${deep.length} / carrier ${carrier.length}) — JOC ${jocN}, Freightos ${fxN}, Flexport ${flexN}`);
 
   const styleGuide   = loadStyleGuide();
+  const indexBlock   = await buildIndexFeatures();
   const systemPrompt = buildSystemPrompt(styleGuide);
-  const userPrompt   = buildUserPrompt(items);
+  const userPrompt   = buildUserPrompt(items, indexBlock);
 
   const Anthropic = require('@anthropic-ai/sdk');
   const client = new Anthropic({ apiKey: ANTHROPIC_KEY });
