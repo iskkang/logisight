@@ -11,6 +11,10 @@ const path = require('path');
 // 로컬 실행 시 .env.local 로드 (GitHub Actions는 env 블록으로 주입, 덮어쓰지 않음)
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env.local') });
 
+// Node 20에는 native WebSocket이 없음 — @supabase/supabase-js(Realtime 초기화)용 shim.
+// 없으면 buildIndexFeatures()의 freight_indices 조회가 throw되어 지표 블록이 통째로 생략됨.
+if (!globalThis.WebSocket) { try { globalThis.WebSocket = require('ws'); } catch { /* ws 미설치 시 무시 */ } }
+
 const ANTHROPIC_KEY    = process.env.ANTHROPIC_API_KEY;
 const NEWS_PATH        = path.resolve(__dirname, '../../content/drafts/latest-news.json');
 const STYLE_GUIDE_PATH = path.resolve(__dirname, 'MONTHLY_REPORT_STYLE.md');
