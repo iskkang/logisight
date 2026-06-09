@@ -1,7 +1,6 @@
 'use strict';
 const fs   = require('fs');
 const path = require('path');
-const { normalizeMonthlyReportMarkdown } = require('./report-style-normalizer');
 
 // ── Frontmatter helpers ──────────────────────────────────────────────────────
 
@@ -51,14 +50,6 @@ function buildSectionSystemPrompt(styleGuide, focus) {
    마지막 한 줄에 '➔' 형태로 명시할 것.
 ⑤ 출처 표기 금지 — 본문에 괄호식 출처 표기 (매체, 날짜), 각주 마크 [n], 번호 참고자료 목록을 만들지 말 것.
    출처가 신뢰도상 꼭 필요하면 **문장 안에 매체명만 자연스럽게(날짜·괄호 없이) 1회** 녹여 쓰고, 그 외엔 생략.
-⑥ Bold 강조 규칙 — 문단 리드 소제목은 별도 줄 \`**소제목**\`으로 쓰고 마침표를 붙이지 말 것.
-   본문 Bold는 단어·지수명 단독 강조가 아니라 판단을 담은 2~10어절 핵심 구절에만 적용.
-   좋은 예: \`**2026년 5월 시장**\`, \`**동시에 강세**\`, \`**같은 방향으로 움직인 점**\`, \`**구조적 비용 충격**\`.
-   금지 예: \`**SCFI**\`, \`**KCCI**\`, \`**BAF**\`, \`**IATA**\`, \`**동반 상승의 의미.**\`.
-⑦ PDF 레이아웃 규칙 — \`NN-N.\` 하위 페이지 제목은 한 줄로 들어가도록 짧게 작성.
-   표·차트가 함께 들어가는 페이지는 본문이 다음 페이지로 넘어가지 않게 해설을 줄일 것.
-   \`[[STATS]]\` 카드 토큰은 \`값|라벨|up/down\` 순서이며, 라벨은 18자 안팎으로 축약.
-   내용이 짧거나 직접 연결되는 인접 하위 페이지는 병합될 수 있으므로 병합 그룹(02-5+02-6, 02-7+02-8, 03-2+03-3, 05-2+05-3+05-4, 06-1+06-2)은 각 블록을 2문단 이내로 압축.
 
 # 기사 선정·사용 기준
 - 운임·물동량·정책·인프라 등 시장 분석성 기사 우선(JOC·Drewry·Linerlytica·Flexport·gCaptain 등 전문 매체).
@@ -237,13 +228,6 @@ ${styleGuide}
 - [ ] 괄호식 출처 표기 (매체, 날짜), 각주 마크 [n], 참고자료 목록이 전혀 없는가? 있으면 제거. 매체명이 꼭 필요하면 문장 안에 자연스럽게 1회만 녹여 썼는가?
 - [ ] "~입니다/합니다" 경어체가 없는가? "~이다/했다" 평서체가 없는가?
 - [ ] 벙커비/벙커연료비 → 벙커유로, 트랜스퍼시픽 → 아시아-북미 항로로 교체됐는가?
-- [ ] 문단 리드 소제목은 별도 줄 \`**소제목**\` 형식이며 마침표가 없는가?
-- [ ] \`**SCFI**\`, \`**KCCI**\`, \`**BAF**\`, \`**IATA**\`처럼 키워드·지수명만 단독으로 Bold 처리하지 않았는가?
-- [ ] 본문 Bold는 문장을 읽고 이해해야 드러나는 핵심 구절(예: \`**구조적 비용 충격**\`)에만 적용됐는가?
-- [ ] \`NN-N.\` 하위 페이지 제목이 한 줄에 들어갈 만큼 짧은가?
-- [ ] 표·차트가 긴 페이지에서 본문이 다음 페이지로 넘어가지 않도록 문단 수와 문장 수를 줄였는가?
-- [ ] \`[[STATS]]\` 카드가 \`값|라벨|up/down\` 순서이며 카드 라벨이 짧은가?
-- [ ] 내용이 짧은 인접 하위 페이지는 무리하게 독립 페이지 분량으로 늘리지 않고 병합 가능한 밀도로 압축했는가?
 - [ ] 출력에 한자(中文) 잔존 0건인가? 있으면 한국어로 번역.`;
 }
 
@@ -600,6 +584,15 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
                   || revised.match(/#{2,3}[^\n]*/);
       if (anchor) { const at = revised.indexOf(anchor[0]) + anchor[0].length; revised = revised.slice(0, at) + inject + revised.slice(at); }
       else        revised += inject;
+    } else {
+      const notice = '\n\n> ⚠️ **이번 회차 항만 물동량 데이터 미수집** — RWI-ISL·ISL 수집 실패. 운임 데이터로 대체 분석.\n\n';
+      const anchor = revised.match(/\n#{2,3}[^\n]*/);
+      if (anchor) {
+        const at = revised.indexOf(anchor[0]) + anchor[0].length;
+        revised = revised.slice(0, at) + notice + revised.slice(at);
+      } else {
+        revised = notice + revised;
+      }
     }
   }
 
@@ -622,8 +615,6 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
     }
   }
 
-  revised = normalizeMonthlyReportMarkdown(revised);
-
   return { status: 'draft', text: revised, pass1Tokens: p1Out, pass2Tokens: p2Out };
 }
 
@@ -632,7 +623,6 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
 function saveSectionFile(outDir, sectionId, month, status, text, extra = {}) {
   fs.mkdirSync(outDir, { recursive: true });
   const outPath = path.join(outDir, `${sectionId}.md`);
-  const normalizedText = normalizeMonthlyReportMarkdown(text);
   const frontmatter = buildFrontmatter({
     section:      sectionId,
     month,
@@ -640,7 +630,7 @@ function saveSectionFile(outDir, sectionId, month, status, text, extra = {}) {
     generated:    new Date().toISOString(),
     ...extra,
   });
-  fs.writeFileSync(outPath, frontmatter + normalizedText + '\n', 'utf-8');
+  fs.writeFileSync(outPath, frontmatter + text + '\n', 'utf-8');
   return outPath;
 }
 
