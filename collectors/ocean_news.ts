@@ -38,8 +38,7 @@ interface OceanNewsSource {
 const OCEAN_NEWS_SOURCES: OceanNewsSource[] = [
   { name: 'Container News',      url: 'https://container-news.com/feed/',                    type: 'rss',  frequency: 'daily',  useKeywordFilter: false },
   { name: 'Hellenic Shipping',   url: 'https://www.hellenicshippingnews.com/feed/',           type: 'rss',  frequency: 'daily',  useKeywordFilter: true  },
-  { name: 'Seatrade Maritime',   url: 'https://www.seatrade-maritime.com/feed',               type: 'rss',  frequency: 'daily',  useKeywordFilter: true  },
-  { name: 'Maritime Executive',  url: 'https://the-maritime-executive.com/feed',              type: 'rss',  frequency: 'daily',  useKeywordFilter: true  },
+  { name: 'Seatrade Maritime',   url: 'https://www.seatrade-maritime.com/rss.xml',            type: 'rss',  frequency: 'daily',  useKeywordFilter: true  },
   { name: 'gCaptain',           url: 'https://gcaptain.com/feed/',                           type: 'rss',  frequency: 'daily',  useKeywordFilter: true  },
   // 신규: 차단 매체(theloadstar/guardian) 우회 — shipshipship.uk 애그리게이터 (원문 링크 그대로 노출)
   { name: 'SeaSearch Containers', url: 'https://www.shipshipship.uk/category/6/',             type: 'html', frequency: 'daily',  useKeywordFilter: false },

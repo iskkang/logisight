@@ -31,37 +31,6 @@ const SOURCES = [
     rss: 'https://www.inboundlogistics.com/feed/',
     section: 'logistics' as const,
   },
-  // ── 대기업 공식 뉴스룸 ────────────────────────────────────────────────
-  {
-    name: 'DHL Press',
-    rss: 'https://press.dhl.com/news.rss',
-    section: 'logistics' as const,
-  },
-  {
-    name: 'FedEx Newsroom',
-    rss: 'https://newsroom.fedex.com/rss/',
-    section: 'logistics' as const,
-  },
-  {
-    name: 'UPS Pressroom',
-    rss: 'https://pressroom.ups.com/rss/all',
-    section: 'logistics' as const,
-  },
-  {
-    name: 'DSV News',
-    rss: 'https://www.dsv.com/en/about-dsv/press-room/rss',
-    section: 'logistics' as const,
-  },
-  {
-    name: 'Kuehne+Nagel',
-    rss: 'https://home.kuehne-nagel.com/rss/press-releases.xml',
-    section: 'logistics' as const,
-  },
-  {
-    name: 'DB Schenker',
-    rss: 'https://www.dbschenker.com/rss/news',
-    section: 'logistics' as const,
-  },
 ];
 
 // 물류 관련성 키워드 필터 (업계 미디어는 광범위하므로 필터 적용)
@@ -116,9 +85,7 @@ export async function collect(): Promise<CollectorResult> {
       const items = await rateLimited(source.rss, () => parseRssFeed(source.rss));
       let added = 0;
       for (const item of items) {
-        // 업계 미디어(Logistics Management 등)는 키워드 필터 적용; 대기업 뉴스룸은 그대로 수집
-        const isCompanyNewsroom = ['DHL Press','FedEx Newsroom','UPS Pressroom','DSV News','Kuehne+Nagel','DB Schenker'].includes(source.name);
-        if (!isCompanyNewsroom && !LOGISTICS_KEYWORDS.test(item.title + ' ' + item.summary_en)) continue;
+        if (!LOGISTICS_KEYWORDS.test(item.title + ' ' + item.summary_en)) continue;
 
         result.data.push({
           data_type: 'news',
