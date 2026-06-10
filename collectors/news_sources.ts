@@ -30,6 +30,8 @@ export const NEWS_SOURCES: NewsSource[] = [
   { name: 'FreightWaves', url: 'https://www.freightwaves.com/feed', kind: 'rss', section: 'logistics', language: 'en' },
 
   { name: 'IATA Pressroom', url: 'https://www.iata.org/en/pressroom/', kind: 'html', section: 'air', language: 'en', selector: 'article a, h2 a, h3 a' },
+  { name: 'Asia Cargo News', url: 'https://www.asiacargonews.com/', kind: 'html', section: 'air', language: 'en', selector: 'a[href*="/en/news/detail"]' },
+  { name: 'Air Freight News', url: 'https://airfreight.news/articles/category/air-freighters', kind: 'html', section: 'air', language: 'en', selector: 'a[href*="/articles/full/"]' },
   { name: 'WorldACD', url: 'https://www.worldacd.com/feed/', kind: 'rss', section: 'air', language: 'en', monthly: true },
   { name: 'Air Cargo News', url: 'https://www.aircargonews.net/feed/', kind: 'rss', section: 'air', language: 'en', monthly: true },
   { name: 'Air Cargo Week', url: 'https://aircargoweek.com/feed/', kind: 'rss', section: 'air', language: 'en' },
