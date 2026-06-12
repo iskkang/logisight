@@ -274,7 +274,7 @@ async function send() {
       process.exit(1);
     }
     html = fs.readFileSync(htmlPath, 'utf-8');
-    subject = `📦 Logisight 뉴스레터 — ${new Date().toLocaleDateString('ko-KR')}`;
+    subject = `📦 Logisight 뉴스레터 — ${new Date().toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' })}`;
     console.log(`📄 외부 HTML 사용: ${HTML_FILE}`);
   } else if (TYPE === 'daily') {
     subject = `📦 Logisight 일일 브리핑 — ${new Date().toLocaleDateString('ko-KR')}`;
