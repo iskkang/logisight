@@ -177,18 +177,55 @@ function buildMainContent(main) {
     .join('\n\n');
 }
 
+// callDeepSeek 응답에서 TITLE/BODY를 분리. 반환 { title, body } | null
+function parseKsgArticle(text) {
+  if (!text) return null;
+  const titleMatch = text.match(/TITLE:\s*(.+?)\s*(?:\n|$)/);
+  const bodyMatch = text.match(/BODY:\s*\n?([\s\S]+)$/);
+  const title = titleMatch ? titleMatch[1].trim() : null;
+  let body = bodyMatch ? bodyMatch[1].trim() : null;
+  // TITLE/BODY 라벨이 없으면 전체를 본문으로 사용
+  if (!body) body = (title ? text.replace(/TITLE:\s*.+\n?/, '') : text).trim();
+  // 모델이 덧붙이는 말미 디스클레이머 제거 ("본 기사는 …작성됐습니다")
+  body = body.replace(/(?:\n\s*)*본\s*기사는[^\n]*$/, '').trim();
+  if (!body || body.length < 100) return null;
+  return { title: title || null, body };
+}
+
 async function generateKoreanAnalysis(callDeepSeek, articleText, context) {
   if (!articleText || articleText.length < 150 || !process.env.DEEPSEEK_API_KEY) return null;
   const message = await callDeepSeek({
-    max_tokens: 1200,
+    max_tokens: 3000,
     messages: [{
       role: 'user',
-      content: `아래 원문 기사에서 확인되는 사실만 사용해 한국어 기사 본문을 작성하라.
+      content: `아래 원문 기사에서 확인되는 사실만 사용해 한국어 뉴스 기사를 작성하라.
 원문 전체 번역이나 장문 복제는 금지한다. 출처에 없는 수치나 사실을 만들지 마라.
-KSG·카고뉴스 스타일의 전문기자 문체로 5~7개 문단, 600~1,000자 안팎의 자연스러운 산문으로 작성하라.
-첫 문단은 핵심 사실을 바로 제시하고, 중간 문단은 배경과 원인을 자연스럽게 연결하며, 마지막 문단은 한국 화주·포워더 관점의 실무 영향을 녹여 쓴다.
-"현상", "원인과 배경", "한국 화주·포워더 영향" 같은 라벨형 소제목이나 H2 구획을 쓰지 마라.
-제목·부제·이미지·credit·중복 출처 문장은 넣지 마라.
+KSG(코리아쉬핑가제트)·카고뉴스 전문기자 문체로 작성한다.
+
+## 제목 규칙
+- 명사형으로 종결한다. 핵심 키워드를 앞 15자 이내에 배치한다. 한글 기준 25~35자.
+- 한자 기호를 적극 혼용한다: 弗(달러)·億·%·↑·↓·…
+- 업계 약어를 그대로 쓴다: TEU·FEU·소석률·컨운임·GRI·PSS·포워더
+- 영문 사명은 원어로 쓴다: Maersk·MSC·CMA CGM·HMM·COSCO·ONE·DSV
+- 과장 표현(최고·무조건·100%) 금지. 같은 키워드를 제목 안에서 2회 이상 반복 금지.
+- 예: 중동행 컨운임 4300弗 돌파…사상최고치
+- 예: 부산→유럽 운임 전주比 9%↑…홍해 우회 지속 영향
+
+## 본문 규칙
+- 5~7개 문단, 600~1,000자 안팎의 자연스러운 산문. 문단과 문단 사이는 빈 줄로 구분해 보기 좋게 한다.
+- 첫 문단은 핵심 사실을 바로 제시하고, 중간 문단은 배경과 원인을 자연스럽게 연결하며, 마지막 문단은 한국 화주·포워더 관점의 실무 영향을 녹여 쓴다.
+- 라벨형 소제목이나 H2 구획(현황·노선별·원인·전망 등)을 절대 쓰지 마라. 평문 산문으로만 작성한다.
+- 어미는 KSG 문어체만 사용한다: ~을 기록했다·~을 밝혔다·~로 집계됐다·~로 전망했다·~고 말했다. ~입니다·~합니다·~됩니다·~했습니다는 절대 금지.
+- 수치 표기: 병렬 수치에는 '각각'을 쓴다(예: 영업익·순익 각각 92% 감소). 비교는 '전년 [수치] 대비 [증감률] [결과]' 형식(예: 전년 1275만TEU 대비 1% 늘어난 1292만TEU). 증감률은 숫자+%, 퍼센트포인트는 %p.
+- 접속어를 활용한다: 반면·이 밖에·이어·한편·가운데·희비·나 홀로 하락세.
+- SEO: 메인 키워드를 1,000자 기준 4~6회 자연스럽게 반복한다.
+- 출처 명시: 모든 수치·통계에 기관명을 밝히고, 본문 맨 끝에 한 줄로 '*출처: [기관명]*'을 단다.
+- 제목·부제·이미지·credit 문장은 본문에 넣지 마라.
+
+## 출력 형식 (정확히 준수)
+TITLE: {제목}
+BODY:
+{본문}
 
 기사 맥락: ${context}
 
@@ -197,7 +234,7 @@ ${articleText}`,
     }],
   });
   const text = message.content?.[0]?.text?.trim();
-  return text && text.length >= 100 ? text : null;
+  return parseKsgArticle(text);
 }
 
 function normalizeMarkdownBody(markdown, { title, summary, imageUrl, imageCredit } = {}) {
@@ -224,6 +261,7 @@ module.exports = {
   categoryFor,
   generateKoreanAnalysis,
   normalizeMarkdownBody,
+  parseKsgArticle,
   resolveArticle,
   sanitizeImageUrl,
 };

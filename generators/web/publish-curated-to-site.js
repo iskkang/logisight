@@ -71,15 +71,16 @@ async function publishMain(curated) {
     title: main.title_ko,
   });
   recordImage(asset);
-  const content = await generateKoreanAnalysis(
+  const generated = await generateKoreanAnalysis(
     callDeepSeek,
     asset.articleText,
     `${main.source} / ${main.title_ko}`,
   );
+  const content = generated?.body || null;
 
   const date = curated.date || TODAY;
   const row = {
-    title: main.title_ko,
+    title: generated?.title || main.title_ko,
     summary: main.what || null,
     content: content || buildMainContent(main) || null,
     url: main.url,
@@ -108,14 +109,15 @@ async function publishLink(link, section, date) {
   });
   recordImage(asset);
 
-  const content = await generateKoreanAnalysis(
+  const generated = await generateKoreanAnalysis(
     callDeepSeek,
     asset.articleText,
     `${link.source} / ${link.title_ko}`,
   );
+  const content = generated?.body || null;
   const isInternal = Boolean(content);
   const row = {
-    title: link.title_ko,
+    title: (isInternal && generated?.title) || link.title_ko,
     summary: link.summary_ko || link.title_ko,
     content,
     url: link.url,

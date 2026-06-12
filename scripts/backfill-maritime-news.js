@@ -139,8 +139,8 @@ async function main() {
         asset.articleText,
         `${row.source || ''} / ${row.title || ''}`,
       );
-      if (generated && generated.length >= 300) {
-        patch.content = generated;
+      if (generated?.body && generated.body.length >= 300) {
+        patch.content = generated.body;
         if (!row.slug) {
           patch.slug = makeSlug(
             (row.published_at || new Date().toISOString()).slice(0, 10),
