@@ -1,17 +1,18 @@
 # .github/workflows/daily-newsletter.yml
-# Required secrets: DEEPSEEK_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
-#                   RESEND_API_KEY, INTERNAL_EMAIL, UNSPLASH_ACCESS_KEY
+# 사이트에 발행된 당일 기사(maritime_news)를 카드 이메일로 발송.
+# 수집·큐레이션 없음 — 기사 생성은 daily-web-articles.yml(06:30 KST)이 담당.
+# Required secrets: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, RESEND_API_KEY, INTERNAL_EMAIL
 name: Daily Newsletter
 
 on:
   schedule:
-    - cron: '0 0 * * *'   # 09:00 KST (UTC 00:00)
+    - cron: '0 23 * * *'   # 08:00 KST (전일 UTC 23:00)
   workflow_dispatch:
 
 jobs:
   newsletter:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 10
 
     steps:
       - uses: actions/checkout@v4
@@ -24,38 +25,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
-
-      - name: Collect rail (daily)
-        run: npm run collect:rail:daily
-        env:
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-
-      - name: Collect ocean (daily)
-        run: npm run collect:ocean:daily
+      - name: Generate newsletter HTML from site articles
+        run: npm run newsletter:from-site
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-
-      - name: Curate rail
-        run: npm run curate:rail
-        env:
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-
-      - name: Curate ocean
-        run: npm run curate:ocean
-        env:
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-
-      - name: Generate newsletter HTML
-        run: npm run newsletter:generate
 
       - name: Send newsletter
         run: |
-          TODAY=$(date +%Y-%m-%d)
+          TODAY=$(TZ=Asia/Seoul date +%Y-%m-%d)
           HTML_PATH="content/drafts/newsletter-${TODAY}.html"
           if [ -f "$HTML_PATH" ]; then
             echo "📄 HTML 발송: $HTML_PATH"
@@ -66,6 +44,3 @@ jobs:
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           SEND_TO: ${{ secrets.INTERNAL_EMAIL }}
-
-      # 웹사이트 기사 생성은 daily-web-articles.yml에서 별도 실행
-      # (이메일 뉴스레터와 웹사이트 기사를 분리)
