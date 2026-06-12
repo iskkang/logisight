@@ -5,11 +5,10 @@ name: Generate Daily Website Articles
 # agent_type: 'shipping' (rail/ocean 시황 기사) + 'brief' (브리프)
 # 웹사이트 기사 페이지(/article/:slug)에 표시되는 실제 기사.
 # 이메일 뉴스레터: daily-newsletter.yml
-# 브리핑 카드: publish-daily-news.yml
 
 on:
   schedule:
-    - cron: '30 21 * * *'  # 06:30 KST (21:30 UTC) — 브리핑 카드 발행 30분 후
+    - cron: '30 21 * * *'  # 06:30 KST (21:30 UTC)
   workflow_dispatch:
 
 jobs:

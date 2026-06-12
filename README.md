@@ -28,7 +28,7 @@ collectors/           수집기 (RSS, 크롤러, 공공API, 운임 지수)
   utils/              playwright_pool, rate_limiter, snapshot_writer 등
 generators/
   web/                웹 기사 생성 (maritime_news, agent_type='shipping')
-  email/              이메일 daily/weekly (agent_type='daily_card','brief')
+  email/              이메일 daily/weekly (agent_type='brief')
   report/             CADI 리포트, PDF 생성
 lib/                  공유 유틸 (supabase-insert.js)
 scripts/              로컬 유틸 (cadi-demo-snapshot.ts 등)
@@ -62,7 +62,6 @@ npm run newsletter:generate   # HTML 뉴스레터 생성
 
 # 전체 파이프라인
 npm run daily:email   # 수집 → 큐레이션 → 뉴스레터
-npm run daily:cards   # 수집 → 큐레이션 → 브리핑 카드 발행
 ```
 
 ## Supabase 원칙
