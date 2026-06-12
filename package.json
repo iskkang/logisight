@@ -29,6 +29,7 @@
     "article:weekly": "node generators/email/generate-article-brief.js --window=7",
     "article:trend": "node generators/email/generate-article-brief.js --type=trend",
     "publish:curated": "node generators/web/publish-curated-to-site.js",
+    "weekly:briefing": "node generators/web/generate-weekly-briefing.js",
     "generate:forecasts": "node generators/web/forecast/generate.js",
     "adjudicate:forecasts": "node generators/web/forecast/adjudicate.js",
     "forecast:drewry": "node generators/web/forecast/persist-drewry.js",
