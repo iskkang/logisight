@@ -23,6 +23,8 @@
     "curate:logistics": "node generators/web/curate-logistics.js",
     "generate:article:logistics": "node generators/web/generate-article-shipping.js --section=logistics",
     "newsletter:generate": "node generators/email/generate-newsletter.js",
+    "newsletter:from-site": "node generators/email/generate-newsletter-from-site.js",
+    "test:email": "node --test generators/email/",
     "article:rail": "node generators/web/generate-article-shipping.js --section=rail",
     "article:ocean": "node generators/web/generate-article-shipping.js --section=ocean",
     "article:corp": "node generators/web/generate-article-corp.js",
