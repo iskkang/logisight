@@ -2,7 +2,7 @@ name: Generate Daily Website Articles
 
 # 역할: 큐레이션된 데이터를 기반으로 웹사이트 기사를 생성 후 maritime_news에 저장.
 #
-# agent_type: 'shipping' (rail/ocean 시황 기사) + 'brief' (브리프)
+# agent_type: 'brief' (내부 기사, publish:curated) + 'external' (외부 링크 카드)
 # 웹사이트 기사 페이지(/article/:slug)에 표시되는 실제 기사.
 # 이메일 뉴스레터: daily-newsletter.yml
 
@@ -87,46 +87,6 @@ jobs:
         run: npm run curate:logistics
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-
-      - name: Generate rail website article (agent_type=shipping)
-        run: npm run generate:article:rail
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-          UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
-
-      - name: Generate ocean website article (agent_type=shipping)
-        run: npm run generate:article:ocean
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-          UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
-
-      - name: Generate air website article (agent_type=shipping)
-        run: npm run generate:article:air
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-          UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
-
-      - name: Generate trade/policy website article (agent_type=shipping)
-        run: npm run generate:article:trade
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-          UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
-
-      - name: Generate logistics website article (agent_type=shipping)
-        run: npm run generate:article:logistics
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-          UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
 
       - name: Generate brief website article (agent_type=brief)
         run: npm run generate:article:brief

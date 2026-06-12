@@ -53,9 +53,9 @@
 
 | 값 | 용도 | 파이프라인 생성자 |
 |----|------|----------------|
-| `shipping` | 해운·철도 시황 웹 기사 | generators/web/generate-article-shipping.js |
+| `shipping` | (2026-06-12 폐기 — 신규 생성 없음, 기존 행만 잔존) | (삭제됨, brief로 통합) |
 | `corp` | 기업 동향 웹 기사 | generators/web/generate-article-corp.js |
-| `brief` | 브리프 웹 기사 | generators/email/generate-article-brief.js |
+| `brief` | 시황·브리프 웹 기사 (KSG 스타일) | generators/web/publish-curated-to-site.js, generators/email/generate-article-brief.js |
 | `weekly_brief` | 주간 브리핑 요약 | generators/email/ |
 | `daily_card` | (2026-06-12 폐기 — 신규 생성 없음, 기존 행만 잔존) | (삭제됨) |
 | `external` | 외부 링크 카드 (본문 없음) | collectors/ |

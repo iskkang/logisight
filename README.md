@@ -53,8 +53,7 @@ npm run collect:all           # 전체 수집기 실행
 # 큐레이션 & 기사 생성
 npm run curate:rail           # 철도 큐레이션
 npm run curate:ocean          # 해운 큐레이션
-npm run generate:article:rail   # 철도 웹 기사 생성
-npm run generate:article:ocean  # 해운 웹 기사 생성
+npm run publish:curated         # 큐레이션 기사 → 사이트 적재 (KSG 스타일, agent_type=brief)
 npm run generate:article:brief  # 브리프 기사 생성
 
 # 뉴스레터
