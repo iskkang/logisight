@@ -1,0 +1,46 @@
+name: TCR Current Delay Ingest
+
+# 책임: TCR 현재 운영 지연 상세 적재 (tcr_containers_current / tcr_route_segments / tcr_risk_alerts).
+# CADI 주간 집계(cadi-ingest.yml)와 별개 책임 → 별도 파일 유지(워크플로 병합 금지).
+# "현재" 레이어이므로 일 단위 갱신.
+
+on:
+  schedule:
+    - cron: '0 1 * * *'   # 매일 01:00 UTC (10:00 KST)
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run — print mapping without DB write'
+        required: false
+        default: 'false'
+        type: choice
+        options: ['false', 'true']
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run TCR current-delay ingest
+        run: npm run collect:tcr:current
+        env:
+          DRY: ${{ github.event.inputs.dry_run || 'false' }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          # MTL Link 토큰 적용 시 활성화 (현재 action=list 무인증)
+          # TRACKING_API_TOKEN: ${{ secrets.TRACKING_API_TOKEN }}
+
+      - name: Notify on failure
+        if: failure()
+        run: echo "⚠️ TCR current ingest 실패 — Actions 로그 확인"

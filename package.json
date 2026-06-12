@@ -9,6 +9,7 @@
     "collect:tracing": "npx tsx collectors/tracing_ingest.ts",
     "collect:live": "npx tsx collectors/tracing_live.ts",
     "collect:tsr": "npx tsx collectors/tracing_fesco.ts",
+    "collect:tcr:current": "npx tsx collectors/tracing_tcr_current.ts",
     "collect:rail:daily": "npx tsx collectors/index.ts rail-daily",
     "collect:rail:weekly": "npx tsx collectors/index.ts rail-weekly",
     "collect:ocean:daily": "npx tsx collectors/index.ts ocean-daily",
