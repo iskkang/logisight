@@ -7,7 +7,11 @@ const SECTION_ORDER = ['해상', '항공', '철도', '무역', '물류'];
 const SECTION_ICONS = { 해상: '🚢', 항공: '✈️', 철도: '🚂', 무역: '📜', 물류: '📦' };
 
 function esc(s) {
-  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 // KST(UTC+9) 기준 오늘 날짜 "YYYY-MM-DD"

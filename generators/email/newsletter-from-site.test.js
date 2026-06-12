@@ -64,3 +64,19 @@ test('buildHtml: image_url 있으면 img 태그, credit 캡션 포함', () => {
   assert.ok(html.includes('https://img.example/a.jpg'));
   assert.ok(html.includes('Photo: Unsplash'));
 });
+
+test('buildHtml: image_url의 쌍따옴표는 src 속성에서 이스케이프', () => {
+  const html = buildHtml(
+    [{ slug: 's', title: 't', summary: null, category: '해상',
+       image_url: 'https://cdn.example/x.jpg" onerror="evil()', image_credit: null }],
+    '2026-06-12',
+  );
+  assert.ok(!html.includes('" onerror="'));
+  assert.ok(html.includes('&quot;'));
+});
+
+test('buildHtml: 기사 0건이어도 유효한 HTML 반환 (throw 없음)', () => {
+  const html = buildHtml([], '2026-06-12');
+  assert.ok(html.includes('<!DOCTYPE html>'));
+  assert.ok(html.includes('Logisight Daily'));
+});
