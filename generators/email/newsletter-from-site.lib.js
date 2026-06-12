@@ -1,5 +1,5 @@
 // generators/email/newsletter-from-site.lib.js
-// 사이트(maritime_news) shipping 기사 → 데일리 뉴스레터 HTML (순수 함수만, I/O 없음)
+// 사이트(maritime_news) 내부 기사 → 데일리 뉴스레터 HTML (순수 함수만, I/O 없음)
 'use strict';
 
 const SITE = 'https://logisight.mtlship.com';
@@ -19,13 +19,21 @@ function kstToday(now = new Date()) {
   return new Date(now.getTime() + 9 * 3_600_000).toISOString().slice(0, 10);
 }
 
-// 카테고리당 최신(fetched_at) 1건, SECTION_ORDER 순서로 정렬
+// 섹션 대표 = is_hero(메인 기사) 우선, 그다음 최신 fetched_at
+function isBetter(row, prev) {
+  const rh = row.is_hero ? 1 : 0;
+  const ph = prev.is_hero ? 1 : 0;
+  if (rh !== ph) return rh > ph;
+  return String(row.fetched_at || '') > String(prev.fetched_at || '');
+}
+
+// 카테고리당 대표 1건, SECTION_ORDER 순서로 정렬
 function pickArticles(rows) {
   const byCategory = new Map();
   for (const row of rows || []) {
     if (!row || !row.slug || !row.title || !row.category) continue;
     const prev = byCategory.get(row.category);
-    if (!prev || String(row.fetched_at || '') > String(prev.fetched_at || '')) {
+    if (!prev || isBetter(row, prev)) {
       byCategory.set(row.category, row);
     }
   }

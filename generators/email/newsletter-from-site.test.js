@@ -21,6 +21,14 @@ test('pickArticles: 카테고리당 최신 1건, 고정 순서(해상→항공�
   assert.deepEqual(pickArticles(rows).map((r) => r.title), ['ocean', 'air', 'rail new']);
 });
 
+test('pickArticles: is_hero(메인 기사)가 더 최신 링크보다 우선', () => {
+  const rows = [
+    { slug: 'link', title: 'ocean link', category: '해상', is_hero: false, fetched_at: '2026-06-12T02:00:00Z' },
+    { slug: 'main', title: 'ocean main', category: '해상', is_hero: true,  fetched_at: '2026-06-12T01:00:00Z' },
+  ];
+  assert.deepEqual(pickArticles(rows).map((r) => r.title), ['ocean main']);
+});
+
 test('pickArticles: slug/title/category 없는 행과 null 제외', () => {
   assert.deepEqual(pickArticles([{ title: 'no slug', category: '해상' }, null]), []);
 });

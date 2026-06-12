@@ -38,16 +38,20 @@
 **기사 선정 쿼리:**
 
 ```
-agent_type = 'shipping'
+agent_type IN ('brief', 'shipping')
 AND slug IS NOT NULL
 AND fetched_at >= 당일 00:00 KST (= 전일 15:00 UTC)
 ORDER BY fetched_at DESC
 ```
 
-- 06:30 워크플로의 `generate-article-shipping.js`가 섹션당 1건씩 생성하는 기사가 대상.
-  shipping 기사는 `category`가 섹션과 1:1 매핑된다 (rail→철도, ocean→해상, air→항공,
-  trade→무역, logistics→물류 — `categoryFor()` 기준).
-- **카테고리당 최신 1건**만 선택 (같은 카테고리에 복수 행이 있으면 fetched_at 최신 우선).
+- 06:30 워크플로(`daily-web-articles.yml`)가 매일 적재하는 내부 기사가 대상.
+  핵심 소스는 `publish-curated-to-site.js`가 쓰는 **`brief`**(본문·slug 있는 내부 기사)이며,
+  살아 있으면 `generate-article-shipping.js`의 **`shipping`**도 함께 포함한다.
+  (외부 링크 카드 `external`은 slug·본문이 없으므로 제외.)
+  내부 기사는 `category`가 섹션과 1:1 매핑된다 (해상·항공·철도·무역·물류 — `categoryFor()` 기준).
+- **카테고리당 대표 1건**만 선택. 같은 카테고리에 복수 행이 있으면
+  **`is_hero=true`(섹션 메인 기사) 우선, 그다음 fetched_at 최신**.
+  (`publish-curated`는 메인을 먼저, 링크를 나중에 적재하므로 단순 최신순으로는 링크가 잡힌다.)
   최대 5장의 카드.
 - 카드 표시 순서는 고정: 해상 → 항공 → 철도 → 무역 → 물류.
 
