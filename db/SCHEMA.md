@@ -21,8 +21,8 @@
 | blank_sailings | 008 | pipeline/collectors | Lovable /rates | ✅ | |
 | schedule_reliability | 008 | pipeline/collectors | Lovable /rates | ✅ | |
 | maritime_news | 009,013,015 | pipeline/generators/web | Lovable /news | ✅ | agent_type으로 웹/이메일 구분 |
-| weekly_briefings | 018 | pipeline/generators/email | Lovable /news | ✅ | |
-| weekly_briefing_points | 018 | pipeline/generators/email | Lovable /news | ✅ | |
+| weekly_briefings | 018 | generators/web/generate-weekly-briefing.js | Lovable /news | ✅ | 매주 월요일 자동 적재 |
+| weekly_briefing_points | 018 | generators/web/generate-weekly-briefing.js | Lovable /news | ✅ | shipping/corp/brief 슬롯 |
 | trade_statistics | 017,023 | collectors/trade_stats.ts (월간 확정치), collectors/trade_provisional.ts (10일 잠정치) | Lovable (지도) | ✅ | stat_type: country/provisional_exp/provisional_imp |
 | policy_alerts | 019 | 수동 or pipeline | Lovable /policy | ✅ | CBAM, EU ETS 등 |
 | newsletter_subscribers | 020 | Lovable (구독 폼) | pipeline/publishers | ❌ | 개인정보 — service_role만 |

@@ -1,0 +1,32 @@
+# .github/workflows/weekly-briefing.yml
+# 지난 7일 brief 기사에서 주제별 메인을 뽑아 weekly_briefings에 적재 (홈 주간 브리핑 카드).
+# Required secrets: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, DEEPSEEK_API_KEY
+name: Weekly Briefing
+
+on:
+  schedule:
+    - cron: '0 22 * * 0'   # 월요일 07:00 KST (일요일 22:00 UTC)
+  workflow_dispatch:
+
+jobs:
+  briefing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate weekly briefing
+        run: npm run weekly:briefing
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
