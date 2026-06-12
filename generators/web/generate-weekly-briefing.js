@@ -22,6 +22,9 @@ async function main() {
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     throw new Error('SUPABASE_URL 또는 SUPABASE_SERVICE_ROLE_KEY 없음');
   }
+  if (!process.env.DEEPSEEK_API_KEY) {
+    throw new Error('DEEPSEEK_API_KEY 없음');
+  }
   const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
     auth: { persistSession: false },
     realtime: { enabled: false },
@@ -61,15 +64,19 @@ async function main() {
     .single();
   if (bErr) throw new Error(bErr.message);
 
-  // 기존 point 삭제 후 재삽입 (재실행 멱등)
-  const { error: dErr } = await supabase
-    .from('weekly_briefing_points')
-    .delete()
-    .eq('briefing_id', briefing.id);
-  if (dErr) throw new Error(dErr.message);
-
+  // 새 point를 먼저 계산. 비어 있으면(DeepSeek가 헤드라인을 못 주면) 기존 point를
+  // 지우지 않고 유지 — 빈 상태로 덮어쓰는 최악을 피한다.
   const points = toPoints(briefing.id, selection);
-  if (points.length > 0) {
+  if (points.length === 0) {
+    console.warn('⚠️ 선정된 헤드라인 0건 — 기존 point 유지, 갱신 스킵');
+  } else {
+    // 재실행 멱등: 기존 point 삭제 후 재삽입. delete~insert 사이 짧은 공백 구간이
+    // 있으나 주간 cron 특성상 허용된다(실패 시 다음 실행에 복구).
+    const { error: dErr } = await supabase
+      .from('weekly_briefing_points')
+      .delete()
+      .eq('briefing_id', briefing.id);
+    if (dErr) throw new Error(dErr.message);
     const { error: pErr } = await supabase.from('weekly_briefing_points').insert(points);
     if (pErr) throw new Error(pErr.message);
   }
