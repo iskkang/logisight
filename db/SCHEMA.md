@@ -57,5 +57,5 @@
 | `corp` | 기업 동향 웹 기사 | generators/web/generate-article-corp.js |
 | `brief` | 브리프 웹 기사 | generators/email/generate-article-brief.js |
 | `weekly_brief` | 주간 브리핑 요약 | generators/email/ |
-| `daily_card` | 이메일 일간 카드 | generators/web/publish-daily-cards-to-site.js |
+| `daily_card` | (2026-06-12 폐기 — 신규 생성 없음, 기존 행만 잔존) | (삭제됨) |
 | `external` | 외부 링크 카드 (본문 없음) | collectors/ |
