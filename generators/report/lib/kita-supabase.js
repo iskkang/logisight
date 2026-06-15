@@ -8,6 +8,17 @@ require('dotenv').config({ path: path.resolve(__dirname, '../../../.env.local') 
 // Node < 22: 네이티브 WebSocket 부재 시 ws 폴리필 (supabase-js RealtimeClient 요구)
 if (typeof globalThis.WebSocket === 'undefined') { try { globalThis.WebSocket = require('ws'); } catch (_) {} }
 
+const { carryForwardOutliers } = require('./rate-outlier-guard');
+
+// 노선별 carry-forward 보정 로그 출력 (적재 전 호출).
+function logCorrections(kind, corrections) {
+  if (!corrections.length) return;
+  console.log('⚠️ [' + kind + '] 이상치 carry-forward ' + corrections.length + '건 (±150% 초과 → 전월값 사용):');
+  corrections.forEach(function(c) {
+    console.log('   ' + c.route + ' ' + c.yearMon + ' ' + c.field + ': ' + c.from + ' → ' + c.to);
+  });
+}
+
 function getClient() {
   const { createClient } = require('@supabase/supabase-js');
   var url = process.env.SUPABASE_URL;
@@ -51,10 +62,17 @@ async function pushSeaToSupabase(payload) {
 
   var rateRows  = [];
   var indexMap  = {};   // yearMon → row (여러 노선에서 같은 지수가 오므로 dedup)
+  var corrections = [];
 
   for (var ri = 0; ri < payload.routes.length; ri++) {
     var route = payload.routes[ri];
     if (route.error) continue;
+
+    // 이상치 가드: 전월 대비 ±150% 초과 값은 담당자 오입력으로 보고 전월값으로 보정.
+    var routeCorr = carryForwardOutliers(route.rates || [], ['feu', 'teu'], { feu: 'feuChg', teu: 'teuChg' });
+    for (var c = 0; c < routeCorr.length; c++) {
+      corrections.push(Object.assign({ route: route.originName + '→' + route.destName }, routeCorr[c]));
+    }
 
     for (var r = 0; r < (route.rates || []).length; r++) {
       var rate = route.rates[r];
@@ -84,6 +102,7 @@ async function pushSeaToSupabase(payload) {
     }
   }
 
+  logCorrections('kita_sea', corrections);
   var indexRows = Object.values(indexMap);
   var r1 = await batchUpsert(sb, 'kita_sea_rates',   rateRows,  'origin,dest,year_mon');
   var r2 = await batchUpsert(sb, 'kita_sea_indices',  indexRows, 'year_mon');
@@ -99,10 +118,19 @@ async function pushAirToSupabase(payload) {
 
   var rateRows = [];
   var indexMap = {};
+  var corrections = [];
 
   for (var ri = 0; ri < payload.routes.length; ri++) {
     var route = payload.routes[ri];
     if (route.error) continue;
+
+    // 이상치 가드: 전월 대비 ±150% 초과 값은 담당자 오입력으로 보고 전월값으로 보정.
+    var routeCorr = carryForwardOutliers(
+      route.rates || [], ['kg100', 'kg300', 'kg500'], { kg100: 'chg100', kg300: 'chg300', kg500: 'chg500' },
+    );
+    for (var c = 0; c < routeCorr.length; c++) {
+      corrections.push(Object.assign({ route: route.originName + '→' + route.destName }, routeCorr[c]));
+    }
 
     for (var r = 0; r < (route.rates || []).length; r++) {
       var rate = route.rates[r];
@@ -134,6 +162,7 @@ async function pushAirToSupabase(payload) {
     }
   }
 
+  logCorrections('kita_air', corrections);
   var indexRows = Object.values(indexMap);
   var r1 = await batchUpsert(sb, 'kita_air_rates',   rateRows,  'origin,dest,year_mon');
   var r2 = await batchUpsert(sb, 'kita_air_indices',  indexRows, 'year_mon');
