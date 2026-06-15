@@ -30,14 +30,23 @@ function parseHeadline(html) {
   const desc  = descM ? decodeEntities(descM[1]).trim() : null;
   if (!desc) return null;
 
-  // M blank sailings ... out of N scheduled departures
+  // M blank sailings ... out of N scheduled departures/sailings
+  // Drewry가 "scheduled departures"↔"scheduled sailings", "out of (a total of) N" 등으로 문구를
+  // 바꿔도 깨지지 않도록 두 변형을 모두 허용한다.
   const cntM = desc.match(/([0-9,]+)\s+blank sailings/i);
-  const schM = desc.match(/out of\s+([0-9,]+)\s+scheduled departures/i);
+  const schM = desc.match(/out of\s+(?:a\s+total\s+of\s+)?([0-9,]+)\s+scheduled\s+(?:departures|sailings)/i);
   const blank     = cntM ? parseInt(cntM[1].replace(/,/g, ''), 10) : null;
   const scheduled = schM ? parseInt(schM[1].replace(/,/g, ''), 10) : null;
-  const pct = (blank != null && scheduled && scheduled > 0)
+  // pct: 1순위 blank/scheduled 역산. scheduled 문구가 또 바뀌어 잡히지 않으면,
+  // 본문에 명시된 결항률(%)을 2순위로 직접 파싱한다(더미값 채우기 아님 — 실제 명시 수치만).
+  let pct = (blank != null && scheduled && scheduled > 0)
     ? parseFloat(((blank / scheduled) * 100).toFixed(1))
     : null;
+  if (pct == null) {
+    const rateM = desc.match(/cancellation rate of\s+([0-9]+(?:\.[0-9]+)?)\s*%/i)
+      || desc.match(/([0-9]+(?:\.[0-9]+)?)\s*%\s+cancellation/i);
+    if (rateM) pct = parseFloat(parseFloat(rateM[1]).toFixed(1));
+  }
 
   // 향후 N주 horizon ("next five weeks" / "next 5 weeks" → 숫자)
   const WORD_NUM = { one:1, two:2, three:3, four:4, five:5, six:6, seven:7, eight:8, nine:9, ten:10 };
