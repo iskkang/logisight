@@ -19,7 +19,12 @@ function parseDrewryAsOf(headline) {
 // 주간 1회: 헤드라인 fetch → blank_sailings 구조화 upsert(region 태그).
 async function persistDrewryReading(supabase) {
   const h = await buildDrewryHeadline();
-  if (!h || h.pct == null) return { ok: false, reason: 'drewry headline 미수집' };
+  if (!h || h.pct == null) {
+    // [임시 진단] green 확인될 때까지 유지. 실패(미수집) 시에만 출력됨 → 정상 경로 영향 없음.
+    console.error('[drewry][diag] raw meta :', (h && h.sentence) ? h.sentence : '(h.sentence 없음)');
+    console.error('[drewry][diag] headline:', JSON.stringify(h, null, 2));
+    return { ok: false, reason: 'drewry headline 미수집' };
+  }
   const as_of = parseDrewryAsOf(h);
   if (!as_of) return { ok: false, reason: 'as_of 파싱 실패', sentence: h.sentence };
   const row = {
