@@ -36,6 +36,7 @@ export const NEWS_SOURCES: NewsSource[] = [
   { name: 'Air Cargo News', url: 'https://www.aircargonews.net/feed/', kind: 'rss', section: 'air', language: 'en', monthly: true },
   { name: 'Air Cargo Week', url: 'https://aircargoweek.com/feed/', kind: 'rss', section: 'air', language: 'en' },
   { name: 'STAT Times', url: 'https://www.stattimes.com/feed', kind: 'rss', section: 'air', language: 'en' },
+  { name: 'Cargo Forwarder', url: 'https://www.cargoforwarder.eu/feed/', kind: 'rss', section: 'air', language: 'en' },
   { name: 'Air Cargo Week Market Data', url: 'https://www.aircargoweek.com/market-data/', kind: 'html', section: 'air', language: 'en', selector: 'article a, h2 a, h3 a', monthly: true },
 
   { name: 'RailFreight BeltAndRoad', url: 'https://www.railfreight.com/category/beltandroad/feed/', kind: 'rss', section: 'rail', language: 'en', monthly: true },

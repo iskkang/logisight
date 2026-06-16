@@ -6,8 +6,9 @@ import type { CollectorResult, NewsItem } from '../types';
 import { dbUpsert } from './supabase_writer';
 
 const HEADERS = {
-  'User-Agent': 'Mozilla/5.0 (compatible; Logisight/1.0; +https://logisight.mtlship.com)',
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
   Accept: 'application/rss+xml, application/xml, text/xml, text/html, */*;q=0.8',
+  'Accept-Language': 'en-US,en;q=0.9',
 };
 
 function asArray<T>(value: T | T[] | undefined): T[] {
@@ -40,7 +41,7 @@ function stripHtml(value: unknown): string {
     .trim();
 }
 
-export async function parseNewsFeed(source: NewsSource, limit = 8): Promise<NewsItem[]> {
+export async function parseNewsFeed(source: NewsSource, limit = 15): Promise<NewsItem[]> {
   const response = await fetch(source.url, { headers: HEADERS, signal: AbortSignal.timeout(15000) });
   if (!response.ok) throw new Error(`HTTP ${response.status}: ${source.url}`);
 

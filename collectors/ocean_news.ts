@@ -21,10 +21,17 @@ const SHIPPING_KEYWORDS = [
   'container', 'blank sailing', 'surcharge', 'congestion', 'port',
   'gri', 'void', 'omission', 'freight rate', 'schedule', 'carrier',
   'shipping', 'disruption', 'vessel', 'terminal', 'throughput',
-  // 해양 안보·항로
+  // 운임·시장 (PSS/FAK/요율 발표, 시장 분석)
+  'rate', 'pss', 'fak', 'peak season', 'market', 'capacity',
+  'demand', 'alliance', 'spot', 'index', 'teu',
+  // 주요 선사 (요율·노선 발표)
+  'maersk', 'cma cgm', 'msc', 'hapag', 'cosco', 'evergreen',
+  'one ', 'zim', 'yang ming', 'hmm',
+  // 해양 안보·항로 (지정학)
   'tanker', 'cargo ship', 'red sea', 'suez', 'hormuz', 'canal',
   'strait', 'piracy', 'hijack', 'incident report', 'ukmto',
   'transit', 'chokepoint', 'diversion', 'rerouting',
+  'iran', 'sanction', 'gulf', 'conflict', 'deal',
 ];
 
 interface OceanNewsSource {
@@ -42,7 +49,7 @@ const OCEAN_NEWS_SOURCES: OceanNewsSource[] = [
   { name: 'gCaptain',           url: 'https://gcaptain.com/feed/',                           type: 'rss',  frequency: 'daily',  useKeywordFilter: true  },
   // 신규: 차단 매체(theloadstar/guardian) 우회 — shipshipship.uk 애그리게이터 (원문 링크 그대로 노출)
   { name: 'SeaSearch Containers', url: 'https://www.shipshipship.uk/category/6/',             type: 'html', frequency: 'daily',  useKeywordFilter: false },
-  { name: 'Linerlytica',          url: 'https://www.linerlytica.com/blog/',                  type: 'html', frequency: 'daily',  useKeywordFilter: true  },
+  { name: 'Linerlytica',          url: 'https://www.linerlytica.com/blog/',                  type: 'html', frequency: 'daily',  useKeywordFilter: false },
   { name: 'Sea-Intelligence',    url: 'https://www.sea-intelligence.com/press-room',          type: 'html', frequency: 'weekly', useKeywordFilter: false },
 ];
 
@@ -64,7 +71,7 @@ async function parseRss(src: OceanNewsSource): Promise<NewsItem[]> {
     if (!title || !link) continue;
     if (src.useKeywordFilter && !passesKeywordFilter(title)) continue;
     items.push({ title, url: link, published_at: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(), summary_en: '', source: src.name });
-    if (items.length >= 5) break;
+    if (items.length >= 20) break;
   }
   return items;
 }
@@ -76,16 +83,19 @@ async function fetchHtmlLinks(src: OceanNewsSource): Promise<NewsItem[]> {
   const base = new URL(src.url).origin;
   const items: NewsItem[] = [];
   const seen = new Set<string>();
-  for (const m of html.matchAll(/<a[^>]+href="([^"]+)"[^>]*>([^<]{10,120})<\/a>/g)) {
+  for (const m of html.matchAll(/<a[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g)) {
     let href = m[1].trim();
-    const title = m[2].trim().replace(/\s+/g, ' ');
+    // 앵커 내부 태그(<h2> 등) 제거 후 제목 추출 — 카드형 레이아웃 대응
+    const title = m[2].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    if (title.length < 10 || title.length > 120) continue;
     if (!href || href.startsWith('javascript') || href.startsWith('#') || href.startsWith('mailto')) continue;
+    if (/\/(tag|category|author)\//i.test(href)) continue;   // 네비·태그 링크 제외
     if (seen.has(title)) continue;
     if (href.startsWith('/')) href = `${base}${href}`;
     if (!href.startsWith('http')) continue;
     seen.add(title);
     items.push({ title, url: href, published_at: new Date().toISOString(), summary_en: '', source: src.name });
-    if (items.length >= 5) break;
+    if (items.length >= 20) break;
   }
   return items;
 }
