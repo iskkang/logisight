@@ -11,6 +11,7 @@ const path = require('path');
 
 const SECTIONS = require('./sections.config');
 const { parseFrontmatter } = require('./lib/section-runner');
+const { normalizeMonthlyReportMarkdown } = require('./lib/report-style-normalizer');
 
 const TODAY    = new Date().toISOString().slice(0, 10);
 const monthArg = process.argv.find(a => a.startsWith('--month='));
@@ -88,12 +89,12 @@ function main() {
   }
 
   const bodyParts = approved.map(s => {
-    let b = s.body;
+    let b = normalizeMonthlyReportMarkdown(s.body);
     b = injectSectionHeader(s, b);
     if (s.id === 'region') b = numberRegionSubheadings(b);
-    return b;
+    return normalizeMonthlyReportMarkdown(b);
   });
-  const body = bodyParts.join('\n\n---\n\n');
+  const body = normalizeMonthlyReportMarkdown(bodyParts.join('\n\n---\n\n'));
 
   const footer = '\n';
 

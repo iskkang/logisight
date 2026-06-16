@@ -60,12 +60,12 @@ async function indexSeries(codes, { weeks = 52 } = {}) {
   return { labels, datasets };
 }
 
-// 지수별 추이 차트 — KCCI 전 항로, SCFI 4계열, 나머지 종합선 위주
+// 지수별 추이 차트 — KCCI 전 항로, SCFI와 나머지는 종합선 위주
 const getOceanKcci   = () => indexSeries(
   ['KCCI','KCCI_USWC','KCCI_USEC','KCCI_NEU','KCCI_MED','KCCI_ME','KCCI_AU','KCCI_SAE','KCCI_SAW','KCCI_ZAF','KCCI_WAF','KCCI_CN','KCCI_JP','KCCI_SEA'],
   { weeks: 26 },
 );
-const getOceanScfi   = () => indexSeries(['SCFI','SCFI_USWC','SCFI_EU','SCFI_USEC']);
+const getOceanScfi   = () => indexSeries(['SCFI']);
 const getOceanCcfi   = () => indexSeries(['CCFI']);
 const getOceanBdi    = () => indexSeries(['BDI']);
 const getOceanBunker = () => indexSeries(['VLSFO', 'HSFO']);
