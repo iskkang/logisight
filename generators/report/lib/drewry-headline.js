@@ -13,7 +13,8 @@ function decodeEntities(s) {
     .replace(/&ndash;/g, '–').replace(/&mdash;/g, '—')
     .replace(/&#x28;/gi, '(').replace(/&#x29;/gi, ')')
     .replace(/&#x3a;/gi, ':').replace(/&amp;/g, '&')
-    .replace(/&nbsp;/g, ' ').replace(/&#x2013;/gi, '–');
+    .replace(/&nbsp;/g, ' ').replace(/&#x2013;/gi, '–')
+    .replace(/&#x25;/gi, '%');
 }
 
 // HTML에서 헤드라인 추출 — title(발행일) + meta description(수치 문장)
@@ -35,9 +36,11 @@ function parseHeadline(html) {
   const schM = desc.match(/out of\s+([0-9,]+)\s+scheduled departures/i);
   const blank     = cntM ? parseInt(cntM[1].replace(/,/g, ''), 10) : null;
   const scheduled = schM ? parseInt(schM[1].replace(/,/g, ''), 10) : null;
+  // 비율: scheduled가 있으면 계산, 없으면 문장에 명시된 "N% cancellation rate" 직접 인용.
+  const rateM = desc.match(/([0-9]+(?:\.[0-9]+)?)\s*%\s+cancellation rate/i);
   const pct = (blank != null && scheduled && scheduled > 0)
     ? parseFloat(((blank / scheduled) * 100).toFixed(1))
-    : null;
+    : (rateM ? parseFloat(rateM[1]) : null);
 
   // 향후 N주 horizon ("next five weeks" / "next 5 weeks" → 숫자)
   const WORD_NUM = { one:1, two:2, three:3, four:4, five:5, six:6, seven:7, eight:8, nine:9, ten:10 };
