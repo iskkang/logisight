@@ -56,7 +56,7 @@ function loadAllMonthlyItems() {
 }
 
 // ── (신규) freight_indices 시계열 → 최신값·WoW·MoM ──
-const CODES = ['SCFI', 'SCFI_USWC', 'SCFI_USEC', 'SCFI_EU', 'KCCI', 'CCFI', 'WCI', 'FBX', 'BDI', 'HRCI'];
+const CODES = ['SCFI', 'SCFI_USWC', 'SCFI_USEC', 'SCFI_EU', 'KCCI', 'CCFI', 'WCI', 'BDI'];
 const LABEL = {
   SCFI:      'SCFI 종합',
   SCFI_USWC: 'SCFI 미주서안',
@@ -65,9 +65,7 @@ const LABEL = {
   KCCI:      'KCCI 종합',
   CCFI:      'CCFI 종합',
   WCI:       'WCI 종합',
-  FBX:       'FBX 글로벌',
   BDI:       'BDI',
-  HRCI:      'HRCI',
 };
 
 async function loadIndexFactsheet() {
@@ -108,7 +106,7 @@ async function loadIndexFactsheet() {
       code,
       value:     latest.value,
       week_date: latest.week_date,
-      unit:      (code === 'WCI' || code === 'FBX') ? '$/FEU' : 'point',
+      unit:      code === 'WCI' ? '$/FEU' : 'point',
       wow:       latest.change_pct ?? (wkAgo ? pct(latest.value, wkAgo.value) : null),
       mom:       moAgo ? pct(latest.value, moAgo.r.value) : null,
     });

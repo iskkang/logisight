@@ -14,7 +14,8 @@ const AIR_CACHE = path.resolve(__dirname, '../../../outputs/cache/kita-fare-air.
 
 // 리포트 표에 노출할 부산발 대표 노선. 권역 편중을 피하고 최신월 값만 사용한다.
 const SEA_FEATURED = ['롱비치', '뉴욕', '로테르담', '상하이', '싱가포르', '두바이', '시드니', '산토스'];
-const AIR_FEATURED = ['시카고', '로스엔젤레스', '프랑크푸르트', '홍콩', '상하이', '두바이', '시드니', '도쿄'];
+const AIR_FEATURED = ['시카고', '로스엔젤레스', '프랑크푸르트', '홍콩', '상하이', '두바이', '시드니'];
+const AIR_TABLE_EXCLUDED = new Set(['도쿄']);
 
 const COLORS = ['#1E3A5F', '#2E86AB', '#E08E45', '#6A994E', '#BC4749'];
 
@@ -65,7 +66,7 @@ function buildKitaSeaReport() {
   const asOfYm = latestYearMon(ok);
   const current = ok.filter(function(r) {
     var l = latestRate(r.rates);
-    return l && l.yearMon === asOfYm;
+    return l && l.yearMon === asOfYm && !AIR_TABLE_EXCLUDED.has(r.destName);
   });
   const featured = [];
   const rest     = [];
@@ -75,7 +76,7 @@ function buildKitaSeaReport() {
     else          rest.push(current[i]);
   }
   featured.sort(function(a, b) { return a.idx - b.idx; });
-  const tableRoutes = featured.map(function(f) { return f.route; }).concat(rest).slice(0, 8);
+  const tableRoutes = featured.map(function(f) { return f.route; }).concat(rest).slice(0, 7);
 
   // 기준월 = 첫 노선의 최신 월
   const asOf = fmtYm(asOfYm) || '—';
@@ -155,7 +156,7 @@ function buildKitaAirReport() {
   const asOfYm = latestYearMon(ok);
   const current = ok.filter(function(r) {
     var l = latestRate(r.rates);
-    return l && l.yearMon === asOfYm;
+    return l && l.yearMon === asOfYm && !AIR_TABLE_EXCLUDED.has(r.destName);
   });
   const featured = [];
   const rest = [];
@@ -165,7 +166,7 @@ function buildKitaAirReport() {
     else          rest.push(current[i]);
   }
   featured.sort(function(a, b) { return a.idx - b.idx; });
-  const tableRoutes = featured.map(function(f) { return f.route; }).concat(rest).slice(0, 8);
+  const tableRoutes = featured.map(function(f) { return f.route; }).concat(rest).slice(0, 7);
   const sample = latestRate(tableRoutes[0].rates);
   const asOf   = sample ? fmtYm(sample.yearMon) : '—';
 
