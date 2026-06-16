@@ -54,14 +54,31 @@ function parseHeadline(html) {
   return { asOf, sentence: desc, blank, scheduled, pct, horizon };
 }
 
+// 실제 브라우저에 가까운 헤더로 요청, 429/503은 백오프 후 재시도(클라우드 IP 일시 차단 대응).
+async function fetchTrackerHtml() {
+  const headers = {
+    'User-Agent': UA,
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Referer': 'https://www.drewry.co.uk/',
+    'Upgrade-Insecure-Requests': '1',
+  };
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const r = await fetch(TRACKER_URL, { headers, signal: AbortSignal.timeout(20000) });
+    if (r.ok) return r.text();
+    if ((r.status === 429 || r.status === 503) && attempt < 3) {
+      const wait = 3000 * attempt; // 3s, 6s
+      console.warn(`  drewry-headline: HTTP ${r.status} — ${wait / 1000}s 후 재시도 (${attempt}/2)`);
+      await new Promise((res) => setTimeout(res, wait));
+      continue;
+    }
+    throw new Error('HTTP ' + r.status);
+  }
+}
+
 async function buildDrewryHeadline() {
   try {
-    const r = await fetch(TRACKER_URL, {
-      headers: { 'User-Agent': UA, 'Accept': 'text/html' },
-      signal: AbortSignal.timeout(20000),
-    });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const html = await r.text();
+    const html = await fetchTrackerHtml();
     const parsed = parseHeadline(html);
     if (!parsed || parsed.blank == null) {
       console.warn('  drewry-headline: 헤드라인 파싱 실패 (구조 변경 가능)');
