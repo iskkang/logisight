@@ -9,15 +9,16 @@ function esc(s) {
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-// 뉴스 1건 -> 카드 HTML(공백 줄 없는 단일 블록 — marked가 HTML 블록으로 통과)
-function newsCard(n) {
-  const lines = ['<div class="news-card">'];
-  lines.push(`<div class="news-source">${esc(n.source)}</div>`);
+// 뉴스 1건 -> 기사 블록 HTML(카테고리·제목·소제목·히어로 이미지·본문 문단·출처).
+// 공백 줄 없는 단일 블록 — marked가 HTML 블록으로 통과.
+function newsArticle(n) {
+  const lines = ['<div class="news-article">'];
+  if (n.category) lines.push(`<span class="news-cat">${esc(n.category)}</span>`);
   lines.push(`<div class="news-title">${esc(n.title)}</div>`);
   if (n.subtitle) lines.push(`<div class="news-sub">${esc(n.subtitle)}</div>`);
-  if (n.image) lines.push(`<img class="news-img" src="${esc(n.image)}" alt="" />`);
-  if (n.body) lines.push(`<div class="news-body">${esc(n.body)}</div>`);
-  if (n.url) lines.push(`<a class="news-link" href="${esc(n.url)}">${esc(n.url)}</a>`);
+  if (n.image) lines.push(`<img class="news-hero" src="${esc(n.image)}" alt="" />`);
+  if (n.body) for (const p of n.body.split(/\n+/).filter(Boolean)) lines.push(`<p class="news-p">${esc(p)}</p>`);
+  lines.push(`<div class="news-src">출처: ${esc(n.source)}</div>`);
   lines.push('</div>');
   return lines.join('\n');
 }
@@ -82,7 +83,7 @@ function assembleMarkdown(weeklyData, llm) {
     L.push(`- **시사점:** ${p.implication || ''}`, '');
     if (sec.news && sec.news.length) {
       L.push('### 주요 뉴스', '');
-      for (const n of sec.news) { L.push(newsCard(n)); L.push(''); }
+      for (const n of sec.news) { L.push(newsArticle(n)); L.push(''); }
     }
     if (p.sowhat) L.push(`➔ **한국 화주 시사점:** ${p.sowhat}`, '');
   }

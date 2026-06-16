@@ -3,7 +3,6 @@
 const fs = require('fs');
 const path = require('path');
 const SECTIONS = require('../sections.config');
-const { filterNews } = require('./news-filter');
 const { buildOceanTable } = require('./ocean-table');
 const { buildAirTable } = require('./air-table');
 const { isoWeek, reportingPeriod } = require('./week');
@@ -11,64 +10,82 @@ const { loadIndexFactsheet } = require('../../report/lib/index-factsheet');
 
 const ROOT = path.resolve(__dirname, '../../..');
 
+// 섹션 → maritime_news.category (logisight-core와 동일 분류)
+const SECTION_CATEGORY = { ocean: '해상', air: '항공', trade: '무역', logistics: '물류' };
+
 function readJson(rel) {
   try { return JSON.parse(fs.readFileSync(path.join(ROOT, rel), 'utf-8')); } catch { return null; }
 }
 
-// HTML 엔티티 디코드(제목·본문에 &#8216; 등 잔존) + 공백 정리
-function clean(s) {
+function decodeEntities(s) {
   return String(s || '')
-    .replace(/&#x?([0-9a-f]+);/gi, (_, c) => String.fromCharCode(/^x/i.test('x' + c) ? parseInt(c, 16) : parseInt(c, 10)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCharCode(parseInt(h, 16)))
     .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(+n))
     .replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
-    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ')
-    .replace(/\s+/g, ' ').trim();
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ');
+}
+// 제목·소제목: 한 줄로 정리
+function inline(s) { return decodeEntities(s).replace(/\s+/g, ' ').trim(); }
+// 본문: 문단 줄바꿈은 보존, 줄 내부 공백만 정리
+function paragraphs(s) {
+  return decodeEntities(s).replace(/\r/g, '').replace(/[ \t]+/g, ' ')
+    .split('\n').map(x => x.trim()).filter(Boolean).join('\n').trim();
 }
 
-// 뉴스 항목 정규화: 제목·소제목·이미지·본문. 이미지+본문 있는 항목 우선 정렬용 점수.
-function normalizeNews(n) {
-  const body = clean(n.content || '');
+// maritime_news 행 → 기사 카드 데이터(카테고리·제목·소제목·이미지·본문)
+function normalizeArticle(r) {
+  let body = paragraphs(r.content || '');
+  body = body.replace(/\n?\*?\s*출처\s*[:：][^\n]*\*?\s*$/, '').trim(); // 본문 끝 출처 줄 제거(별도 표기)
+  if (body.length > 1000) body = body.slice(0, 1000).replace(/\s+\S*$/, '') + '…';
   return {
-    title: clean(n.title),
-    source: n.source || '',
-    url: n.url || '',
-    subtitle: clean(n.summary_en || ''),
-    image: n.og_image || '',
-    body: body.length > 360 ? body.slice(0, 360).replace(/\s+\S*$/, '') + '…' : body,
+    category: r.category || '',
+    title: inline(r.title),
+    source: r.source || '',
+    url: r.url || '',
+    subtitle: inline(r.summary || ''),
+    image: r.image_url || '',
+    body,
   };
 }
-function richScore(n) { return (n.image ? 2 : 0) + (n.body ? 1 : 0); }
 
-// latest-news.json -> 섹션 키워드 입력용 통합 풀
-function newsPool(news) {
-  return [
-    ...(news.shipping || []), ...(news.air || []), ...(news.rail || []),
-    ...(news.trade || []), ...(news.risk || []), ...(news.carrier_advisory || []),
-    ...(news.logistics || []),
-  ];
+// 섹션 카테고리별 최근 7일 리치 기사(이미지+본문) 상위 3건. 내부 큐레이션(agent_type='brief') 우선.
+async function loadSectionNews(supabase, catKo, sinceISO) {
+  if (!supabase || !catKo) return [];
+  const { data, error } = await supabase.from('maritime_news')
+    .select('title,summary,content,image_url,source,url,category,agent_type,published_at')
+    .eq('category', catKo).gte('published_at', sinceISO)
+    .order('published_at', { ascending: false }).limit(60);
+  if (error || !data) return [];
+  const rich = data.filter(r => r.image_url && (r.content || '').length > 200);
+  rich.sort((a, b) => (b.agent_type === 'brief' ? 1 : 0) - (a.agent_type === 'brief' ? 1 : 0));
+  const seen = new Set();
+  const out = [];
+  for (const r of rich) {
+    if (seen.has(r.title)) continue;
+    seen.add(r.title);
+    out.push(normalizeArticle(r));
+    if (out.length >= 3) break;
+  }
+  return out;
 }
 
 async function assembleWeeklyData(supabase, now = new Date()) {
   const period = reportingPeriod(now);
   const weekId = isoWeek(now).id;
   const generatedAt = now.toISOString().slice(0, 10);
+  const sinceISO = new Date(now.getTime() - 7 * 86400000).toISOString();
 
   const indexRows = supabase ? await loadIndexFactsheet().catch(() => null) : null;
   const iata = readJson('outputs/cache/iata-cargo.json');
-  const news = readJson('content/drafts/latest-news.json') || {};
-  const pool = newsPool(news);
 
-  const sections = SECTIONS.map(sec => {
+  const sections = [];
+  for (const sec of SECTIONS) {
     let table = null, factText = '';
     if (sec.table === 'ocean') ({ table, factText } = buildOceanTable(indexRows));
     else if (sec.table === 'air') ({ table, factText } = buildAirTable(iata));
-    // 키워드 매칭 후, 이미지+본문 있는 항목을 우선해 상위 3건을 카드용으로 확보.
-    const newsItems = filterNews(pool, sec.keywords, now, 7, 12)
-      .map(normalizeNews)
-      .sort((a, b) => richScore(b) - richScore(a))
-      .slice(0, 3);
-    return { id: sec.id, title: sec.title, table, factText, news: newsItems };
-  });
+    const news = await loadSectionNews(supabase, SECTION_CATEGORY[sec.id], sinceISO);
+    sections.push({ id: sec.id, title: sec.title, table, factText, news });
+  }
 
   return { weekId, period, generatedAt, sections };
 }

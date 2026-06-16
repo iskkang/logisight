@@ -101,14 +101,15 @@ td.up{color:var(--c-up);font-weight:700}
 td.down{color:var(--c-down);font-weight:700}
 blockquote{color:var(--c-cap);font-size:8.8pt;border-left:3px solid var(--c-rule);margin:1mm 0 4mm;padding-left:3mm}
 
-/* NEWS CARD */
-.news-card{border:1px solid var(--c-rule);border-radius:5px;padding:4mm;margin:0 0 4mm;break-inside:avoid;overflow:hidden}
-.news-card .news-source{font-size:8pt;font-weight:700;letter-spacing:.5px;color:var(--c-primary);text-transform:uppercase;margin-bottom:1.5mm}
-.news-card .news-title{font-family:var(--font-title);font-size:12pt;font-weight:800;color:var(--c-ink);line-height:1.3;margin-bottom:1.5mm}
-.news-card .news-sub{font-size:9.5pt;color:var(--c-soft);font-style:italic;margin-bottom:2mm}
-.news-card .news-img{float:right;width:46mm;height:30mm;object-fit:cover;border-radius:4px;margin:0 0 2mm 4mm}
-.news-card .news-body{font-size:9.3pt;color:var(--c-body);line-height:1.55}
-.news-card .news-link{display:block;clear:both;font-size:7.6pt;color:var(--c-cap);margin-top:2mm;word-break:break-all}
+/* NEWS ARTICLE (logisight-core 기사 형태: 배지·제목·소제목·히어로·본문·출처) */
+.news-article{margin:0 0 6mm;padding:0 0 5mm;border-bottom:1px solid var(--c-rule);break-inside:avoid}
+.news-article .news-cat{display:inline-block;background:var(--c-primary);color:#fff;font-size:7.5pt;font-weight:700;
+  letter-spacing:.5px;padding:.8mm 2.6mm;border-radius:3px;margin-bottom:2.4mm}
+.news-article .news-title{font-family:var(--font-title);font-size:14.5pt;font-weight:800;color:var(--c-ink);line-height:1.3;margin-bottom:2mm}
+.news-article .news-sub{font-size:10pt;color:var(--c-soft);line-height:1.5;margin-bottom:3mm}
+.news-article .news-hero{width:100%;height:62mm;object-fit:cover;border-radius:5px;margin-bottom:3.5mm}
+.news-article .news-p{font-size:9.6pt;color:var(--c-body);line-height:1.62;margin-bottom:2.2mm}
+.news-article .news-src{font-size:8.2pt;color:var(--c-cap);font-style:italic;margin-top:1.5mm}
 </style></head><body>
 <section class="cover">
   <div class="cv-diagonal"></div>
