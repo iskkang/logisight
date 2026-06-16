@@ -62,6 +62,7 @@
     "monthly:assemble": "node generators/report/assemble-monthly-report.js",
     "monthly:pdf": "node generators/report/monthly-report-pdf.js",
     "weekly-report:generate": "node generators/weekly-report/generate-weekly-report.js",
+    "weekly-report:pdf": "node generators/weekly-report/weekly-report-pdf.js",
     "monthly:pipeline": "npm run collect:monthly && npm run section:all",
     "kita:sea": "node generators/report/lib/kita-fare.js --force",
     "kita:air": "node generators/report/lib/kita-fare.js --air --force",
