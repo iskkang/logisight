@@ -8,3 +8,9 @@
 - **신호등은 리스크 수준** (🟢 안정 / 🟡 관망 / 🔴 주의). 이모지로만. 가격 등락색과 무관.
 - **뉴스는 결론 뒷받침용 3건만 선별.**
 - 핵심 수치 굵게. 전주 대비 증감은 `▲/▼ +X.X%`.
+
+## 발행 절차 (검토 게이트)
+1. 일요일 워크플로가 `content/weekly-report/YYYY-Www.md` 초안(`status: draft`) 생성.
+2. 사람이 검토·수정 후 frontmatter `status: draft` → `approved`.
+3. `npm run weekly-report:pdf -- --week=YYYY-Www` → `content/published/weekly-report-YYYY-Www.pdf`.
+4. `npm run weekly-report:publish -- --week=YYYY-Www [--pdf-url=...]` → 웹(`weekly_reports`) 게재.
