@@ -1,7 +1,8 @@
 // generators/weekly-report/publish-weekly-report.js
 'use strict';
-// 승인된 주간 리포트 -> weekly_reports upsert (+ pdf_url 있으면 기록).
-// 사용법: node generators/weekly-report/publish-weekly-report.js --week=2026-W24 [--pdf-url=https://...]
+// 승인된 주간 리포트 -> weekly_reports upsert. PDF가 있으면 reports 버킷에 업로드 후 pdf_url 자동 설정.
+// 사용법: node generators/weekly-report/publish-weekly-report.js --week=2026-W24 [--pdf-url=https://... (수동 override)]
+const REPORTS_BUCKET = 'reports';
 const fs = require('fs');
 const path = require('path');
 const ws = require('ws'); globalThis.WebSocket = ws;
@@ -31,13 +32,27 @@ async function main() {
   const wn = Number(week.split('-W')[1]);
   const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
+  // PDF가 있으면 Storage(reports)에 업로드하고 공개 URL을 pdf_url로 사용. --pdf-url가 있으면 그것을 우선.
+  let pdfUrl = arg('pdf-url') || null;
+  if (!pdfUrl) {
+    const pdfPath = path.join(ROOT, 'content/published', `weekly-report-${week}.pdf`);
+    if (fs.existsSync(pdfPath)) {
+      const objectPath = `weekly/${week}.pdf`;
+      const { error: upErr } = await supabase.storage.from(REPORTS_BUCKET)
+        .upload(objectPath, fs.readFileSync(pdfPath), { contentType: 'application/pdf', upsert: true });
+      if (upErr) throw new Error(`PDF 업로드 실패: ${upErr.message}`);
+      pdfUrl = supabase.storage.from(REPORTS_BUCKET).getPublicUrl(objectPath).data.publicUrl;
+      console.log(`  PDF 업로드: ${objectPath}`);
+    }
+  }
+
   const row = {
     week_id: week,
     period_start: meta.period_start_iso,
     period_end: meta.period_end_iso,
     title: `${wn}주차 글로벌 물류 시황`,
     body_md: md.replace(/^---[\s\S]*?---\s*/, ''),
-    pdf_url: arg('pdf-url') || null,
+    pdf_url: pdfUrl,
     published_at: new Date().toISOString(),
   };
   const { error } = await supabase.from('weekly_reports').upsert(row, { onConflict: 'week_id' });

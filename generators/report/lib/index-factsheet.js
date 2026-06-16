@@ -107,7 +107,9 @@ async function loadIndexFactsheet() {
       value:     latest.value,
       week_date: latest.week_date,
       unit:      code === 'WCI' ? '$/FEU' : 'point',
-      wow:       latest.change_pct ?? (wkAgo ? pct(latest.value, wkAgo.value) : null),
+      // WoW는 저장된 연속 값으로 직접 계산(표의 값↔증감 정합 보장). 직전 값이 없을 때만 적재된 change_pct 사용.
+      // (WCI change_pct는 Drewry 산문 파싱이라 부호 오류 가능 — shipping_indices.ts fetchWCI 참고)
+      wow:       (wkAgo ? pct(latest.value, wkAgo.value) : latest.change_pct),
       mom:       moAgo ? pct(latest.value, moAgo.r.value) : null,
     });
   }
