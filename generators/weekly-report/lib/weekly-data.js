@@ -20,6 +20,7 @@ function newsPool(news) {
   return [
     ...(news.shipping || []), ...(news.air || []), ...(news.rail || []),
     ...(news.trade || []), ...(news.risk || []), ...(news.carrier_advisory || []),
+    ...(news.logistics || []),
   ];
 }
 
