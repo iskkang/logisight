@@ -1,0 +1,209 @@
+{
+  "fetched_at": "2026-06-09T01:58:54.493Z",
+  "as_of": "2026-06-09",
+  "rows": [
+    {
+      "port": "Long Beach",
+      "slug": "long-beach",
+      "region": "북미",
+      "median_wait_days": 0.13,
+      "wow_pct": 8.3,
+      "category": "low",
+      "long_tail": true,
+      "week_label": "31 May - 06 Jun 2026",
+      "ok": true
+    },
+    {
+      "port": "Los Angeles",
+      "slug": "los-angeles",
+      "region": "북미",
+      "median_wait_days": 0.12,
+      "wow_pct": 50,
+      "category": "low",
+      "long_tail": false,
+      "week_label": "31 May - 06 Jun 2026",
+      "ok": true
+    },
+    {
+      "port": "New York",
+      "slug": "new-york",
+      "region": "북미",
+      "median_wait_days": 0.08,
+      "wow_pct": 0,
+      "category": "low",
+      "long_tail": false,
+      "week_label": "31 May - 06 Jun 2026",
+      "ok": true
+    },
+    {
+      "port": "Rotterdam",
+      "slug": "rotterdam",
+      "region": "유럽",
+      "median_wait_days": 0.08,
+      "wow_pct": 0,
+      "category": "low",
+      "long_tail": false,
+      "week_label": "31 May - 06 Jun 2026",
+      "ok": true
+    },
+    {
+      "port": "Hamburg",
+      "slug": "hamburg",
+      "region": "유럽",
+      "median_wait_days": 0.04,
+      "wow_pct": 0,
+      "category": "low",
+      "long_tail": true,
+      "week_label": "31 May - 06 Jun 2026",
+      "ok": true
+    },
+    {
+      "port": "Gdansk",
+      "slug": "gdansk",
+      "region": "발틱",
+      "median_wait_days": 0.1,
+      "wow_pct": -33.3,
+      "category": "low",
+      "long_tail": false,
+      "week_label": "31 May - 06 Jun 2026",
+      "ok": true
+    },
+    {
+      "port": "Singapore",
+      "slug": "singapore",
+      "region": "아시아",
+      "median_wait_days": 0.08,
+      "wow_pct": 0,
+      "category": "low",
+      "long_tail": false,
+      "week_label": "31 May - 06 Jun 2026",
+      "ok": true
+    },
+    {
+      "port": "Shanghai",
+      "slug": "shanghai",
+      "region": "아시아",
+      "median_wait_days": 1.33,
+      "wow_pct": 2.3,
+      "category": "medium",
+      "long_tail": false,
+      "week_label": "31 May - 06 Jun 2026",
+      "ok": true
+    },
+    {
+      "port": "Ningbo",
+      "slug": "ningbo",
+      "region": "아시아",
+      "median_wait_days": 1.21,
+      "wow_pct": -19.3,
+      "category": "medium",
+      "long_tail": false,
+      "week_label": "31 May - 06 Jun 2026",
+      "ok": true
+    },
+    {
+      "port": "Busan",
+      "slug": "busan",
+      "region": "아시아",
+      "median_wait_days": 0.17,
+      "wow_pct": 41.7,
+      "category": "low",
+      "long_tail": false,
+      "week_label": "31 May - 06 Jun 2026",
+      "ok": true
+    },
+    {
+      "port": "Jebel Ali",
+      "slug": "jebel-ali",
+      "region": "중동",
+      "median_wait_days": 8.19,
+      "wow_pct": 213.8,
+      "category": "high",
+      "long_tail": false,
+      "week_label": "31 May - 06 Jun 2026",
+      "ok": true
+    }
+  ],
+  "trend": {
+    "long-beach": [
+      {
+        "week_label": "31 May - 06 Jun 2026",
+        "median_wait_days": 0.13,
+        "category": "low"
+      }
+    ],
+    "los-angeles": [
+      {
+        "week_label": "31 May - 06 Jun 2026",
+        "median_wait_days": 0.12,
+        "category": "low"
+      }
+    ],
+    "new-york": [
+      {
+        "week_label": "31 May - 06 Jun 2026",
+        "median_wait_days": 0.08,
+        "category": "low"
+      }
+    ],
+    "rotterdam": [
+      {
+        "week_label": "31 May - 06 Jun 2026",
+        "median_wait_days": 0.08,
+        "category": "low"
+      }
+    ],
+    "hamburg": [
+      {
+        "week_label": "31 May - 06 Jun 2026",
+        "median_wait_days": 0.04,
+        "category": "low"
+      }
+    ],
+    "gdansk": [
+      {
+        "week_label": "31 May - 06 Jun 2026",
+        "median_wait_days": 0.1,
+        "category": "low"
+      }
+    ],
+    "singapore": [
+      {
+        "week_label": "31 May - 06 Jun 2026",
+        "median_wait_days": 0.08,
+        "category": "low"
+      }
+    ],
+    "shanghai": [
+      {
+        "week_label": "31 May - 06 Jun 2026",
+        "median_wait_days": 1.33,
+        "category": "medium"
+      }
+    ],
+    "ningbo": [
+      {
+        "week_label": "31 May - 06 Jun 2026",
+        "median_wait_days": 1.21,
+        "category": "medium"
+      }
+    ],
+    "busan": [
+      {
+        "week_label": "31 May - 06 Jun 2026",
+        "median_wait_days": 0.17,
+        "category": "low"
+      }
+    ],
+    "jebel-ali": [
+      {
+        "week_label": "31 May - 06 Jun 2026",
+        "median_wait_days": 8.19,
+        "category": "high"
+      }
+    ]
+  },
+  "table": "| 항만 | median 대기 | WoW | 혼잡도 |\n|------|-----------|-----|--------|\n| Jebel Ali (중동) | 8.2일 | ▲214% | 높음 |\n| Shanghai (아시아) | 1.3일 | ▲2% | 보통 |\n| Ningbo (아시아) | 1.2일 | ▼19% | 보통 |\n| Busan (아시아) | 0.2일 | ▲42% | 낮음 |\n| Long Beach (북미) | 0.1일 | ▲8% | 낮음 · 롱테일 |\n| Los Angeles (북미) | 0.1일 | ▲50% | 낮음 |\n| Gdansk (발틱) | 0.1일 | ▼33% | 낮음 |\n| New York (북미) | 0.1일 | ▲0% | 낮음 |\n| Rotterdam (유럽) | 0.1일 | ▲0% | 낮음 |\n| Singapore (아시아) | 0.1일 | ▲0% | 낮음 |\n| Hamburg (유럽) | 0.0일 | ▲0% | 낮음 · 롱테일 |\n\n※ 2026-06-09 기준. 출처: [Portcast Port Congestion](https://www.portcast.io/port-congestion). median = 입항 전 정박/대기 일수 중앙값.",
+  "chartData": null,
+  "factText": "항만 혼잡도(median 대기일, 2026-06-09, Portcast):\nJebel Ali: 8.2일 (WoW ▲214%, 높음)\nShanghai: 1.3일 (WoW ▲2%, 보통)\nNingbo: 1.2일 (WoW ▼19%, 보통)\nBusan: 0.2일 (WoW ▲42%, 낮음)\nLong Beach: 0.1일 (WoW ▲8%, 낮음)\nLos Angeles: 0.1일 (WoW ▲50%, 낮음)\nGdansk: 0.1일 (WoW ▼33%, 낮음)\nNew York: 0.1일 (WoW ▲0%, 낮음)\nRotterdam: 0.1일 (WoW ▲0%, 낮음)\nSingapore: 0.1일 (WoW ▲0%, 낮음)\nHamburg: 0.0일 (WoW ▲0%, 낮음)"
+}

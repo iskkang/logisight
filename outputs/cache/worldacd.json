@@ -1,0 +1,22 @@
+{
+  "fetched_at": "2026-06-09T02:01:16.220Z",
+  "as_of": "2026-06-09",
+  "source": "WorldACD Market Data",
+  "url": "https://www.worldacd.com/trend-reports/weekly/worldacd-weekly-air-cargo-trends-2026-week-22/",
+  "week_no": 22,
+  "period": "25 to 31 May",
+  "spot_usd_kg": 3.29,
+  "spot_wow_pct": 2,
+  "spot_yoy_pct": null,
+  "fullmarket_usd_kg": null,
+  "tonnage_note": null,
+  "trend": [
+    {
+      "week": "W22",
+      "spot_usd_kg": 3.29
+    }
+  ],
+  "table": "| 지표 | 값 | WoW | YoY |\n|------|----|-----|-----|\n| 글로벌 평균 항공운임 | $3.29/kg | ▲2% | — YoY |\n\n※ week 22 (25 to 31 May) 기준. 출처: [WorldACD Market Data](https://www.worldacd.com/).",
+  "chartData": null,
+  "factText": "WorldACD 주간 항공화물(글로벌):\n스팟 운임 $3.29/kg (WoW 2%, YoY —%)\n(week 22, 출처 WorldACD Market Data)"
+}
