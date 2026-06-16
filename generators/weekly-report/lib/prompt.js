@@ -39,10 +39,11 @@ ${blocks}
   "execSummary": [{"topic":"해상","signal":"🔴","basis":"근거 1문장(명사형)"}],
   "overview": {"signal":"🟡","conclusion":"명사형 종합 결론","events":["핵심 이벤트(명사형) 3~5개"],"background":"...","analysis":"...","implication":"..."},
   "sections": {
-    "ocean": {"signal":"🔴","conclusion":"명사형 결론","background":"...","analysis":"...","implication":"...","news":[{"title":"...","source":"...","note":"결론 뒷받침 근거"}],"sowhat":"한국 화주 So-what(명사형)"},
+    "ocean": {"signal":"🔴","conclusion":"명사형 결론","background":"...","analysis":"...","implication":"...","sowhat":"한국 화주 So-what(명사형)"},
     "air": {}, "logistics": {}, "trade": {}
   }
-}`;
+}
+(뉴스는 시스템이 별도로 카드로 첨부하므로 JSON에 포함하지 않는다. 후보 뉴스는 섹션 서술의 근거로만 활용한다.)`;
 
   return { system: SYSTEM, messages: [{ role: 'user', content: user }] };
 }

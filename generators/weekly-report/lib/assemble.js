@@ -1,11 +1,31 @@
 'use strict';
-// weeklyData(코드 표) + llmJson(산문) -> 최종 마크다운. 순수 함수.
+// weeklyData(코드 표·뉴스) + llmJson(산문) -> 최종 마크다운. 순수 함수.
+// 뉴스는 weeklyData의 실제 데이터(제목·소제목·이미지·본문)로 카드 HTML 렌더(LLM 환각 차단).
 
 function weekNum(weekId) { return Number(weekId.split('-W')[1]); }
+
+function esc(s) {
+  return String(s || '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// 뉴스 1건 -> 카드 HTML(공백 줄 없는 단일 블록 — marked가 HTML 블록으로 통과)
+function newsCard(n) {
+  const lines = ['<div class="news-card">'];
+  lines.push(`<div class="news-source">${esc(n.source)}</div>`);
+  lines.push(`<div class="news-title">${esc(n.title)}</div>`);
+  if (n.subtitle) lines.push(`<div class="news-sub">${esc(n.subtitle)}</div>`);
+  if (n.image) lines.push(`<img class="news-img" src="${esc(n.image)}" alt="" />`);
+  if (n.body) lines.push(`<div class="news-body">${esc(n.body)}</div>`);
+  if (n.url) lines.push(`<a class="news-link" href="${esc(n.url)}">${esc(n.url)}</a>`);
+  lines.push('</div>');
+  return lines.join('\n');
+}
 
 function assembleMarkdown(weeklyData, llm) {
   const { weekId, period, generatedAt, sections } = weeklyData;
   const wn = weekNum(weekId);
+  const ov = llm.overview || {};
   const L = [];
 
   L.push('---');
@@ -24,12 +44,17 @@ function assembleMarkdown(weeklyData, llm) {
   L.push('| 보고대상 | 임원회의 |');
   L.push(`| 보고기간 | ${period.start} ~ ${period.end} (${wn}주차) |`, '');
 
+  // Executive Summary — 종합 행이 없으면 overview로 보강
+  const exec = [...(llm.execSummary || [])];
+  if (!exec.some(r => /종합/.test(r.topic || ''))) {
+    exec.unshift({ topic: '종합 시황', signal: ov.signal || '', basis: ov.conclusion || '' });
+  }
   L.push('---', '', '## Executive Summary', '');
   L.push('| 주제 | 결론(신호등) | 핵심 근거 |', '|---|---|---|');
-  for (const r of llm.execSummary || []) L.push(`| ${r.topic} | ${r.signal} | ${r.basis} |`);
+  for (const r of exec) L.push(`| ${r.topic} | ${r.signal} | ${r.basis} |`);
   L.push('', '> ※ 신호등은 리스크 수준(🟢 안정 / 🟡 관망 / 🔴 주의)이며 가격 등락색과 무관.', '');
 
-  const ov = llm.overview || {};
+  // 1. 종합
   L.push('---', '', `## ${sections.find(s => s.id === 'overview').title}`, '');
   L.push(`**결론: ${ov.conclusion || ''} (${ov.signal || ''}).**`, '');
   if (ov.events && ov.events.length) {
@@ -42,6 +67,7 @@ function assembleMarkdown(weeklyData, llm) {
   L.push(`- **분석:** ${ov.analysis || ''}`);
   L.push(`- **시사점:** ${ov.implication || ''}`, '');
 
+  // 2..5
   for (const sec of sections.filter(s => s.id !== 'overview')) {
     const p = (llm.sections || {})[sec.id] || {};
     L.push('---', '', `## ${sec.title}`, '');
@@ -54,10 +80,9 @@ function assembleMarkdown(weeklyData, llm) {
     L.push(`- **배경:** ${p.background || ''}`);
     L.push(`- **분석:** ${p.analysis || ''}`);
     L.push(`- **시사점:** ${p.implication || ''}`, '');
-    if (p.news && p.news.length) {
-      L.push('### 뉴스 (결론 뒷받침)', '');
-      for (const n of p.news) L.push(`- ${n.title} — [${n.source}]${n.note ? ` *(${n.note})*` : ''}`);
-      L.push('');
+    if (sec.news && sec.news.length) {
+      L.push('### 주요 뉴스', '');
+      for (const n of sec.news) { L.push(newsCard(n)); L.push(''); }
     }
     if (p.sowhat) L.push(`➔ **한국 화주 시사점:** ${p.sowhat}`, '');
   }
