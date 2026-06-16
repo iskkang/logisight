@@ -35,5 +35,9 @@ supabase/.temp/
 # PDF 생성 임시 파일
 *.pdf.tmp
 
+# 1회성 스크립트 산출물 (백업, 생성 리포트)
+scripts/backup-*.json
+scripts/rewrite-closing-report-*.txt
+
 # Repo setup zip
 *.zip
