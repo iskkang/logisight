@@ -1,0 +1,28 @@
+name: Weekly Report Draft
+
+on:
+  schedule:
+    - cron: '0 5 * * 0'   # 일요일 14:00 KST (05:00 UTC)
+  workflow_dispatch:
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22', cache: 'npm' }
+      - run: npm ci
+      - run: npm run weekly-report:generate
+      - name: Commit draft
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add content/weekly-report/*.md
+          git commit -m "chore(weekly-report): draft $(date -u +%Y-W%V)" || echo "no changes"
+          git push || echo "push skipped"
