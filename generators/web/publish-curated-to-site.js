@@ -91,7 +91,7 @@ async function publishMain(curated) {
     agent_type: 'brief',
     tags: [section],
     slug: makeSlug(date, main.title_ko),
-    published_at: main.published_at || null,
+    published_at: main.published_at || new Date().toISOString(), // 소스 날짜 없으면 게시 시각으로(사이트 정렬·표시용 NULL 방지)
     fetched_at: new Date().toISOString(),
     image_url: asset.imageUrl,
     image_source: asset.imageSource,
@@ -128,7 +128,7 @@ async function publishLink(link, section, date) {
     agent_type: isInternal ? 'brief' : 'external',
     tags: [section],
     slug: isInternal ? makeSlug(date, link.title_ko) : null,
-    published_at: link.published_at || null,
+    published_at: link.published_at || new Date().toISOString(), // 소스 날짜 없으면 게시 시각으로(NULL 방지)
     fetched_at: new Date().toISOString(),
     image_url: asset.imageUrl,
     image_source: asset.imageSource,
