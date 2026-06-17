@@ -6,7 +6,8 @@ name: Logisight Market Collectors
 
 on:
   schedule:
-    - cron: '0 2 * * 1'   # 월요일 02:00 UTC
+    - cron: '0 2 * * 1'   # 월요일 02:00 UTC — 주초 1차
+    - cron: '0 2 * * 2'   # 화요일 02:00 UTC (11:00 KST) — KCCI 월요일 발표가 늦게 반영되는 경우 보강
     - cron: '0 6 * * 5'   # 금요일 06:00 UTC (WCI 목/SCFI 금 발표 직후)
   workflow_dispatch:        # 수동 실행 허용
 
