@@ -56,7 +56,8 @@ async function loadSectionNews(supabase, catKo, sinceISO) {
     .eq('category', catKo).gte('published_at', sinceISO)
     .order('published_at', { ascending: false }).limit(60);
   if (error || !data) return [];
-  const rich = data.filter(r => r.image_url && (r.content || '').length > 200);
+  // 이미지+본문 + 한국어 기사만(제목에 한글). 영문 외부 기사 제외.
+  const rich = data.filter(r => r.image_url && (r.content || '').length > 200 && /[가-힣]/.test(r.title || ''));
   rich.sort((a, b) => (b.agent_type === 'brief' ? 1 : 0) - (a.agent_type === 'brief' ? 1 : 0));
   const seen = new Set();
   const out = [];

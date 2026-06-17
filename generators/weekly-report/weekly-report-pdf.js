@@ -76,11 +76,12 @@ body{font-family:var(--font-sans);color:var(--c-body);font-size:10.5pt;line-heig
 .cv-vol{font-family:var(--font-title);font-size:13pt;color:#fff;font-weight:800}
 
 /* FLOW */
-.flow{padding:20mm 18mm 18mm}
+.flow{padding:0 17mm 16mm}
 .flow hr{display:none}
+/* 각 섹션 h2는 새 페이지 최상단에서 시작 → 상단 패딩으로 페이지 상단 마진 확보 */
 .flow h2{font-family:var(--font-title);font-size:20pt;font-weight:800;color:var(--c-ink);letter-spacing:-.02em;
-  padding-bottom:3mm;margin-bottom:6mm;border-bottom:2.5px solid var(--c-primary);break-before:page;break-after:avoid}
-.flow h2.first{break-before:avoid}
+  padding-top:20mm;padding-bottom:3mm;margin-bottom:6mm;border-bottom:2.5px solid var(--c-primary);break-before:page;break-after:avoid}
+.flow h2.first{break-before:avoid;padding-top:18mm}
 .flow h3{font-family:var(--font-title);font-size:12.5pt;font-weight:700;color:var(--c-teal);margin:6mm 0 2.5mm;break-after:avoid}
 .flow p{margin:0 0 2.6mm}
 .flow ul,.flow ol{margin:0 0 3mm 5mm}
