@@ -53,11 +53,14 @@ function buildHtml(meta, contentMd) {
   --font-title:'Pretendard','Noto Sans KR',sans-serif; --font-sans:'Pretendard','Malgun Gothic',sans-serif;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-@page{size:A4;margin:0}
+/* 모든 페이지(섹션 시작·연속 페이지 공통) 상단·하단 마진. 좌우는 .flow 패딩으로. */
+@page{size:A4;margin:16mm 0 14mm}
+/* 커버는 풀블리드 — named page로 마진 제거 */
+@page cover{margin:0}
 body{font-family:var(--font-sans);color:var(--c-body);font-size:10.5pt;line-height:1.62;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 
 /* COVER */
-.cover{width:210mm;height:297mm;position:relative;overflow:hidden;break-after:page;
+.cover{page:cover;width:210mm;height:297mm;position:relative;overflow:hidden;break-after:page;
   background:linear-gradient(160deg,#4D4D4D 0%,#414141 58%,#363636 100%);color:#fff;
   padding:26mm 22mm;display:flex;flex-direction:column;justify-content:space-between}
 .cv-diagonal{position:absolute;right:0;bottom:0;width:120mm;height:84mm;z-index:0;
@@ -75,13 +78,12 @@ body{font-family:var(--font-sans);color:var(--c-body);font-size:10.5pt;line-heig
   border-top:1px solid rgba(255,255,255,.2);padding-top:6mm;font-size:9pt;color:rgba(255,255,255,.65)}
 .cv-vol{font-family:var(--font-title);font-size:13pt;color:#fff;font-weight:800}
 
-/* FLOW */
-.flow{padding:0 17mm 16mm}
+/* FLOW (상하 마진은 @page가 담당, 좌우는 패딩) */
+.flow{padding:0 17mm}
 .flow hr{display:none}
-/* 각 섹션 h2는 새 페이지 최상단에서 시작 → 상단 패딩으로 페이지 상단 마진 확보 */
 .flow h2{font-family:var(--font-title);font-size:20pt;font-weight:800;color:var(--c-ink);letter-spacing:-.02em;
-  padding-top:20mm;padding-bottom:3mm;margin-bottom:6mm;border-bottom:2.5px solid var(--c-primary);break-before:page;break-after:avoid}
-.flow h2.first{break-before:avoid;padding-top:18mm}
+  padding-bottom:3mm;margin-bottom:6mm;border-bottom:2.5px solid var(--c-primary);break-before:page;break-after:avoid}
+.flow h2.first{break-before:avoid}
 .flow h3{font-family:var(--font-title);font-size:12.5pt;font-weight:700;color:var(--c-teal);margin:6mm 0 2.5mm;break-after:avoid}
 .flow p{margin:0 0 2.6mm}
 .flow ul,.flow ol{margin:0 0 3mm 5mm}
