@@ -9,6 +9,23 @@ const SLOTS = [
   { key: 'brief', category: '글로벌', order: 3 },
 ];
 
+// 어려운/모호한 한자 약물 → 한글 강제 치환. LLM이 프롬프트 금지를 안 지켜도 결정론적으로 제거.
+// 출처 표기 '發'(발신지)은 KSG 관용이라 유지하되, 뒤에 한글이 붙으면 가독성 위해 공백을 넣는다.
+// 例) "亞發美서안 … 성수기前倒" → "아시아發 미서안 … 성수기앞당김"
+const HANJA_MAP = [
+  ['前倒', '앞당김'], ['脫出', '탈출'], // 2자 약물 먼저
+  ['脫', '탈'], ['亞', '아시아'], ['美', '미'], ['弗', '달러'], ['億', '억'], ['對', '대'], ['比', '대비'],
+  ['歐', '유럽'], ['獨', '독'], ['佛', '프랑스'], ['露', '러시아'], ['印', '인도'],
+  ['中', '중'], ['日', '일'], ['英', '영'], ['北', '북'], ['南', '남'], ['東', '동'], ['西', '서'],
+];
+function sanitizeHanja(text) {
+  if (!text) return text;
+  let s = String(text);
+  for (const [h, k] of HANJA_MAP) s = s.split(h).join(k);
+  s = s.replace(/發(?=[가-힣])/g, '發 '); // 發 뒤 한글이면 공백(아시아發미서안 → 아시아發 미서안)
+  return s.replace(/[ \t]{2,}/g, ' ').trim();
+}
+
 // KST(UTC+9) 기준 그 주 월요일을 "YYYY-MM-DD"로
 function mondayOf(now = new Date()) {
   const kst = new Date(now.getTime() + 9 * 3_600_000);
@@ -32,7 +49,7 @@ function buildSelectionMessages(articles) {
     .join('\n');
   const content = `당신은 한국 해운·물류 전문 매체의 주간 브리핑 편집장이다.
 아래는 지난 7일간 발행된 기사 목록이다. 세 주제별로 가장 중요한 기사 1건씩을 고르고,
-각 기사를 KSG(코리아쉬핑가제트) 스타일 헤드라인(명사형 종결, 25~40자)으로 다시 써라. 숫자·단위·국가는 한글(달러·억·대비·미국·아시아)로 쓰고, 어려운 한자 약물(弗·億·比·美·亞·北·前倒 등)은 쓰지 않는다. 기호는 %·↑·↓만 쓴다.
+각 기사를 KSG(코리아쉬핑가제트) 스타일 헤드라인(명사형 종결, 25~40자)으로 다시 써라. 숫자·단위·국가는 한글(달러·억·대비·미국·아시아)로 쓰고, 어려운 한자 약물(弗·億·比·美·亞·北·前倒 등)은 쓰지 않는다. 한자 바로 뒤에 또 다른 한자를 붙이지 마라(예: 亞發美 금지 → "아시아發 미"). 기호는 %·↑·↓만 쓴다.
 
 주제 정의:
 - shipping(시황): 해상·항공·철도 운임/시황 동향
@@ -55,7 +72,7 @@ ${list}`;
 function toPoints(briefingId, selection) {
   const out = [];
   for (const slot of SLOTS) {
-    const headline = (selection && selection[slot.key] ? String(selection[slot.key]) : '').trim();
+    const headline = sanitizeHanja((selection && selection[slot.key] ? String(selection[slot.key]) : '').trim());
     if (!headline) continue;
     out.push({
       briefing_id: briefingId,
@@ -68,4 +85,4 @@ function toPoints(briefingId, selection) {
   return out;
 }
 
-module.exports = { mondayOf, subtitleFor, buildSelectionMessages, toPoints, SLOTS };
+module.exports = { mondayOf, subtitleFor, buildSelectionMessages, toPoints, sanitizeHanja, SLOTS };

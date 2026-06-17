@@ -1,7 +1,27 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { mondayOf, subtitleFor, buildSelectionMessages, toPoints } = require('./weekly-briefing.lib');
+const { mondayOf, subtitleFor, buildSelectionMessages, toPoints, sanitizeHanja } = require('./weekly-briefing.lib');
+
+test('sanitizeHanja: 어려운 한자 약물 → 한글, 發 뒤 공백', () => {
+  assert.equal(
+    sanitizeHanja('亞發美서안 컨운임 127%↑…성수기前倒·관세위기 재현'),
+    '아시아發 미서안 컨운임 127%↑…성수기앞당김·관세위기 재현',
+  );
+  assert.equal(sanitizeHanja('4300弗 돌파'), '4300달러 돌파');
+  assert.equal(sanitizeHanja('脫中 가속'), '탈중 가속');
+});
+
+test('sanitizeHanja: 한자 없으면 그대로, 빈 값 안전', () => {
+  assert.equal(sanitizeHanja('시황 헤드라인 25%↑'), '시황 헤드라인 25%↑');
+  assert.equal(sanitizeHanja(''), '');
+  assert.equal(sanitizeHanja(null), null);
+});
+
+test('toPoints: 헤드라인의 한자도 sanitize', () => {
+  const points = toPoints('bid-1', { shipping: '亞發美서안 운임 급등', corp: '', brief: '' });
+  assert.equal(points[0].headline, '아시아發 미서안 운임 급등');
+});
 
 test('mondayOf: 목요일(KST) → 같은 주 월요일', () => {
   assert.equal(mondayOf(new Date('2026-06-11T03:00:00Z')), '2026-06-08');

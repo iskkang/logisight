@@ -14,6 +14,7 @@ const {
   subtitleFor,
   buildSelectionMessages,
   toPoints,
+  sanitizeHanja,
 } = require('./lib/weekly-briefing.lib');
 
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env.local') });
@@ -58,7 +59,7 @@ async function main() {
       subtitle: subtitleFor(weekOf),
       week_of: weekOf,
       published_at: new Date().toISOString(),
-      content: selection.content || null,
+      content: sanitizeHanja(selection.content) || null,
     }, { onConflict: 'week_of' })
     .select('id')
     .single();
