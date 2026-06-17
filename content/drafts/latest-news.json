@@ -1,5 +1,5 @@
 {
-  "date": "2026. 6. 16.",
+  "date": "2026. 6. 17.",
   "shipping": [
     {
       "title": "Rio de Janeiro port upgrades channel to receive larger vessels",
@@ -498,314 +498,6 @@
     },
     {
       "name": "BDI",
-      "value": 3021,
-      "date": "2026-05-22",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "SCFI",
-      "value": 2218,
-      "date": "2026-05-22",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "SCFI_USWC",
-      "value": 3154,
-      "date": "2026-05-22",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "SCFI_EU",
-      "value": 1905,
-      "date": "2026-05-22",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "SCFI_USEC",
-      "value": 4313,
-      "date": "2026-05-22",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "HSFO",
-      "value": 717,
-      "date": "2026-05-22",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "VLSFO",
-      "value": 916,
-      "date": "2026-05-22",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "BDI",
-      "value": 2959,
-      "date": "2026-05-08",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "SCFI",
-      "value": 1954,
-      "date": "2026-05-08",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "SCFI_USWC",
-      "value": 2826,
-      "date": "2026-05-08",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "SCFI_EU",
-      "value": 1596,
-      "date": "2026-05-08",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "SCFI_USEC",
-      "value": 3812,
-      "date": "2026-05-08",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "HSFO",
-      "value": 724,
-      "date": "2026-05-08",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "VLSFO",
-      "value": 965,
-      "date": "2026-05-08",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "BDI",
-      "value": 2675,
-      "date": "2026-05-01",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "SCFI",
-      "value": 1911,
-      "date": "2026-05-01",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "SCFI_USWC",
-      "value": 2722,
-      "date": "2026-05-01",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "SCFI_EU",
-      "value": 1521,
-      "date": "2026-05-01",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "SCFI_USEC",
-      "value": 3691,
-      "date": "2026-05-01",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "HSFO",
-      "value": 703,
-      "date": "2026-05-01",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "VLSFO",
-      "value": 977,
-      "date": "2026-05-01",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "BDI",
-      "value": 2655,
-      "date": "2026-04-24",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "SCFI",
-      "value": 1875,
-      "date": "2026-04-24",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "SCFI_USWC",
-      "value": 2586,
-      "date": "2026-04-24",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "SCFI_EU",
-      "value": 1497,
-      "date": "2026-04-24",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "SCFI_USEC",
-      "value": 3570,
-      "date": "2026-04-24",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "HSFO",
-      "value": 675,
-      "date": "2026-04-24",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "VLSFO",
-      "value": 801,
-      "date": "2026-04-24",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "KCCI",
-      "value": 2193,
-      "date": "2026-04-20",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "BDI",
-      "value": 2403,
-      "date": "2026-04-17",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "BDI",
-      "value": 2149,
-      "date": "2026-04-10",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "SCFI",
-      "value": 1891,
-      "date": "2026-04-10",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "SCFI_USWC",
-      "value": 2552,
-      "date": "2026-04-10",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "SCFI_EU",
-      "value": 1547,
-      "date": "2026-04-10",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "SCFI_USEC",
-      "value": 3518,
-      "date": "2026-04-10",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "HSFO",
-      "value": 725,
-      "date": "2026-04-10",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "VLSFO",
-      "value": 862,
-      "date": "2026-04-10",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "BDI",
-      "value": 2027,
-      "date": "2026-04-03",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "SCFI",
-      "value": 1855,
-      "date": "2026-04-03",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "SCFI_USWC",
-      "value": 2359,
-      "date": "2026-04-03",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "SCFI_EU",
-      "value": 1650,
-      "date": "2026-04-03",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "SCFI_USEC",
-      "value": 3254,
-      "date": "2026-04-03",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "HSFO",
-      "value": 849,
-      "date": "2026-04-03",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "VLSFO",
-      "value": 957,
-      "date": "2026-04-03",
-      "source": "oneksa.kr",
-      "source_url": "https://oneksa.kr/shipping_index"
-    },
-    {
-      "name": "BDI",
       "value": 2010,
       "date": "2026-03-27",
       "source": "oneksa.kr",
@@ -949,24 +641,6 @@
       "unit": "$/FEU",
       "source": "Freightos FBX",
       "source_url": "https://fbx.freightos.com/"
-    },
-    {
-      "grade": "MGO",
-      "port": "Singapore",
-      "priceUsd": 500,
-      "url": "https://shipandbunker.com/prices/apac/sg/sg-sin-singapore",
-      "date": "2026-06-05",
-      "source": "Ship & Bunker",
-      "source_url": "https://shipandbunker.com/prices/apac/sg/sg-sin-singapore"
-    },
-    {
-      "grade": "MGO",
-      "port": "Rotterdam",
-      "priceUsd": 500,
-      "url": "https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam",
-      "date": "2026-06-05",
-      "source": "Ship & Bunker",
-      "source_url": "https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam"
     },
     {
       "title": "DHL extends FIA World Endurance Championship logistics partnership",
@@ -2007,6 +1681,520 @@
       "source": "Splash247",
       "section": "shipping",
       "language": "en"
+    },
+    {
+      "name": "BDI",
+      "value": 2809,
+      "date": "2026-06-12",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "SCFI",
+      "value": 2985,
+      "date": "2026-06-12",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "SCFI_USWC",
+      "value": 5101,
+      "date": "2026-06-12",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "SCFI_EU",
+      "value": 3064,
+      "date": "2026-06-12",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "SCFI_USEC",
+      "value": 6321,
+      "date": "2026-06-12",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "HSFO",
+      "value": 671,
+      "date": "2026-06-12",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "VLSFO",
+      "value": 777,
+      "date": "2026-06-12",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "BDI",
+      "value": 3114,
+      "date": "2026-06-05",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "SCFI",
+      "value": 2726,
+      "date": "2026-06-05",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "SCFI_USWC",
+      "value": 4552,
+      "date": "2026-06-05",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "SCFI_EU",
+      "value": 2605,
+      "date": "2026-06-05",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "SCFI_USEC",
+      "value": 5741,
+      "date": "2026-06-05",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "HSFO",
+      "value": 711,
+      "date": "2026-06-05",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "VLSFO",
+      "value": 818,
+      "date": "2026-06-05",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "BDI",
+      "value": 3021,
+      "date": "2026-05-22",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "SCFI",
+      "value": 2218,
+      "date": "2026-05-22",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "SCFI_USWC",
+      "value": 3154,
+      "date": "2026-05-22",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "SCFI_EU",
+      "value": 1905,
+      "date": "2026-05-22",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "SCFI_USEC",
+      "value": 4313,
+      "date": "2026-05-22",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "HSFO",
+      "value": 717,
+      "date": "2026-05-22",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "VLSFO",
+      "value": 916,
+      "date": "2026-05-22",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "BDI",
+      "value": 2959,
+      "date": "2026-05-08",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "SCFI",
+      "value": 1954,
+      "date": "2026-05-08",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "SCFI_USWC",
+      "value": 2826,
+      "date": "2026-05-08",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "SCFI_EU",
+      "value": 1596,
+      "date": "2026-05-08",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "SCFI_USEC",
+      "value": 3812,
+      "date": "2026-05-08",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "HSFO",
+      "value": 724,
+      "date": "2026-05-08",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "VLSFO",
+      "value": 965,
+      "date": "2026-05-08",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "BDI",
+      "value": 2675,
+      "date": "2026-05-01",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "SCFI",
+      "value": 1911,
+      "date": "2026-05-01",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "SCFI_USWC",
+      "value": 2722,
+      "date": "2026-05-01",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "SCFI_EU",
+      "value": 1521,
+      "date": "2026-05-01",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "SCFI_USEC",
+      "value": 3691,
+      "date": "2026-05-01",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "HSFO",
+      "value": 703,
+      "date": "2026-05-01",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "VLSFO",
+      "value": 977,
+      "date": "2026-05-01",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "BDI",
+      "value": 2655,
+      "date": "2026-04-24",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "SCFI",
+      "value": 1875,
+      "date": "2026-04-24",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "SCFI_USWC",
+      "value": 2586,
+      "date": "2026-04-24",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "SCFI_EU",
+      "value": 1497,
+      "date": "2026-04-24",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "SCFI_USEC",
+      "value": 3570,
+      "date": "2026-04-24",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "HSFO",
+      "value": 675,
+      "date": "2026-04-24",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "VLSFO",
+      "value": 801,
+      "date": "2026-04-24",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "KCCI",
+      "value": 2193,
+      "date": "2026-04-20",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "BDI",
+      "value": 2403,
+      "date": "2026-04-17",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "BDI",
+      "value": 2149,
+      "date": "2026-04-10",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "SCFI",
+      "value": 1891,
+      "date": "2026-04-10",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "SCFI_USWC",
+      "value": 2552,
+      "date": "2026-04-10",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "SCFI_EU",
+      "value": 1547,
+      "date": "2026-04-10",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "SCFI_USEC",
+      "value": 3518,
+      "date": "2026-04-10",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "HSFO",
+      "value": 725,
+      "date": "2026-04-10",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "VLSFO",
+      "value": 862,
+      "date": "2026-04-10",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "BDI",
+      "value": 2027,
+      "date": "2026-04-03",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "SCFI",
+      "value": 1855,
+      "date": "2026-04-03",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "SCFI_USWC",
+      "value": 2359,
+      "date": "2026-04-03",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "SCFI_EU",
+      "value": 1650,
+      "date": "2026-04-03",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "SCFI_USEC",
+      "value": 3254,
+      "date": "2026-04-03",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "HSFO",
+      "value": 849,
+      "date": "2026-04-03",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "name": "VLSFO",
+      "value": 957,
+      "date": "2026-04-03",
+      "source": "oneksa.kr",
+      "source_url": "https://oneksa.kr/shipping_index"
+    },
+    {
+      "code": "SCFI",
+      "name": "SCFI_종합",
+      "value": 2985.22,
+      "change_pct": 9.49,
+      "date": "2026-06-12",
+      "unit": "point",
+      "source": "Shanghai Shipping Exchange (via dashboard)",
+      "source_url": "https://en.sse.net.cn/indices/scfinew.jsp"
+    },
+    {
+      "code": "KCCI",
+      "name": "KCCI_종합",
+      "value": 3349,
+      "change_pct": 10.09,
+      "date": "2026-06-15",
+      "unit": "point",
+      "source": "KOBC (via dashboard)",
+      "source_url": "https://www.kobc.or.kr/index/kcci"
+    },
+    {
+      "code": "CCFI",
+      "name": "CCFI_종합",
+      "value": 1480.11,
+      "change_pct": 4.85,
+      "date": "2026-06-12",
+      "unit": "point",
+      "source": "Shanghai Shipping Exchange (via dashboard)",
+      "source_url": "https://en.sse.net.cn/indices/ccfinew.jsp"
+    },
+    {
+      "code": "WCI",
+      "name": "WCI_종합",
+      "value": 3549,
+      "change_pct": -3,
+      "date": "2026-06-11",
+      "unit": "$/40ft",
+      "source": "Drewry WCI",
+      "source_url": "https://www.drewry.co.uk/supply-chain-advisors/supply-chain-expertise/world-container-index-assessed-by-drewry"
+    },
+    {
+      "code": "WCI_SHA_RTM",
+      "name": "WCI 상하이-로테르담",
+      "value": 3768,
+      "change_pct": null,
+      "date": "2026-06-11",
+      "unit": "$/40ft",
+      "source": "Drewry WCI",
+      "source_url": "https://www.drewry.co.uk/supply-chain-advisors/supply-chain-expertise/world-container-index-assessed-by-drewry"
+    },
+    {
+      "code": "WCI_SHA_GOA",
+      "name": "WCI 상하이-제노바",
+      "value": 5139,
+      "change_pct": null,
+      "date": "2026-06-11",
+      "unit": "$/40ft",
+      "source": "Drewry WCI",
+      "source_url": "https://www.drewry.co.uk/supply-chain-advisors/supply-chain-expertise/world-container-index-assessed-by-drewry"
+    },
+    {
+      "code": "WCI_SHA_LAX",
+      "name": "WCI 상하이-로스앤젤레스",
+      "value": 4683,
+      "change_pct": null,
+      "date": "2026-06-11",
+      "unit": "$/40ft",
+      "source": "Drewry WCI",
+      "source_url": "https://www.drewry.co.uk/supply-chain-advisors/supply-chain-expertise/world-container-index-assessed-by-drewry"
+    },
+    {
+      "code": "WCI_SHA_NYC",
+      "name": "WCI 상하이-뉴욕",
+      "value": 5870,
+      "change_pct": null,
+      "date": "2026-06-11",
+      "unit": "$/40ft",
+      "source": "Drewry WCI",
+      "source_url": "https://www.drewry.co.uk/supply-chain-advisors/supply-chain-expertise/world-container-index-assessed-by-drewry"
+    },
+    {
+      "code": "FBX",
+      "name": "FBX_글로벌",
+      "value": 2888.8,
+      "change_pct": 1.11,
+      "date": "2026-06-12",
+      "unit": "$/FEU",
+      "source": "Freightos FBX",
+      "source_url": "https://fbx.freightos.com/"
+    },
+    {
+      "grade": "MGO",
+      "port": "Singapore",
+      "priceUsd": 500,
+      "url": "https://shipandbunker.com/prices/apac/sg/sg-sin-singapore",
+      "date": "2026-06-17",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices/apac/sg/sg-sin-singapore"
+    },
+    {
+      "grade": "MGO",
+      "port": "Rotterdam",
+      "priceUsd": 500,
+      "url": "https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam",
+      "date": "2026-06-17",
+      "source": "Ship & Bunker",
+      "source_url": "https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam"
     }
   ],
   "air": [
@@ -2586,6 +2774,24 @@
       "image_credit": "Cargo Forwarder",
       "section": "air",
       "language": "en"
+    },
+    {
+      "name": "Freightos Air Index",
+      "value": 8211,
+      "change_pct": null,
+      "unit": "$/kg",
+      "date": "2026-06-17",
+      "source": "Freightos Air Index",
+      "source_url": "https://fbx.freightos.com/air"
+    },
+    {
+      "name": "Jet Fuel (IATA)",
+      "value": 138.86,
+      "change_pct": null,
+      "unit": "$/gallon",
+      "date": "2026-06-17",
+      "source": "Jet Fuel (IATA)",
+      "source_url": "https://www.iata.org/en/publications/economics/fuel-monitor/"
     }
   ],
   "rail": [
