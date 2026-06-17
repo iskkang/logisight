@@ -1,7 +1,7 @@
 name: Forecast — Weekly Draft Generation
 
-# 주간: 타깃 조립 → 채점 → 산문 → forecasts 에 status='draft' 적재.
-# 발행은 프론트 /admin/forecasts 검수 큐에서만(자동 발행 없음).
+# 주간: 타깃 조립 → 채점 → 산문 → forecasts 적재.
+# 발행: 확신 전망은 자동 발행(status='published'). 본문 미작성(needs_editor)만 draft로 검수 큐에 남김.
 on:
   schedule:
     # 화요일 04:00 UTC (13:00 KST) — 화 02:00 market-collectors가 KCCI 월요일 발표분을 적재한 직후.

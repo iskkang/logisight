@@ -16,6 +16,8 @@ function buildBasis(input) {
 }
 
 function mapVerdictToRow(input, verdict, prose, asof = new Date()) {
+  // 확신 전망(본문 작성됨)은 자동 발행. needs_editor(본문 미작성)는 draft로 검수 큐에 남김.
+  const publish = !prose.needs_editor;
   return {
     module: 'rates',
     watch_points: buildWatchPoints(input, asof),
@@ -36,7 +38,8 @@ function mapVerdictToRow(input, verdict, prose, asof = new Date()) {
     basis: buildBasis(input),
     statement: prose.needs_editor ? EDITOR_PLACEHOLDER : prose.statement,
     impact_note: prose.needs_editor ? null : prose.impact_note,
-    status: 'draft',
+    status: publish ? 'published' : 'draft',
+    published_at: publish ? asof.toISOString() : null,
   };
 }
 

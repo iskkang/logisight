@@ -53,7 +53,9 @@ test('generateDrafts: scores targets and upserts drafts (fake LLM/DB)', async ()
   const res = await generateDrafts(fakeSupabase(captured), fakeLLM, { asof: new Date() });
   assert.equal(res.total >= 2, true);
   assert.equal(captured.length, res.inserted);
-  assert.equal(captured.every((r) => r.status === 'draft'), true);
+  assert.equal(captured.every((r) => r.status === 'published'), true); // 확신 전망 = 자동 발행
+  assert.equal(res.published, captured.length);
+  assert.equal(captured.every((r) => typeof r.published_at === 'string'), true);
   assert.equal(captured.every((r) => r.model_version === 'v1.4.1'), true);
 });
 

@@ -24,8 +24,9 @@ test('buildBasis: includes key numbers as strings', () => {
   assert.ok(b.some((s) => s.includes('12')));
 });
 
-test('mapVerdictToRow: maps verdict+prose+input → forecasts row', () => {
-  const row = mapVerdictToRow(input, verdict, prose);
+test('mapVerdictToRow: confident prose → auto-published with published_at', () => {
+  const asof = new Date('2026-06-17T00:00:00Z');
+  const row = mapVerdictToRow(input, verdict, prose, asof);
   assert.equal(row.module, 'rates');
   assert.equal(row.metric_ref, 'KCCI');
   assert.equal(row.cadence, 'weekly');
@@ -35,13 +36,15 @@ test('mapVerdictToRow: maps verdict+prose+input → forecasts row', () => {
   assert.equal(row.range_low_pct, 3);
   assert.equal(row.model_version, 'v1.4.1');
   assert.equal(row.metric_value_at_publish, 1200);
-  assert.equal(row.status, 'draft');
+  assert.equal(row.status, 'published'); // 확신 전망 = 자동 발행
+  assert.equal(row.published_at, '2026-06-17T00:00:00.000Z');
   assert.equal(row.statement, '상승 가능성');
   assert.equal(Array.isArray(row.basis), true);
 });
-test('mapVerdictToRow: needs_editor prose → placeholder statement, draft', () => {
+test('mapVerdictToRow: needs_editor prose → placeholder statement, draft(큐 유지)', () => {
   const row = mapVerdictToRow(input, verdict, { statement: null, impact_note: null, needs_editor: true });
-  assert.equal(row.status, 'draft');
+  assert.equal(row.status, 'draft'); // 본문 미작성 → 검수 큐에 남김(자동 발행 제외)
+  assert.equal(row.published_at, null);
   assert.match(row.statement, /검수/); // 에디터 작성 안내 placeholder
   assert.equal(row.impact_note, null);
 });

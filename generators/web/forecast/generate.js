@@ -1,7 +1,8 @@
 'use strict';
-// 주간 전망 생성: 타깃 조립 → 채점 → (비-abstain) 산문 → forecasts upsert(draft).
+// 주간 전망 생성: 타깃 조립 → 채점 → (비-abstain) 산문 → forecasts 적재.
 // 실행: node generators/web/forecast/generate.js  (또는 npm run generate:forecasts)
-// 발행은 프론트 /admin/forecasts 검수 큐에서만.
+// 발행 정책: 확신 전망(본문 작성됨)은 자동 발행(status='published'). 본문 미작성(needs_editor)만
+// draft로 /admin/forecasts 검수 큐에 남겨 사람이 보강 후 수동 발행. 이미 발행/판정된 행은 불변(덮어쓰기 금지).
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config({ path: path.resolve(__dirname, '../../../.env.local') });
@@ -34,7 +35,7 @@ async function generateDrafts(supabase, callLLM, { asof = new Date() } = {}) {
   const news = await fetchRecentNews(supabase, asof);
   const monthly = await fetchMonthlyTargets(supabase);
   const targets = [...WEEKLY_TARGETS, ...monthly];
-  const res = { total: targets.length, inserted: 0, updated: 0, skipped: 0, abstained: 0, needsEditor: 0, errors: 0 };
+  const res = { total: targets.length, inserted: 0, updated: 0, published: 0, skipped: 0, abstained: 0, needsEditor: 0, errors: 0 };
   for (const t of targets) {
     const input = await assembleInput(supabase, t, { asof, shared });
     const verdict = scoreForecast(input);
@@ -68,7 +69,9 @@ async function generateDrafts(supabase, callLLM, { asof = new Date() } = {}) {
     if (error) { res.errors++; console.error(`❌ ${action} [${t.metric_ref}]: ${error.message}`); }
     else {
       if (action === 'update') res.updated++; else res.inserted++;
-      console.log(`✅ draft [${t.metric_ref}] ${verdict.direction} ${verdict.expected_range_pct ?? ''}${prose.needs_editor ? ' (에디터 작성 필요)' : ''}`);
+      if (row.status === 'published') res.published++;
+      const tag = row.status === 'published' ? '발행' : 'draft';
+      console.log(`✅ ${tag} [${t.metric_ref}] ${verdict.direction} ${verdict.expected_range_pct ?? ''}${prose.needs_editor ? ' (에디터 작성 필요)' : ''}`);
     }
   }
   return res;
@@ -81,7 +84,7 @@ async function main() {
   });
   await assertSchema(supabase); // 마이그레이션 가드 — 누락 시 여기서 명시적 실패.
   const res = await generateDrafts(supabase, callClaude);
-  console.log(`📊 신규 ${res.inserted} · 갱신 ${res.updated} · 보존 ${res.skipped} / ${res.total} 타깃 · abstain ${res.abstained} · 에디터필요 ${res.needsEditor} · 오류 ${res.errors}`);
+  console.log(`📊 신규 ${res.inserted} · 갱신 ${res.updated} · 발행 ${res.published} · 보존 ${res.skipped} / ${res.total} 타깃 · abstain ${res.abstained} · 에디터필요 ${res.needsEditor} · 오류 ${res.errors}`);
 }
 
 if (require.main === module) {
