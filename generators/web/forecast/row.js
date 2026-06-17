@@ -1,6 +1,5 @@
 'use strict';
-// verdict + prose + input → forecasts 행(status='draft'). 순수 함수.
-const { buildWatchPoints } = require('./watch-points');
+// verdict + prose + input → forecasts 행. 순수 함수.
 
 const EDITOR_PLACEHOLDER = '[AI 초안 · 에디터 검수 필요 — 본문 작성]';
 
@@ -20,7 +19,7 @@ function mapVerdictToRow(input, verdict, prose, asof = new Date()) {
   const publish = !prose.needs_editor;
   return {
     module: 'rates',
-    watch_points: buildWatchPoints(input, asof),
+    watch_points: [], // 발표일 달력(watch_points)은 생성 중단 — stale 표시 문제. 채점엔 영향 없음.
     metric_ref: input.metric_ref,
     cadence: input.cadence,
     horizon_date: input.horizon_date,
