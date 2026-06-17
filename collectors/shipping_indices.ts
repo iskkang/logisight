@@ -55,15 +55,27 @@ const WCI_DOWN = /fell|fall|drop|declin|decreas|slip|eas|sank|sink|down\b|lower/
 
 async function fetchWCI(): Promise<IndexData[]> {
   const url = 'https://www.drewry.co.uk/supply-chain-advisors/supply-chain-expertise/world-container-index-assessed-by-drewry';
-  const res = await fetch(url, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (compatible; Logisight/1.0; +https://logisight.mtlship.com)',
-      'Accept': 'text/html,application/xhtml+xml',
-      'Accept-Language': 'en-US,en;q=0.9',
-    },
-    signal: AbortSignal.timeout(15000),
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  // Drewry는 CI 러너 IP에 HTTP 429를 자주 반환 → 브라우저 헤더 + 429/503 백오프 재시도.
+  const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+  let res: Response | null = null;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    res = await fetch(url, {
+      headers: {
+        'User-Agent': UA,
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Referer': 'https://www.drewry.co.uk/',
+      },
+      signal: AbortSignal.timeout(15000),
+    });
+    if (res.ok) break;
+    if ((res.status === 429 || res.status === 503) && attempt < 3) {
+      await new Promise((r) => setTimeout(r, 3000 * attempt)); // 3s, 6s
+      continue;
+    }
+    throw new Error(`HTTP ${res.status}`);
+  }
+  if (!res || !res.ok) throw new Error('WCI fetch 실패');
   const html = await res.text();
   // 태그/스크립트 제거 후 평문에서 파싱 (마크업 변동에 강함)
   const text = html

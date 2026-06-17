@@ -21,6 +21,8 @@ const THRESHOLDS = {
   WCI_SHA_RTM: 14, WCI_SHA_GOA: 14, WCI_SHA_LAX: 14, WCI_SHA_NYC: 14,
 };
 const DEFAULT_THRESHOLD = 16; // KCCI 레인 등 기타
+// 핵심 지수만 stale 시 워크플로 실패. 레인/벙커 sublane은 경고만(불규칙 갱신이라 워크플로를 빨갛게 만들지 않음).
+const CRITICAL = new Set(['SCFI', 'KCCI', 'WCI', 'CCFI', 'BDI', 'FBX']);
 
 async function latestPerCode() {
   // distinct-on이 어려우므로 최신순 정렬 후 코드별 첫 행만 취함
@@ -60,7 +62,12 @@ if (stale.length) {
   for (const r of stale.sort((a,b)=>b.age-a.age)) {
     console.log(`  ⚠️  ${r.code.padEnd(12)} ${r.date}  (${r.age}d > ${r.limit}d)  val=${r.value}`);
   }
-  console.error(`\n❌ ${stale.length}개 지수가 stale 임계를 초과했습니다.`);
-  process.exit(1);
+  const criticalStale = stale.filter((r) => CRITICAL.has(r.code));
+  if (criticalStale.length) {
+    console.error(`\n❌ 핵심 지수 ${criticalStale.length}개 stale: ${criticalStale.map((r) => r.code).join(', ')} — 워크플로 실패.`);
+    process.exit(1);
+  }
+  console.warn(`\n⚠️  보조 sublane ${stale.length}개만 stale (핵심 지수는 신선) — 워크플로 통과.`);
+  process.exit(0);
 }
 console.log('\n✅ 모든 점검 대상 지수가 신선도 임계 이내입니다.');
