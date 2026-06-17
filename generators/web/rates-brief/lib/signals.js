@@ -81,4 +81,27 @@ function computeBunker(vlsfoMoM, asOf) {
   };
 }
 
-module.exports = { pctile, momChange, computeOceanPressure, computeGlobalMomentum, computeAir, computeBunker };
+// 항공 시황: IATA 권역별 수요(CTK)·공급(ACTK)·적재율(CLF) 종합 (특정 노선 운임이 아니라 시장 전반)
+function computeAirMarket(iata, asOf) {
+  const d = iata && iata.data;
+  if (!d || !d.headline) return null;
+  const h = d.headline;
+  const sign = (n) => `${n >= 0 ? '+' : ''}${n}%`;
+  const regions = (d.regions || []).filter((r) => r.region && r.region !== '전체(글로벌)' && r.ctk_yoy != null);
+  const byCtk = [...regions].sort((a, b) => b.ctk_yoy - a.ctk_yoy);
+  const top = byCtk[0], bot = byCtk[byCtk.length - 1];
+  const gap = h.ctk_yoy - h.actk_yoy; // 수요-공급 격차
+  let state = 'observe';
+  if (Math.abs(h.ctk_yoy) >= 8 || Math.abs(gap) >= 5) state = 'caution';
+  else if (Math.abs(h.ctk_yoy) < 2 && Math.abs(gap) < 2) state = 'normal';
+  const regionText = top && bot && top !== bot
+    ? ` 권역별로 ${top.region} 강세(수요 ${sign(top.ctk_yoy)}), ${bot.region} 부진(${sign(bot.ctk_yoy)})`
+    : '';
+  return {
+    label: '항공 시황', state,
+    basis: `글로벌 항공 화물 수요(CTK) ${sign(h.ctk_yoy)} vs 공급(ACTK) ${sign(h.actk_yoy)}, 적재율(CLF) ${h.clf_level}%(${h.clf_ppt >= 0 ? '+' : ''}${h.clf_ppt}%p).${regionText}`,
+    sources: ['IATA'], asOf: asOf ?? (d.asOf || null), confidence: 'medium',
+  };
+}
+
+module.exports = { pctile, momChange, computeOceanPressure, computeGlobalMomentum, computeAir, computeAirMarket, computeBunker };

@@ -1,5 +1,6 @@
 // generators/web/rates-brief/generate-rates-brief.js
 'use strict';
+const fs = require('fs');
 const path = require('path');
 const ws = require('ws'); globalThis.WebSocket = ws;
 require('dotenv').config({ path: path.resolve(__dirname, '../../../.env.local') });
@@ -26,21 +27,11 @@ async function indexSeries(sb, code) {
   return (data || []).filter((r) => r.value != null);
 }
 
-async function airTopMoM(sb) {
-  const { data } = await sb.from('kita_air_rates')
-    .select('origin,dest,year_mon,kg300').order('year_mon', { ascending: false }).limit(400);
-  if (!data || !data.length) return null;
-  const latest = data[0].year_mon;
-  const routes = [...new Set(data.filter((r) => r.year_mon === latest).map((r) => `${r.origin}→${r.dest}`))];
-  const cands = [];
-  for (const key of routes) {
-    const [o, d] = key.split('→');
-    const series = data.filter((r) => r.origin === o && r.dest === d).map((r) => ({ k: r.year_mon, value: r.kg300 }));
-    const mom = S.momChange(series);
-    if (mom != null && Math.abs(mom) <= 200) cands.push({ route: key, mom });
-  }
-  cands.sort((a, b) => Math.abs(b.mom) - Math.abs(a.mom));
-  return cands[0] ?? null;
+// 항공 시황 입력: IATA 권역별 화물 통계(캐시).
+function readIata() {
+  try {
+    return JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../../outputs/cache/iata-cargo.json'), 'utf-8'));
+  } catch { return null; }
 }
 
 async function main() {
@@ -54,8 +45,7 @@ async function main() {
 
   const ocean = S.computeOceanPressure(kcci, asOf);
   const global = S.computeGlobalMomentum(scfi, wci, asOf);
-  const air0 = await airTopMoM(sb);
-  const air = air0 ? S.computeAir(air0.mom, air0.route, ocean?.pct ?? null, asOf) : null;
+  const air = S.computeAirMarket(readIata(), asOf);
   const vlsfoMoM = S.momChange(vlsfo.map((p) => ({ k: p.week_date, value: p.value })));
   const bunker = S.computeBunker(vlsfoMoM, asOf);
 

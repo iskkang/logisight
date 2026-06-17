@@ -23,7 +23,7 @@ ${facts}
   "headline": "이번 주 핵심을 한 문장(명사형)으로",
   "ocean":  "해상 운임 압력 분석 (백분위·증감 인용)",
   "global": "글로벌 SCFI·WCI 모멘텀 분석",
-  "air":    "항공 운임 변동·모달 시사점 (신호 없으면 빈 문자열)",
+  "air":    "항공 시황 전반 분석 — 글로벌 수요(CTK)·공급(ACTK)·적재율(CLF)과 권역별 동향 종합 (특정 노선 운임이 아니라 시장 전반, 신호 없으면 빈 문자열)",
   "outlook":"단기 전망·부킹/계약 시사점"
 }`;
   return { system: SYSTEM, messages: [{ role: 'user', content: user }] };

@@ -1,7 +1,23 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { computeOceanPressure, computeGlobalMomentum, computeAir, computeBunker } = require('./signals');
+const { computeOceanPressure, computeGlobalMomentum, computeAir, computeAirMarket, computeBunker } = require('./signals');
+
+test('air market: IATA demand/supply/load-factor with regional highlights', () => {
+  const iata = { data: { asOf: '2026-06', headline: { ctk_yoy: 4, actk_yoy: -0.4, clf_level: 46, clf_ppt: 1.9 }, regions: [
+    { region: '전체(글로벌)', ctk_yoy: 4, actk_yoy: -0.4 },
+    { region: '아시아태평양', ctk_yoy: 10.5, actk_yoy: 5.3 },
+    { region: '중동', ctk_yoy: -18.2, actk_yoy: -22.9 },
+  ] } };
+  const s = computeAirMarket(iata);
+  assert.equal(s.label, '항공 시황');
+  assert.match(s.basis, /수요\(CTK\) \+4%/);
+  assert.match(s.basis, /적재율\(CLF\) 46%/);
+  assert.match(s.basis, /아시아태평양 강세/);
+  assert.match(s.basis, /중동 부진/);
+  assert.equal(s.state, 'observe');
+  assert.equal(computeAirMarket(null), null);
+});
 
 test('ocean pressure: caution at 75th pct with rising 3w avg', () => {
   const dates = ['2026-04-27', '2026-05-04', '2026-05-11', '2026-05-18', '2026-05-25', '2026-06-01', '2026-06-08', '2026-06-15'];
