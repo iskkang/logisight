@@ -19,10 +19,10 @@ function isoWeekId(dateStr) {
 }
 
 async function indexSeries(sb, code) {
-  const since = new Date(Date.now() - 400 * 86400000).toISOString().slice(0, 10);
+  // 프론트(rates.functions.ts)와 동일하게 전체 history를 사용 — 52주 백분위 산출이 프론트 폴백과 일치해야 함.
   const { data } = await sb.from('freight_indices')
-    .select('week_date,value').eq('index_code', code).gte('week_date', since)
-    .order('week_date', { ascending: true });
+    .select('week_date,value').eq('index_code', code)
+    .order('week_date', { ascending: true }).limit(5000);
   return (data || []).filter((r) => r.value != null);
 }
 
