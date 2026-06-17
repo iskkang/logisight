@@ -4,7 +4,9 @@ name: Forecast — Weekly Draft Generation
 # 발행은 프론트 /admin/forecasts 검수 큐에서만(자동 발행 없음).
 on:
   schedule:
-    - cron: '0 6 * * 1'   # 월요일 06:00 UTC (15:00 KST) — 주간 지수 갱신 이후
+    # 화요일 04:00 UTC (13:00 KST) — 화 02:00 market-collectors가 KCCI 월요일 발표분을 적재한 직후.
+    # (이전 월 06:00은 KCCI 미발표 시점이라 stale 지수로 생성되는 문제가 있었음)
+    - cron: '0 4 * * 2'
   workflow_dispatch:
 
 jobs:
