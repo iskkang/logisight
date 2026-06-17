@@ -1,0 +1,22 @@
+name: Rates Intelligence Brief
+
+on:
+  schedule:
+    - cron: '0 3 * * 2'   # 화 03:00 UTC — market-collectors(화 02:00) 직후
+    - cron: '0 7 * * 5'   # 금 07:00 UTC — market-collectors(금 06:00) 직후
+  workflow_dispatch:
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22', cache: 'npm' }
+      - run: npm ci
+      - run: npm run rates-brief:generate
