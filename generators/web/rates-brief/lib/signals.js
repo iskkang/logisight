@@ -4,7 +4,8 @@
 
 function pctile(values, current) {
   if (!values.length) return 0;
-  const below = values.filter((v) => v < current).length;
+  // 프론트 server/signals.ts percentile52wValues 와 동일하게 v <= current (골든 패리티)
+  const below = values.filter((v) => v <= current).length;
   return Math.round((below / values.length) * 100);
 }
 function momChange(series) {
