@@ -13,7 +13,7 @@ on:
 jobs:
   fetch-trade-stats:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     steps:
       - uses: actions/checkout@v4
@@ -26,13 +26,27 @@ jobs:
       - name: Install deps
         run: npm ci
 
-      - name: Fetch customs trade statistics
+      - name: Fetch customs trade statistics (country totals)
         run: |
           PERIOD_ARG=""
           if [ -n "${{ github.event.inputs.period }}" ]; then
             PERIOD_ARG="--period=${{ github.event.inputs.period }}"
           fi
           npx tsx collectors/trade_stats.ts $PERIOD_ARG
+        env:
+          DATA_GO_KR_API_KEY:        ${{ secrets.DATA_GO_KR_API_KEY }}
+          SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      # HS 품목별(item) + 품목별 국가별(item_country) + 대륙별 + 신성질별.
+      # industries HS 트리맵·드릴다운이 소비. 국가 전수 순회라 길다(수 분).
+      - name: Fetch customs HS categories (item / item_country / continent / newnature)
+        run: |
+          PERIOD_ARG=""
+          if [ -n "${{ github.event.inputs.period }}" ]; then
+            PERIOD_ARG="--period=${{ github.event.inputs.period }}"
+          fi
+          npx tsx collectors/trade_categories.ts $PERIOD_ARG
         env:
           DATA_GO_KR_API_KEY:        ${{ secrets.DATA_GO_KR_API_KEY }}
           SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
