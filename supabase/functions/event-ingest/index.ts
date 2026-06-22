@@ -61,8 +61,14 @@ serve(async () => {
     });
   } catch (_) {}
 
+  // 피드가 같은 이벤트를 여러 feature/에피소드로 중복 방출할 수 있음 → id 기준 dedup(나중 값 우선).
+  // (안 하면 upsert 한 배치에 동일 id 2건 → "ON CONFLICT DO UPDATE command cannot affect row a second time")
+  const byId = new Map<string, any>();
+  for (const r of out) byId.set(r.id, r);
+  const rows = [...byId.values()];
+
   // 피드는 "현재 활성 집합"이므로 소스별 통째 교체
   await sb.from('events').delete().in('source', ['nhc', 'gdacs', 'nws']);
-  if (out.length) { const { error } = await sb.from('events').upsert(out, { onConflict: 'id' }); if (error) return new Response(error.message, { status: 500 }); }
-  return new Response(JSON.stringify({ events: out.length }), { headers: { 'Content-Type': 'application/json' } });
+  if (rows.length) { const { error } = await sb.from('events').upsert(rows, { onConflict: 'id' }); if (error) return new Response(error.message, { status: 500 }); }
+  return new Response(JSON.stringify({ events: rows.length }), { headers: { 'Content-Type': 'application/json' } });
 });
