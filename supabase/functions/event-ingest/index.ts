@@ -1,5 +1,5 @@
 // supabase/functions/event-ingest/index.ts
-// 전 세계 재해 피드 → events 테이블. NOAA NHC(열대저기압) + GDACS(다중재해) + NWS(미국 경보).
+// 전 세계 재해 피드 → events 테이블. NOAA NHC + GDACS + NWS + HKO(북서태평양 태풍).
 // 사전 미정의 지역의 새 이벤트를 자동 감지해 핀+알람으로 띄운다. 부분 실패 허용(try/catch).
 // 소스별로 "현재 활성 집합"을 통째 교체(delete→upsert). service_role 키로 RLS 우회.
 //
@@ -15,6 +15,10 @@ function centroid(geom: any): [number | null, number | null] {
   walk(geom.coordinates); if (!pts.length) return [null, null];
   let x = 0, y = 0; pts.forEach(p => { x += p[0]; y += p[1]; }); return [x / pts.length, y / pts.length];
 }
+async function getText(u: string) { const r = await fetch(u, { headers: { 'User-Agent': UA } }); if (!r.ok) throw new Error(r.status + ' ' + u); return await r.text(); }
+// HKO TC XML은 평탄·고정 스키마(검증 완료) → 원격 XML 파서(stale-import 위험) 대신 태그 정규식 추출.
+function tagText(xml: string, name: string): string { const m = xml.match(new RegExp('<' + name + '>([\\s\\S]*?)</' + name + '>')); return m ? m[1].trim() : ''; }
+function parseLatLon(v: string): number | null { const m = (v || '').match(/(-?\d+(?:\.\d+)?)\s*([NSEW])?/i); if (!m) return null; let n = parseFloat(m[1]); const d = (m[2] || '').toUpperCase(); if (d === 'S' || d === 'W') n = -n; return Number.isNaN(n) ? null : n; }
 
 serve(async () => {
   const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
@@ -61,6 +65,33 @@ serve(async () => {
     });
   } catch (_) {}
 
+  // 4) HKO — 북서태평양 활성 태풍 (홍콩천문대 TC Track Info, WMO/상업 재사용 허용).
+  //    tc_list.xml(활성 목록) → 각 TC track XML의 <AnalysisInformation>(현재 중심·강도). TC당 정확히 1행.
+  //    활성 태풍 없으면 빈 목록 → 정상(에러 아님).
+  try {
+    const listXml = await getText('https://www.weather.gov.hk/wxinfo/currwx/tc_list.xml');
+    const blocks = listXml.match(/<TropicalCyclone>[\s\S]*?<\/TropicalCyclone>/g) || [];
+    for (const b of blocks) {
+      const id = tagText(b, 'TropicalCycloneID');
+      const name = tagText(b, 'TropicalCycloneEnglishName');
+      const url = tagText(b, 'TropicalCycloneURL').replace(/^http:/, 'https:');
+      if (!id || !url) continue;
+      let lat: number | null = null, lon: number | null = null, intensity = '';
+      try {
+        const trackXml = await getText(url);
+        const a = (trackXml.match(/<AnalysisInformation>[\s\S]*?<\/AnalysisInformation>/) || [])[0] || '';
+        intensity = tagText(a, 'Intensity');
+        lat = parseLatLon(tagText(a, 'Latitude'));   // "17.40N" → 17.40
+        lon = parseLatLon(tagText(a, 'Longitude'));  // "127.90E" → 127.90
+      } catch (_) {}
+      // 강도 매핑: TD/TS → 주의(a), STS·TY·STY·SuperTY → 경보(r).
+      const low = /Depression/i.test(intensity) || /^Tropical Storm$/i.test(intensity);
+      out.push({ id: 'hko-' + id, source: 'hko', kind: 'cyclone',
+        title: (name || 'Tropical Cyclone') + (intensity ? ' (' + intensity + ')' : ''),
+        severity: low ? 'a' : 'r', lon, lat, area: '북서태평양', starts_at: null, ends_at: null, url });
+    }
+  } catch (_) {}
+
   // 피드가 같은 이벤트를 여러 feature/에피소드로 중복 방출할 수 있음 → id 기준 dedup(나중 값 우선).
   // (안 하면 upsert 한 배치에 동일 id 2건 → "ON CONFLICT DO UPDATE command cannot affect row a second time")
   const byId = new Map<string, any>();
@@ -68,7 +99,7 @@ serve(async () => {
   const rows = [...byId.values()];
 
   // 피드는 "현재 활성 집합"이므로 소스별 통째 교체
-  await sb.from('events').delete().in('source', ['nhc', 'gdacs', 'nws']);
+  await sb.from('events').delete().in('source', ['nhc', 'gdacs', 'nws', 'hko']);
   if (rows.length) { const { error } = await sb.from('events').upsert(rows, { onConflict: 'id' }); if (error) return new Response(error.message, { status: 500 }); }
   return new Response(JSON.stringify({ events: rows.length }), { headers: { 'Content-Type': 'application/json' } });
 });
