@@ -54,7 +54,7 @@ IIFE 안의 하드코딩 배열(`PORTS/CHOKES/ROUTES/SPOTS`)과 합성 함수(`r
 
 ### 5. 스케줄링 — GitHub Actions (pg_cron 대체)
 검증 끝난 뒤 자동화. pg_cron 미사용 (스키마에서 `create extension`도 제거).
-1. GitHub repo(logisight) → Settings → Secrets and variables → Actions → **`SUPABASE_FN_KEY`** = anon public 키 (verify_jwt 통과용; 함수가 내부에서 service 키로 DB 씀 — **service_role 키는 워크플로에 넣지 말 것**).
+1. GitHub repo(logisight) → Settings → Secrets and variables → Actions → **`SUPABASE_ANON_KEY`** = anon public 키 (verify_jwt 통과용; 함수가 내부에서 service 키로 DB 씀 — **service_role 키는 워크플로에 넣지 말 것**).
 2. `.github/workflows/globe-risk-cron.yml` 가 **기본 브랜치(main)** 에 있어야 cron이 돈다. 커밋·푸시 후 Actions 탭 → **Run workflow** 로 1회 수동 실행 → Supabase에서 `asset_risk`·`events` 갱신 확인.
 3. risk-refresh 6h / event-ingest 2h. GitHub cron은 정시 보장이 아니라 best-effort(수 분 지연 가능 — 6h/2h 주기엔 무방).
 

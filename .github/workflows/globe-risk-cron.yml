@@ -2,7 +2,7 @@ name: globe-risk-cron
 
 # 기상 리스크 지구본 스케줄러 — Supabase Edge Function 트리거 (pg_cron 대체).
 # risk-refresh: 6시간마다 / event-ingest: 2시간마다.
-# SUPABASE_FN_KEY = anon public 키 (verify_jwt 통과용; 함수 내부에서 service 키로 DB 씀).
+# SUPABASE_ANON_KEY = anon public 키 (verify_jwt 통과용; 함수 내부에서 service 키로 DB 씀).
 # GitHub cron은 정시 보장이 아니라 best-effort(수 분 지연 가능 — 6h/2h 주기엔 무방).
 
 on:
@@ -20,11 +20,11 @@ jobs:
         if: github.event.schedule == '0 */6 * * *' || github.event_name == 'workflow_dispatch'
         run: |
           curl -sSf -X POST "https://hmgbvqczmyjixkqbruzp.supabase.co/functions/v1/risk-refresh" \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_FN_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
             -H "Content-Type: application/json" -d '{}'
       - name: event-ingest
         if: github.event.schedule == '15 */2 * * *' || github.event_name == 'workflow_dispatch'
         run: |
           curl -sSf -X POST "https://hmgbvqczmyjixkqbruzp.supabase.co/functions/v1/event-ingest" \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_FN_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
             -H "Content-Type: application/json" -d '{}'
