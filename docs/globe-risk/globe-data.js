@@ -28,6 +28,9 @@ if (typeof HDAYS === 'undefined') { var HDAYS = [0, 3, 7, 14]; }
 if (typeof HLBL  === 'undefined') { var HLBL  = ['지금', '+3일', '+7일', '+14일']; }
 
 var PORTS = [], CHOKES = [], NODES = {}, ROUTES = [], SPOTS = [], riskMap = {};
+// v2: 통합 자산 배열(port/choke/rail) + 글로벌 이벤트 레이어.
+// 렌더/인터랙션(node·event 핀·render2·renderAlerts·hitTest·범례) 편집은 globe-v2.md 참고.
+var ASSETS = [], EVENTS = [], eventHit = [], selEvent = null;
 
 // --- 데이터 로더 (부팅을 async로) -------------------------------------------
 async function loadData() {
@@ -35,10 +38,13 @@ async function loadData() {
   var rt = await sb.from('routes').select('*');
   var rk = await sb.from('asset_risk').select('*');
   var ws = await sb.from('weather_systems').select('*');
+  var ev = await sb.from('events').select('*');
   var assets = a.data || [];
+  EVENTS = ev.data || [];
   PORTS  = assets.filter(function (x) { return x.type === 'port'; }).map(function (x) { return [x.id, x.name, x.lon, x.lat]; });
   CHOKES = assets.filter(function (x) { return x.type === 'choke'; }).map(function (x) { return [x.id, x.name, x.lon, x.lat]; });
-  assets.forEach(function (x) { NODES[x.id] = { key: x.id, name: x.name, lon: x.lon, lat: x.lat, type: x.type }; });
+  // v2: 단일 ASSETS (port/choke/rail 통합), NODES에 freeze_prone 포함
+  ASSETS = assets.map(function (x) { NODES[x.id] = { key: x.id, name: x.name, lon: x.lon, lat: x.lat, type: x.type, freeze_prone: x.freeze_prone }; return NODES[x.id]; });
   ROUTES = (rt.data || []).map(function (r) {
     var wp = r.waypoints, keys = wp.filter(function (w) { return typeof w === 'string'; });
     return { id: r.id, name: r.name, wp: wp, keys: keys, chokes: r.chokes || [] };

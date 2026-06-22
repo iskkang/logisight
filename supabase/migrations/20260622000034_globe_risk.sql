@@ -2,9 +2,7 @@
 -- assets(항만/초크포인트) · routes(항로) · asset_risk(예보 환산 리스크) · weather_systems(Phase 2 핀).
 -- 읽기는 anon 허용, 쓰기는 service_role(RLS 우회)만 — risk-refresh Edge Function이 upsert.
 -- DO NOT APPLY automatically — run manually after review (supabase db push 또는 SQL 에디터).
-
-create extension if not exists pg_cron;
-create extension if not exists pg_net;
+-- 스케줄링은 pg_cron이 아니라 GitHub Actions(.github/workflows/globe-risk-cron.yml) → extension 불필요.
 
 create table if not exists public.assets (
   id   text primary key,
