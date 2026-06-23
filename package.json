@@ -40,6 +40,8 @@
     "forecast:smoke": "node generators/web/forecast/smoke-assemble.js",
     "generate:climate": "node generators/web/climate/generate.js",
     "test:climate": "node --test generators/web/climate/",
+    "judge:impact": "node generators/web/impact/judge.js",
+    "test:impact": "node --test generators/web/impact/",
     "backfill:news": "node scripts/backfill-maritime-news.js",
     "backfill:news:images": "node scripts/backfill-maritime-news.js --images",
     "backfill:news:internal-images": "node scripts/backfill-maritime-news.js --internal-images",

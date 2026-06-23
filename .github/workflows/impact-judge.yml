@@ -1,0 +1,30 @@
+name: Impact — Event × Passage Cross-Judgment
+
+# 활성 events(예보트랙) × passages.influence_radius_km 교차판정 → event_passage_hits 적재.
+# event-ingest(globe-risk-cron, 매시 :15 격2시간, 트랙 갱신) 직후 :25에 편승 — 갱신된 트랙으로 판정.
+# climate-generate(:35)보다 앞서 실행 → (c)가 최신 hit 위에서 동작. 새 비밀 없음(geo 판정, ANTHROPIC 불필요).
+on:
+  schedule:
+    - cron: '25 */2 * * *'   # event-ingest(:15 격2h) 직후, climate(:35) 이전
+  workflow_dispatch:
+
+jobs:
+  judge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Judge event × passage hits
+        run: npm run judge:impact
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

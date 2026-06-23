@@ -66,7 +66,8 @@ serve(async () => {
   } catch (_) {}
 
   // 4) HKO — 북서태평양 활성 태풍 (홍콩천문대 TC Track Info, WMO/상업 재사용 허용).
-  //    tc_list.xml(활성 목록) → 각 TC track XML의 <AnalysisInformation>(현재 중심·강도). TC당 정확히 1행.
+  //    tc_list.xml(활성 목록) → 각 TC track XML의 <AnalysisInformation>(현재 중심·강도)
+  //    + <ForecastInformation>(예보 폴리라인) → track 적재((b) 교차판정용). TC당 정확히 1행.
   //    활성 태풍 없으면 빈 목록 → 정상(에러 아님).
   try {
     const listXml = await getText('https://www.weather.gov.hk/wxinfo/currwx/tc_list.xml');
@@ -77,18 +78,28 @@ serve(async () => {
       const url = tagText(b, 'TropicalCycloneURL').replace(/^http:/, 'https:');
       if (!id || !url) continue;
       let lat: number | null = null, lon: number | null = null, intensity = '';
+      let track: number[][] | null = null;
       try {
         const trackXml = await getText(url);
         const a = (trackXml.match(/<AnalysisInformation>[\s\S]*?<\/AnalysisInformation>/) || [])[0] || '';
         intensity = tagText(a, 'Intensity');
         lat = parseLatLon(tagText(a, 'Latitude'));   // "17.40N" → 17.40
         lon = parseLatLon(tagText(a, 'Longitude'));  // "127.90E" → 127.90
+        // 예보 폴리라인: <ForecastInformation> 각 블록의 위경도를 점열로. 현재 분석점을 선두에 둔다.
+        const pts: number[][] = [];
+        if (lon != null && lat != null) pts.push([lon, lat]);
+        for (const fb of trackXml.match(/<ForecastInformation>[\s\S]*?<\/ForecastInformation>/g) || []) {
+          const flat = parseLatLon(tagText(fb, 'Latitude'));
+          const flon = parseLatLon(tagText(fb, 'Longitude'));
+          if (flat != null && flon != null) pts.push([flon, flat]);
+        }
+        track = pts.length ? pts : null;
       } catch (_) {}
       // 강도 매핑: TD/TS → 주의(a), STS·TY·STY·SuperTY → 경보(r).
       const low = /Depression/i.test(intensity) || /^Tropical Storm$/i.test(intensity);
       out.push({ id: 'hko-' + id, source: 'hko', kind: 'cyclone',
         title: (name || 'Tropical Cyclone') + (intensity ? ' (' + intensity + ')' : ''),
-        severity: low ? 'a' : 'r', lon, lat, area: '북서태평양', starts_at: null, ends_at: null, url });
+        severity: low ? 'a' : 'r', lon, lat, area: '북서태평양', starts_at: null, ends_at: null, url, track });
     }
   } catch (_) {}
 
@@ -140,6 +151,8 @@ serve(async () => {
   const byId = new Map<string, any>();
   for (const r of out) byId.set(r.id, r);
   const rows = [...byId.values()];
+  // 컬럼 균일화: HKO만 track 보유 → 나머지는 null로 채워 upsert 컬럼 추론 일관성 확보.
+  for (const r of rows) if (!('track' in r)) r.track = null;
 
   // 피드는 "현재 활성 집합"이므로 소스별 통째 교체
   await sb.from('events').delete().in('source', ['nhc', 'gdacs', 'nws', 'hko', 'meteoalarm']);
