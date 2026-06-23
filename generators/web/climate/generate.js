@@ -81,7 +81,7 @@ async function generateClimateDrafts(supabase, callLLM, { asof = new Date(), dry
     currentKeys.add(row.metric_ref);
     res.drafts.push({ ctx, row });
 
-    if (dryRun) { console.log(`· [dry] ${row.metric_ref} (${ctx.event.name} → ${route.name} via ${viaPassage.name_ko})${prose.needs_editor ? ' (에디터 작성 필요)' : ''}`); continue; }
+    if (dryRun) { console.log(`· [dry:${row.status}] ${row.metric_ref} (${ctx.event.name} → ${route.name} via ${viaPassage.name_ko})${prose.needs_editor ? ' (에디터 작성 필요)' : ''}`); continue; }
 
     // dedup: 같은 (metric_ref, model_version) — 발행/판정 보존, draft만 갱신.
     const { data: existing } = await supabase.from('forecasts').select('id,status')
@@ -95,7 +95,7 @@ async function generateClimateDrafts(supabase, callLLM, { asof = new Date(), dry
       ({ error } = await supabase.from('forecasts').insert(row));
     }
     if (error) { res.errors++; console.error(`❌ ${action} [${row.metric_ref}]: ${error.message}`); }
-    else { if (action === 'update') res.updated++; else res.inserted++; console.log(`✅ draft [${row.metric_ref}] ${ctx.event.name} → ${route.name} via ${viaPassage.name_ko}`); }
+    else { if (action === 'update') res.updated++; else res.inserted++; console.log(`✅ ${row.status} [${row.metric_ref}] ${ctx.event.name} → ${route.name} via ${viaPassage.name_ko}`); }
   }
 
   // 폐기: 이번에 재생성되지 않은 climate draft(거리-근접 stale, 더 이상 영향 없는 이벤트)는 삭제. 발행/판정은 보존(불변).
