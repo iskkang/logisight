@@ -1,0 +1,31 @@
+name: Climate — Impact Draft Generation
+
+# 활성 events(태풍·홍수) × 노선 근접 → Claude 3단 기후 영향 초안 → forecasts(module='climate', status='draft').
+# event-ingest(globe-risk-cron, 매시 :15 격2시간) 직후에 편승: 갱신된 events를 읽어 :35에 생성.
+# 새 비밀 없음 — forecast-generate.yml과 동일 시크릿 재사용. 초안만 생성(자동 발행 없음 → 에디터 검수).
+on:
+  schedule:
+    - cron: '35 */2 * * *'   # event-ingest(:15 격2시간) 직후
+  workflow_dispatch:
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate climate impact drafts
+        run: npm run generate:climate
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
