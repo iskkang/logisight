@@ -20,6 +20,7 @@ create table if not exists public.event_passage_hits (
 create index if not exists event_passage_hits_passage_idx on public.event_passage_hits (passage_id);
 
 alter table public.event_passage_hits enable row level security;
+drop policy if exists "read event_passage_hits" on public.event_passage_hits;
 create policy "read event_passage_hits" on public.event_passage_hits for select using (true);
 
 -- 조회 편의 뷰: hit → 그 passage를 지나는 모든 route로 펼침(route 단위 영향 목록).

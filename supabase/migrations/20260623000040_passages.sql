@@ -31,6 +31,8 @@ create index if not exists route_passages_passage_idx on public.route_passages (
 
 alter table public.passages       enable row level security;
 alter table public.route_passages enable row level security;
+drop policy if exists "read passages"       on public.passages;
+drop policy if exists "read route_passages" on public.route_passages;
 create policy "read passages"       on public.passages       for select using (true);
 create policy "read route_passages" on public.route_passages for select using (true);
 
