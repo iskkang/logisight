@@ -30,6 +30,7 @@
 | data_updates | 022 | pipeline | 모니터링 | ✅ | 수집 상태 추적 |
 | tcr_snapshots | 011 | pipeline/collectors | Lovable /eurasia | ✅ | |
 | port_throughput | 010 | pipeline/collectors | Lovable (지도) | ✅ | 소스: LA·LB·SGP + KOSIS(해양수산부) KRPUS/KRICN/KRGMP 등 한국 항만 TEU |
+| industry_briefs | 044 | supabase/functions/industry-brief-generate (Edge, service_role) | Lovable /industries (직접 read) | ✅ | period(YYYY.MM)별 Claude 산업 브리핑 캐시(trade_briefs 043의 산업판 트윈). input_hash 동일 시 재생성 스킵(월1회). 챕터집계 RPC industry_chapter_totals(044) |
 
 ## trade_statistics.stat_type 값 목록
 

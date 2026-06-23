@@ -52,6 +52,14 @@ jobs:
           SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
+      # item 적재 직후 산업 브리핑 재생성. input_hash 비교로 데이터가 바뀐 달에만 실제 LLM 호출.
+      - name: Regenerate industry brief (only if data changed)
+        run: |
+          curl -fsS -X POST "$SUPABASE_FUNCTION_URL/industry-brief-generate" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}"
+        env:
+          SUPABASE_FUNCTION_URL: ${{ secrets.SUPABASE_FUNCTION_URL }}
+
       - name: Log to data_updates
         if: always()
         run: |
