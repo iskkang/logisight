@@ -42,10 +42,8 @@ jobs:
 
       - name: Regenerate trade brief (only if data changed)
         run: |
-          curl -fsS -X POST "$SUPABASE_FUNCTION_URL/trade-brief-generate" \
+          curl -fsS -X POST "https://hmgbvqczmyjixkqbruzp.supabase.co/functions/v1/trade-brief-generate" \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}"
-        env:
-          SUPABASE_FUNCTION_URL: ${{ secrets.SUPABASE_FUNCTION_URL }}
 
       - name: Log to data_updates
         if: always()
