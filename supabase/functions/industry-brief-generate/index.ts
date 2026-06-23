@@ -7,8 +7,8 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY")!;
-const MODEL = Deno.env.get("ANTHROPIC_MODEL") ?? "claude-sonnet-4-6";
+const DEEPSEEK_KEY = Deno.env.get("DEEPSEEK_API_KEY")!;
+const MODEL = Deno.env.get("DEEPSEEK_MODEL") ?? "deepseek-v4-pro";
 
 const sb = createClient(SUPABASE_URL, SERVICE_KEY, {
   auth: { persistSession: false },
@@ -305,7 +305,7 @@ function prompt(input: IndustryBriefInput) {
   ].join("\n");
 }
 
-function parseClaudeJson(text: string) {
+function parseBriefJson(text: string) {
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
   const body = (fenced?.[1] ?? text).trim();
   const json = JSON.parse(body);
@@ -316,28 +316,27 @@ function parseClaudeJson(text: string) {
   return { verdict, detail };
 }
 
-async function callClaude(input: IndustryBriefInput) {
-  const r = await fetch("https://api.anthropic.com/v1/messages", {
+async function callDeepSeek(input: IndustryBriefInput) {
+  // DeepSeek 는 OpenAI 호환 chat/completions. deepseek-v4-pro 는 추론(reasoning) 모델로
+  // 추론 토큰(~1.4k)이 max_tokens 를 소비하므로 답변이 잘리지 않게 넉넉히 잡는다.
+  // response_format 으로 순수 JSON 을 강제(프롬프트에 'JSON' 명시 필요 — 이미 포함).
+  const r = await fetch("https://api.deepseek.com/chat/completions", {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      "x-api-key": ANTHROPIC_KEY,
-      "anthropic-version": "2023-06-01",
+      "authorization": `Bearer ${DEEPSEEK_KEY}`,
     },
     body: JSON.stringify({
       model: MODEL,
-      max_tokens: 400,
+      max_tokens: 3000,
+      response_format: { type: "json_object" },
       messages: [{ role: "user", content: prompt(input) }],
     }),
   });
-  if (!r.ok) throw new Error(`anthropic ${r.status}: ${(await r.text()).slice(0, 200)}`);
+  if (!r.ok) throw new Error(`deepseek ${r.status}: ${(await r.text()).slice(0, 200)}`);
   const data = await r.json();
-  const text = (data.content ?? [])
-    .filter((block: { type?: string }) => block.type === "text")
-    .map((block: { text?: string }) => block.text ?? "")
-    .join("")
-    .trim();
-  return parseClaudeJson(text);
+  const text = (data.choices?.[0]?.message?.content ?? "").trim();
+  return parseBriefJson(text);
 }
 
 Deno.serve(async (req) => {
@@ -357,7 +356,7 @@ Deno.serve(async (req) => {
       return Response.json({ ok: true, skipped: true, period: input.period });
     }
 
-    const brief = await callClaude(input);
+    const brief = await callDeepSeek(input);
     const { error } = await sb.from("industry_briefs").upsert({
       period: input.period,
       verdict: brief.verdict,
