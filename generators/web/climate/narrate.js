@@ -5,6 +5,11 @@
 
 const FORBIDDEN = ['확실', '반드시', '틀림없', '분명히', '할 것이다'];
 const HEDGE = /(추정|가량|약\s|예상|범위|내외|정도|~|∼|〜|가능성|로 보인다|수 있다)/;
+// 가드보강: 정량(지연일·풍속·비용 등)은 범위·추정 동반 필수. 좌표·거리(°·km)는 입력 근거라 제외.
+const QTY = /(\d+(?:\.\d+)?)\s*(일|시간|%|달러|USD|원|TEU|FEU|m\/s|kt|노트|hPa)/;
+// 트랙 끝점 너머 시점 단언: 이동동사 ↔ 일/시간 수치 인접(트랙 점별 예보시각 없음).
+const MOVE = '통과|도달|상륙|접근|관통|북상|남하|이동';
+const TRACK_TIME = new RegExp(`(${MOVE})[^.。\\n]{0,15}\\d+\\s*(일|시간)|\\d+\\s*(일|시간)\\s*(후|뒤|내)[^.。\\n]{0,15}(${MOVE})`);
 
 function buildClimatePrompt(ctx) {
   const { event, route, viaPassage, viaMinKm, sharedRoutes = [], trackSummary = {}, nearbyAssets = [] } = ctx;
@@ -75,8 +80,22 @@ function validateClimate(parsed, ctx) {
     issues.push(`이벤트 echo 불일치(${echo || '없음'}≠${ctx.event.name})`);
   }
 
-  // 지연일/일수 수치는 범위+추정 표지 동반 필수 — 가짜 정밀·임의 지연일 차단.
-  if (/\d+\s*일/.test(impact) && !HEDGE.test(impact)) issues.push('정량(지연일) 추정·범위 표현 누락');
+  // 2a) 정량(지연일·풍속·비용 등) 단정 차단 — 범위·추정 표현만 허용(가짜 정밀).
+  for (const [label, txt] of [['weather', weather], ['impact', impact]]) {
+    if (QTY.test(txt) && !HEDGE.test(txt)) { issues.push(`정량 단정(${label}) — 추정·범위 표현 누락`); break; }
+  }
+  // 2c) 트랙 끝점 너머 시점 단언 차단(트랙 점별 예보시각 미제공).
+  if (TRACK_TIME.test(`${weather}\n${impact}`)) issues.push('트랙 시각 미제공인데 통과 시점 단언');
+  // 2b) 입력(allowed) 밖 지명 등장 차단(환각). gazetteer 제공 시에만.
+  if (Array.isArray(ctx.gazetteer) && ctx.gazetteer.length) {
+    const src = ctx.allowedPlaces instanceof Set ? [...ctx.allowedPlaces] : (ctx.allowedPlaces || []);
+    const allowed = new Set(src.map((s) => String(s).replace(/\s/g, ''))); // 공백 정규화(자산명 '대만 해협' vs 관문 '대만해협')
+    const bodyNorm = `${weather}\n${impact}\n${action}`.replace(/\s/g, '');
+    for (const place of ctx.gazetteer) {
+      const p = String(place).replace(/\s/g, '');
+      if (p && bodyNorm.includes(p) && !allowed.has(p)) { issues.push(`환각: 입력 외 지명(${place})`); break; }
+    }
+  }
 
   // 분량 가드 — 폭주 방지용 느슨한 상한(태풍 초안은 강도·위치·트랙부재·평시대비 가중으로 자연히 길다).
   if (weather.length > 520) issues.push(`weather 분량 초과(${weather.length}>520)`);

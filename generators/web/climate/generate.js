@@ -45,6 +45,9 @@ async function generateClimateDrafts(supabase, callLLM, { asof = new Date(), dry
   const routeById = {}; (routes || []).forEach((r) => { routeById[r.id] = r; });
   const passageById = {}; (passages || []).forEach((p) => { passageById[p.id] = p; });
   const riskH0 = {}; (risk || []).forEach((r) => { if (r.horizon_days === 0) riskH0[r.asset_id] = r; });
+  // 환각 가드(2b)용 gazetteer: 알려진 관문·자산 지명 전체. via 인근(≤1500km) + event.area만 allowed.
+  const gazetteer = [...(passages || []).map((p) => p.name_ko), ...(assets || []).map((a) => a.name)].filter(Boolean);
+  const ALLOW_KM = 1500;
 
   // 같은 관문(via)을 공유하는 route 목록(전파 맥락).
   const routesByVia = {};
@@ -73,7 +76,10 @@ async function generateClimateDrafts(supabase, callLLM, { asof = new Date(), dry
       .map((a) => ({ asset: a, km: haversineKm([viaPassage.lon, viaPassage.lat], [a.lon, a.lat]) }))
       .filter((x) => x.km <= 800).sort((a, b) => a.km - b.km).slice(0, 3)
       .map((x) => ({ name: x.asset.name, type: x.asset.type, km: x.km, risk: riskH0[x.asset.id] || null }));
-    const ctx = { asof, event: { ...event, name: eventName(event.title) }, route: { id: route.id, name: route.name }, viaPassage, viaMinKm: primary.min, sharedRoutes: shared, trackSummary: ts, nearbyAssets: near };
+    const allowedPlaces = new Set([viaPassage.name_ko, event.area].filter(Boolean));
+    for (const p of passages || []) if (haversineKm([viaPassage.lon, viaPassage.lat], [p.lon, p.lat]) <= ALLOW_KM) allowedPlaces.add(p.name_ko);
+    for (const a of assets || []) if (haversineKm([viaPassage.lon, viaPassage.lat], [a.lon, a.lat]) <= ALLOW_KM) allowedPlaces.add(a.name);
+    const ctx = { asof, event: { ...event, name: eventName(event.title) }, route: { id: route.id, name: route.name }, viaPassage, viaMinKm: primary.min, sharedRoutes: shared, trackSummary: ts, nearbyAssets: near, gazetteer, allowedPlaces };
 
     const prose = await narrateClimate(callLLM, ctx);
     if (prose.needs_editor) res.needsEditor++;

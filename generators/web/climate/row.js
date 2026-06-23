@@ -1,28 +1,24 @@
 'use strict';
 // ctx + prose → forecasts 행(module='climate'). 순수 함수.
 // 입력은 event_route_impacts(트랙 교차 검증된 event→route via passage).
-// 자동발행 게이트: 코드 가드 통과 + 비-CRITICAL + 귀속 명확 = published. 그 외 = draft(자동 보류).
-// 검수 인력 부재 → 형식 검수 무의미. narrate.js 환각/가짜정밀 가드를 발행 게이트로 승격.
-// (forecasts.status는 draft/published/resolved만 허용 → '보류'는 draft로 표현, auto_held 플래그로 구분.)
+// 전량 자동발행 게이트: 코드 가드 통과 + 귀속 명확 = published(전 등급, 태풍 포함).
+// 검수 인력 부재 → 형식 검수 무의미. narrate.js 환각/가짜정밀/오귀속 가드가 유일한 발행 게이트.
+// 가드 실패·귀속 근거 없음만 자동 보류. (forecasts.status는 draft/published/resolved만 허용 →
+//  '보류'는 draft로 표현, auto_held 플래그로 구분 — 기존 검수 큐에 그대로 노출.)
 
 const EDITOR_PLACEHOLDER = '[AI 초안 · 에디터 검수 필요 — 본문 작성]';
 const SEV_KO = { r: '경보(red)', a: '주의(orange)' };
-const GATE_VERSION = 'climate-gate-v1';
+const GATE_VERSION = 'climate-gate-v2';
 
 function addDays(d, n) {
   const x = new Date(d.getTime() + n * 86400000);
   return x.toISOString().slice(0, 10);
 }
 
-// CRITICAL = 영향 큰 등급(보수적 보류 대상): 태풍 Typhoon~Super Typhoon(cyclone 'r') ·
-// GDACS red · Meteoalarm Extreme · NWS extreme — 모두 severity='r'.
-function isCritical(event) { return event.severity === 'r'; }
-
-// 발행 판단. publish=false면 자동 보류(draft) + reason 기록.
+// 발행 판단. publish=false면 자동 보류(draft) + reason 기록. CRITICAL 특례 없음(전량 자동).
 function publishDecision(ctx, prose) {
-  if (prose.needs_editor) return { publish: false, reason: 'guard_fail' };          // 가드 검증 실패(환각·인과·트랙초과 등)
+  if (prose.needs_editor) return { publish: false, reason: 'guard_fail' };          // 가드 검증 실패(환각·가짜정밀·인과 단정·트랙초과 등)
   if (!ctx.viaPassage || !ctx.viaPassage.id || !ctx.route || !ctx.route.id) return { publish: false, reason: 'no_attribution' }; // 귀속 불명
-  if (isCritical(ctx.event)) return { publish: false, reason: 'critical' };          // 영향 큰 건 보수적 보류(사람 옵션)
   return { publish: true, reason: null };
 }
 
@@ -72,4 +68,4 @@ function mapClimateRow(ctx, prose, asof = new Date()) {
   };
 }
 
-module.exports = { mapClimateRow, buildBasis, isCritical, publishDecision, EDITOR_PLACEHOLDER, GATE_VERSION };
+module.exports = { mapClimateRow, buildBasis, publishDecision, EDITOR_PLACEHOLDER, GATE_VERSION };

@@ -12,6 +12,8 @@ const ctx = {
   sharedRoutes: [{ id: 'r1', name: '아시아–유럽' }],
   trackSummary: { current: [125.2, 18.9], via: [125.3, 24.7], end: [145.8, 36.9], direction: '북동진', points: 121, hasTrack: true },
   nearbyAssets: [],
+  gazetteer: ['미야코해협', '대만해협', '수에즈운하', '말라카해협', '상하이', '닝보'],
+  allowedPlaces: new Set(['미야코해협', '대만해협', '닝보']),
 };
 
 const GOOD = {
@@ -60,6 +62,35 @@ test('validateClimate: 추정표현 없는 지연일 차단', () => {
 
 test('validateClimate: 이벤트 echo 불일치 차단', () => {
   assert.equal(validateClimate({ ...GOOD, event_echo: 'HAIKUI' }, ctx).ok, false);
+});
+
+test('가드보강 2a: 헤지 없는 정량(풍속 m/s 등) 차단', () => {
+  const v = validateClimate({ ...GOOD, weather: 'MEKKHALA는 풍속 55m/s로 미야코해협을 통과한다.', event_echo: 'MEKKHALA' }, ctx);
+  assert.equal(v.ok, false);
+  assert.ok(v.issues.some((i) => /정량|추정/.test(i)));
+});
+
+test('가드보강 2b: 입력(allowed) 밖 지명 등장 차단(환각)', () => {
+  const bad = { ...GOOD, impact: '미야코해협 통과로 수에즈운하 적체가 발생할 가능성이 있다고 추정된다.' };
+  const v = validateClimate(bad, ctx);
+  assert.equal(v.ok, false);
+  assert.ok(v.issues.some((i) => /환각|지명|수에즈/.test(i)));
+});
+
+test('가드보강 2b: allowed 지명만이면 통과', () => {
+  assert.equal(validateClimate(GOOD, ctx).ok, true); // 미야코해협만 등장
+});
+
+test('가드보강 2c: 트랙 끝점 너머 시점 단언(N일 후 통과) 차단', () => {
+  const bad = { ...GOOD, weather: 'MEKKHALA는 북동진하여 3일 후 미야코해협을 통과하는 것으로 나타났다.', event_echo: 'MEKKHALA' };
+  const v = validateClimate(bad, ctx);
+  assert.equal(v.ok, false);
+  assert.ok(v.issues.some((i) => /시점|트랙/.test(i)));
+});
+
+test('가드보강 2b: gazetteer 없는 ctx는 환각검사 생략(무크래시)', () => {
+  const minimal = { event: { name: 'MEKKHALA' } };
+  assert.equal(validateClimate(GOOD, minimal).ok, true);
 });
 
 test('narrateClimate: 검증 통과 시 3단 필드 반환', async () => {
