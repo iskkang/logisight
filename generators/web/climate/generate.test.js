@@ -4,98 +4,99 @@ const assert = require('node:assert/strict');
 const { generateClimateDrafts } = require('./generate');
 
 const GOOD_LLM = async () => JSON.stringify({
-  weather: 'MEKKHALA는 슈퍼태풍 강도로 대만 해협 인근에 위치한 것으로 나타났다. 예보 경로는 입력에 없어 접근 방향은 단정하지 않는다.',
-  impact: '아시아–미동안 노선의 대만해협 구간에서 우회·감속 가능성이 있고 리드타임은 +2~4일가량 추정된다.',
-  action: '대만해협 경유 부킹에 버퍼를 두고 선사 공지를 모니터링할 것을 권고한다.',
+  weather: 'MEKKHALA는 슈퍼태풍 강도로 북동진하며 미야코해협을 통과하는 것으로 나타났다. 트랙 점에 예보시각이 없어 시점은 단정하지 않는다.',
+  impact: '아시아–미동안 노선이 미야코해협을 지나므로 통항·리드타임에 지연 가능성이 있다고 추정된다. +2~4일가량 추정 수준.',
+  action: '미야코해협 경유 부킹에 버퍼를 두고 트랙 갱신을 모니터링할 것을 권고한다.',
   event_echo: 'MEKKHALA',
 });
 
-// 가짜 supabase — 테이블별 데이터 + forecasts insert/update/lookup 캡처.
-function fakeSupabase({ forecastsExisting = [], captured, events }) {
+const EVENTS = [{ id: 'hko-2611', source: 'hko', kind: 'cyclone', title: 'MEKKHALA (Super Typhoon)', severity: 'r', lon: 125.6, lat: 18.5, area: '북서태평양', track: [[125.2, 18.9], [125.3, 24.7], [145.8, 36.9]] }];
+
+function match(r, f) { return Object.entries(f).every(([k, v]) => r[k] === v); }
+function forecastsBuilder(store, captured) {
+  const filters = {};
+  const b = {
+    select() { return b; },
+    eq(c, v) { filters[c] = v; return b; },
+    limit() { return Promise.resolve({ data: store.filter((r) => match(r, filters)) }); },
+    then(res, rej) { return Promise.resolve({ data: store.filter((r) => match(r, filters)) }).then(res, rej); },
+    insert(row) { store.push({ ...row, id: 'fc-' + (store.length + 1) }); captured.push({ op: 'insert', metric_ref: row.metric_ref }); return Promise.resolve({ error: null }); },
+    update(row) { return { eq(c, v) { const i = store.findIndex((r) => r[c] === v); if (i >= 0) store[i] = { ...store[i], ...row }; captured.push({ op: 'update', metric_ref: row.metric_ref }); return Promise.resolve({ error: null }); } }; },
+    delete() { return { eq(c, v) { const i = store.findIndex((r) => r[c] === v); const rm = i >= 0 ? store.splice(i, 1)[0] : null; captured.push({ op: 'delete', metric_ref: rm && rm.metric_ref }); return Promise.resolve({ error: null }); } }; },
+  };
+  return b;
+}
+function fakeSupabase({ impacts, events = EVENTS, captured, existingForecasts = [] }) {
+  const store = existingForecasts.slice();
   const data = {
-    events: events || [
-      { id: 'hko-2611', source: 'hko', kind: 'cyclone', title: 'MEKKHALA (Super Typhoon)', severity: 'r', lon: 125.6, lat: 18.5, area: '북서태평양' },
-      { id: 'gdacs:far', source: 'gdacs', kind: 'flood', title: 'Flood Far', severity: 'r', lon: -46.3, lat: -23.9, area: 'Brazil' },
-    ],
-    routes: [
-      { id: 'r3', name: '아시아–미동안', waypoints: ['shanghai', 'taiwan', [140, 20]], chokes: ['taiwan'] },
-      { id: 'r2', name: '환태평양', waypoints: ['busan', [150, 40]], chokes: [] },
-    ],
-    assets: [
-      { id: 'taiwan', name: '대만 해협', type: 'choke', lon: 119.5, lat: 24.0, freeze_prone: false },
-      { id: 'shanghai', name: '상하이', type: 'port', lon: 121.5, lat: 31.2, freeze_prone: false },
-      { id: 'busan', name: '부산', type: 'port', lon: 129.0, lat: 35.1, freeze_prone: false },
-    ],
-    asset_risk: [{ asset_id: 'taiwan', horizon_days: 0, score: 0, level: 'g', driver: '평온' }],
-    forecasts: forecastsExisting,
+    event_route_impacts: impacts,
+    events,
+    routes: [{ id: 'r3', name: '아시아–미동안' }, { id: 'r1', name: '아시아–유럽' }],
+    passages: [{ id: 'miyako_strait', name_ko: '미야코해협', lat: 24.8, lon: 125.3, influence_radius_km: 150 }, { id: 'taiwan_strait', name_ko: '대만해협', lat: 24, lon: 119.5, influence_radius_km: 180 }],
+    assets: [{ id: 'taiwan', name: '대만 해협', type: 'choke', lon: 119.5, lat: 24 }],
+    asset_risk: [],
   };
   function from(table) {
+    if (table === 'forecasts') return forecastsBuilder(store, captured);
     let rows = (data[table] || []).slice();
-    const api = {
-      select() { return api; },
-      eq(col, val) { rows = rows.filter((r) => r[col] === val); return api; },
-      in(col, vals) { rows = rows.filter((r) => vals.includes(r[col])); return api; },
-      order() { return api; },
-      limit() { return Promise.resolve({ data: rows }); },
-      then(res, rej) { return Promise.resolve({ data: rows }).then(res, rej); },
-      async insert(row) { captured.push({ op: 'insert', row }); return { error: null }; },
-      update(patch) { return { eq() { captured.push({ op: 'update', row: patch }); return Promise.resolve({ error: null }); } }; },
-    };
+    const api = { select() { return api; }, eq() { return api; }, in() { return api; }, order() { return api; }, limit() { return Promise.resolve({ data: rows }); }, then(res, rej) { return Promise.resolve({ data: rows }).then(res, rej); } };
     return api;
   }
-  return { from };
+  return { from, _store: store };
 }
 
-test('generateClimateDrafts: 근접 태풍 1건 → climate draft 1건 적재(원거리 이벤트 무시)', async () => {
+test('generateClimateDrafts: event_route_impacts(r3 via miyako) → 1 draft, metric_ref에 via 포함', async () => {
   const captured = [];
-  const res = await generateClimateDrafts(fakeSupabase({ captured }), GOOD_LLM, { asof: new Date('2026-06-23') });
-  assert.equal(captured.length, 1);
-  const row = captured[0].row;
-  assert.equal(row.module, 'climate');
-  assert.equal(row.status, 'draft');
-  assert.equal(row.metric_ref, 'climate:r3:hko-2611');
-  assert.match(row.statement, /기상 리스크 변화/);
+  const impacts = [{ event_id: 'hko-2611', route_id: 'r3', via_passage_id: 'miyako_strait', min_dist_km: 100 }];
+  const res = await generateClimateDrafts(fakeSupabase({ impacts, captured }), GOOD_LLM, { asof: new Date('2026-06-23') });
   assert.equal(res.inserted, 1);
+  assert.equal(res.drafts.length, 1);
+  assert.equal(res.drafts[0].row.metric_ref, 'climate:r3:hko-2611:miyako_strait');
+  assert.equal(res.drafts[0].ctx.viaPassage.id, 'miyako_strait');
+  assert.equal(res.drafts[0].ctx.trackSummary.hasTrack, true);
+  assert.equal(res.drafts[0].ctx.trackSummary.direction, '북동진');
 });
 
-test('generateClimateDrafts: 근접 이벤트 0건 → 빈 초안 없이 스킵', async () => {
+test('generateClimateDrafts: 거리-근접 stale draft(키 불일치)는 폐기, 발행분은 보존', async () => {
   const captured = [];
-  const onlyFar = fakeSupabase({ captured });
-  // events를 원거리 1건만 남기도록 교체
-  const sb = {
-    from(t) {
-      if (t === 'events') {
-        return { select() { return this; }, order() { return this; }, then(r) { return Promise.resolve({ data: [{ id: 'gdacs:far', kind: 'flood', title: 'Far', severity: 'r', lon: -46.3, lat: -23.9, area: 'Brazil' }] }).then(r); } };
-      }
-      return onlyFar.from(t);
-    },
-  };
-  const res = await generateClimateDrafts(sb, GOOD_LLM, { asof: new Date('2026-06-23') });
-  assert.equal(captured.length, 0);
-  assert.equal(res.pairs, 0);
+  const impacts = [{ event_id: 'hko-2611', route_id: 'r3', via_passage_id: 'miyako_strait', min_dist_km: 100 }];
+  const existingForecasts = [
+    { id: 'old1', metric_ref: 'climate:r3:hko-2611', model_version: 'climate-v1', module: 'climate', status: 'draft' }, // 거리근접 stale
+    { id: 'pub1', metric_ref: 'climate:r9:e9', model_version: 'climate-v1', module: 'climate', status: 'published' },   // 보존
+  ];
+  const res = await generateClimateDrafts(fakeSupabase({ impacts, captured, existingForecasts }), GOOD_LLM, { asof: new Date('2026-06-23') });
+  assert.equal(res.purged, 1);
+  assert.ok(captured.some((c) => c.op === 'delete' && c.metric_ref === 'climate:r3:hko-2611'));
+  assert.ok(!captured.some((c) => c.op === 'delete' && c.metric_ref === 'climate:r9:e9')); // published 보존
 });
 
-test('generateClimateDrafts: 이미 발행된 동일 키는 보존(덮어쓰기 금지)', async () => {
+test('generateClimateDrafts: 0 impacts → 0 draft, stale draft 폐기', async () => {
   const captured = [];
-  const existing = [{ id: 'pub1', metric_ref: 'climate:r3:hko-2611', model_version: 'climate-v1', status: 'published' }];
-  const res = await generateClimateDrafts(fakeSupabase({ captured, forecastsExisting: existing }), GOOD_LLM, { asof: new Date('2026-06-23') });
-  assert.equal(captured.length, 0); // insert/update 안 함
-  assert.equal(res.skippedExisting, 1);
+  const existingForecasts = [{ id: 'old1', metric_ref: 'climate:r3:hko-2611', model_version: 'climate-v1', module: 'climate', status: 'draft' }];
+  const res = await generateClimateDrafts(fakeSupabase({ impacts: [], captured, existingForecasts }), GOOD_LLM, { asof: new Date('2026-06-23') });
+  assert.equal(res.groups, 0);
+  assert.equal(res.drafts.length, 0);
+  assert.equal(res.purged, 1);
 });
 
-test('generateClimateDrafts: 태풍·홍수 외(storm/tornado)는 노선 근접해도 제외', async () => {
+test('generateClimateDrafts: 같은 (event,route) 다중 via → 1 draft(최근접 via 대표)', async () => {
   const captured = [];
-  // taiwan 좌표(119.5,24.0)에 정확히 위치한 storm — r3에 0km로 근접하지만 kind=storm → 게이트 제외.
-  const events = [{ id: 'nws:tornado', kind: 'storm', title: 'Tornado Warning', severity: 'r', lon: 119.5, lat: 24.0, area: 'x' }];
-  const res = await generateClimateDrafts(fakeSupabase({ captured, events }), GOOD_LLM, { asof: new Date('2026-06-23') });
-  assert.equal(captured.length, 0);
-  assert.equal(res.pairs, 0);
+  const impacts = [
+    { event_id: 'hko-2611', route_id: 'r3', via_passage_id: 'taiwan_strait', min_dist_km: 150 },
+    { event_id: 'hko-2611', route_id: 'r3', via_passage_id: 'miyako_strait', min_dist_km: 100 },
+  ];
+  const res = await generateClimateDrafts(fakeSupabase({ impacts, captured }), GOOD_LLM, { asof: new Date('2026-06-23') });
+  assert.equal(res.groups, 1);
+  assert.equal(res.drafts.length, 1);
+  assert.equal(res.drafts[0].row.metric_ref, 'climate:r3:hko-2611:miyako_strait'); // 최근접 100km
 });
 
-test('generateClimateDrafts: dryRun이면 DB 쓰지 않고 행만 반환', async () => {
+test('generateClimateDrafts: dryRun이면 DB 미기록·폐기 안 함, 행만 반환', async () => {
   const captured = [];
-  const res = await generateClimateDrafts(fakeSupabase({ captured }), GOOD_LLM, { asof: new Date('2026-06-23'), dryRun: true });
+  const impacts = [{ event_id: 'hko-2611', route_id: 'r3', via_passage_id: 'miyako_strait', min_dist_km: 100 }];
+  const existingForecasts = [{ id: 'old1', metric_ref: 'climate:r3:hko-2611', model_version: 'climate-v1', module: 'climate', status: 'draft' }];
+  const res = await generateClimateDrafts(fakeSupabase({ impacts, captured, existingForecasts }), GOOD_LLM, { asof: new Date('2026-06-23'), dryRun: true });
   assert.equal(captured.length, 0);
   assert.equal(res.drafts.length, 1);
-  assert.equal(res.drafts[0].row.metric_ref, 'climate:r3:hko-2611');
+  assert.equal(res.purged, 0);
 });

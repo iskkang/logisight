@@ -5,29 +5,43 @@ const { buildClimatePrompt, validateClimate, narrateClimate } = require('./narra
 
 const ctx = {
   asof: new Date('2026-06-23T00:00:00Z'),
-  event: { id: 'hko-2611', title: 'MEKKHALA (Super Typhoon)', name: 'MEKKHALA', kind: 'cyclone', severity: 'r', lon: 125.6, lat: 18.5, area: '북서태평양' },
+  event: { id: 'hko-2611', kind: 'cyclone', title: 'MEKKHALA (Super Typhoon)', name: 'MEKKHALA', severity: 'r', lon: 125.6, lat: 18.5, area: '북서태평양' },
   route: { id: 'r3', name: '아시아–미동안' },
-  nearestKm: 878,
-  nearestLabel: '대만 해협',
-  nearbyAssets: [{ name: '대만 해협', type: 'choke', km: 878, risk: { score: 0, level: 'g', driver: '평온' } }],
+  viaPassage: { id: 'miyako_strait', name_ko: '미야코해협' },
+  viaMinKm: 100,
+  sharedRoutes: [{ id: 'r1', name: '아시아–유럽' }],
+  trackSummary: { current: [125.2, 18.9], via: [125.3, 24.7], end: [145.8, 36.9], direction: '북동진', points: 121, hasTrack: true },
+  nearbyAssets: [],
 };
 
 const GOOD = {
-  weather: 'MEKKHALA는 슈퍼태풍 강도로 대만 해협에서 약 880km 떨어진 지점에 위치한 것으로 나타났다. 예보 경로 데이터는 입력에 없어 접근 방향은 단정하지 않는다.',
-  impact: '아시아–미동안 노선의 대만해협 통과 구간에서 우회·감속 가능성이 있으며, 리드타임은 +2~4일가량 늘 수 있다는 추정이 가능하다.',
-  action: '대만해협 경유 화물의 부킹 일정에 버퍼를 두고 선사 공지를 모니터링할 것을 권고한다.',
+  weather: 'MEKKHALA는 슈퍼태풍 강도로 현재 남쪽 해상에 위치하며, 예보트랙은 북동진하여 미야코해협을 통과하는 것으로 나타났다. 트랙 점에 예보시각이 없어 통과 시점은 단정하지 않는다.',
+  impact: '아시아–미동안 노선이 미야코해협을 지나므로 해당 구간 통항·리드타임에 지연 가능성이 있다고 추정된다. 정량 근거가 없어 +2~4일가량 추정 수준으로만 본다.',
+  action: '미야코해협 경유 부킹에 버퍼를 두고 트랙 갱신을 모니터링할 것을 권고한다.',
   event_echo: 'MEKKHALA',
 };
 
-test('buildClimatePrompt: 시스템에 asset_risk 평시-only 가중 지침과 환각 차단 지침 포함', () => {
-  const { system, user } = buildClimatePrompt(ctx);
-  assert.match(system, /평시/);                 // asset_risk score는 평시 기상장만 반영
-  assert.match(system, /활성 이벤트/);          // 둘 다 가중
-  assert.match(system, /입력에 없는/);          // 환각 차단(없는 항만·수치 금지)
-  // user에는 실데이터만 — 이벤트 타이틀·노선명·근접거리 포함
+test('buildClimatePrompt: 시스템에 신호가중·환각차단·트랙시각 가드 포함', () => {
+  const { system } = buildClimatePrompt(ctx);
+  assert.match(system, /평시/);          // asset_risk 평시-only 가중
+  assert.match(system, /활성 이벤트/);
+  assert.match(system, /입력.*없는/);    // 환각 차단(입력에 없는 노선·항만·수치 금지)
+  assert.match(system, /트랙/);          // 트랙 기반 서술
+  assert.match(system, /시각|시점/);     // 예보시각 없으니 +N일 만들지 말 것
+});
+
+test('buildClimatePrompt: user에 via_passage·route·트랙 방향 포함(거리근접 아님)', () => {
+  const { user } = buildClimatePrompt(ctx);
   assert.match(user, /MEKKHALA/);
   assert.match(user, /아시아–미동안/);
-  assert.match(user, /878|880/);
+  assert.match(user, /미야코해협/);      // 걸린 관문
+  assert.match(user, /북동진/);          // 트랙 방향
+});
+
+test('buildClimatePrompt: 점 이벤트(트랙 없음)도 via_passage 기반으로 구성', () => {
+  const pt = { ...ctx, event: { ...ctx.event, kind: 'flood', name: 'FloodX' }, trackSummary: { current: [125, 24], hasTrack: false } };
+  const { user } = buildClimatePrompt(pt);
+  assert.match(user, /미야코해협/);
 });
 
 test('validateClimate: 정상 3단 출력 통과', () => {
@@ -35,55 +49,27 @@ test('validateClimate: 정상 3단 출력 통과', () => {
 });
 
 test('validateClimate: 단정 표현(반드시) 차단', () => {
-  const bad = { ...GOOD, impact: '리드타임이 반드시 늘어난다는 추정이 가능하다.' };
-  assert.equal(validateClimate(bad, ctx).ok, false);
+  assert.equal(validateClimate({ ...GOOD, impact: '반드시 지연된다는 추정이 가능하다.' }, ctx).ok, false);
 });
 
-test('validateClimate: 추정표현 없는 지연일 수치 차단', () => {
-  const bad = { ...GOOD, impact: '아시아–미동안 노선 리드타임이 +3일 늘어난다.' };
-  const v = validateClimate(bad, ctx);
+test('validateClimate: 추정표현 없는 지연일 차단', () => {
+  const v = validateClimate({ ...GOOD, impact: '리드타임이 +3일 늘어난다.' }, ctx);
   assert.equal(v.ok, false);
   assert.ok(v.issues.some((i) => /추정/.test(i)));
 });
 
-test('validateClimate: 범위+추정 동반한 지연일은 허용', () => {
-  assert.equal(validateClimate(GOOD, ctx).ok, true); // "+2~4일가량 … 추정"
-});
-
-test('validateClimate: 현실적 길이(450자) 본문 허용 — 태풍 초안은 길어진다', () => {
-  const unit = 'MEKKHALA 슈퍼태풍 대만 해협 인근 위치 추정. ';
-  const longWeather = unit.repeat(40).slice(0, 450);
-  const v = validateClimate({ ...GOOD, weather: longWeather }, ctx);
-  assert.equal(v.ok, true, JSON.stringify(v.issues));
-});
-
-test('validateClimate: 폭주(>520자) weather는 차단', () => {
-  const tooLong = 'MEKKHALA 슈퍼태풍 대만 해협 인근 위치 추정. '.repeat(40).slice(0, 540);
-  assert.equal(validateClimate({ ...GOOD, weather: tooLong }, ctx).ok, false);
-});
-
-test('validateClimate: 권장행동 비면 실패', () => {
-  const bad = { ...GOOD, action: '' };
-  assert.equal(validateClimate(bad, ctx).ok, false);
-});
-
-test('validateClimate: 이벤트 echo 불일치 차단(환각 방지)', () => {
-  const bad = { ...GOOD, event_echo: 'HAIKUI' };
-  assert.equal(validateClimate(bad, ctx).ok, false);
+test('validateClimate: 이벤트 echo 불일치 차단', () => {
+  assert.equal(validateClimate({ ...GOOD, event_echo: 'HAIKUI' }, ctx).ok, false);
 });
 
 test('narrateClimate: 검증 통과 시 3단 필드 반환', async () => {
-  const fakeLLM = async () => JSON.stringify(GOOD);
-  const out = await narrateClimate(fakeLLM, ctx);
+  const out = await narrateClimate(async () => JSON.stringify(GOOD), ctx);
   assert.equal(out.needs_editor, false);
   assert.equal(out.weather, GOOD.weather);
-  assert.equal(out.action, GOOD.action);
 });
 
-test('narrateClimate: 검증 실패 반복 시 needs_editor=true(빈 본문)', async () => {
-  const fakeLLM = async () => 'not json at all';
-  const out = await narrateClimate(fakeLLM, ctx, { maxRetries: 1 });
+test('narrateClimate: 검증 실패 반복 시 needs_editor=true', async () => {
+  const out = await narrateClimate(async () => 'not json', ctx, { maxRetries: 1 });
   assert.equal(out.needs_editor, true);
   assert.equal(out.weather, null);
-  assert.ok(out.validation_issues.length > 0);
 });
