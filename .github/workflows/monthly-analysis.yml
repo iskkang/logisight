@@ -9,6 +9,8 @@ jobs:
   collect-monthly:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
@@ -36,6 +38,14 @@ jobs:
         run: node generators/report/assemble-monthly-report.js --force
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Commit draft (검수용 — 발행은 monthly-report-publish 수동 트리거)
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add content/drafts/monthly-analysis-*.md content/monthly-report/**/*.md
+          git commit -m "chore(monthly): draft $(date -u +%Y-%m)" || echo "no changes"
+          git push || echo "push skipped"
 
       - name: Log to data_updates
         if: always()

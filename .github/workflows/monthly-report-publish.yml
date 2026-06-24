@@ -1,0 +1,64 @@
+name: Monthly Report Publish
+
+# 승인 후 자동발행(수동 트리거): monthly-analysis 가 만든 초안을 검수한 뒤
+# Actions에서 Run → PDF 생성 + Storage 업로드 + reports upsert + published PDF 커밋.
+on:
+  workflow_dispatch:
+    inputs:
+      month:
+        description: '대상 월 (YYYY-MM). 비우면 현재 월(UTC)'
+        required: false
+
+concurrency:
+  group: monthly-report-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22', cache: 'npm' }
+      - run: npm ci
+
+      - name: 대상 월 결정
+        id: m
+        env:
+          MONTH: ${{ github.event.inputs.month }}
+        run: |
+          MONTH="${MONTH:-$(date -u +%Y-%m)}"
+          echo "month=$MONTH" >> "$GITHUB_OUTPUT"
+          echo "대상 월: $MONTH"
+
+      - name: Chrome 경로 확인
+        id: chrome
+        run: |
+          BIN=$(which google-chrome || which google-chrome-stable || which chromium-browser || true)
+          [ -z "$BIN" ] && { echo "::error::Chrome 미설치 — 러너에서 google-chrome 을 찾지 못함"; exit 1; }
+          echo "path=$BIN" >> "$GITHUB_OUTPUT"
+          echo "Chrome: $BIN"
+
+      - name: PDF 생성 + 발행
+        env:
+          MONTH: ${{ steps.m.outputs.month }}
+          PUPPETEER_EXECUTABLE_PATH: ${{ steps.chrome.outputs.path }}
+        run: |
+          npm run monthly:pdf -- --month="$MONTH"
+          npm run monthly:publish -- --month="$MONTH"
+
+      - name: published PDF 커밋
+        env:
+          MONTH: ${{ steps.m.outputs.month }}
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add content/published/monthly-analysis-*.pdf
+          git commit -m "chore(monthly): publish PDF $MONTH" || echo "no changes"
+          git push || echo "push skipped"

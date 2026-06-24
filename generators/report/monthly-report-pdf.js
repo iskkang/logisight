@@ -895,6 +895,7 @@ async function main() {
 
   const browser = await puppeteer.launch({
     executablePath:
+      process.env.PUPPETEER_EXECUTABLE_PATH ||
       "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
     headless: true,
     args: [
