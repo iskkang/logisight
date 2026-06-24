@@ -1,5 +1,7 @@
-name: Weekly Report Draft
+name: Weekly Report Auto-Publish
 
+# 완전 자동(승인 게이트 없음): 일요일 cron이 초안 생성 → 즉시 승인 → PDF → 발행 → 커밋.
+# 검수 게이트가 필요하면 approve 단계를 빼고 .md만 커밋하도록 되돌리면 된다.
 on:
   schedule:
     - cron: '0 5 * * 0'   # 일요일 14:00 KST (05:00 UTC)
@@ -20,11 +22,28 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: '22', cache: 'npm' }
       - run: npm ci
-      - run: npm run weekly-report:generate
-      - name: Commit draft
+
+      - name: Chrome 경로 확인
+        id: chrome
+        run: |
+          BIN=$(which google-chrome || which google-chrome-stable || which chromium-browser || true)
+          [ -z "$BIN" ] && { echo "::error::Chrome 미설치 — 러너에서 google-chrome 을 찾지 못함"; exit 1; }
+          echo "path=$BIN" >> "$GITHUB_OUTPUT"
+          echo "Chrome: $BIN"
+
+      - name: 초안 생성 → 승인 → PDF → 발행
+        env:
+          PUPPETEER_EXECUTABLE_PATH: ${{ steps.chrome.outputs.path }}
+        run: |
+          npm run weekly-report:generate
+          WEEK=$(date -u +%G-W%V)
+          echo "주차: $WEEK"
+          npm run weekly-report:approve -- --week="$WEEK"
+
+      - name: Commit md + PDF
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add content/weekly-report/*.md
-          git commit -m "chore(weekly-report): draft $(date -u +%Y-W%V)" || echo "no changes"
+          git add content/weekly-report/*.md content/published/weekly-report-*.pdf
+          git commit -m "chore(weekly-report): auto-publish $(date -u +%G-W%V)" || echo "no changes"
           git push || echo "push skipped"
