@@ -1,0 +1,87 @@
+name: Weekly Report Publish
+
+# 승인 후 자동발행: content/weekly-report/<주차>.md 를 status: approved 로 바꿔 push 하면
+#   → PDF 생성(content/published) + Storage 업로드 + weekly_reports/reports upsert + PDF 커밋.
+# draft 상태(미승인) push 는 list-publishable 가 걸러내 no-op.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'content/weekly-report/*.md'
+  workflow_dispatch:
+    inputs:
+      week:
+        description: '주차 (YYYY-Www). 비우면 승인된 미발행 초안 자동 선택'
+        required: false
+      force:
+        description: 'PDF가 이미 있어도 재발행'
+        type: boolean
+        default: false
+
+concurrency:
+  group: weekly-report-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22', cache: 'npm' }
+      - run: npm ci
+
+      - name: 발행 대상 주차 산출
+        id: weeks
+        env:
+          WEEK: ${{ github.event.inputs.week }}
+          FORCE: ${{ github.event.inputs.force }}
+        run: |
+          ARGS=""
+          [ -n "$WEEK" ] && ARGS="$ARGS --week=$WEEK"
+          [ "$FORCE" = "true" ] && ARGS="$ARGS --force"
+          WEEKS=$(node generators/weekly-report/list-publishable.js $ARGS)
+          echo "발행 대상: ${WEEKS:-(없음)}"
+          if [ -n "$WEEKS" ]; then
+            echo "has=true" >> "$GITHUB_OUTPUT"
+            { echo "list<<EOF"; echo "$WEEKS"; echo "EOF"; } >> "$GITHUB_OUTPUT"
+          else
+            echo "has=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Chrome 경로 확인
+        if: steps.weeks.outputs.has == 'true'
+        id: chrome
+        run: |
+          BIN=$(which google-chrome || which google-chrome-stable || which chromium-browser || true)
+          [ -z "$BIN" ] && { echo "::error::Chrome 미설치 — 러너에서 google-chrome 을 찾지 못함"; exit 1; }
+          echo "path=$BIN" >> "$GITHUB_OUTPUT"
+          echo "Chrome: $BIN"
+
+      - name: PDF 생성 + 발행
+        if: steps.weeks.outputs.has == 'true'
+        env:
+          WEEKS: ${{ steps.weeks.outputs.list }}
+          PUPPETEER_EXECUTABLE_PATH: ${{ steps.chrome.outputs.path }}
+        run: |
+          while IFS= read -r week; do
+            [ -z "$week" ] && continue
+            echo "▶ $week"
+            npm run weekly-report:pdf -- --week="$week"
+            npm run weekly-report:publish -- --week="$week"
+          done <<< "$WEEKS"
+
+      - name: published PDF 커밋
+        if: steps.weeks.outputs.has == 'true'
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add content/published/weekly-report-*.pdf
+          git commit -m "chore(weekly-report): publish PDF" || echo "no changes"
+          git push || echo "push skipped"
