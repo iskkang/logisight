@@ -15,6 +15,7 @@ const ROOT = path.resolve(__dirname, '../..');
 function arg(name) { const a = process.argv.find(x => x.startsWith(`--${name}=`)); return a ? a.split('=')[1] : null; }
 
 function parseFrontmatter(md) {
+  md = md.replace(/\r\n/g, '\n');                 // CRLF(Windows 체크아웃) 정규화
   const m = md.match(/^---\n([\s\S]*?)\n---/);
   const meta = {};
   if (m) for (const line of m[1].split('\n')) {

@@ -14,6 +14,7 @@ function chromePath() {
 }
 
 function parseFrontmatter(md) {
+  md = md.replace(/\r\n/g, '\n');                 // CRLF(Windows 체크아웃) 정규화
   const m = md.match(/^---\n([\s\S]*?)\n---/);
   const meta = {};
   if (m) for (const line of m[1].split('\n')) {
