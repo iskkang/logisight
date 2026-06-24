@@ -1,0 +1,22 @@
+name: weekly-pick
+
+# 이번 주 주목(weekly_pick) 자동 선정 — Supabase Edge Function 트리거.
+# 최근 7일 maritime_news(ko)에 점수(언급량·물류 영향도)를 매겨 1건 선정 → weekly_pick upsert.
+# SUPABASE_ANON_KEY = anon public 키(verify_jwt 통과용; 함수 내부에서 service 키로 DB 씀).
+# GitHub cron 은 정시 보장이 아닌 best-effort(수 분 지연 가능 — 주간 배치엔 무방).
+
+on:
+  schedule:
+    - cron: '0 15 * * 0'   # 일 15:00 UTC = 월 00:00 KST
+  workflow_dispatch: {}     # 수동 실행 버튼
+
+jobs:
+  pick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: weekly-pick-select
+        run: |
+          curl -sSf -X POST "https://hmgbvqczmyjixkqbruzp.supabase.co/functions/v1/weekly-pick-select" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Content-Type: application/json" -d '{}'
