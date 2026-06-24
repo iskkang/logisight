@@ -65,6 +65,7 @@
     "section:all": "node generators/report/run-section.js --all",
     "monthly:assemble": "node generators/report/assemble-monthly-report.js",
     "monthly:pdf": "node generators/report/monthly-report-pdf.js",
+    "monthly:publish": "node generators/report/publish-monthly-report.js",
     "weekly-report:generate": "node generators/weekly-report/generate-weekly-report.js",
     "weekly-report:pdf": "node generators/weekly-report/weekly-report-pdf.js",
     "weekly-report:publish": "node generators/weekly-report/publish-weekly-report.js",

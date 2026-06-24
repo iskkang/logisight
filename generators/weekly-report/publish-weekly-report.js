@@ -8,6 +8,7 @@ const path = require('path');
 const ws = require('ws'); globalThis.WebSocket = ws;
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env.local') });
 const { createClient } = require('@supabase/supabase-js');
+const { publishReport } = require('../lib/publish-report');
 
 const ROOT = path.resolve(__dirname, '../..');
 
@@ -33,11 +34,11 @@ async function main() {
   const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
   // PDF가 있으면 Storage(reports)에 업로드하고 공개 URL을 pdf_url로 사용. --pdf-url가 있으면 그것을 우선.
+  const objectPath = `weekly/${week}.pdf`;
   let pdfUrl = arg('pdf-url') || null;
   if (!pdfUrl) {
     const pdfPath = path.join(ROOT, 'content/published', `weekly-report-${week}.pdf`);
     if (fs.existsSync(pdfPath)) {
-      const objectPath = `weekly/${week}.pdf`;
       const { error: upErr } = await supabase.storage.from(REPORTS_BUCKET)
         .upload(objectPath, fs.readFileSync(pdfPath), { contentType: 'application/pdf', upsert: true });
       if (upErr) throw new Error(`PDF 업로드 실패: ${upErr.message}`);
@@ -58,6 +59,21 @@ async function main() {
   const { error } = await supabase.from('weekly_reports').upsert(row, { onConflict: 'week_id' });
   if (error) throw new Error(error.message);
   console.log(`✅ 웹 발행: weekly_reports/${week}`);
+
+  // 마켓 리포트 카탈로그(reports)에도 등록 — PDF가 있을 때만(pdf_url NOT NULL). 이미 업로드한 PDF 재사용.
+  if (pdfUrl) {
+    const fmtMD = (d) => d ? `${d.slice(5, 7)}.${d.slice(8, 10)}` : '';
+    await publishReport({
+      type: 'weekly',
+      periodStart: meta.period_start_iso,
+      periodEnd: meta.period_end_iso,
+      periodLabel: `${wn}주차 · ${fmtMD(meta.period_start_iso)}–${fmtMD(meta.period_end_iso)}`,
+      title: `${wn}주차 글로벌 물류 시황`,
+      pdfUrl,
+      pdfKey: objectPath,
+      webUrl: null,
+    });
+  }
 }
 
 main().catch(e => { console.error('발행 실패:', e.message); process.exit(1); });

@@ -32,6 +32,7 @@
 | port_throughput | 010 | pipeline/collectors | Lovable (지도) | ✅ | 소스: LA·LB·SGP + KOSIS(해양수산부) KRPUS/KRICN/KRGMP 등 한국 항만 TEU |
 | industry_briefs | 044 | supabase/functions/industry-brief-generate (Edge, service_role) | Lovable /industries (직접 read) | ✅ | period(YYYY.MM)별 Claude 산업 브리핑 캐시(trade_briefs 043의 산업판 트윈). input_hash 동일 시 재생성 스킵(월1회). 챕터집계 RPC industry_chapter_totals(044) |
 | weekly_pick | 045 | supabase/functions/weekly-pick-select (Edge, service_role) | Lovable /news (직접 read) | ✅ | 최근 7일 maritime_news(ko) 점수화(언급량·물류 영향도)로 주1건 자동 선정 캐시. 주당 1행(week_start PK). maritime_news.view_count 도입 시 조회수 신호 가산 |
+| reports | 046 | generators/weekly-report/publish-weekly-report.js, generators/report/publish-monthly-report.js | Lovable "마켓 리포트" 랜딩/아카이브 (직접 read) | ✅ | 주간+월간 PDF 통합 카탈로그. weekly_reports(030)는 웹 가독 원본으로 유지, 본 테이블은 PDF 발행 인덱스. PDF는 reports 공개 버킷(weekly/·monthly/). 같은 기간 재발행 시 id로 upsert(덮어쓰기) |
 
 ## trade_statistics.stat_type 값 목록
 
