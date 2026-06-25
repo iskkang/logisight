@@ -3,7 +3,7 @@ module.exports = {
   region: 'europe',
   label: '유럽',
   geoKeywords: [
-    'Europe','유럽',  // 일반 권역어 (국가·항만명만으론 '미주·유럽 노선' 등 누락)
+    'Europe','유럽','European Union','EU','Eurozone',  // 일반 권역어 (국가·항만명만으론 '미주·유럽 노선' 등 누락)
     'Poland','폴란드','Hungary','헝가리','Czech','체코','Germany','독일',
     'UK','United Kingdom','영국','France','프랑스','Netherlands','네덜란드',
     'Belgium','벨기에','CEE','동유럽','중동부유럽',
@@ -16,6 +16,16 @@ module.exports = {
     'battery','배터리','이차전지','EV','전기차','semiconductor','반도체','K-배터리',
     'Wroclaw','브로츠와프','Komarom','코마롬','God','괴드',
     'Korea-EU','한-EU','한국발','한국향','Korean shipper','Korean exporter','부산',
+  ],
+  policyAnchors: [
+    '관세','tariff','반덤핑','anti-dumping','수출통제','export control','제재','sanctions',
+    '쿼터','quota','보조금','subsidy','무역장벽','trade barrier','FTA','관세인상',
+    'CBAM','탄소국경','EUDR','공급망실사','CSDDD','Foreign Subsidies',
+  ],
+  tradeAnchors: [
+    '무역량','trade volume','물동량','throughput','수출입','exports','imports',
+    '교역량','TEU','container volume','수출 증가','수출 감소','통관량',
+    'customs volume','교역 규모','bilateral trade',
   ],
   priorityTopics: [
     'CEE 배터리/EV 공급망 (폴란드·헝가리 클러스터)',

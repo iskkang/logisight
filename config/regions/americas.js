@@ -3,6 +3,7 @@ module.exports = {
   region: 'americas',
   label: '미주',
   geoKeywords: [
+    'Americas','미주','North America','US','U.S.',  // 일반 권역어
     'USA','United States','미국','Mexico','멕시코','USMCA','nearshoring','니어쇼어링',
     'Laredo','라레도','Nuevo Laredo','Los Angeles','Long Beach','LA/LB',
     'Savannah','사바나','Houston','Manzanillo','만사니요','Gulf of Mexico','멕시코만',
@@ -12,6 +13,16 @@ module.exports = {
     'battery','배터리','semiconductor','반도체','EV','전기차','IRA','관세','tariff',
     'HMGMA','Georgia plant','조지아 공장','Tennessee','테네시',
     '한국발','한국향','Korean exporter','부산',
+  ],
+  policyAnchors: [
+    '관세','tariff','반덤핑','anti-dumping','수출통제','export control','제재','sanctions',
+    '쿼터','quota','보조금','subsidy','무역장벽','trade barrier','관세인상',
+    'Section 301','Section 232','IRA','USMCA','reshoring',
+  ],
+  tradeAnchors: [
+    '무역량','trade volume','물동량','throughput','수출입','exports','imports',
+    '교역량','TEU','container volume','수출 증가','수출 감소','통관량',
+    'customs volume','교역 규모','bilateral trade',
   ],
   priorityTopics: [
     '니어쇼어링 (멕시코 생산 이전)',

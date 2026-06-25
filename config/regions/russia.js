@@ -3,6 +3,7 @@ module.exports = {
   region: 'russia',
   label: '극동(러시아·CIS)',
   geoKeywords: [
+    'Far East','극동','Eurasia','유라시아',  // 일반 권역어
     'Russia','러시아','Vladivostok','블라디보스토크','TSR','Trans-Siberian','시베리아횡단철도',
     'Vostochny','보스토치니','Moscow','모스크바','CIS','Kazakhstan','카자흐스탄',
     'Uzbekistan','우즈베키스탄','sanctions','제재','rerouting','우회','Central Asia','중앙아시아',
@@ -10,6 +11,15 @@ module.exports = {
   koreaAnchors: [
     '한국발','한국향','부산','TSR','CIS 환적','transshipment','중앙아시아 운임',
     '제재 우회','parallel import','평행수입','Korean cargo','MTL',
+  ],
+  policyAnchors: [
+    '제재','sanctions','price cap','수출통제','export control','이중용도','dual-use',
+    '우회수출','관세','tariff','쿼터','quota','무역장벽','trade barrier',
+  ],
+  tradeAnchors: [
+    '무역량','trade volume','물동량','throughput','수출입','exports','imports',
+    '교역량','TEU','container volume','수출 증가','수출 감소','통관량',
+    'customs volume','교역 규모','bilateral trade',
   ],
   priorityTopics: [
     'TSR 운임·운행 동향',

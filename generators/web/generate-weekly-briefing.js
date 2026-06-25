@@ -14,6 +14,7 @@ const {
   mondayOf,
   subtitleFor,
   buildSelectionMessages,
+  buildRegionSelectionMessages,
   toPoints,
   sanitizeHanja,
 } = require('./lib/weekly-briefing.lib');
@@ -48,31 +49,24 @@ async function main() {
     return;
   }
 
-  // ── 권역 모드: 지오+한국앵커 필터 → 큐레이션. --region 미지정 시 기존 전역 동작 유지 ──
+  // ── 권역 모드(v2): region AND (korea OR policy OR trade) 필터 → briefType 그룹 큐레이션. 미지정 시 전역 동작 유지 ──
   const regionArg = process.argv.find((a) => a.startsWith('--region='));
   const region = regionArg ? regionArg.split('=')[1] : null;
-  let curated = articles;
-  let promptFocus;
-  let regionCfg = null;
   if (region) {
-    regionCfg = require('../../config/regions/' + region + '.js');
-    const { filterByRegion } = require('../../lib/region-filter.js');
-    curated = filterByRegion(articles, regionCfg, 12);
-    promptFocus = regionCfg.promptFocus;
-    console.log(`  [region=${region}/${regionCfg.label}] 필터 통과 ${curated.length}/${articles.length}건`);
+    const regionCfg = require('../../config/regions/' + region + '.js');
+    const { filterByRegion, SHARED_TYPE_RULES } = require('../../lib/region-filter.js');
+    const curated = filterByRegion(articles, regionCfg, 14);
+    const byType = curated.reduce((m, a) => { m[a.briefType] = (m[a.briefType] || 0) + 1; return m; }, {});
+    console.log(`  [region=${region}/${regionCfg.label}] 필터 통과 ${curated.length}/${articles.length}건`, byType);
     if (curated.length === 0) {
-      console.warn(`⚠️ [region=${region}] 통과 기사 0건 — 더미 없이 권역 섹션 생략`);
+      console.warn(`⚠️ [region=${region}] 통과 기사 0건 — 더미 없이 권역 브리핑 생략`);
       return;
     }
-  }
-
-  const selection = await callDeepSeekJson({
-    messages: buildSelectionMessages(curated, promptFocus),
-    max_tokens: 3000,
-  });
-
-  // ── 권역 모드 산출: region 태그 파일(프로덕션 weekly_briefings 비침습). 글로벌 모드는 아래 DB 적재 ──
-  if (region) {
+    const focus = regionCfg.promptFocus + ' ' + SHARED_TYPE_RULES;
+    const regionSel = await callDeepSeekJson({
+      messages: buildRegionSelectionMessages(curated, focus),
+      max_tokens: 3000,
+    });
     const outDir = path.resolve(__dirname, '../../content/weekly-region');
     fs.mkdirSync(outDir, { recursive: true });
     const outPath = path.join(outDir, `${weekOf}-${region}.json`);
@@ -81,12 +75,18 @@ async function main() {
       label: regionCfg.label,
       week_of: weekOf,
       article_count: curated.length,
+      by_type: byType,
       generated_at: new Date().toISOString(),
-      selection,
+      selection: regionSel,
     }, null, 2), 'utf-8');
     console.log(`✅ [region=${region}] 산출물: ${outPath} (기사 ${curated.length}건)`);
     return;
   }
+
+  const selection = await callDeepSeekJson({
+    messages: buildSelectionMessages(articles),
+    max_tokens: 3000,
+  });
 
   const { data: briefing, error: bErr } = await supabase
     .from('weekly_briefings')

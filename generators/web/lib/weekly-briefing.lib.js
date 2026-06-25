@@ -69,6 +69,28 @@ ${list}`;
   return [{ role: 'user', content }];
 }
 
+// 권역 모드(v2): briefType(news/policy/trade)별 그룹 페이로드 → type별 블록 큐레이션.
+// focus = cfg.promptFocus + SHARED_TYPE_RULES (호출측에서 결합). 빈 type 블록은 생략 지시.
+function buildRegionSelectionMessages(articles, focus) {
+  const byType = { news: [], policy: [], trade: [] };
+  for (const a of articles) (byType[a.briefType] || byType.news).push(a);
+  const block = (label, items) => items.length
+    ? `\n[${label}] (${items.length}건)\n` +
+      items.map((a, i) => `${i + 1}. ${a.title || ''} — ${a.summary || ''}`).join('\n')
+    : '';
+  const payload = block('news', byType.news) + block('policy', byType.policy) + block('trade', byType.trade);
+  const content = `당신은 한국 화주·제조사를 위한 권역 물류 주간 브리핑 편집장이다.
+${focus || ''}
+아래는 권역 필터를 통과한 기사를 briefType별로 묶은 목록이다. 항목이 있는 type만 작성하고 없는 type은 생략한다(억지 생성 금지).
+숫자·단위·국가는 한글(달러·억·대비·미국·아시아)로 쓰고 어려운 한자 약물(弗·億·比·美·亞 등)은 쓰지 않는다.
+~입니다·~합니다는 쓰지 말고 ~기록했다·~밝혔다·~전망했다 어미를 사용한다.
+반드시 아래 JSON으로만 응답하라(빈 type은 ""):
+{"news":"운영 동향 요약 또는 \\"\\"","policy":"정책 함의(한국/권역 영향 1~2문장) 또는 \\"\\"","trade":"무역량 동향(기사에 보고된 수치만) 또는 \\"\\"","content":"권역 주간 분석 본문 600~1,000자 평문 산문"}
+
+기사 목록:${payload}`;
+  return [{ role: 'user', content }];
+}
+
 // 선정 JSON → weekly_briefing_points 행 배열 (빈 슬롯 제외)
 function toPoints(briefingId, selection) {
   const out = [];
@@ -86,4 +108,4 @@ function toPoints(briefingId, selection) {
   return out;
 }
 
-module.exports = { mondayOf, subtitleFor, buildSelectionMessages, toPoints, sanitizeHanja, SLOTS };
+module.exports = { mondayOf, subtitleFor, buildSelectionMessages, buildRegionSelectionMessages, toPoints, sanitizeHanja, SLOTS };
