@@ -2,8 +2,10 @@
 name: Weekly Newsletter
 
 on:
-  schedule:
-    - cron: '0 2 * * 4'   # 목요일 02:00 UTC (11:00 KST) — WCI 발표일
+  # 2026-06-25: 자동 발송 중단. 주간 리포트가 일간 뉴스레터와 동일 발신/제목으로
+  # 목요일 오후(GitHub Actions 지연으로 ~15:00 KST) 중복 발송되어, 일간 1통만 남기도록 schedule 제거.
+  # 필요 시 Actions의 "Run workflow"(workflow_dispatch)로 수동 실행.
+  #   - cron: '0 2 * * 4'   # (이전) 목요일 02:00 UTC (11:00 KST) — WCI 발표일
   workflow_dispatch:
 
 jobs:
