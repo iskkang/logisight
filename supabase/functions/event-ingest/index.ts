@@ -45,7 +45,9 @@ serve(async () => {
     (j.features || []).forEach((f: any) => {
       const p = f.properties || {}; const lvl = (p.alertlevel || '').toLowerCase(); const t = (p.eventtype || '').toUpperCase();
       if ((lvl !== 'orange' && lvl !== 'red') || !kindMap[t]) return;
-      const lon = f.geometry?.coordinates?.[0] ?? null, lat = f.geometry?.coordinates?.[1] ?? null;
+      // GDACS는 같은 이벤트를 Point(진앙/중심)와 Polygon(영향권 링) 에피소드로 함께 방출 →
+      // coordinates[0]을 lon으로 단정하면 Polygon에선 배열이 들어가 upsert 타입오류(500). centroid로 Point·Polygon 모두 처리(NWS와 동일).
+      const [lon, lat] = centroid(f.geometry);
       out.push({ id: 'gdacs:' + (p.eventid || p.eventname), source: 'gdacs', kind: kindMap[t], title: p.name || p.eventname || t,
         severity: lvl === 'red' ? 'r' : 'a', lon, lat, area: p.country || '', starts_at: p.fromdate || null, ends_at: p.todate || null,
         url: (p.url && p.url.report) || 'https://www.gdacs.org/' });
