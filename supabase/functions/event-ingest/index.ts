@@ -48,8 +48,11 @@ serve(async () => {
       // GDACS는 같은 이벤트를 Point(진앙/중심)와 Polygon(영향권 링) 에피소드로 함께 방출 →
       // coordinates[0]을 lon으로 단정하면 Polygon에선 배열이 들어가 upsert 타입오류(500). centroid로 Point·Polygon 모두 처리(NWS와 동일).
       const [lon, lat] = centroid(f.geometry);
+      // EQ/TS는 순간 이벤트 → GDACS todate==fromdate. ends_at으로 두면 프론트가 '만료'로 보고 ~1h 뒤 핀을 숨김.
+      // null로(=종료시각 없음). 수명은 GDACS 활성집합(매 run delete→upsert)이 관리.
+      const pointInTime = kindMap[t] === 'earthquake' || kindMap[t] === 'tsunami';
       out.push({ id: 'gdacs:' + (p.eventid || p.eventname), source: 'gdacs', kind: kindMap[t], title: p.name || p.eventname || t,
-        severity: lvl === 'red' ? 'r' : 'a', lon, lat, area: p.country || '', starts_at: p.fromdate || null, ends_at: p.todate || null,
+        severity: lvl === 'red' ? 'r' : 'a', lon, lat, area: p.country || '', starts_at: p.fromdate || null, ends_at: pointInTime ? null : (p.todate || null),
         url: (p.url && p.url.report) || 'https://www.gdacs.org/' });
     });
   } catch (_) {}
