@@ -1,29 +1,33 @@
 name: globe-risk-cron
 
 # 기상 리스크 지구본 스케줄러 — Supabase Edge Function 트리거 (pg_cron 대체).
-# risk-refresh: 6시간마다 / event-ingest: 2시간마다.
+# risk-refresh(예보→asset_risk)·event-ingest(재해 피드→events)를 매 실행 갱신.
+# 독립 job — 한쪽 실패가 다른쪽을 막지 않음. curl -sSf 실패 시 해당 job이 빨간 X(stale을 success로 숨기지 않음).
+# 스케줄은 2시간마다(:15) — GitHub는 정각(:00) 스케줄 드롭이 잦아 오프-아워 분(:15) 사용. best-effort(수 분 지연 가능).
+# (이전: risk-refresh를 '0 */6'(:00) cron에만 묶어 정각 드롭으로 사실상 미실행 → asset_risk stale. 그 의존 제거.)
 # SUPABASE_ANON_KEY = anon public 키 (verify_jwt 통과용; 함수 내부에서 service 키로 DB 씀).
-# GitHub cron은 정시 보장이 아니라 best-effort(수 분 지연 가능 — 6h/2h 주기엔 무방).
 
 on:
   schedule:
-    - cron: '0 */6 * * *'    # risk-refresh: 6시간마다
-    - cron: '15 */2 * * *'   # event-ingest: 2시간마다
+    - cron: '15 */2 * * *'   # 2시간마다 (오프-아워 분 — 정각 드롭 회피)
   workflow_dispatch: {}        # 수동 실행 버튼
 
 jobs:
-  trigger:
+  risk-refresh:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - name: risk-refresh
-        if: github.event.schedule == '0 */6 * * *' || github.event_name == 'workflow_dispatch'
         run: |
           curl -sSf -X POST "https://hmgbvqczmyjixkqbruzp.supabase.co/functions/v1/risk-refresh" \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
             -H "Content-Type: application/json" -d '{}'
+
+  event-ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
       - name: event-ingest
-        if: github.event.schedule == '15 */2 * * *' || github.event_name == 'workflow_dispatch'
         run: |
           curl -sSf -X POST "https://hmgbvqczmyjixkqbruzp.supabase.co/functions/v1/event-ingest" \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
