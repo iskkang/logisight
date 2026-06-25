@@ -33,6 +33,9 @@ serve(async () => {
   const { data: assets, error } = await sb.from('assets').select('*');
   if (error) return new Response(error.message, { status: 500 });
 
+  // upsert의 ON CONFLICT UPDATE는 컬럼 default(now())를 타지 않으므로 updated_at을 명시한다.
+  // (안 하면 첫 INSERT 시각에 고정 → 프론트 신선도 게이트가 영구 "예보 불충분"으로 회색 처리)
+  const nowIso = new Date().toISOString();
   const rows: any[] = [];
   for (const a of assets!) {
     const isSea = a.type === 'port' || a.type === 'choke';
@@ -63,7 +66,7 @@ serve(async () => {
       const score = Math.round(top[1]);                       // 최악 해저드 등급이 점수 결정
       const level = score >= 60 ? 'r' : score >= 30 ? 'a' : 'g';
       const driver = score >= 30 ? `${top[0]}${top[2] ? ` (${top[2]})` : ''}` : '정상';
-      rows.push({ asset_id: a.id, horizon_days: d, score, level, driver, wind_speed: sustained, wind_gust: gust, wave_height: wave, precip: prcp, snowfall: snowS, temp_min: tmin, is_freeze: isFreeze });
+      rows.push({ asset_id: a.id, horizon_days: d, score, level, driver, wind_speed: sustained, wind_gust: gust, wave_height: wave, precip: prcp, snowfall: snowS, temp_min: tmin, is_freeze: isFreeze, updated_at: nowIso });
     }
   }
   const { error: up } = await sb.from('asset_risk').upsert(rows, { onConflict: 'asset_id,horizon_days' });
