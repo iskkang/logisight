@@ -8,6 +8,7 @@ module.exports = {
     'Vostochny','보스토치니','Moscow','모스크바','CIS','Kazakhstan','카자흐스탄',
     'Uzbekistan','우즈베키스탄','sanctions','제재','rerouting','우회','Central Asia','중앙아시아',
   ],
+  broadGeo: ['Far East', '극동', 'Eurasia', '유라시아', 'CIS', 'Central Asia', '중앙아시아'],  // 광역어 — 주체 판정에서 제외
   koreaAnchors: [
     '한국발','한국향','부산','TSR','CIS 환적','transshipment','중앙아시아 운임',
     '제재 우회','parallel import','평행수입','Korean cargo','MTL',

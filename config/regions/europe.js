@@ -10,6 +10,7 @@ module.exports = {
     'Rotterdam','로테르담','Hamburg','함부르크','Antwerp','안트베르펜',
     'Felixstowe','Le Havre','Gdansk','그단스크','North Sea','Rhine','라인강',
   ],
+  broadGeo: ['Europe', '유럽', 'European Union', 'EU', 'Eurozone'],  // 광역어 — 주체 판정에서 제외
   koreaAnchors: [
     'LG Energy Solution','LG에너지솔루션','Samsung SDI','삼성SDI',
     'SK On','SK온','Hyundai','현대차','Kia','기아','POSCO','포스코','Hanwha','한화',

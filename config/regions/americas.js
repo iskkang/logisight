@@ -6,8 +6,9 @@ module.exports = {
     'Americas','미주','North America','US','U.S.',  // 일반 권역어
     'USA','United States','미국','Mexico','멕시코','USMCA','nearshoring','니어쇼어링',
     'Laredo','라레도','Nuevo Laredo','Los Angeles','Long Beach','LA/LB',
-    'Savannah','사바나','Houston','Manzanillo','만사니요','Gulf of Mexico','멕시코만',
+    'Savannah','사바나','Houston','Texas','텍사스','Corpus Christi','코퍼스크리스티','Manzanillo','만사니요','Gulf of Mexico','멕시코만',
   ],
+  broadGeo: ['Americas', '미주', 'North America'],  // 광역어 — 주체 판정에서 제외(미국·멕시코·도시는 주체로 유지)
   koreaAnchors: [
     'Hyundai','현대','Kia','기아','Samsung','삼성','LG','SK On','SK온','POSCO','포스코','Hanwha','한화',
     'battery','배터리','semiconductor','반도체','EV','전기차','IRA','관세','tariff',

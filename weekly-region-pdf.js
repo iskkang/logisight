@@ -17,7 +17,7 @@ async function main() {
   if (!meta) throw new Error(`region-meta 없음: ${region}`);
 
   const jsonPath = path.join(__dirname, 'content/weekly-region', `${week}-${region}.json`);
-  if (!fs.existsSync(jsonPath)) throw new Error(`feed JSON 없음: ${jsonPath} (먼저 weekly-region-feed.js 실행)`);
+  if (!fs.existsSync(jsonPath)) { console.warn(`⚠️ [${region}] feed JSON 없음(0건/미생성) — PDF 생략: ${jsonPath}`); return; }
   const json = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
 
   const model = adapt(json, meta);

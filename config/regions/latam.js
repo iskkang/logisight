@@ -8,6 +8,7 @@ module.exports = {
     'Santos','산토스','Paranagua','파라나구아','Valparaiso','발파라이소','San Antonio',
     'lithium','리튬','copper','구리','iron ore','철광석',
   ],
+  broadGeo: ['South America', '남미', '중남미', 'Latin America', 'LatAm', '라틴아메리카'],  // 광역어 — 주체 판정에서 제외
   koreaAnchors: [
     'lithium','리튬','이차전지 원료','battery raw material','POSCO','포스코','LG','Samsung','삼성',
     'iron ore','철광석','grain','곡물','copper','구리','nickel','니켈',
