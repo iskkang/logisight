@@ -73,3 +73,18 @@ test('confidence_reason: 발행분=자동발행, 보류분=보류 사유', () =>
 test('horizon_date = 기준일 + 3일', () => {
   assert.equal(mapClimateRow(critical, prose, asof).horizon_date, '2026-06-26');
 });
+
+// ── 지진·쓰나미: 발행 본문 헤더 kind 인지(기상 아님) ──
+const quake = { ...base, event: { id: 'gdacs:eq1', kind: 'earthquake', title: '혼슈 지진 (M6.5)', name: '혼슈 지진', severity: 'r', lon: 141, lat: 38 },
+  trackSummary: { current: [141, 38], hasTrack: false } };
+
+test('지진 발행 본문 헤더 = [지진 상황] (기상 리스크 변화 아님)', () => {
+  const r = mapClimateRow(quake, prose, asof);
+  assert.match(r.statement, /\[지진 상황\]/);
+  assert.doesNotMatch(r.statement, /기상 리스크 변화/);
+});
+
+test('쓰나미 발행 본문 헤더 = [쓰나미 상황]', () => {
+  const ts = { ...quake, event: { ...quake.event, kind: 'tsunami', title: '쓰나미 경보', name: '쓰나미 경보' } };
+  assert.match(mapClimateRow(ts, prose, asof).statement, /\[쓰나미 상황\]/);
+});

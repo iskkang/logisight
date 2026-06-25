@@ -36,10 +36,12 @@ serve(async () => {
     });
   } catch (_) {}
 
-  // 2) GDACS — 전 지구 다중재해 (태풍/홍수/산불), Orange+Red만
+  // 2) GDACS — 전 지구 다중재해 (태풍/홍수/산불/지진/쓰나미), Orange+Red만
+  //    EQ/TS는 점 이벤트(트랙 없음) → (b) judge가 이벤트 심각도 기반 광역반경으로 passage 교차판정.
+  //    (VO 화산은 범위 외 — 추가하지 않음.)
   try {
     const j = await getJSON('https://www.gdacs.org/gdacsapi/api/events/geteventlist/MAP');
-    const kindMap: any = { TC: 'cyclone', FL: 'flood', WF: 'storm', DR: 'other' };
+    const kindMap: any = { TC: 'cyclone', FL: 'flood', WF: 'storm', DR: 'other', EQ: 'earthquake', TS: 'tsunami' };
     (j.features || []).forEach((f: any) => {
       const p = f.properties || {}; const lvl = (p.alertlevel || '').toLowerCase(); const t = (p.eventtype || '').toUpperCase();
       if ((lvl !== 'orange' && lvl !== 'red') || !kindMap[t]) return;

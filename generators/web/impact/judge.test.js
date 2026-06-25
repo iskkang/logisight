@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { eventPassageHits, judgeEvents } = require('./judge');
+const { eventPassageHits, judgeEvents, eventRadiusKm } = require('./judge');
 
 // 실제 시드 좌표(lat,lon,radius)
 const PASSAGES = [
@@ -9,6 +9,30 @@ const PASSAGES = [
   { id: 'miyako_strait', lat: 24.8, lon: 125.3, influence_radius_km: 150 },
   { id: 'bashi_channel', lat: 21.5, lon: 121.0, influence_radius_km: 180 },
 ];
+
+// ── 지진·쓰나미: 이벤트 구동 광역반경(점 이벤트는 passage 고정반경 대신 이벤트 심각도로 판정) ──
+test('eventRadiusKm: 지진·쓰나미만 이벤트반경, 그 외 0(무회귀)', () => {
+  assert.equal(eventRadiusKm({ kind: 'earthquake', severity: 'r' }), 350);
+  assert.equal(eventRadiusKm({ kind: 'earthquake', severity: 'a' }), 150);
+  assert.equal(eventRadiusKm({ kind: 'tsunami', severity: 'r' }), 1000);
+  assert.equal(eventRadiusKm({ kind: 'tsunami', severity: 'a' }), 500);
+  assert.equal(eventRadiusKm({ kind: 'cyclone', severity: 'r' }), 0);
+  assert.equal(eventRadiusKm({ kind: 'flood', severity: 'a' }), 0);
+});
+
+test('eventPassageHits: 지진(red)은 이벤트 광역반경으로 passage 고정반경 밖도 hit', () => {
+  // 진앙을 bashi_channel(21.5,121.0) 정남쪽 ~255km(2.3°lat): passage 180km 밖, 지진 red 350km 안.
+  const quake = { id: 'gdacs:eq1', kind: 'earthquake', severity: 'r', lon: 121.0, lat: 19.2, track: null };
+  const hit = eventPassageHits(quake, PASSAGES).find((h) => h.passage_id === 'bashi_channel');
+  assert.ok(hit, 'bashi_channel이 지진 광역반경으로 잡혀야 함');
+  assert.ok(hit.min_dist_km > 180 && hit.min_dist_km < 350);
+});
+
+test('eventPassageHits: 같은 거리의 홍수(점)는 passage 고정반경 밖이라 미스 — 이벤트반경 무적용', () => {
+  const flood = { id: 'fl', kind: 'flood', severity: 'r', lon: 121.0, lat: 19.2, track: null };
+  const hit = eventPassageHits(flood, PASSAGES).find((h) => h.passage_id === 'bashi_channel');
+  assert.equal(hit, undefined);
+});
 
 // MEKKHALA: 현재점(125.6,18.5)에서 미야코해협(125.3,24.8) 인근 지나 북동진(실 트랙 축약).
 const MEKKHALA = { id: 'hko-2611', kind: 'cyclone', lon: 125.6, lat: 18.5,

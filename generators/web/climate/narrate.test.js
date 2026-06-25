@@ -46,6 +46,27 @@ test('buildClimatePrompt: 점 이벤트(트랙 없음)도 via_passage 기반으�
   assert.match(user, /미야코해협/);
 });
 
+// ── 지진·쓰나미: kind 인지 프레이밍(기상 아님) ──
+const quakeCtx = { ...ctx,
+  event: { id: 'gdacs:eq1', kind: 'earthquake', title: '혼슈 동부 지진', name: '혼슈 동부 지진', severity: 'r', lon: 141, lat: 38, area: '일본' },
+  trackSummary: { current: [141, 38], hasTrack: false } };
+
+test('buildClimatePrompt: 지진은 재해 프레이밍 + 내륙/철도/구조물 맥락(기상 프레이밍 아님)', () => {
+  const { system } = buildClimatePrompt(quakeCtx);
+  assert.match(system, /지진/);
+  assert.match(system, /철도|내륙|구조물/);
+  assert.match(system, /입력.*없는/);          // 환각 가드 유지
+  assert.doesNotMatch(system, /기상 리스크 변화/); // 지진을 기상으로 서술 금지
+});
+
+test('buildClimatePrompt: 쓰나미는 항만/연안/해상 + 근사·보수 맥락', () => {
+  const tsCtx = { ...quakeCtx, event: { ...quakeCtx.event, kind: 'tsunami', title: '쓰나미 경보', name: '쓰나미 경보' } };
+  const { system } = buildClimatePrompt(tsCtx);
+  assert.match(system, /쓰나미/);
+  assert.match(system, /항만|연안|해상/);
+  assert.match(system, /근사|보수/);
+});
+
 test('validateClimate: 정상 3단 출력 통과', () => {
   assert.deepEqual(validateClimate(GOOD, ctx), { ok: true, issues: [] });
 });

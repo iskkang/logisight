@@ -9,6 +9,8 @@
 const EDITOR_PLACEHOLDER = '[AI 초안 · 에디터 검수 필요 — 본문 작성]';
 const SEV_KO = { r: '경보(red)', a: '주의(orange)' };
 const GATE_VERSION = 'climate-gate-v2';
+// 발행 본문 1번 섹션 헤더 — 지진·쓰나미는 기상이 아니므로 종류별 헤더. 그 외는 기상.
+const SITUATION_HEADER = { earthquake: '[지진 상황]', tsunami: '[쓰나미 상황]' };
 
 function addDays(d, n) {
   const x = new Date(d.getTime() + n * 86400000);
@@ -43,7 +45,7 @@ function mapClimateRow(ctx, prose, asof = new Date()) {
   const { publish, reason } = publishDecision(ctx, prose);
   const statement = needsEditor
     ? EDITOR_PLACEHOLDER
-    : `[기상 리스크 변화]\n${prose.weather}\n\n[영향]\n${prose.impact}`;
+    : `${SITUATION_HEADER[event.kind] || '[기상 리스크 변화]'}\n${prose.weather}\n\n[영향]\n${prose.impact}`;
   const confidence = event.severity === 'r' && event.kind === 'cyclone' ? 'medium' : 'low';
   const baseFlag = trackSummary.hasTrack ? '예보트랙 시각 미제공(경로 방향만)' : '단일좌표(트랙 없음)';
   const gateFlags = publish ? ['auto_published'] : ['auto_held', `hold:${reason}`];

@@ -19,15 +19,29 @@ function eventPoints(event) {
   return [];
 }
 
+// 지진·쓰나미 영향반경(km) — 점 이벤트라 passage 고정반경 대신 이벤트 심각도(GDACS alertlevel)로 광역 판정.
+// 근사값(튜닝 대상): 지진은 진앙 영향권(orange≈M6/red≈M6.5+), 쓰나미는 연안 전파 불확실성 감안 보수적 광역.
+// 그 외(태풍·홍수 등)는 0 → max() 비교에서 passage 고정반경이 그대로 적용(무회귀).
+const EVENT_RADIUS_KM = {
+  earthquake: { a: 150, r: 350 },
+  tsunami: { a: 500, r: 1000 },
+};
+function eventRadiusKm(event) {
+  const byKind = EVENT_RADIUS_KM[event.kind];
+  if (!byKind) return 0;
+  return byKind[event.severity] ?? byKind.a;
+}
+
 // event × passages → [{passage_id, min_dist_km, hit_point_idx}] (hit만, 최소거리 오름차순)
 function eventPassageHits(event, passages) {
   const pts = eventPoints(event);
   if (!pts.length) return [];
+  const eventR = eventRadiusKm(event); // 지진·쓰나미만 >0
   const hits = [];
   for (const p of passages) {
     let best = Infinity, bi = -1;
     pts.forEach((pt, i) => { const d = haversineKm(pt, [p.lon, p.lat]); if (d < best) { best = d; bi = i; } });
-    if (best <= p.influence_radius_km) hits.push({ passage_id: p.id, min_dist_km: best, hit_point_idx: bi });
+    if (best <= Math.max(p.influence_radius_km, eventR)) hits.push({ passage_id: p.id, min_dist_km: best, hit_point_idx: bi });
   }
   return hits.sort((a, b) => a.min_dist_km - b.min_dist_km);
 }
@@ -35,7 +49,7 @@ function eventPassageHits(event, passages) {
 // 전체 활성 이벤트 판정 → event_passage_hits 통째 교체(파생 테이블이므로 stale 없음).
 async function judgeEvents(supabase, { dryRun = false } = {}) {
   const [{ data: events }, { data: passages }] = await Promise.all([
-    supabase.from('events').select('id,kind,lon,lat,track'),
+    supabase.from('events').select('id,kind,severity,lon,lat,track'),
     supabase.from('passages').select('id,lon,lat,influence_radius_km'),
   ]);
   const rows = [];
@@ -71,4 +85,4 @@ if (require.main === module) {
   main().catch((e) => { console.error('impact judge 실패:', e.message); process.exit(1); });
 }
 
-module.exports = { eventPassageHits, judgeEvents, haversineKm, eventPoints };
+module.exports = { eventPassageHits, judgeEvents, haversineKm, eventPoints, eventRadiusKm };
