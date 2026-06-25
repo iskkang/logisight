@@ -59,6 +59,25 @@ async function sbDeleteIn(table: string, column: string, ids: string[]): Promise
   if (!res.ok) throw new Error(`delete ${table} failed: ${res.status} — ${await res.text()}`);
 }
 
+// upsert ON CONFLICT DO NOTHING — 기존 행 보존(baseline 고정용). sbUpsert(merge)와 구분.
+async function sbUpsertIgnore(table: string, rows: Record<string, unknown>[], onConflict: string): Promise<void> {
+  if (!rows.length) return;
+  const url = `${SUPABASE_URL}/rest/v1/${table}?on_conflict=${encodeURIComponent(onConflict)}`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json', Prefer: 'resolution=ignore-duplicates,return=minimal' }),
+    body: JSON.stringify(rows),
+  });
+  if (!res.ok) throw new Error(`upsert(ignore) ${table} failed: ${res.status} — ${await res.text()}`);
+}
+
+// RPC 호출(산출 재계산).
+async function sbRpc(fn: string): Promise<void> {
+  const url = `${SUPABASE_URL}/rest/v1/rpc/${fn}`;
+  const res = await fetch(url, { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: '{}' });
+  if (!res.ok) throw new Error(`rpc ${fn} failed: ${res.status} — ${await res.text()}`);
+}
+
 // ─── Raw API type ─────────────────────────────────────────────────────────────
 interface RawContainer {
   container_no:         string;
@@ -210,6 +229,42 @@ async function main() {
   await sbDeleteIn('tcr_risk_alerts', 'container_no', allContainerNos);
   await sbInsert('tcr_risk_alerts', alertRows);
   console.log(`💾 tcr_risk_alerts refresh: ${alertRows.length}건 (red/yellow)`);
+
+  // ── [추가] 추적 스냅샷(append) + first-seen baseline + 노선 지연 재계산 ──
+  // 위 현재상태(tcr_containers_current 등) 덮어쓰기는 유지. 여기선 별도 테이블에 이력만 누적해 baseline 대비 지연 산출.
+  // route = 여정 식별자: origin → destination(이동 중에도 고정). 세그먼트명(current_segment_name)은 이동 시 바뀌어 회피.
+  const snapshotDate = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10); // KST 업무일
+  const routeOf = (c: RawContainer): string => {
+    const o = clean(c.origin), d = clean(c.destination);
+    return o && d ? `${o} → ${d}` : (clean(c.current_segment_name) ?? c.container_no);
+  };
+  const tracked = containers.filter(c => c.container_no);
+
+  // 1) 스냅샷 append (같은 날 재수집은 merge로 갱신)
+  const snapRows = tracked.map(c => ({
+    container_no: c.container_no,
+    route:        routeOf(c),
+    eta:          c.eta_final,          // YYYY-MM-DD | null
+    status_raw:   c.signal ?? null,
+    snapshot_date: snapshotDate,
+    source:       'TCR',
+  }));
+  await sbUpsert('tcr_tracking_snapshots', snapRows, 'container_no,snapshot_date');
+  console.log(`💾 tcr_tracking_snapshots append: ${snapRows.length}건 (${snapshotDate})`);
+
+  // 2) baseline = first-seen eta_final (이미 있으면 DO NOTHING으로 고정)
+  const baseRows = tracked.map(c => ({
+    container_no: c.container_no,
+    route:        routeOf(c),
+    baseline_eta: c.eta_final,
+    first_seen:   snapshotDate,
+  }));
+  await sbUpsertIgnore('tcr_container_baseline', baseRows, 'container_no');
+  console.log(`💾 tcr_container_baseline 고정: ${baseRows.length}건 (최초 관측만 insert)`);
+
+  // 3) 노선 헬스 재계산 (프론트 read 대상 tcr_route_health)
+  await sbRpc('tcr_recompute_route_health');
+  console.log('💾 tcr_route_health 재계산 완료');
 
   console.log('\n✅ collect:tcr:current 완료');
 }

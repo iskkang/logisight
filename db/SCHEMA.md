@@ -28,7 +28,10 @@
 | newsletter_subscribers | 020 | Lovable (구독 폼) | pipeline/publishers | ❌ | 개인정보 — service_role만 |
 | user_roles | 021 | Lovable (auth) | Lovable | 인증만 | app_role enum |
 | data_updates | 022 | pipeline | 모니터링 | ✅ | 수집 상태 추적 |
-| tcr_snapshots | 011 | pipeline/collectors | Lovable /eurasia | ✅ | |
+| tcr_snapshots | 011 | pipeline/collectors | Lovable /eurasia | ✅ | 익명 **집계** 일별 스냅샷(총계·운송중·도착·경보). container_no 미저장 |
+| tcr_tracking_snapshots | 047 | collectors/tracing_tcr_current.ts | (route_health 경유) | ❌ | append-only 일일 스냅샷(컨테이너×일). 현재상태 덮어쓰기와 별개로 이력 누적. service-only |
+| tcr_container_baseline | 047 | collectors/tracing_tcr_current.ts | (route_health 경유) | ❌ | first-seen eta_final 고정 baseline(불변). service-only |
+| tcr_route_health | 047 | collectors/tracing_tcr_current.ts (rpc tcr_recompute_route_health) | Lovable /eurasia (전환 후) | ✅ | 노선별 지연 산출 결과(status·avg/max_delay·trend). 함수 tcr_recompute_route_health()가 재계산 |
 | port_throughput | 010 | pipeline/collectors | Lovable (지도) | ✅ | 소스: LA·LB·SGP + KOSIS(해양수산부) KRPUS/KRICN/KRGMP 등 한국 항만 TEU |
 | industry_briefs | 044 | supabase/functions/industry-brief-generate (Edge, service_role) | Lovable /industries (직접 read) | ✅ | period(YYYY.MM)별 Claude 산업 브리핑 캐시(trade_briefs 043의 산업판 트윈). input_hash 동일 시 재생성 스킵(월1회). 챕터집계 RPC industry_chapter_totals(044) |
 | weekly_pick | 045 | supabase/functions/weekly-pick-select (Edge, service_role) | Lovable /news (직접 read) | ✅ | 최근 7일 maritime_news(ko) 점수화(언급량·물류 영향도)로 주1건 자동 선정 캐시. 주당 1행(week_start PK). maritime_news.view_count 도입 시 조회수 신호 가산 |
