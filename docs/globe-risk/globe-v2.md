@@ -44,7 +44,7 @@ EVENTS.forEach(function(e){
   ctx.beginPath(); ctx.arc(p[0],p[1],base+pulse*10,0,7); ctx.fillStyle='rgba('+hexrgb(col)+',0.10)'; ctx.fill();
   ctx.beginPath(); ctx.arc(p[0],p[1],base,0,7); ctx.fillStyle='rgba('+hexrgb(col)+',0.55)'; ctx.fill();
   ctx.lineWidth=1.6; ctx.strokeStyle='rgba('+hexrgb(col)+',0.95)'; ctx.stroke();
-  var k={cyclone:'태풍',storm:'폭풍',flood:'홍수',snow:'폭설',other:'경보'}[e.kind]||'경보';
+  var k={cyclone:'태풍',storm:'폭풍',flood:'홍수',snow:'폭설',earthquake:'지진',tsunami:'쓰나미',other:'경보'}[e.kind]||'경보';
   ctx.fillStyle='rgba(234,242,251,.92)'; ctx.font='600 10px JetBrains Mono, monospace'; ctx.textAlign='center'; ctx.fillText(k,p[0],p[1]-base-7);
   eventHit.push({id:e.id,x:p[0],y:p[1],r:base+8});
 });
