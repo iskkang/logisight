@@ -1,0 +1,37 @@
+name: Deploy Edge Functions
+
+# globe-risk 파이프라인 함수 자동 배포 — 코드(supabase/functions/<name>)가 main에 푸시되면 Supabase로 배포.
+# git push는 코드만 올리고 Supabase는 '배포된' 함수를 실행하므로, 코드 변경 시 배포가 필요하다. 그걸 자동화.
+#
+# 범위 = event-ingest, risk-refresh 만. (나머지 함수는 verify_jwt 등 설정을 확정 못해 제외 —
+#  supabase/config.toml이 없어 blanket deploy 시 전 함수가 verify_jwt=true로 덮여 공개 웹훅이 깨질 위험.
+#  다른 함수도 자동배포하려면: 그 함수가 verify_jwt=true가 맞는지 확인 후 아래 steps에 한 줄 추가.)
+#
+# 필요 시크릿: SUPABASE_ACCESS_TOKEN = infinityflow@naver.com 계정 액세스 토큰.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/functions/event-ingest/**'
+      - 'supabase/functions/risk-refresh/**'
+  workflow_dispatch: {}        # 수동 실행 (두 함수 모두 배포)
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Deploy event-ingest
+        run: supabase functions deploy event-ingest --project-ref hmgbvqczmyjixkqbruzp
+
+      - name: Deploy risk-refresh
+        run: supabase functions deploy risk-refresh --project-ref hmgbvqczmyjixkqbruzp
