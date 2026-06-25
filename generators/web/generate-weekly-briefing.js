@@ -3,6 +3,7 @@
 // 환경변수: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, DEEPSEEK_API_KEY
 'use strict';
 
+const fs = require('fs');
 const path = require('path');
 const ws = require('ws');
 globalThis.WebSocket = ws;
@@ -47,10 +48,45 @@ async function main() {
     return;
   }
 
+  // ── 권역 모드: 지오+한국앵커 필터 → 큐레이션. --region 미지정 시 기존 전역 동작 유지 ──
+  const regionArg = process.argv.find((a) => a.startsWith('--region='));
+  const region = regionArg ? regionArg.split('=')[1] : null;
+  let curated = articles;
+  let promptFocus;
+  let regionCfg = null;
+  if (region) {
+    regionCfg = require('../../config/regions/' + region + '.js');
+    const { filterByRegion } = require('../../lib/region-filter.js');
+    curated = filterByRegion(articles, regionCfg, 12);
+    promptFocus = regionCfg.promptFocus;
+    console.log(`  [region=${region}/${regionCfg.label}] 필터 통과 ${curated.length}/${articles.length}건`);
+    if (curated.length === 0) {
+      console.warn(`⚠️ [region=${region}] 통과 기사 0건 — 더미 없이 권역 섹션 생략`);
+      return;
+    }
+  }
+
   const selection = await callDeepSeekJson({
-    messages: buildSelectionMessages(articles),
+    messages: buildSelectionMessages(curated, promptFocus),
     max_tokens: 3000,
   });
+
+  // ── 권역 모드 산출: region 태그 파일(프로덕션 weekly_briefings 비침습). 글로벌 모드는 아래 DB 적재 ──
+  if (region) {
+    const outDir = path.resolve(__dirname, '../../content/weekly-region');
+    fs.mkdirSync(outDir, { recursive: true });
+    const outPath = path.join(outDir, `${weekOf}-${region}.json`);
+    fs.writeFileSync(outPath, JSON.stringify({
+      region,
+      label: regionCfg.label,
+      week_of: weekOf,
+      article_count: curated.length,
+      generated_at: new Date().toISOString(),
+      selection,
+    }, null, 2), 'utf-8');
+    console.log(`✅ [region=${region}] 산출물: ${outPath} (기사 ${curated.length}건)`);
+    return;
+  }
 
   const { data: briefing, error: bErr } = await supabase
     .from('weekly_briefings')

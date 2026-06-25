@@ -43,11 +43,12 @@ function subtitleFor(isoDate) {
 }
 
 // 지난 7일 brief 기사 목록 → DeepSeek messages 1개
-function buildSelectionMessages(articles) {
+function buildSelectionMessages(articles, promptFocus) {
   const list = articles
     .map((a, i) => `${i + 1}. [${a.category || ''}] ${a.title || ''} — ${a.summary || ''}`)
     .join('\n');
-  const content = `당신은 한국 해운·물류 전문 매체의 주간 브리핑 편집장이다.
+  const focusBlock = promptFocus ? `\n권역 분석 지침: ${promptFocus}` : '';
+  const content = `당신은 한국 해운·물류 전문 매체의 주간 브리핑 편집장이다.${focusBlock}
 아래는 지난 7일간 발행된 기사 목록이다. 세 주제별로 가장 중요한 기사 1건씩을 고르고,
 각 기사를 KSG(코리아쉬핑가제트) 스타일 헤드라인(명사형 종결, 25~40자)으로 다시 써라. 숫자·단위·국가는 한글(달러·억·대비·미국·아시아)로 쓰고, 어려운 한자 약물(弗·億·比·美·亞·北·前倒 등)은 쓰지 않는다. 한자 바로 뒤에 또 다른 한자를 붙이지 마라(예: 亞發美 금지 → "아시아發 미"). 기호는 %·↑·↓만 쓴다.
 

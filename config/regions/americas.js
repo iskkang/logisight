@@ -1,0 +1,30 @@
+// 미주 권역 — 한국 수출기업 관점
+module.exports = {
+  region: 'americas',
+  label: '미주',
+  geoKeywords: [
+    'USA','United States','미국','Mexico','멕시코','USMCA','nearshoring','니어쇼어링',
+    'Laredo','라레도','Nuevo Laredo','Los Angeles','Long Beach','LA/LB',
+    'Savannah','사바나','Houston','Manzanillo','만사니요','Gulf of Mexico','멕시코만',
+  ],
+  koreaAnchors: [
+    'Hyundai','현대','Kia','기아','Samsung','삼성','LG','SK On','SK온','POSCO','포스코','Hanwha','한화',
+    'battery','배터리','semiconductor','반도체','EV','전기차','IRA','관세','tariff',
+    'HMGMA','Georgia plant','조지아 공장','Tennessee','테네시',
+    '한국발','한국향','Korean exporter','부산',
+  ],
+  priorityTopics: [
+    '니어쇼어링 (멕시코 생산 이전)',
+    '미 서안/동안 항만',
+    '라레도 국경 통관',
+    'IRA·관세·반덤핑이 K-배터리/반도체 대미 수출에 미치는 영향',
+    'USMCA 동향',
+  ],
+  excludeKeywords: ['football','celebrity','연예','스포츠'],
+  promptFocus: [
+    '미국·멕시코 물류를 한국 수출기업 관점에서 분석한다.',
+    '니어쇼어링(멕시코 생산), 국경 통관(라레도), 서안·동안 항만, 관세(IRA·반덤핑)가 K-배터리/반도체/완성차 대미 수출에 미치는 영향을 우선한다.',
+    '현상→원인→배경→전망 4단계. 권고가 아닌 "무엇을 왜 주시할지".',
+  ].join(' '),
+  extraSources: [],
+};
