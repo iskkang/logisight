@@ -1,19 +1,23 @@
 name: globe-risk-cron
 
 # 기상 리스크 지구본 스케줄러 — Supabase Edge Function 트리거 (pg_cron 대체).
-# risk-refresh(예보→asset_risk)·event-ingest(재해 피드→events)를 매 실행 갱신.
+# risk-refresh(예보→asset_risk): 하루 3회. event-ingest(재해 피드→events): 2시간마다(태풍·지진 급변 대비).
 # 독립 job — 한쪽 실패가 다른쪽을 막지 않음. curl -sSf 실패 시 해당 job이 빨간 X(stale을 success로 숨기지 않음).
-# 스케줄은 2시간마다(:15) — GitHub는 정각(:00) 스케줄 드롭이 잦아 오프-아워 분(:15) 사용. best-effort(수 분 지연 가능).
-# (이전: risk-refresh를 '0 */6'(:00) cron에만 묶어 정각 드롭으로 사실상 미실행 → asset_risk stale. 그 의존 제거.)
+# 각 job은 자기 schedule에서만 실행(다른 schedule 런에선 회색 skip=정상). workflow_dispatch는 둘 다 실행.
+# cron은 UTC. 분(minute)은 :07/:15 등 오프-아워 — GitHub는 정각(:00) 스케줄 드롭이 잦아 회피(과거 asset_risk stale 원인).
 # SUPABASE_ANON_KEY = anon public 키 (verify_jwt 통과용; 함수 내부에서 service 키로 DB 씀).
 
 on:
   schedule:
-    - cron: '15 */2 * * *'   # 2시간마다 (오프-아워 분 — 정각 드롭 회피)
-  workflow_dispatch: {}        # 수동 실행 버튼
+    - cron: '15 */2 * * *'   # event-ingest: 2시간마다 (:15 오프-아워)
+    - cron: '7 16 * * *'     # risk-refresh: KST 01:07
+    - cron: '7 23 * * *'     # risk-refresh: KST 08:07
+    - cron: '7 7 * * *'      # risk-refresh: KST 16:07
+  workflow_dispatch: {}        # 수동 실행 버튼 (둘 다 실행)
 
 jobs:
   risk-refresh:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '7 16 * * *' || github.event.schedule == '7 23 * * *' || github.event.schedule == '7 7 * * *'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -24,6 +28,7 @@ jobs:
             -H "Content-Type: application/json" -d '{}'
 
   event-ingest:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '15 */2 * * *'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
