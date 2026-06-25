@@ -1,11 +1,14 @@
 name: Climate — Impact Draft Generation
 
-# 활성 events(태풍·홍수) × 노선 근접 → Claude 3단 기후 영향 초안 → forecasts(module='climate', status='draft').
-# event-ingest(globe-risk-cron, 매시 :15 격2시간) 직후에 편승: 갱신된 events를 읽어 :35에 생성.
+# 활성 events(태풍·홍수·지진·쓰나미) × 노선 근접 → Claude 3단 기후/재해 영향 초안 → forecasts(module='climate', status='draft').
+# Claude 호출 비용이 커 하루 3회로 축소(이전 격2시간=12회). event-ingest(:15)·impact-judge(:25)는 매 2h 유지 →
+# impacts는 항상 최신. 짝수시 :35에 돌려 그 시각 ingest/judge 직후 데이터를 읽는다(홀수시엔 ingest/judge 미실행).
 # 새 비밀 없음 — forecast-generate.yml과 동일 시크릿 재사용. 초안만 생성(자동 발행 없음 → 에디터 검수).
 on:
   schedule:
-    - cron: '35 */2 * * *'   # event-ingest(:15 격2시간) 직후
+    - cron: '35 16 * * *'   # KST 01:35
+    - cron: '35 0 * * *'    # KST 09:35
+    - cron: '35 8 * * *'    # KST 17:35
   workflow_dispatch:
 
 jobs:
