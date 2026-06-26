@@ -41,6 +41,38 @@ const CORRIDOR_RULES = [
     routeLandmarks: ['prince george', 'edmonton', 'winnipeg', 'duluth'],
     destination: ['chicago'],
   },
+  {
+    code: 'NYNJ_CHI_NS',
+    railroads: ['NS', 'norfolk southern'],
+    coverage: null,
+    origin: ['new york', 'new jersey', 'ny/nj', 'nynj'],
+    routeLandmarks: ['harrisburg', 'pittsburgh', 'cleveland'],
+    destination: ['chicago'],
+  },
+  {
+    code: 'SAV_CHI_CSX',
+    railroads: ['CSX'],
+    coverage: null,
+    origin: ['savannah'],
+    routeLandmarks: ['atlanta', 'nashville', 'indianapolis'],
+    destination: ['chicago'],
+  },
+  {
+    code: 'LAZ_LAR_CPKC',
+    railroads: ['CPKC', 'canadian pacific kansas city', 'kansas city southern', 'kcs'],
+    coverage: null,
+    origin: ['lazaro cardenas', 'lázaro cárdenas'],
+    routeLandmarks: ['morelia', 'san luis potosi', 'san luis potosí', 'monterrey'],
+    destination: ['laredo'],
+  },
+  {
+    code: 'LAR_CHI_CPKC',
+    railroads: ['CPKC', 'canadian pacific kansas city', 'kansas city southern', 'kcs'],
+    coverage: null,
+    origin: ['laredo'],
+    routeLandmarks: ['san antonio', 'dallas', 'kansas city'],
+    destination: ['chicago'],
+  },
 ];
 
 // Port dwell maps to origin-side corridors. No severity is implied here.
@@ -49,6 +81,8 @@ const PORT_ORIGIN_MAP = {
   polb: ['LALB_CHI_BNSF', 'LALB_CHI_UP', 'LALB_DAL_UP'],
   prince_rupert: ['PRR_CHI_CN'],
   vancouver: ['VAN_TOR_CN'],
+  savannah: ['SAV_CHI_CSX'],
+  lazaro_cardenas: ['LAZ_LAR_CPKC'],
 };
 
 const ALL_CORRIDORS = CORRIDOR_RULES.map((rule) => rule.code);
