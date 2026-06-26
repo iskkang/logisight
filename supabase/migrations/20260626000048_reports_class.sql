@@ -16,6 +16,12 @@ update reports set
     when title like '%극동%' or period_label like '%극동%' then '극동(러시아·CIS)'
     when title like '%유럽%' or period_label like '%유럽%' then '유럽'
     when title like '%미주%' or period_label like '%미주%' then '미주'
+    when title like '%남미%' or period_label like '%남미%' then '남미'
+    when title like '%중국%' or period_label like '%중국%' then '중국'
+    when title like '%일본%' or period_label like '%일본%' then '일본'
+    when title like '%동남아%' or period_label like '%동남아%' then '동남아'
+    when title like '%중동%' or period_label like '%중동%' then '중동'
+    when title like '%아프리카%' or period_label like '%아프리카%' then '아프리카'
     else region end
 where title like '%권역%';
 
