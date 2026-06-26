@@ -15,6 +15,7 @@ const { collectUp } = require('../src/rail/collectors/up');
 const { collectCn } = require('../src/rail/collectors/cn');
 const { collectNews } = require('../src/rail/collectors/news');
 const { collectStb } = require('../src/rail/collectors/stb');
+const { collectCbpBwt } = require('../src/rail/collectors/cbpBwt');
 const { STB_CARRIER_CORRIDORS } = require('../config/rail/stb');
 const {
   CATEGORY: PROGRESSIVE_RAILROADING_CATEGORY,
@@ -205,6 +206,20 @@ async function main() {
   if (stb.events.length) {
     const { error: stbError } = await supabase.from('rail_events').upsert(stb.events, { onConflict: 'source,source_uid' });
     if (stbError) throw new Error(`stb upsert: ${JSON.stringify(stbError)}`);
+  }
+
+  const cbpBwt = await collectCbpBwt();
+  if (cbpBwt.errors.length) console.warn('[cbp_bwt errors]', cbpBwt.errors);
+  console.log(`[cbp_bwt] WTB -> events ${cbpBwt.events.length}`);
+  for (const line of cbpBwt.debug) console.log('    ', line);
+
+  const { error: cbpBwtDeleteError } = await supabase.from('rail_events').delete().like('source', 'cbp_bwt%');
+  if (cbpBwtDeleteError) throw new Error(`cbp_bwt delete: ${JSON.stringify(cbpBwtDeleteError)}`);
+  if (cbpBwt.events.length) {
+    const { error: cbpBwtError } = await supabase
+      .from('rail_events')
+      .upsert(cbpBwt.events, { onConflict: 'source,source_uid' });
+    if (cbpBwtError) throw new Error(`cbp_bwt upsert: ${JSON.stringify(cbpBwtError)}`);
   }
 
   const windowDays = Number(process.env.RAIL_RECOMPUTE_WINDOW_DAYS || 21);
