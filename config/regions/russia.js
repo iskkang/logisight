@@ -37,8 +37,8 @@ module.exports = {
   ],
   excludeKeywords: ['celebrity','연예','스포츠'],
   promptFocus: [
-    '러시아·CIS 물류를 한국 및 중앙아시아 화주 관점에서 분석한다.',
-    'TSR, 블라디보스토크, 제재 우회 경로, CIS/중앙아 환적을 우선한다. MTL의 핵심 권역임을 전제한다.',
+    '러시아·CIS 권역의 물류·교역을 그 자체로 분석한다.',
+    'TSR, 블라디보스토크, 제재·우회 경로, CIS/중앙아 환적을 우선한다.',
     '현상→원인→배경→전망 4단계. 권고가 아닌 "무엇을 왜 주시할지".',
   ].join(' '),
   extraSources: [], // Landbridge(yaowen/kouan/russiainfo) 기존 보유 — 통합 검토
