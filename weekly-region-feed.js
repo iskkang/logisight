@@ -1,9 +1,10 @@
 'use strict';
-// 권역 위클리 feed 생산기: weekly-report 리치 풀(이미지+본문)을 권역에 단일 배정(assignPool) →
-// 거시/지수/라운드업은 글로벌 제외, 권역은 "주체"인 기사만 → briefType 그룹 큐레이션 →
+// 권역 위클리 feed 생산기 (권역 인지 큐레이션):
+// maritime_news(한글 brief + 영문/노어/스페인어 external)를 권역에 단일 배정(assignPool, 주체 게이트) →
+// 거시/지수/라운드업은 글로벌 제외 → 비한글 카드는 DeepSeek로 한글 번역·요약 → briefType 그룹 큐레이션 →
 // rich JSON(items[] + selection)으로 content/weekly-region/<week>-<region>.json 저장. PDF는 weekly-region-pdf.js.
 // weekly-report 파일 import/수정 없음(독립).
-// 사용법: node weekly-region-feed.js [--week=2026-W26] [--region=europe(특정 권역만)]
+// 사용법: node weekly-region-feed.js [--week=2026-W26] [--region=europe]
 const fs = require('fs');
 const path = require('path');
 const ws = require('ws'); globalThis.WebSocket = ws;
@@ -15,6 +16,7 @@ const { assignPool, REGIONS } = require('./lib/region-assign');
 const { buildRegionSelectionMessages } = require('./generators/web/lib/weekly-briefing.lib');
 
 const CATS = ['해상', '항공', '무역', '물류', '철도'];   // 철도=러시아·CIS·TCR/TSR 통로(권역 배정은 주체 게이트가 결정)
+const PER_REGION = 14;   // 권역당 카드 상한(번역 비용·분량)
 const arg = (n) => { const a = process.argv.find((x) => x.startsWith(`--${n}=`)); return a ? a.split('=')[1] : null; };
 
 function isoWeekId(d) {
@@ -32,14 +34,48 @@ function weekPeriod(d) {
   const f = (x) => `${String(x.getMonth() + 1).padStart(2, '0')}/${String(x.getDate()).padStart(2, '0')}`;
   return `${f(mon)}~${f(sun)}`;
 }
-function toItem(a) {
-  let body = String(a.content || '').replace(/\r/g, '').replace(/[ \t]+/g, ' ').trim();
+function cleanBody(s) {
+  let body = String(s || '').replace(/\r/g, '').replace(/[ \t]+/g, ' ').trim();
   body = body.replace(/\n?\*?\s*출처\s*[:：][^\n]*\*?\s*$/, '').trim();
   if (body.length > 900) body = body.slice(0, 900).replace(/\s+\S*$/, '') + '…';
-  return {
-    briefType: a.briefType, tag: a.category || '', headline: a.title || '',
-    lead: a.summary || '', image: a.image_url || null, body, source: a.source || '', url: a.url || '',
-  };
+  return body;
+}
+
+// 한글 brief는 그대로, 비한글(영문·노어·스페인어) external은 DeepSeek로 한 번에 번역·요약해 카드화.
+async function translateCards(arts) {
+  const cards = arts.map((a) => ({
+    briefType: a.briefType, tag: a.category || '', image: a.image_url || null,
+    source: a.source || '', url: a.url || '', ko: /[가-힣]/.test(a.title || ''),
+    t0: a.title || '', s0: a.summary || '', c0: a.content || '',
+    headline: '', lead: '', body: '',
+  }));
+  for (const c of cards) if (c.ko) { c.headline = c.t0; c.lead = c.s0; c.body = cleanBody(c.c0); }
+
+  const ext = cards.filter((c) => !c.ko);
+  if (ext.length) {
+    const list = ext.map((c, i) => `${i}. TITLE: ${c.t0}\nLEAD: ${(c.s0 || '').slice(0, 200)}\nBODY: ${(c.c0 || '').slice(0, 700)}`).join('\n\n');
+    const messages = [{ role: 'user', content: `다음 ${ext.length}개 해외 물류 기사를 한국어로 번역·요약한다.
+각 항목: headline(간결한 한국어 헤드라인 25~40자, 명사형 종결), lead(한 문장 요약), body(2~3문장, 기사에 보고된 핵심 사실·수치만; 환각 금지).
+고유명사·항만·기업명·수치는 보존. ~입니다·~합니다 금지(~기록했다·~밝혔다 어미).
+반드시 JSON만: {"cards":[{"i":0,"headline":"...","lead":"...","body":"..."}, ...]}
+
+기사 목록:
+${list}` }];
+    try {
+      const res = await callDeepSeekJson({ messages, max_tokens: 4000 });
+      const byI = new Map(((res && res.cards) || []).map((x) => [x.i, x]));
+      ext.forEach((c, i) => {
+        const tr = byI.get(i) || {};
+        c.headline = (tr.headline || c.t0).trim();
+        c.lead = (tr.lead || '').trim();
+        c.body = (tr.body || '').trim();
+      });
+    } catch (e) {
+      console.warn('  [translate] 실패, 원문 사용:', e.message);
+      for (const c of ext) { c.headline = c.t0; c.lead = c.s0; c.body = cleanBody(c.c0); }
+    }
+  }
+  return cards.map((c) => ({ briefType: c.briefType, tag: c.tag, headline: c.headline, lead: c.lead, image: c.image, body: c.body, source: c.source, url: c.url }));
 }
 
 async function main() {
@@ -56,51 +92,54 @@ async function main() {
   const only = arg('region');
   const sinceISO = new Date(now.getTime() - 7 * 86400000).toISOString();
 
-  // 리치 풀(weekly-report 풀: 카테고리별 이미지+본문>200+한글제목, 섹션 cap 없이 전량)
+  // 풀: 본문 있는 기사 전량(한글 brief + 영문/노어/스페인어 external). 언어·이미지 무관 — 주체 게이트가 권역 결정.
   const pool = []; const seen = new Set();
   for (const cat of CATS) {
     const { data, error } = await supabase.from('maritime_news')
       .select('title,summary,content,image_url,source,url,category,agent_type,published_at')
       .eq('category', cat).gte('published_at', sinceISO)
-      .order('published_at', { ascending: false }).limit(60);
+      .order('published_at', { ascending: false }).limit(80);
     if (error) throw new Error(error.message);
     for (const r of (data || [])) {
-      if (!(r.image_url && (r.content || '').length > 200 && /[가-힣]/.test(r.title || ''))) continue;
-      if (seen.has(r.title)) continue;
-      seen.add(r.title); pool.push(r);
+      if ((r.content || '').length <= 200) continue;            // 본문 있는 것만(카드용)
+      const key = r.url || r.title;
+      if (seen.has(key)) continue;
+      seen.add(key); pool.push(r);
     }
   }
 
-  // 단일 배정: 거시/지수/라운드업 → global, 권역은 주체 게이트
+  // 단일 배정: 거시/지수/라운드업 → global, 권역은 주체 게이트(제목+리드 앵커 + 지배성)
   const buckets = assignPool(pool, cfgs, { dominanceMargin: 1 });
   const counts = Object.fromEntries(REGIONS.map((r) => [r, buckets[r].length]));
-  console.log(`풀 ${pool.length} → 배정`, counts, `| global(거시/제외) ${buckets.global.length}`);
+  console.log(`풀 ${pool.length} → 배정`, counts, `| global ${buckets.global.length}`);
 
   const dir = path.join(__dirname, 'content/weekly-region');
   fs.mkdirSync(dir, { recursive: true });
 
   for (const region of (only ? [only] : REGIONS)) {
-    const arts = buckets[region] || [];
+    const arts = (buckets[region] || []).slice(0, PER_REGION);
     if (!arts.length) {
       const stale = path.join(dir, `${week}-${region}.json`);
-      if (fs.existsSync(stale)) { fs.unlinkSync(stale); console.log(`  [${region}] 0건 — stale feed 삭제: ${stale}`); }
-      else console.log(`  [${region}] 0건 — feed/PDF 생략`);
+      if (fs.existsSync(stale)) { fs.unlinkSync(stale); console.log(`  [${region}] 0건 — stale feed 삭제`); }
+      else console.log(`  [${region}] 0건 — 생략`);
       continue;
     }
 
     const cfg = cfgs[region];
-    const byType = arts.reduce((m, a) => { m[a.briefType] = (m[a.briefType] || 0) + 1; return m; }, {});
+    const koN = arts.filter((a) => /[가-힣]/.test(a.title || '')).length;
+    const cards = await translateCards(arts);
+    const byType = cards.reduce((m, c) => { m[c.briefType] = (m[c.briefType] || 0) + 1; return m; }, {});
     const focus = cfg.promptFocus + ' ' + SHARED_TYPE_RULES;
-    const selection = await callDeepSeekJson({ messages: buildRegionSelectionMessages(arts, focus), max_tokens: 3000 });
+    const selArticles = cards.map((c) => ({ title: c.headline, summary: c.lead, briefType: c.briefType }));
+    const selection = await callDeepSeekJson({ messages: buildRegionSelectionMessages(selArticles, focus), max_tokens: 3000 });
 
     const out = {
       region, label: cfg.label, week, period,
       generated_at: now.toISOString().slice(0, 10),
-      by_type: byType, selection, items: arts.map(toItem),
+      by_type: byType, selection, items: cards,
     };
-    const outPath = path.join(dir, `${week}-${region}.json`);
-    fs.writeFileSync(outPath, JSON.stringify(out, null, 2), 'utf-8');
-    console.log(`✅ [${region}] feed: ${outPath} (items ${arts.length}`, byType, ')');
+    fs.writeFileSync(path.join(dir, `${week}-${region}.json`), JSON.stringify(out, null, 2), 'utf-8');
+    console.log(`✅ [${region}] feed: items ${cards.length} (한글 ${koN}, 번역 ${cards.length - koN})`, byType);
   }
 }
 
