@@ -18,6 +18,11 @@ const REGION_KR = {
   europe: '유럽',
   russia: '극동(러시아·CIS)',
   latam: '남미',
+  china: '중국',
+  japan: '일본',
+  sea: '동남아',
+  mideast: '중동',
+  africa: '아프리카',
 };
 
 const BUCKET = 'reports';
