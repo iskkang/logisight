@@ -12,13 +12,14 @@ globalThis.WebSocket = WebSocket;
 const require = createRequire(import.meta.url);
 const { collectBnsf } = require('../src/rail/collectors/bnsf');
 const { collectUp } = require('../src/rail/collectors/up');
+const { collectCn } = require('../src/rail/collectors/cn');
 const { collectNews } = require('../src/rail/collectors/news');
 const { ruleParseEvent } = require('../src/rail/ruleParseEvent');
 const { matchCorridors } = require('../src/rail/matchCorridors');
 const { scoreEvent } = require('../src/rail/scoreEvent');
 const { recomputeCorridorStatus } = require('../src/rail/recomputeStatus');
 
-const COLLECTORS = [collectBnsf, collectUp];
+const COLLECTORS = [collectBnsf, collectUp, collectCn];
 
 const url = process.env.SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -38,17 +39,29 @@ function toISODate(value) {
   if (namedMonth) {
     const months = new Map([
       ['january', '01'],
+      ['jan', '01'],
       ['february', '02'],
+      ['feb', '02'],
       ['march', '03'],
+      ['mar', '03'],
       ['april', '04'],
+      ['apr', '04'],
       ['may', '05'],
       ['june', '06'],
+      ['jun', '06'],
       ['july', '07'],
+      ['jul', '07'],
       ['august', '08'],
+      ['aug', '08'],
       ['september', '09'],
+      ['sep', '09'],
+      ['sept', '09'],
       ['october', '10'],
+      ['oct', '10'],
       ['november', '11'],
+      ['nov', '11'],
       ['december', '12'],
+      ['dec', '12'],
     ]);
     const month = months.get(namedMonth[1].toLowerCase());
     if (month) return `${namedMonth[3]}-${month}-${namedMonth[2].padStart(2, '0')}`;
@@ -97,6 +110,7 @@ async function main() {
         source: collected.source,
         id: item.source_uid,
         location_text: item.title,
+        ...(collected.source === 'cn' ? { railroad: 'CN' } : {}),
       });
       const match = matchCorridors(parsed);
       const score = scoreEvent(parsed, match.scope);
