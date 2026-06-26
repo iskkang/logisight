@@ -51,6 +51,8 @@ const OCEAN_NEWS_SOURCES: OceanNewsSource[] = [
   { name: 'SeaSearch Containers', url: 'https://www.shipshipship.uk/category/6/',             type: 'html', frequency: 'daily',  useKeywordFilter: false },
   { name: 'Linerlytica',          url: 'https://www.linerlytica.com/blog/',                  type: 'html', frequency: 'daily',  useKeywordFilter: false },
   { name: 'Sea-Intelligence',    url: 'https://www.sea-intelligence.com/press-room',          type: 'html', frequency: 'weekly', useKeywordFilter: false },
+  // 남미(태평양안 포함) — RSS 없음(404), 홈페이지 HTML 스크랩. 스페인어 원문 → 큐레이션(DeepSeek)에서 한글 번역.
+  { name: 'MundoMaritimo',       url: 'https://www.mundomaritimo.net/',                       type: 'html', frequency: 'daily',  useKeywordFilter: false },
 ];
 
 function passesKeywordFilter(title: string): boolean {

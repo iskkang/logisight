@@ -5,7 +5,7 @@ export type NewsSource = {
   url: string;
   kind: 'rss' | 'html';
   section: NewsSection;
-  language: 'en' | 'ko';
+  language: 'en' | 'ko' | 'es';
   selector?: string;
   monthly?: boolean;
 };
@@ -53,6 +53,16 @@ export const NEWS_SOURCES: NewsSource[] = [
   { name: 'KITA', url: 'https://www.kita.net/shippers/board/newsList.do', kind: 'html', section: 'trade', language: 'ko', selector: '.board-list a, td a, .title a', monthly: true },
   { name: 'NLIC', url: 'https://www.nlic.go.kr/nlic/newsArticleList.action', kind: 'html', section: 'trade', language: 'ko', selector: '.list a, td a, .title a, .subject a', monthly: true },
   { name: 'KOTRA', url: 'https://dream.kotra.or.kr/kotranews/cms/com/index.do?MENU_ID=70', kind: 'html', section: 'trade', language: 'ko', selector: '.list-title a, .tit a, td a', monthly: true },
+
+  // ── 권역 특화 매체 (2026-06-26) — 일간 수집(monthly 미지정) ──
+  // 철도(러시아·CIS·유럽·Middle Corridor) — RSS 확인됨
+  { name: 'RailFreight', url: 'https://www.railfreight.com/feed/', kind: 'rss', section: 'rail', language: 'en' },
+  // 남미 동안(브라질) 항만·운임 — RSS 확인됨
+  { name: 'Datamar News', url: 'https://datamarnews.com/feed/', kind: 'rss', section: 'shipping', language: 'en' },
+  // ⚠ 아래 3곳: 단순 fetch에 봇 차단(403/Cloudflare). collector 브라우저 헤더로 통과 가능성, 실패 시 graceful skip. 안 되면 Playwright 수집 필요.
+  { name: 'Baltic Transport Journal', url: 'https://baltictransportjournal.com/feed/', kind: 'rss', section: 'shipping', language: 'en' },  // 발트·CEE 항만
+  { name: 'PortSEurope', url: 'https://www.portseurope.com/feed/', kind: 'rss', section: 'shipping', language: 'en' },                       // 남유럽·지중해 항만
+  { name: 'Portal Portuario', url: 'https://portalportuario.cl/feed/', kind: 'rss', section: 'shipping', language: 'es' },                  // 칠레·태평양안(Chancay)
 ];
 
 export function sourcesFor(
