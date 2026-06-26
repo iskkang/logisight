@@ -120,7 +120,7 @@ function addBestSignal(bestByCorridor, corridors, tier, signal) {
 }
 
 async function collectStb({ fetchImpl = fetch } = {}) {
-  const out = { source: 'stb', week: null, events: [], debug: [], errors: [] };
+  const out = { source: 'stb', week: null, events: [], debug: [], errors: [], checkedCarriers: [] };
 
   let buffer;
   try {
@@ -144,6 +144,7 @@ async function collectStb({ fetchImpl = fetch } = {}) {
 
   const { rows, headerIndex, railroadCol, firstDateCol, prior, latest } = sheet;
   const bestByCorridor = {};
+  const checked = new Set();
 
   for (let i = headerIndex + 1; i < rows.length; i += 1) {
     const row = rows[i];
@@ -162,6 +163,7 @@ async function collectStb({ fetchImpl = fetch } = {}) {
     if (/train speed/.test(lower) && /intermodal/.test(lower)) {
       const carrier = carrierFromText(railroad) || carrierFromText(descriptor);
       if (!carrier || !STB_CARRIER_CORRIDORS[carrier]) continue;
+      checked.add(carrier);
 
       const change = percentChange(latestValue, priorValue);
       const tier = speedTier(change);
@@ -177,6 +179,7 @@ async function collectStb({ fetchImpl = fetch } = {}) {
     } else if (/dwell/.test(lower) && /\bsystem\b/.test(lower)) {
       const carrier = carrierFromText(railroad) || carrierFromText(descriptor);
       if (!carrier || !STB_CARRIER_CORRIDORS[carrier]) continue;
+      checked.add(carrier);
 
       const change = percentChange(latestValue, priorValue);
       const tier = dwellTier(change);
@@ -227,6 +230,7 @@ async function collectStb({ fetchImpl = fetch } = {}) {
     });
   }
 
+  out.checkedCarriers = [...checked];
   return out;
 }
 

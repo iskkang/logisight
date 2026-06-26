@@ -12,6 +12,7 @@ function scoreToStatus(score) {
 
 function recomputeCorridorStatus(scoredEvents, opts = {}) {
   const healthy = new Set(opts.healthySources ?? []);
+  const stbCheckedCorridors = new Set(opts.stbCheckedCorridors ?? []);
   const byCorridor = Object.fromEntries(ALL_CORRIDORS.map((code) => [code, []]));
 
   for (const event of scoredEvents) {
@@ -31,6 +32,17 @@ function recomputeCorridorStatus(scoredEvents, opts = {}) {
           score: null,
           reason: `${coverage.toUpperCase()} advisory checked - no reported disruption`,
           source: coverage,
+          active_event_ids: [],
+        };
+      }
+
+      if (stbCheckedCorridors.has(code)) {
+        return {
+          corridor_code: code,
+          status: 'normal',
+          score: null,
+          reason: 'STB carrier-level checked - within normal range',
+          source: 'stb',
           active_event_ids: [],
         };
       }
