@@ -1,5 +1,7 @@
-const { ALL_CORRIDORS } = require('../../config/rail/corridor-mapping');
-const { STATUS_THRESHOLDS, PRESUME_NORMAL_ON_NO_ISSUE } = require('../../config/rail/scoring');
+const { ALL_CORRIDORS, CORRIDOR_RULES } = require('../../config/rail/corridor-mapping');
+const { STATUS_THRESHOLDS } = require('../../config/rail/scoring');
+
+const COVERAGE = Object.fromEntries(CORRIDOR_RULES.map((rule) => [rule.code, rule.coverage ?? null]));
 
 function scoreToStatus(score) {
   for (const threshold of STATUS_THRESHOLDS) {
@@ -8,7 +10,8 @@ function scoreToStatus(score) {
   return 'unknown';
 }
 
-function recomputeCorridorStatus(scoredEvents) {
+function recomputeCorridorStatus(scoredEvents, opts = {}) {
+  const healthy = new Set(opts.healthySources ?? []);
   const byCorridor = Object.fromEntries(ALL_CORRIDORS.map((code) => [code, []]));
 
   for (const event of scoredEvents) {
@@ -20,11 +23,23 @@ function recomputeCorridorStatus(scoredEvents) {
   return ALL_CORRIDORS.map((code) => {
     const events = byCorridor[code];
     if (events.length === 0) {
+      const coverage = COVERAGE[code];
+      if (coverage && healthy.has(coverage)) {
+        return {
+          corridor_code: code,
+          status: 'normal',
+          score: null,
+          reason: `${coverage.toUpperCase()} advisory checked - no reported disruption`,
+          source: coverage,
+          active_event_ids: [],
+        };
+      }
+
       return {
         corridor_code: code,
-        status: PRESUME_NORMAL_ON_NO_ISSUE ? 'normal' : 'unknown',
+        status: 'unknown',
         score: null,
-        reason: PRESUME_NORMAL_ON_NO_ISSUE ? 'collection succeeded, no reported issue' : 'no signal',
+        reason: coverage ? `${coverage.toUpperCase()} collection failed` : 'limited public operating feed (news monitoring only)',
         source: null,
         active_event_ids: [],
       };

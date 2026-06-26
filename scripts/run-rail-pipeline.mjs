@@ -87,6 +87,7 @@ function formatStatus(status) {
 
 async function main() {
   const newRows = [];
+  const healthySources = new Set();
 
   const progressiveRailroading = await collectProgressiveRailroading({ supabase });
   if (progressiveRailroading.errors.length) console.warn('[PR errors]', progressiveRailroading.errors);
@@ -96,6 +97,8 @@ async function main() {
     const collected = await collect();
     if (collected.errors.length) console.warn(`[${collected.source} errors]`, collected.errors);
     console.log(`[${collected.source}] fetched:`, collected.items.length);
+    const listFailed = collected.errors.some((error) => /^list fetch/i.test(error));
+    if (!listFailed) healthySources.add(collected.source);
 
     const sourceUids = collected.items.map((item) => item.source_uid);
     const { data: existing, error: existingError } = await supabase
@@ -204,7 +207,7 @@ async function main() {
       source: row.source,
     }));
 
-  const statuses = recomputeCorridorStatus(scored);
+  const statuses = recomputeCorridorStatus(scored, { healthySources });
   const now = new Date().toISOString();
   const statusRows = statuses.map((status) => ({ ...status, updated_at: now }));
   const { error: statusError } = await supabase

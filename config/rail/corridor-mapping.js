@@ -4,6 +4,7 @@ const CORRIDOR_RULES = [
   {
     code: 'LALB_CHI_BNSF',
     railroads: ['BNSF'],
+    coverage: 'bnsf',
     origin: ['los angeles', 'long beach', 'la/lb', 'san pedro'],
     routeLandmarks: ['southern transcon', 'transcon', 'barstow', 'needles', 'flagstaff', 'belen', 'amarillo', 'marceline', 'fort madison'],
     destination: ['chicago'],
@@ -11,6 +12,7 @@ const CORRIDOR_RULES = [
   {
     code: 'LALB_CHI_UP',
     railroads: ['UP', 'union pacific'],
+    coverage: null,
     origin: ['los angeles', 'long beach', 'la/lb', 'san pedro'],
     routeLandmarks: ['overland route', 'las vegas', 'salt lake', 'cheyenne', 'north platte', 'omaha'],
     destination: ['chicago'],
@@ -18,6 +20,7 @@ const CORRIDOR_RULES = [
   {
     code: 'LALB_DAL_UP',
     railroads: ['UP', 'union pacific'],
+    coverage: null,
     origin: ['los angeles', 'long beach', 'la/lb', 'san pedro'],
     routeLandmarks: ['sunset route', 'tucson', 'el paso'],
     destination: ['dallas'],
@@ -25,6 +28,7 @@ const CORRIDOR_RULES = [
   {
     code: 'VAN_TOR_CN',
     railroads: ['CN', 'canadian national'],
+    coverage: 'cn',
     origin: ['vancouver'],
     routeLandmarks: ['kamloops', 'edmonton', 'winnipeg', 'thunder bay'],
     destination: ['toronto'],
@@ -32,6 +36,7 @@ const CORRIDOR_RULES = [
   {
     code: 'PRR_CHI_CN',
     railroads: ['CN', 'canadian national'],
+    coverage: 'cn',
     origin: ['prince rupert', 'fairview'],
     routeLandmarks: ['prince george', 'edmonton', 'winnipeg', 'duluth'],
     destination: ['chicago'],
