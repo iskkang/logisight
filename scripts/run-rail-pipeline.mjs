@@ -14,6 +14,7 @@ const { collectBnsf } = require('../src/rail/collectors/bnsf');
 const { collectUp } = require('../src/rail/collectors/up');
 const { collectCn } = require('../src/rail/collectors/cn');
 const { collectNews } = require('../src/rail/collectors/news');
+const { collectStb } = require('../src/rail/collectors/stb');
 const {
   CATEGORY: PROGRESSIVE_RAILROADING_CATEGORY,
   collectProgressiveRailroading,
@@ -87,6 +88,7 @@ function formatStatus(status) {
 
 async function main() {
   const newRows = [];
+  const healthySources = new Set();
 
   const progressiveRailroading = await collectProgressiveRailroading({ supabase });
   if (progressiveRailroading.errors.length) console.warn('[PR errors]', progressiveRailroading.errors);
@@ -96,6 +98,8 @@ async function main() {
     const collected = await collect();
     if (collected.errors.length) console.warn(`[${collected.source} errors]`, collected.errors);
     console.log(`[${collected.source}] fetched:`, collected.items.length);
+    const listFailed = collected.errors.some((error) => /^list fetch/i.test(error));
+    if (!listFailed) healthySources.add(collected.source);
 
     const sourceUids = collected.items.map((item) => item.source_uid);
     const { data: existing, error: existingError } = await supabase
@@ -182,6 +186,18 @@ async function main() {
     if (error) throw new Error(`rail_events upsert: ${JSON.stringify(error)}`);
   }
 
+  const stb = await collectStb();
+  if (stb.errors.length) console.warn('[stb errors]', stb.errors);
+  console.log(`[stb] week ${stb.week ?? '?'} -> events ${stb.events.length}`);
+  for (const line of stb.debug) console.log('    ', line);
+
+  const { error: stbDeleteError } = await supabase.from('rail_events').delete().like('source', 'stb%');
+  if (stbDeleteError) throw new Error(`stb delete: ${JSON.stringify(stbDeleteError)}`);
+  if (stb.events.length) {
+    const { error: stbError } = await supabase.from('rail_events').upsert(stb.events, { onConflict: 'source,source_uid' });
+    if (stbError) throw new Error(`stb upsert: ${JSON.stringify(stbError)}`);
+  }
+
   const windowDays = Number(process.env.RAIL_RECOMPUTE_WINDOW_DAYS || 21);
   const sinceISO = new Date(Date.now() - windowDays * 864e5).toISOString().slice(0, 10);
   const { data: recent, error: recentError } = await supabase.from('rail_events').select('*').gte('start_date', sinceISO);
@@ -204,7 +220,7 @@ async function main() {
       source: row.source,
     }));
 
-  const statuses = recomputeCorridorStatus(scored);
+  const statuses = recomputeCorridorStatus(scored, { healthySources });
   const now = new Date().toISOString();
   const statusRows = statuses.map((status) => ({ ...status, updated_at: now }));
   const { error: statusError } = await supabase

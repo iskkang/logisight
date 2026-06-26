@@ -28,12 +28,8 @@ const STATUS_THRESHOLDS = [
   { min: 30, status: 'watch' },
 ];
 
-// Missing signal should remain missing. No issue rows do not prove normality.
-const PRESUME_NORMAL_ON_NO_ISSUE = false;
-
 module.exports = {
   EVENT_BASE_SCORE,
   SCOPE_MULTIPLIER,
   STATUS_THRESHOLDS,
-  PRESUME_NORMAL_ON_NO_ISSUE,
 };
