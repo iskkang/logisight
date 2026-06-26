@@ -5,6 +5,7 @@ const { scoreEvent } = require('../scoreEvent');
 
 const ARTICLE_TABLE = 'maritime_news';
 const RAIL_CATEGORY = '\ucca0\ub3c4';
+const NA_RAIL_CATEGORY = '\ucca0\ub3c4-\ubd81\ubbf8';
 
 const STRONG = new Set(['embargo', 'derailment', 'line_out_of_service', 'service_interruption', 'congestion']);
 const MACRO_EXCLUDE = [
@@ -66,7 +67,7 @@ async function collectNews({ supabase, sinceDays = 21 } = {}) {
     const { data, error } = await supabase
       .from(ARTICLE_TABLE)
       .select('id,title,summary,content,url,source,published_at,category')
-      .eq('category', RAIL_CATEGORY)
+      .in('category', [RAIL_CATEGORY, NA_RAIL_CATEGORY])
       .gte('published_at', sinceISO);
     if (error) throw error;
     articles = data ?? [];
@@ -116,4 +117,4 @@ async function collectNews({ supabase, sinceDays = 21 } = {}) {
   return out;
 }
 
-module.exports = { collectNews, ARTICLE_TABLE, RAIL_CATEGORY };
+module.exports = { collectNews, ARTICLE_TABLE, RAIL_CATEGORY, NA_RAIL_CATEGORY };

@@ -14,6 +14,10 @@ const { collectBnsf } = require('../src/rail/collectors/bnsf');
 const { collectUp } = require('../src/rail/collectors/up');
 const { collectCn } = require('../src/rail/collectors/cn');
 const { collectNews } = require('../src/rail/collectors/news');
+const {
+  CATEGORY: PROGRESSIVE_RAILROADING_CATEGORY,
+  collectProgressiveRailroading,
+} = require('../src/rail/collectors/progressive-railroading');
 const { ruleParseEvent } = require('../src/rail/ruleParseEvent');
 const { matchCorridors } = require('../src/rail/matchCorridors');
 const { scoreEvent } = require('../src/rail/scoreEvent');
@@ -83,6 +87,10 @@ function formatStatus(status) {
 
 async function main() {
   const newRows = [];
+
+  const progressiveRailroading = await collectProgressiveRailroading({ supabase });
+  if (progressiveRailroading.errors.length) console.warn('[PR errors]', progressiveRailroading.errors);
+  console.log(`[PR producer] read ${progressiveRailroading.read} -> inserted ${progressiveRailroading.inserted} (maritime_news, category=${PROGRESSIVE_RAILROADING_CATEGORY})`);
 
   for (const collect of COLLECTORS) {
     const collected = await collect();
