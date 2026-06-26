@@ -41,6 +41,38 @@ function cleanBody(s) {
   return body;
 }
 
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+const IMG_KW = { '해상': 'container ship port', '항공': 'air cargo freighter', '철도': 'freight train railway', '무역': 'cargo port trade', '물류': 'logistics warehouse cargo' };
+
+// 이미지 URL이 실제 이미지로 로드되는지 검증(만료 토큰·404·핫링크 차단 컷)
+async function imageOk(url) {
+  if (!url) return false;
+  try {
+    const r = await fetch(url, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(8000) });
+    if (!r.ok) return false;
+    return (r.headers.get('content-type') || '').toLowerCase().startsWith('image/');
+  } catch { return false; }
+}
+
+// Unsplash 대체 이미지(키워드 기반). 키 없거나 실패 시 null.
+async function unsplashImage(keyword) {
+  const key = process.env.UNSPLASH_ACCESS_KEY;
+  if (!key) return null;
+  try {
+    const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(keyword)}&orientation=landscape&per_page=1&client_id=${key}`;
+    const r = await fetch(url, { headers: { 'Accept-Version': 'v1' }, signal: AbortSignal.timeout(10000) });
+    if (!r.ok) return null;
+    const photo = (await r.json())?.results?.[0];
+    return photo?.urls?.regular ? `${photo.urls.regular}&w=1200&h=675&fit=crop` : null;
+  } catch { return null; }
+}
+
+// 원본 이미지가 로드되면 유지, 실패하면 Unsplash, 그것도 없으면 null(카드에서 이미지 영역 생략)
+async function resolveImage(image, keyword) {
+  if (await imageOk(image)) return image;
+  return (await unsplashImage(keyword)) || null;
+}
+
 // 한글 brief는 그대로, 비한글(영문·노어·스페인어) external은 DeepSeek로 한 번에 번역·요약해 카드화.
 async function translateCards(arts) {
   const cards = arts.map((a) => ({
@@ -75,6 +107,11 @@ ${list}` }];
       for (const c of ext) { c.headline = c.t0; c.lead = c.s0; c.body = cleanBody(c.c0); }
     }
   }
+  // 이미지: 원본 로드 검증 → 실패 시 Unsplash 폴백 → 없으면 null(깨진 이미지 박스 방지)
+  await Promise.all(cards.map(async (c) => {
+    c.image = await resolveImage(c.image, IMG_KW[c.tag] || 'global logistics cargo supply chain');
+  }));
+
   return cards.map((c) => ({ briefType: c.briefType, tag: c.tag, headline: c.headline, lead: c.lead, image: c.image, body: c.body, source: c.source, url: c.url }));
 }
 
