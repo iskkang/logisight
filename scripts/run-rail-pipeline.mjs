@@ -182,7 +182,8 @@ async function main() {
     if (error) throw new Error(`rail_events upsert: ${JSON.stringify(error)}`);
   }
 
-  const sinceISO = new Date(Date.now() - 21 * 864e5).toISOString().slice(0, 10);
+  const windowDays = Number(process.env.RAIL_RECOMPUTE_WINDOW_DAYS || 21);
+  const sinceISO = new Date(Date.now() - windowDays * 864e5).toISOString().slice(0, 10);
   const { data: recent, error: recentError } = await supabase.from('rail_events').select('*').gte('start_date', sinceISO);
   if (recentError) throw new Error(`rail_events read: ${JSON.stringify(recentError)}`);
 
