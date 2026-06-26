@@ -13,7 +13,7 @@ const META = require('./config/region-meta');
 
 const BUCKET = 'reports';
 const PUB_DIR = path.join(__dirname, 'content/published');
-const JSON_DIR = path.join(__dirname, 'content/weekly-region');
+const JSON_DIR = path.join(__dirname, 'content/weekly-region-deep');   // deep 분석 JSON(롤아웃). 없으면 plan()에서 구 디렉터리 폴백
 const arg = (n) => { const a = process.argv.find((x) => x.startsWith(`--${n}=`)); return a ? a.split('=')[1] : null; };
 
 // ISO 주차 → 보고기간(월~일) ISO 날짜
@@ -41,12 +41,15 @@ function targets(week, only) {
 
 function plan(week, t) {
   const meta = META[t.region];
-  const jsonPath = path.join(JSON_DIR, `${week}-${t.region}.json`);
+  const deepPath = path.join(JSON_DIR, `${week}-${t.region}.json`);
+  const oldPath = path.join(__dirname, 'content/weekly-region', `${week}-${t.region}.json`);
+  const jsonPath = fs.existsSync(deepPath) ? deepPath : oldPath;
   const j = fs.existsSync(jsonPath) ? JSON.parse(fs.readFileSync(jsonPath, 'utf-8')) : {};
   const label = j.label || meta.kr;                         // 예: '미주'
   const { startISO, endISO } = isoWeekRange(week);
   const period = j.period || '';                            // 'MM/DD~MM/DD'
-  const summary = j.selection && j.selection.content ? String(j.selection.content).slice(0, 160) : null;
+  const summary = j.summary ? String(j.summary).slice(0, 160)   // deep: 종합 / 구: selection.content
+    : (j.selection && j.selection.content ? String(j.selection.content).slice(0, 160) : null);
   return {
     region: t.region,
     localPdf: path.join(PUB_DIR, t.file),

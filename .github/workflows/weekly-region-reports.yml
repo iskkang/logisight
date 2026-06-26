@@ -1,7 +1,7 @@
 name: Weekly Region Reports
 
-# 매주 일요일: 권역별(유럽·미주·극동CIS·남미) 위클리 리포트 자동 생성 + 발행.
-#   feed(주체 게이트 배정 + 영문 external 한글 번역 + 이미지 폴백) → 권역 PDF 렌더 → reports 버킷/카탈로그 발행.
+# 매주 일요일: 권역별 심층 분석형 위클리 리포트 자동 생성 + 발행.
+#   deep-feed(핵심 이슈 클러스터링 + 심층 분석 + 운임 지표) → 권역 PDF(차트 포함) 렌더 → reports 버킷/카탈로그 발행.
 # 데이터원: maritime_news(주간 누적, 일간 수집/큐레이션 결과). 0건 권역은 자동 생략.
 # 필요 secrets: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, DEEPSEEK_API_KEY, UNSPLASH_ACCESS_KEY
 on:
@@ -52,15 +52,15 @@ jobs:
           echo "week=$WEEK" >> "$GITHUB_OUTPUT"
           echo "주차: $WEEK"
 
-      - name: 권역 feed 생성 (배정·번역·이미지 폴백)
-        run: node weekly-region-feed.js --week="${{ steps.w.outputs.week }}"
-
-      - name: 권역 PDF 렌더 (데이터 있는 권역만)
+      - name: 권역 심층 분석 리포트 생성 (deep feed + PDF, 데이터 있는 권역만)
         env:
           PUPPETEER_EXECUTABLE_PATH: ${{ steps.chrome.outputs.path }}
         run: |
           for r in europe americas russia latam china japan sea mideast africa; do
-            node weekly-region-pdf.js --week="${{ steps.w.outputs.week }}" --region="$r"
+            echo "═══ $r ═══"
+            node weekly-region-deep-feed.js --week="${{ steps.w.outputs.week }}" --region="$r" \
+              && node weekly-region-deep-pdf.js --week="${{ steps.w.outputs.week }}" --region="$r" \
+              || echo "::warning::[$r] 생성 실패 또는 소스 없음 — 생략"
           done
 
       - name: 발행 (reports 버킷 + 카탈로그)
