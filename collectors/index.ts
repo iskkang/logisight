@@ -29,6 +29,7 @@ import { collect as collectPortStats }         from './port_stats';
 import { collect as collectMonthlyAnalysis }   from './monthly_analysis';
 import { collect as collectFreightIndexExcel } from './freight_index_excel';
 import { collect as collectKcciRoutes }        from './kcci_routes';
+import { collect as collectErai }              from './erai';
 import { collect as collectNewsLogistics }     from './news_logistics';
 import { collect as collectNewsBrowser }       from './news_browser';
 
@@ -43,6 +44,7 @@ const GROUPS = [
       { name: 'shipping_indices',    fn: collectShipping },     // WCI · FBX · SCFI · KCCI · CCFI (종합)
       { name: 'freight_index_excel', fn: collectFreightIndexExcel }, // oneksa: BDI · SCFI 레인 · HSFO · VLSFO (주간)
       { name: 'kcci_routes',         fn: collectKcciRoutes },   // KOBC: KCCI 종합 + 13개 권역 항로 (주간)
+      { name: 'erai',                fn: collectErai },         // index1520: ERAI 유라시아 철도 운임 컴포지트(월별)
       { name: 'bunker',              fn: collectBunker },
       { name: 'air_indices',         fn: collectAir },
     ],
