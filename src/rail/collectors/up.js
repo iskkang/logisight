@@ -1,11 +1,19 @@
 const crypto = require('node:crypto');
 const cheerio = require('cheerio');
 
-const LIST_URL = 'https://www.bnsf.com/news-media/customer-notifications/library.page?type=service';
-const BASE = 'https://www.bnsf.com';
+const LIST_URL = 'https://www.up.com/announcements/customer-news';
+const BASE = 'https://www.up.com';
 const UA = 'LogisightRailMonitor/0.1 (+research)';
 
-const TITLE_EXCLUDE = [/weekly surface transportation board update/i];
+const TITLE_EXCLUDE = [
+  /accessorial charges/i,
+  /operating plan/i,
+  /merger/i,
+  /rates after the merger/i,
+  /status of the railroad/i,
+  /stb application/i,
+  /switching tariff/i,
+];
 
 function sha(value) {
   return crypto.createHash('sha256').update(value || '').digest('hex');
@@ -19,8 +27,12 @@ function detailUrlFromHref(href) {
   return href.startsWith('http') ? href : new URL(href, BASE).href;
 }
 
-async function collectBnsf({ fetchImpl = fetch } = {}) {
-  const out = { source: 'bnsf', items: [], errors: [] };
+function sourceUidFromUrl(detailUrl) {
+  return detailUrl.match(/\/(CN\d{4}-\d+)$/i)?.[1] || sha(detailUrl).slice(0, 16);
+}
+
+async function collectUp({ fetchImpl = fetch } = {}) {
+  const out = { source: 'up', items: [], errors: [] };
 
   let listHtml;
   try {
@@ -34,11 +46,11 @@ async function collectBnsf({ fetchImpl = fetch } = {}) {
 
   const $ = cheerio.load(listHtml);
   const cards = [];
-  $('.media-asset[data-type="service"]').each((_, element) => {
-    const link = $(element).find('.media-asset-copy h3 a');
+  $('.up-suggested-posts__card.js-suggestedPosts-card').each((_, element) => {
+    const link = $(element).find('.up-suggested-posts__title.js-suggestedPosts-title');
     const title = cleanText(link.text());
     const href = link.attr('href');
-    const date = cleanText($(element).find('.media-asset-copy p.date').text());
+    const date = cleanText($(element).find('.up-suggested-posts__date.js-suggestedPosts-date').text());
     if (title && href) cards.push({ title, href, date });
   });
 
@@ -46,20 +58,15 @@ async function collectBnsf({ fetchImpl = fetch } = {}) {
     if (TITLE_EXCLUDE.some((pattern) => pattern.test(card.title))) continue;
 
     const detailUrl = detailUrlFromHref(card.href);
-    const sourceUid = new URL(detailUrl).searchParams.get('notId') || sha(detailUrl).slice(0, 16);
+    const sourceUid = sourceUidFromUrl(detailUrl);
 
     try {
       const response = await fetchImpl(detailUrl, { headers: { 'User-Agent': UA } });
       if (!response.ok) throw new Error(`detail HTTP ${response.status}`);
       const detail = cheerio.load(await response.text());
-      const title = cleanText(detail('.page.single-article h1').text()) || card.title;
-      const date = cleanText(detail('.single-sidebar p.date').text()).replace(/^Date\s*/i, '') || card.date;
-      const body = detail('.single-content-bottom > p')
-        .map((_, paragraph) => cleanText(detail(paragraph).text()))
-        .get()
-        .filter(Boolean)
-        .join('\n')
-        .trim();
+      const title = cleanText(detail('h1').first().text()) || card.title;
+      const date = cleanText(detail('.up-post-detail-hero__date, [class*="date"]').first().text()) || card.date;
+      const body = cleanText(detail('.up-post-detail-hero-wysiwyg .up-rich-text').first().text());
 
       out.items.push({
         source_uid: sourceUid,
@@ -77,4 +84,4 @@ async function collectBnsf({ fetchImpl = fetch } = {}) {
   return out;
 }
 
-module.exports = { collectBnsf, LIST_URL };
+module.exports = { collectUp, LIST_URL };

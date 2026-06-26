@@ -11,10 +11,13 @@ globalThis.WebSocket = WebSocket;
 
 const require = createRequire(import.meta.url);
 const { collectBnsf } = require('../src/rail/collectors/bnsf');
+const { collectUp } = require('../src/rail/collectors/up');
 const { ruleParseEvent } = require('../src/rail/ruleParseEvent');
 const { matchCorridors } = require('../src/rail/matchCorridors');
 const { scoreEvent } = require('../src/rail/scoreEvent');
 const { recomputeCorridorStatus } = require('../src/rail/recomputeStatus');
+
+const COLLECTORS = [collectBnsf, collectUp];
 
 const url = process.env.SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -30,6 +33,32 @@ const supabase = createClient(url, key, {
 
 function toISODate(value) {
   const cleaned = String(value || '').replace(/^Date\s*/i, '').trim();
+  const namedMonth = cleaned.match(/^([A-Za-z]+)\s+(\d{1,2}),\s*(\d{4})$/);
+  if (namedMonth) {
+    const months = new Map([
+      ['january', '01'],
+      ['february', '02'],
+      ['march', '03'],
+      ['april', '04'],
+      ['may', '05'],
+      ['june', '06'],
+      ['july', '07'],
+      ['august', '08'],
+      ['september', '09'],
+      ['october', '10'],
+      ['november', '11'],
+      ['december', '12'],
+    ]);
+    const month = months.get(namedMonth[1].toLowerCase());
+    if (month) return `${namedMonth[3]}-${month}-${namedMonth[2].padStart(2, '0')}`;
+  }
+
+  const numeric = cleaned.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (numeric) return `${numeric[3]}-${numeric[1].padStart(2, '0')}-${numeric[2].padStart(2, '0')}`;
+
+  const isoDate = cleaned.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (isoDate) return isoDate[1];
+
   const date = new Date(cleaned);
   return Number.isFinite(date.getTime()) ? date.toISOString().slice(0, 10) : null;
 }
@@ -39,58 +68,63 @@ function formatStatus(status) {
 }
 
 async function main() {
-  const collected = await collectBnsf();
-  if (collected.errors.length) console.warn('[bnsf errors]', collected.errors);
-  console.log('[bnsf] fetched:', collected.items.length);
-
-  const sourceUids = collected.items.map((item) => item.source_uid);
-  const { data: existing, error: existingError } = await supabase
-    .from('rail_events')
-    .select('source_uid, checksum')
-    .eq('source', 'bnsf')
-    .in('source_uid', sourceUids.length ? sourceUids : ['__none__']);
-  if (existingError) throw new Error(`rail_events existing read: ${JSON.stringify(existingError)}`);
-
-  const seen = new Map((existing ?? []).map((event) => [event.source_uid, event.checksum]));
-
   const newRows = [];
-  let mapped = 0;
-  let unmapped = 0;
 
-  for (const item of collected.items) {
-    if (seen.get(item.source_uid) === item.checksum) continue;
+  for (const collect of COLLECTORS) {
+    const collected = await collect();
+    if (collected.errors.length) console.warn(`[${collected.source} errors]`, collected.errors);
+    console.log(`[${collected.source}] fetched:`, collected.items.length);
 
-    const parsed = ruleParseEvent(`${item.title}\n${item.body}`, {
-      source: 'bnsf',
-      id: item.source_uid,
-      location_text: item.title,
-    });
-    const match = matchCorridors(parsed);
-    const score = scoreEvent(parsed, match.scope);
+    const sourceUids = collected.items.map((item) => item.source_uid);
+    const { data: existing, error: existingError } = await supabase
+      .from('rail_events')
+      .select('source_uid, checksum')
+      .eq('source', collected.source)
+      .in('source_uid', sourceUids.length ? sourceUids : ['__none__']);
+    if (existingError) throw new Error(`rail_events existing read: ${JSON.stringify(existingError)}`);
 
-    if (match.corridorCodes.length) mapped += 1;
-    else unmapped += 1;
+    const seen = new Map((existing ?? []).map((event) => [event.source_uid, event.checksum]));
 
-    newRows.push({
-      source: 'bnsf',
-      source_uid: item.source_uid,
-      checksum: item.checksum,
-      event_type: parsed.event_type,
-      severity: parsed.severity,
-      railroad: parsed.railroad,
-      location_text: parsed.location_text,
-      affected_corridors: match.corridorCodes,
-      scope: match.scope,
-      score,
-      summary: parsed.summary,
-      evidence_text: item.body.slice(0, 1000),
-      confidence_score: parsed.confidence_score,
-      start_date: toISODate(item.date),
-      end_date: null,
-    });
+    let mapped = 0;
+    let unmapped = 0;
+    let changed = 0;
+
+    for (const item of collected.items) {
+      if (seen.get(item.source_uid) === item.checksum) continue;
+
+      const parsed = ruleParseEvent(`${item.title}\n${item.body}`, {
+        source: collected.source,
+        id: item.source_uid,
+        location_text: item.title,
+      });
+      const match = matchCorridors(parsed);
+      const score = scoreEvent(parsed, match.scope);
+
+      if (match.corridorCodes.length) mapped += 1;
+      else unmapped += 1;
+      changed += 1;
+
+      newRows.push({
+        source: collected.source,
+        source_uid: item.source_uid,
+        checksum: item.checksum,
+        event_type: parsed.event_type,
+        severity: parsed.severity,
+        railroad: parsed.railroad,
+        location_text: parsed.location_text,
+        affected_corridors: match.corridorCodes,
+        scope: match.scope,
+        score,
+        summary: parsed.summary,
+        evidence_text: item.body.slice(0, 1000),
+        confidence_score: parsed.confidence_score,
+        start_date: toISODate(item.date),
+        end_date: null,
+      });
+    }
+
+    console.log(`[${collected.source}] new/changed: ${changed} (mapped ${mapped} / unmapped ${unmapped})`);
   }
-
-  console.log(`[bnsf] new/changed: ${newRows.length} (mapped ${mapped} / unmapped ${unmapped})`);
 
   if (newRows.length) {
     const { error } = await supabase.from('rail_events').upsert(newRows, { onConflict: 'source,source_uid' });
