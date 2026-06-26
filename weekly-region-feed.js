@@ -17,6 +17,7 @@ const { buildRegionSelectionMessages } = require('./generators/web/lib/weekly-br
 
 const CATS = ['해상', '항공', '무역', '물류', '철도'];   // 철도=러시아·CIS·TCR/TSR 통로(권역 배정은 주체 게이트가 결정)
 const PER_REGION = 14;   // 권역당 카드 상한(번역 비용·분량)
+const MIN_BODY = 120;    // 본문 미달 카드 제외(유료벽/요약만 출처의 2~3줄 빈약 카드)
 const arg = (n) => { const a = process.argv.find((x) => x.startsWith(`--${n}=`)); return a ? a.split('=')[1] : null; };
 
 function isoWeekId(d) {
@@ -87,7 +88,7 @@ async function translateCards(arts) {
   if (ext.length) {
     const list = ext.map((c, i) => `${i}. TITLE: ${c.t0}\nLEAD: ${(c.s0 || '').slice(0, 200)}\nBODY: ${(c.c0 || '').slice(0, 700)}`).join('\n\n');
     const messages = [{ role: 'user', content: `다음 ${ext.length}개 해외 물류 기사를 한국어로 번역·요약한다.
-각 항목: headline(간결한 한국어 헤드라인 25~40자, 명사형 종결), lead(한 문장 요약), body(2~3문장, 기사에 보고된 핵심 사실·수치만; 환각 금지).
+각 항목: headline(간결한 한국어 헤드라인 25~40자, 명사형 종결), lead(한 문장 요약), body(원문의 핵심 사실·수치·맥락을 충실히 담아 4~6문장; 원문이 짧으면 가능한 만큼. 보고된 내용만, 환각·과장 금지).
 고유명사·항만·기업명·수치는 보존. ~입니다·~합니다 금지(~기록했다·~밝혔다 어미).
 반드시 JSON만: {"cards":[{"i":0,"headline":"...","lead":"...","body":"..."}, ...]}
 
@@ -164,7 +165,15 @@ async function main() {
 
     const cfg = cfgs[region];
     const koN = arts.filter((a) => /[가-힣]/.test(a.title || '')).length;
-    const cards = await translateCards(arts);
+    let cards = await translateCards(arts);
+    const before = cards.length;
+    cards = cards.filter((c) => (c.body || '').length >= MIN_BODY);   // 빈약 카드(유료벽/요약만) 제외
+    if (!cards.length) {
+      const stale = path.join(dir, `${week}-${region}.json`);
+      if (fs.existsSync(stale)) fs.unlinkSync(stale);
+      console.log(`  [${region}] 본문 충실 카드 0건(전체 ${before}) — 생략`);
+      continue;
+    }
     const byType = cards.reduce((m, c) => { m[c.briefType] = (m[c.briefType] || 0) + 1; return m; }, {});
     const focus = cfg.promptFocus + ' ' + SHARED_TYPE_RULES;
     const selArticles = cards.map((c) => ({ title: c.headline, summary: c.lead, briefType: c.briefType }));
