@@ -5,7 +5,7 @@ export type NewsSource = {
   url: string;
   kind: 'rss' | 'html';
   section: NewsSection;
-  language: 'en' | 'ko' | 'es';
+  language: 'en' | 'ko' | 'es' | 'ru';
   selector?: string;
   monthly?: boolean;
   requiresBrowser?: boolean;   // 봇 차단(Cloudflare/403) — news_browser(Playwright)가 수집, news_global은 스킵
@@ -64,6 +64,11 @@ export const NEWS_SOURCES: NewsSource[] = [
   { name: 'Baltic Transport Journal', url: 'https://baltictransportjournal.com/feed/', kind: 'rss', section: 'shipping', language: 'en', requiresBrowser: true },  // 발트·CEE 항만
   { name: 'PortSEurope', url: 'https://www.portseurope.com/feed/', kind: 'rss', section: 'shipping', language: 'en', requiresBrowser: true },                       // 남유럽·지중해 항만
   { name: 'Portal Portuario', url: 'https://portalportuario.cl/feed/', kind: 'rss', section: 'shipping', language: 'es', requiresBrowser: true },                  // 칠레·태평양안(Chancay)
+
+  // ── 러시아·CIS 보강 (2026-06-26) ── (PortNews/RZD 공식은 rail_ops/rail_tsr에도 있으나 피드 폐지로 0건이라 작동 경로로 재추가)
+  { name: 'RZD-Partner', url: 'https://www.rzd-partner.ru/news/xml.php?SECTION_ID=1020', kind: 'rss', section: 'rail', language: 'ru' },                            // 러 철도화물(러시아어 RSS) — 큐레이션서 한글 번역
+  { name: 'PortNews EN', url: 'https://en.portnews.ru/', kind: 'html', section: 'rail', language: 'en', selector: 'a[href*="/news/"], article a, h2 a, h3 a' },     // 영문 RSS 폐지(404) → news_rail Playwright HTML 스크랩
+  { name: 'The Moscow Times', url: 'https://www.themoscowtimes.com/rss/news', kind: 'rss', section: 'trade', language: 'en' },                                      // 중립 교차검증(제재·사건·항공 폐쇄)
 ];
 
 export function sourcesFor(
