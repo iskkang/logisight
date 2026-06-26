@@ -36,6 +36,10 @@ async function main() {
     summary: '글로벌 해운·항공·철도 운임과 공급망·지정학 동향 종합 분석',
     pdfPath,
     webUrl: null,
+    // 분류(048): 월간
+    reportClass: 'monthly',
+    region: null,
+    isoWeek: null,
   });
   console.log(`✅ 월간 발행 완료: ${month}`);
 }

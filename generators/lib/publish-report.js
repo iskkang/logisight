@@ -30,6 +30,9 @@ function client() {
  * @param {string} [inp.pdfUrl]     이미 업로드된 PDF 공개 URL — 주면 업로드 생략(pdfKey와 함께)
  * @param {string} [inp.pdfKey]     이미 업로드된 스토리지 경로
  * @param {string} [inp.coverPath]  로컬 표지 이미지(선택)
+ * @param {'monthly'|'weekly'|'weekly_regional'} [inp.reportClass] 권위 분류 — 미전달 시 type 폴백
+ * @param {string|null} [inp.region]   weekly_regional 권역명(미주/유럽/극동(러시아·CIS) …)
+ * @param {string|null} [inp.isoWeek]  'YYYY-Www' 주간 그룹 라벨(weekly·weekly_regional)
  * @returns {Promise<{id: string, pdfUrl: string}>}
  */
 async function publishReport(inp) {
@@ -73,6 +76,10 @@ async function publishReport(inp) {
     pdf_url: pdfUrl,
     web_url: inp.webUrl ?? null,
     cover_url: coverUrl,
+    // 분류 3필드(048) — 프론트가 월간/주간 종합/주간 권역 분리 + 권역 매트릭스 렌더에 사용.
+    report_class: inp.reportClass ?? inp.type,  // 미전달 시 type 폴백
+    region: inp.region ?? null,                 // weekly_regional만 채움
+    iso_week: inp.isoWeek ?? null,              // 'YYYY-Www'
     published_at: new Date().toISOString(),
   };
   const { error } = await sb.from('reports').upsert(row, { onConflict: 'id' });

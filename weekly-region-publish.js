@@ -11,6 +11,15 @@ require('dotenv').config({ path: path.resolve(__dirname, '.env.local') });
 const { createClient } = require('@supabase/supabase-js');
 const META = require('./config/region-meta');
 
+// 프론트 권역 매트릭스 컬럼명과 1:1 일치하는 정식 권역명. region-meta.kr('미주 권역'/'극동·CIS 권역')과
+// 다르며, 매트릭스 매칭을 위해 괄호 포함 형태로 통일한다(특히 극동 = '극동(러시아·CIS)').
+const REGION_KR = {
+  americas: '미주',
+  europe: '유럽',
+  russia: '극동(러시아·CIS)',
+  latam: '남미',
+};
+
 const BUCKET = 'reports';
 const PUB_DIR = path.join(__dirname, 'content/published');
 const JSON_DIR = path.join(__dirname, 'content/weekly-region');
@@ -58,6 +67,10 @@ function plan(week, t) {
     period_end: endISO,
     period_label: period ? `${label} · ${period}` : label,
     summary,
+    // 분류(048): 주간 권역. region은 프론트 매트릭스 컬럼명과 일치(meta.kr 아님), iso_week는 주차.
+    report_class: 'weekly_regional',
+    region: REGION_KR[t.region] || (META[t.region] && META[t.region].kr) || t.region,
+    iso_week: week,
   };
 }
 
@@ -105,6 +118,9 @@ async function main() {
       pdf_url: pdfUrl,
       web_url: null,
       cover_url: null,
+      report_class: p.report_class, // 'weekly_regional'
+      region: p.region, // 미주/유럽/극동(러시아·CIS)
+      iso_week: p.iso_week, // 'YYYY-Www'
       published_at: new Date().toISOString(),
     };
     const { error } = await sb.from('reports').upsert(row, { onConflict: 'id' });

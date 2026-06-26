@@ -73,6 +73,10 @@ async function main() {
       pdfUrl,
       pdfKey: objectPath,
       webUrl: null,
+      // 분류(048): 주간 종합
+      reportClass: 'weekly',
+      region: null,
+      isoWeek: week, // 'YYYY-Www'
     });
   }
 }
