@@ -31,6 +31,10 @@ import { collect as collectFreightIndexExcel } from './freight_index_excel';
 import { collect as collectNewsLogistics }     from './news_logistics';
 import { collect as collectNewsBrowser }       from './news_browser';
 
+const { collect: collectContainerNewsSticky } = require('./container-news-sticky') as {
+  collect: () => Promise<CollectorResult>;
+};
+
 const GROUPS = [
   {
     name: '운임 지수',
@@ -69,6 +73,7 @@ const GROUPS = [
     name: 'rail-daily',
     collectors: [
       { name: 'news_rail',      fn: collectNewsRail },                          // RailFreight RSS + TransportCorridors
+      { name: 'container_news_sticky', fn: collectContainerNewsSticky },
       { name: 'rail_cn_daily',  fn: () => collectRailCN({ frequency: 'daily' }) },
       { name: 'rail_ops_daily', fn: () => collectRailOps({ frequency: 'daily' }) },
     ],
@@ -77,6 +82,7 @@ const GROUPS = [
     name: 'rail-weekly',
     collectors: [
       { name: 'news_rail',       fn: collectNewsRail },                         // weekly도 최신 기사 포함
+      { name: 'container_news_sticky', fn: collectContainerNewsSticky },
       { name: 'rail_cn_weekly',  fn: () => collectRailCN({ frequency: 'weekly' }) },
       { name: 'rail_ops_weekly', fn: () => collectRailOps({ frequency: 'weekly' }) },
     ],
@@ -123,6 +129,7 @@ const GROUPS = [
     name: 'monthly-analysis',
     collectors: [
       { name: 'monthly_analysis',     fn: collectMonthlyAnalysis },
+      { name: 'container_news_sticky', fn: collectContainerNewsSticky },
       { name: 'freight_index_excel',  fn: collectFreightIndexExcel },
     ],
   },

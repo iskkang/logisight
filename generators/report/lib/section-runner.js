@@ -128,6 +128,26 @@ function appendTopicArticleGuide(lines, items, topicGuides) {
   lines.push('');
 }
 
+function appendStickyRailGuide(lines, items) {
+  const stickyRail = items.filter(i =>
+    i &&
+    i.sticky === true &&
+    String(i.source || '').toLowerCase() === 'container-news' &&
+    String(i.section || '').toLowerCase() === 'rail'
+  );
+  if (!stickyRail.length) return;
+
+  lines.push('## Container News sticky rail items (gated event block)');
+  lines.push('Use this block only because sticky rail items are present in this run. Keep the tone to what happened and why it matters; do not add recommendation or action wording.');
+  for (const item of stickyRail) {
+    lines.push(`- [${item.source}] ${item.title}`);
+    if (item.summary_en || item.summary) lines.push(`  Summary: ${(item.summary_en || item.summary).slice(0, 600)}`);
+    if (item.tags?.length) lines.push(`  Tags: ${item.tags.join(', ')}`);
+    lines.push(`  URL: ${item.url}`);
+  }
+  lines.push('');
+}
+
 function buildSectionUserPrompt(title, items, month, indexFactText, railFactText, airFactText, portThroughputFactText, kitaFactText, topicGuides) {
   const lines = [`분석 기준월: ${month}`, ''];
 
@@ -161,6 +181,7 @@ function buildSectionUserPrompt(title, items, month, indexFactText, railFactText
   }
 
   appendTopicArticleGuide(lines, items, topicGuides);
+  appendStickyRailGuide(lines, items);
 
   const causal  = items.filter(i => i.category === 'lane_causal');
   const carrier = items.filter(i => i.category === 'carrier_update');

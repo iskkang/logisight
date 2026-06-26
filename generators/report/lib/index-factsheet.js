@@ -20,6 +20,15 @@ const LANE_CAUSAL_RELEVANCE = /freight rate|container rate|ocean rate|shipping r
 
 // ── (기존) 뉴스 아이템 로더 — run-section.js 호환 유지 ──
 // TASK 4 (옵션 A): category 필터 제거 + air/risk 섹션 추가 → air/rail/policy 섹션 입력 확보
+function titleKey(item) {
+  return String(item?.title || item?.title_en || '')
+    .toLowerCase()
+    .replace(/&(?:amp|#038);/g, '&')
+    .replace(/[^a-z0-9가-힣一-龥]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function loadAllMonthlyItems() {
   if (!fs.existsSync(NEWS_PATH)) {
     console.error('ERROR: latest-news.json 없음 — npm run collect:monthly 먼저 실행하세요.');
@@ -48,9 +57,17 @@ function loadAllMonthlyItems() {
   });
 
   const seen = new Set();
+  const seenRailTitles = new Set();
   return all.filter(i => {
     if (seen.has(i.url)) return false;
     seen.add(i.url);
+    if (i.section === 'rail') {
+      const key = titleKey(i);
+      if (key) {
+        if (seenRailTitles.has(key)) return false;
+        seenRailTitles.add(key);
+      }
+    }
     return true;
   });
 }
