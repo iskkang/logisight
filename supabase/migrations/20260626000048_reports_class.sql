@@ -30,7 +30,8 @@ update reports
 set iso_week = substring(coalesce(id, pdf_path) from '(\d{4}-W\d{2})')
 where report_class in ('weekly','weekly_regional') and iso_week is null;
 
--- 제약(기존행 안 깨지게 not valid) + 인덱스
+-- 제약(기존행 안 깨지게 not valid) + 인덱스. 재실행 가능하도록 drop if exists 후 재생성.
+alter table reports drop constraint if exists reports_class_chk;
 alter table reports
   add constraint reports_class_chk check (report_class in ('monthly','weekly','weekly_regional')) not valid;
 create index if not exists idx_reports_class on reports (report_class, period_start desc);
