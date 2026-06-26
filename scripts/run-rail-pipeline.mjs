@@ -14,6 +14,7 @@ const { collectBnsf } = require('../src/rail/collectors/bnsf');
 const { collectUp } = require('../src/rail/collectors/up');
 const { collectCn } = require('../src/rail/collectors/cn');
 const { collectNews } = require('../src/rail/collectors/news');
+const { collectStb } = require('../src/rail/collectors/stb');
 const {
   CATEGORY: PROGRESSIVE_RAILROADING_CATEGORY,
   collectProgressiveRailroading,
@@ -183,6 +184,18 @@ async function main() {
   if (newRows.length) {
     const { error } = await supabase.from('rail_events').upsert(newRows, { onConflict: 'source,source_uid' });
     if (error) throw new Error(`rail_events upsert: ${JSON.stringify(error)}`);
+  }
+
+  const stb = await collectStb();
+  if (stb.errors.length) console.warn('[stb errors]', stb.errors);
+  console.log(`[stb] week ${stb.week ?? '?'} -> events ${stb.events.length}`);
+  for (const line of stb.debug) console.log('    ', line);
+
+  const { error: stbDeleteError } = await supabase.from('rail_events').delete().like('source', 'stb%');
+  if (stbDeleteError) throw new Error(`stb delete: ${JSON.stringify(stbDeleteError)}`);
+  if (stb.events.length) {
+    const { error: stbError } = await supabase.from('rail_events').upsert(stb.events, { onConflict: 'source,source_uid' });
+    if (stbError) throw new Error(`stb upsert: ${JSON.stringify(stbError)}`);
   }
 
   const windowDays = Number(process.env.RAIL_RECOMPUTE_WINDOW_DAYS || 21);

@@ -46,11 +46,12 @@ function recomputeCorridorStatus(scoredEvents, opts = {}) {
     }
 
     const top = events.reduce((best, event) => (event.score > best.score ? event : best));
+    const reason = top.source === 'stb' ? top.summary : `${top.event_type} (${top.source}) - ${top.summary}`;
     return {
       corridor_code: code,
       status: scoreToStatus(top.score),
       score: top.score,
-      reason: `${top.event_type} (${top.source}) - ${top.summary}`.slice(0, 240),
+      reason: reason.slice(0, 240),
       source: top.source,
       active_event_ids: events.map((event) => event.id).filter(Boolean),
     };
