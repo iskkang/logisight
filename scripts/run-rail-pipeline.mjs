@@ -12,6 +12,7 @@ globalThis.WebSocket = WebSocket;
 const require = createRequire(import.meta.url);
 const { collectBnsf } = require('../src/rail/collectors/bnsf');
 const { collectUp } = require('../src/rail/collectors/up');
+const { collectNews } = require('../src/rail/collectors/news');
 const { ruleParseEvent } = require('../src/rail/ruleParseEvent');
 const { matchCorridors } = require('../src/rail/matchCorridors');
 const { scoreEvent } = require('../src/rail/scoreEvent');
@@ -124,6 +125,34 @@ async function main() {
     }
 
     console.log(`[${collected.source}] new/changed: ${changed} (mapped ${mapped} / unmapped ${unmapped})`);
+  }
+
+  const news = await collectNews({ supabase, sinceDays: 21 });
+  if (news.errors.length) console.warn('[news errors]', news.errors);
+  console.log(`[news] read ${news.stats.read} -> mapped ${news.stats.mapped}`);
+
+  const newsUids = news.rows.map((row) => row.source_uid);
+  const { data: existingNews, error: existingNewsError } = await supabase
+    .from('rail_events')
+    .select('source, source_uid, checksum')
+    .like('source', 'news:%')
+    .in('source_uid', newsUids.length ? newsUids : ['__none__']);
+  if (existingNewsError) throw new Error(`rail_events news existing read: ${JSON.stringify(existingNewsError)}`);
+
+  const seenNews = new Map((existingNews ?? []).map((event) => [`${event.source}|${event.source_uid}`, event.checksum]));
+  let changedNews = 0;
+  for (const row of news.rows) {
+    if (seenNews.get(`${row.source}|${row.source_uid}`) === row.checksum) continue;
+    newRows.push(row);
+    changedNews += 1;
+  }
+  console.log(`[news] new/changed: ${changedNews}`);
+
+  if (news.rows.length) {
+    console.log('\n=== mapped news events (precision review) ===');
+    for (const row of news.rows) {
+      console.log(`  [${row.source}] ${row.affected_corridors.join(',')} ${row.event_type} score=${row.score} - ${row.summary}`);
+    }
   }
 
   if (newRows.length) {
