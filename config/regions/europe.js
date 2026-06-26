@@ -9,6 +9,11 @@ module.exports = {
     'Belgium','벨기에','CEE','동유럽','중동부유럽',
     'Rotterdam','로테르담','Hamburg','함부르크','Antwerp','안트베르펜',
     'Felixstowe','Le Havre','Gdansk','그단스크','North Sea','Rhine','라인강',
+    // 주체앵커 보강: 허브 도시·항만·유럽계 물류기업
+    'Frankfurt','프랑크푸르트','Munich','뮌헨','Stuttgart','슈투트가르트','Duisburg','뒤스부르크',
+    'Piraeus','피레우스','Valencia','발렌시아','Algeciras','알헤시라스','Bremerhaven','브레머하펜',
+    'Zeebrugge','제브뤼헤','Barcelona','바르셀로나','Genoa','제노바','밀라노','마드리드',
+    '바르샤바','부다페스트','프라하','Lufthansa','루프트한자','Hapag-Lloyd','하파크로이드',
   ],
   broadGeo: ['Europe', '유럽', 'European Union', 'EU', 'Eurozone'],  // 광역어 — 주체 판정에서 제외
   koreaAnchors: [

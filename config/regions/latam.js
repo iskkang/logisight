@@ -7,6 +7,10 @@ module.exports = {
     'Brazil','브라질','Chile','칠레','Peru','페루','Argentina','아르헨티나','Colombia','콜롬비아',
     'Santos','산토스','Paranagua','파라나구아','Valparaiso','발파라이소','San Antonio',
     'lithium','리튬','copper','구리','iron ore','철광석',
+    // 주체앵커 보강: 남미 허브 도시·항만·광물기업
+    'Callao','카야오','Buenos Aires','부에노스아이레스','Cartagena','카르타헤나','Guayaquil','과야킬',
+    'Montevideo','몬테비데오','Bogota','보고타','Sao Paulo','상파울루','Rio de Janeiro','리우데자네이루',
+    'Itajai','이타자이','Codelco','코델코','soybean','대두',
   ],
   broadGeo: ['South America', '남미', '중남미', 'Latin America', 'LatAm', '라틴아메리카'],  // 광역어 — 주체 판정에서 제외
   koreaAnchors: [

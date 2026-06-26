@@ -7,6 +7,11 @@ module.exports = {
     'USA','United States','미국','Mexico','멕시코','USMCA','nearshoring','니어쇼어링',
     'Laredo','라레도','Nuevo Laredo','Los Angeles','Long Beach','LA/LB',
     'Savannah','사바나','Houston','Texas','텍사스','Corpus Christi','코퍼스크리스티','Manzanillo','만사니요','Gulf of Mexico','멕시코만',
+    // 주체앵커 보강: 미국·캐나다·멕시코 허브 도시·항만·물류기업
+    'Chicago','시카고','Dallas','댈러스','Memphis','멤피스','Atlanta','애틀랜타','New York','뉴욕',
+    'New Jersey','뉴저지','Oakland','오클랜드','Seattle','시애틀','Charleston','찰스턴','Norfolk','노퍽',
+    'Vancouver','밴쿠버','Monterrey','몬테레이','Tijuana','티후아나','Veracruz','베라크루스',
+    'Lazaro Cardenas','라사로카르데나스','FedEx','페덱스',
   ],
   broadGeo: ['Americas', '미주', 'North America'],  // 광역어 — 주체 판정에서 제외(미국·멕시코·도시는 주체로 유지)
   koreaAnchors: [

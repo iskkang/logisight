@@ -7,6 +7,10 @@ module.exports = {
     'Russia','러시아','Vladivostok','블라디보스토크','TSR','Trans-Siberian','시베리아횡단철도',
     'Vostochny','보스토치니','Moscow','모스크바','CIS','Kazakhstan','카자흐스탄',
     'Uzbekistan','우즈베키스탄','sanctions','제재','rerouting','우회','Central Asia','중앙아시아',
+    // 주체앵커 보강: 러시아·CIS·중앙아 허브 도시·항만·기업
+    'St. Petersburg','상트페테르부르크','Novorossiysk','노보로시스크','Nakhodka','나홋카',
+    'Almaty','알마티','Tashkent','타슈켄트','Astana','아스타나','Baku','바쿠','Tbilisi','트빌리시',
+    'Minsk','민스크','Belarus','벨라루스','Mongolia','몽골','Khorgos','호르고스','Dostyk','도스틱','FESCO','페스코',
   ],
   broadGeo: ['Far East', '극동', 'Eurasia', '유라시아', 'CIS', 'Central Asia', '중앙아시아'],  // 광역어 — 주체 판정에서 제외
   koreaAnchors: [
