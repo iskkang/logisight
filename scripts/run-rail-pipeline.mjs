@@ -15,6 +15,7 @@ const { collectUp } = require('../src/rail/collectors/up');
 const { collectCn } = require('../src/rail/collectors/cn');
 const { collectNews } = require('../src/rail/collectors/news');
 const { collectStb } = require('../src/rail/collectors/stb');
+const { STB_CARRIER_CORRIDORS } = require('../config/rail/stb');
 const {
   CATEGORY: PROGRESSIVE_RAILROADING_CATEGORY,
   collectProgressiveRailroading,
@@ -191,6 +192,14 @@ async function main() {
   console.log(`[stb] week ${stb.week ?? '?'} -> events ${stb.events.length}`);
   for (const line of stb.debug) console.log('    ', line);
 
+  const stbCheckedCorridors = new Set();
+  for (const carrier of stb.checkedCarriers || []) {
+    for (const code of STB_CARRIER_CORRIDORS[carrier] || []) stbCheckedCorridors.add(code);
+  }
+  console.log(
+    `[stb] checked carriers: ${(stb.checkedCarriers || []).join(',') || '(none)'} -> corridors ${stbCheckedCorridors.size}`,
+  );
+
   const { error: stbDeleteError } = await supabase.from('rail_events').delete().like('source', 'stb%');
   if (stbDeleteError) throw new Error(`stb delete: ${JSON.stringify(stbDeleteError)}`);
   if (stb.events.length) {
@@ -220,7 +229,7 @@ async function main() {
       source: row.source,
     }));
 
-  const statuses = recomputeCorridorStatus(scored, { healthySources });
+  const statuses = recomputeCorridorStatus(scored, { healthySources, stbCheckedCorridors });
   const now = new Date().toISOString();
   const statusRows = statuses.map((status) => ({ ...status, updated_at: now }));
   const { error: statusError } = await supabase
