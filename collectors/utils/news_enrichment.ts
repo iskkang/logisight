@@ -41,12 +41,10 @@ function stripHtml(value: unknown): string {
     .trim();
 }
 
-export async function parseNewsFeed(source: NewsSource, limit = 15): Promise<NewsItem[]> {
-  const response = await fetch(source.url, { headers: HEADERS, signal: AbortSignal.timeout(15000) });
-  if (!response.ok) throw new Error(`HTTP ${response.status}: ${source.url}`);
-
+// RSS/Atom XML 문자열 → NewsItem[]. (fetch는 호출측에서 — 일반 fetch 또는 브라우저 in-page fetch)
+export function parseFeedXml(xml: string, source: NewsSource, limit = 15): NewsItem[] {
   const parser = new XMLParser({ ignoreAttributes: false, cdataPropName: '#text' });
-  const parsed = parser.parse(await response.text());
+  const parsed = parser.parse(xml);
   const rawItems = [
     ...asArray(parsed?.rss?.channel?.item),
     ...asArray(parsed?.feed?.entry),
@@ -70,6 +68,12 @@ export async function parseNewsFeed(source: NewsSource, limit = 15): Promise<New
     if (items.length >= limit) break;
   }
   return items;
+}
+
+export async function parseNewsFeed(source: NewsSource, limit = 15): Promise<NewsItem[]> {
+  const response = await fetch(source.url, { headers: HEADERS, signal: AbortSignal.timeout(15000) });
+  if (!response.ok) throw new Error(`HTTP ${response.status}: ${source.url}`);
+  return parseFeedXml(await response.text(), source, limit);
 }
 
 function absoluteUrl(value: string | undefined, pageUrl: string): string | null {

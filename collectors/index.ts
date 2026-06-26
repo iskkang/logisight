@@ -29,6 +29,7 @@ import { collect as collectPortStats }         from './port_stats';
 import { collect as collectMonthlyAnalysis }   from './monthly_analysis';
 import { collect as collectFreightIndexExcel } from './freight_index_excel';
 import { collect as collectNewsLogistics }     from './news_logistics';
+import { collect as collectNewsBrowser }       from './news_browser';
 
 const GROUPS = [
   {
@@ -87,6 +88,7 @@ const GROUPS = [
       { name: 'ocean_news_daily',    fn: () => collectOceanNews({ frequency: 'daily' }) },
       { name: 'chokepoints_daily',   fn: () => collectChokepoints({ frequency: 'daily' }) },
       { name: 'news_global_ocean',   fn: () => collectNewsGlobal(['shipping']) },
+      { name: 'news_browser',        fn: collectNewsBrowser },   // 봇 차단 RSS(Playwright): PortSEurope·PortalPortuario·Baltic
     ],
   },
   {

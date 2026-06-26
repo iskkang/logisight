@@ -16,6 +16,7 @@ export async function collect(
   const result: CollectorResult = { section: 'shipping', data: [] };
 
   for (const source of sourcesFor(sections, 'rss')) {
+    if (source.requiresBrowser) continue;   // Playwright 수집기(news_browser)가 담당 — 단순 fetch는 봇 차단
     try {
       const items = await rateLimited(source.url, () => parseNewsFeed(source));
       const enriched = await Promise.all(items.map(enrichNewsItem));

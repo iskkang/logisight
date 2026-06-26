@@ -8,6 +8,7 @@ export type NewsSource = {
   language: 'en' | 'ko' | 'es';
   selector?: string;
   monthly?: boolean;
+  requiresBrowser?: boolean;   // 봇 차단(Cloudflare/403) — news_browser(Playwright)가 수집, news_global은 스킵
 };
 
 export const CATEGORY_BY_SECTION: Record<NewsSection | 'ocean' | 'policy', string> = {
@@ -59,10 +60,10 @@ export const NEWS_SOURCES: NewsSource[] = [
   { name: 'RailFreight', url: 'https://www.railfreight.com/feed/', kind: 'rss', section: 'rail', language: 'en' },
   // 남미 동안(브라질) 항만·운임 — RSS 확인됨
   { name: 'Datamar News', url: 'https://datamarnews.com/feed/', kind: 'rss', section: 'shipping', language: 'en' },
-  // ⚠ 아래 3곳: 단순 fetch에 봇 차단(403/Cloudflare). collector 브라우저 헤더로 통과 가능성, 실패 시 graceful skip. 안 되면 Playwright 수집 필요.
-  { name: 'Baltic Transport Journal', url: 'https://baltictransportjournal.com/feed/', kind: 'rss', section: 'shipping', language: 'en' },  // 발트·CEE 항만
-  { name: 'PortSEurope', url: 'https://www.portseurope.com/feed/', kind: 'rss', section: 'shipping', language: 'en' },                       // 남유럽·지중해 항만
-  { name: 'Portal Portuario', url: 'https://portalportuario.cl/feed/', kind: 'rss', section: 'shipping', language: 'es' },                  // 칠레·태평양안(Chancay)
+  // 봇 차단(Cloudflare/403) — news_browser(Playwright)가 수집. PortSEurope/PortalPortuario=RSS, Baltic=415→홈페이지 HTML 폴백.
+  { name: 'Baltic Transport Journal', url: 'https://baltictransportjournal.com/feed/', kind: 'rss', section: 'shipping', language: 'en', requiresBrowser: true },  // 발트·CEE 항만
+  { name: 'PortSEurope', url: 'https://www.portseurope.com/feed/', kind: 'rss', section: 'shipping', language: 'en', requiresBrowser: true },                       // 남유럽·지중해 항만
+  { name: 'Portal Portuario', url: 'https://portalportuario.cl/feed/', kind: 'rss', section: 'shipping', language: 'es', requiresBrowser: true },                  // 칠레·태평양안(Chancay)
 ];
 
 export function sourcesFor(
