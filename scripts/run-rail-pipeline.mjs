@@ -21,6 +21,7 @@ const {
   CATEGORY: PROGRESSIVE_RAILROADING_CATEGORY,
   collectProgressiveRailroading,
 } = require('../src/rail/collectors/progressive-railroading');
+const { CATEGORY: INDEX1520_CATEGORY, collectIndex1520 } = require('../src/rail/collectors/index1520');
 const { ruleParseEvent } = require('../src/rail/ruleParseEvent');
 const { matchCorridors } = require('../src/rail/matchCorridors');
 const { scoreEvent } = require('../src/rail/scoreEvent');
@@ -95,6 +96,10 @@ async function main() {
   const progressiveRailroading = await collectProgressiveRailroading({ supabase });
   if (progressiveRailroading.errors.length) console.warn('[PR errors]', progressiveRailroading.errors);
   console.log(`[PR producer] read ${progressiveRailroading.read} -> inserted ${progressiveRailroading.inserted} (maritime_news, category=${PROGRESSIVE_RAILROADING_CATEGORY})`);
+
+  const index1520 = await collectIndex1520({ supabase });
+  if (index1520.errors.length) console.warn('[index1520 errors]', index1520.errors);
+  console.log(`[index1520] fetched ${index1520.read} -> inserted ${index1520.inserted} (maritime_news, category=${INDEX1520_CATEGORY})`);
 
   for (const collect of COLLECTORS) {
     const collected = await collect();
