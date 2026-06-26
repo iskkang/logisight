@@ -20,11 +20,13 @@ module.exports = {
   policyAnchors: [
     '제재','sanctions','price cap','수출통제','export control','이중용도','dual-use',
     '우회수출','관세','tariff','쿼터','quota','무역장벽','trade barrier',
+    '규제','regulation','수입규제','수출규제','수출금지','embargo','통관',
   ],
   tradeAnchors: [
     '무역량','trade volume','물동량','throughput','수출입','exports','imports',
     '교역량','TEU','container volume','수출 증가','수출 감소','통관량',
     'customs volume','교역 규모','bilateral trade',
+    '무역','수입','수출','교역','대러 교역','대러 수출',
   ],
   priorityTopics: [
     'TSR 운임·운행 동향',

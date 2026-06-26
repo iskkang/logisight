@@ -14,7 +14,7 @@ const { SHARED_TYPE_RULES } = require('./lib/region-filter');
 const { assignPool, REGIONS } = require('./lib/region-assign');
 const { buildRegionSelectionMessages } = require('./generators/web/lib/weekly-briefing.lib');
 
-const CATS = ['해상', '항공', '무역', '물류'];   // weekly-report 섹션 카테고리(overview 제외)
+const CATS = ['해상', '항공', '무역', '물류', '철도'];   // 철도=러시아·CIS·TCR/TSR 통로(권역 배정은 주체 게이트가 결정)
 const arg = (n) => { const a = process.argv.find((x) => x.startsWith(`--${n}=`)); return a ? a.split('=')[1] : null; };
 
 function isoWeekId(d) {
