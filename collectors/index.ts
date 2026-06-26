@@ -34,6 +34,9 @@ import { collect as collectNewsBrowser }       from './news_browser';
 const { collect: collectContainerNewsSticky } = require('./container-news-sticky') as {
   collect: () => Promise<CollectorResult>;
 };
+const { collect: collectContainerNewsRates } = require('./container-news-rates-surcharges') as {
+  collect: () => Promise<CollectorResult>;
+};
 
 const GROUPS = [
   {
@@ -93,6 +96,7 @@ const GROUPS = [
       { name: 'carrier_advisories',  fn: collectCarrierAdvisories },
       { name: 'ocean_news_daily',    fn: () => collectOceanNews({ frequency: 'daily' }) },
       { name: 'chokepoints_daily',   fn: () => collectChokepoints({ frequency: 'daily' }) },
+      { name: 'container_news_rates', fn: collectContainerNewsRates },
       { name: 'news_global_ocean',   fn: () => collectNewsGlobal(['shipping']) },
       { name: 'news_browser',        fn: collectNewsBrowser },   // 봇 차단 RSS(Playwright): PortSEurope·PortalPortuario·Baltic
     ],
@@ -103,6 +107,7 @@ const GROUPS = [
       { name: 'carrier_advisories',  fn: collectCarrierAdvisories },
       { name: 'ocean_news_weekly',   fn: () => collectOceanNews({ frequency: 'weekly' }) },
       { name: 'chokepoints_weekly',  fn: () => collectChokepoints({ frequency: 'weekly' }) },
+      { name: 'container_news_rates', fn: collectContainerNewsRates },
       { name: 'port_stats',          fn: collectPortStats },
     ],
   },

@@ -14,6 +14,7 @@
     "collect:rail:weekly": "npx tsx collectors/index.ts rail-weekly",
     "collect:ocean:daily": "npx tsx collectors/index.ts ocean-daily",
     "collect:ocean:weekly": "npx tsx collectors/index.ts ocean-weekly",
+    "collect:rates": "node collectors/container-news-rates-surcharges.js",
     "curate:rail": "node generators/web/curate-rail.js",
     "curate:ocean": "node generators/web/curate-ocean.js",
     "curate:air": "node generators/web/curate-air.js",
