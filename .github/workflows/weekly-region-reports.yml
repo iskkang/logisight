@@ -1,0 +1,68 @@
+name: Weekly Region Reports
+
+# 매주 일요일: 권역별(유럽·미주·극동CIS·남미) 위클리 리포트 자동 생성 + 발행.
+#   feed(주체 게이트 배정 + 영문 external 한글 번역 + 이미지 폴백) → 권역 PDF 렌더 → reports 버킷/카탈로그 발행.
+# 데이터원: maritime_news(주간 누적, 일간 수집/큐레이션 결과). 0건 권역은 자동 생략.
+# 필요 secrets: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, DEEPSEEK_API_KEY, UNSPLASH_ACCESS_KEY
+on:
+  schedule:
+    - cron: '30 6 * * 0'   # 일요일 15:30 KST (06:30 UTC) — 글로벌 weekly-report(14:00 KST) 이후
+  workflow_dispatch:
+    inputs:
+      week:
+        description: '주차 (YYYY-Www). 비우면 현재 ISO 주차'
+        required: false
+      publish:
+        description: '발행(reports 버킷 업로드). false면 생성만'
+        type: boolean
+        default: true
+
+concurrency:
+  group: weekly-region-reports
+  cancel-in-progress: false
+
+jobs:
+  region-reports:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22', cache: 'npm' }
+      - run: npm ci
+
+      - name: Chrome 경로 확인 (PDF 렌더용)
+        id: chrome
+        run: |
+          BIN=$(which google-chrome || which google-chrome-stable || which chromium-browser || true)
+          [ -z "$BIN" ] && { echo "::error::Chrome 미설치 — 러너에서 google-chrome 을 찾지 못함"; exit 1; }
+          echo "path=$BIN" >> "$GITHUB_OUTPUT"
+          echo "Chrome: $BIN"
+
+      - name: 주차 산출
+        id: w
+        run: |
+          WEEK="${{ github.event.inputs.week }}"
+          [ -z "$WEEK" ] && WEEK=$(date -u +%G-W%V)
+          echo "week=$WEEK" >> "$GITHUB_OUTPUT"
+          echo "주차: $WEEK"
+
+      - name: 권역 feed 생성 (배정·번역·이미지 폴백)
+        run: node weekly-region-feed.js --week="${{ steps.w.outputs.week }}"
+
+      - name: 권역 PDF 렌더 (데이터 있는 권역만)
+        env:
+          PUPPETEER_EXECUTABLE_PATH: ${{ steps.chrome.outputs.path }}
+        run: |
+          for r in europe americas russia latam; do
+            node weekly-region-pdf.js --week="${{ steps.w.outputs.week }}" --region="$r"
+          done
+
+      - name: 발행 (reports 버킷 + 카탈로그)
+        if: ${{ github.event_name == 'schedule' || github.event.inputs.publish != 'false' }}
+        run: node weekly-region-publish.js --week="${{ steps.w.outputs.week }}" --commit
