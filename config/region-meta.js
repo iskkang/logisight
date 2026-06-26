@@ -4,4 +4,9 @@ module.exports = {
   americas: { en: 'AMERICAS',       kr: '미주 권역',     coverTitle: '미주 권역 물류 시황' },
   russia:   { en: 'FAR EAST · CIS', kr: '극동·CIS 권역', coverTitle: '극동·CIS 물류 시황' },
   latam:    { en: 'LATIN AMERICA',  kr: '남미 권역',     coverTitle: '남미 권역 물류 시황' },
+  china:    { en: 'CHINA',          kr: '중국 권역',     coverTitle: '중국 권역 물류 시황' },
+  japan:    { en: 'JAPAN',          kr: '일본 권역',     coverTitle: '일본 권역 물류 시황' },
+  sea:      { en: 'SOUTHEAST ASIA', kr: '동남아 권역',   coverTitle: '동남아 권역 물류 시황' },
+  mideast:  { en: 'MIDDLE EAST',    kr: '중동 권역',     coverTitle: '중동 권역 물류 시황' },
+  africa:   { en: 'AFRICA',         kr: '아프리카 권역', coverTitle: '아프리카 권역 물류 시황' },
 };

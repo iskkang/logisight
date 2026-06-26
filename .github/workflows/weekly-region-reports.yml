@@ -59,7 +59,7 @@ jobs:
         env:
           PUPPETEER_EXECUTABLE_PATH: ${{ steps.chrome.outputs.path }}
         run: |
-          for r in europe americas russia latam; do
+          for r in europe americas russia latam china japan sea mideast africa; do
             node weekly-region-pdf.js --week="${{ steps.w.outputs.week }}" --region="$r"
           done
 
