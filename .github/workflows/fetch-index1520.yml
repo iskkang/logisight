@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "31 0 1,6,11,16,21,26 * *" # 09:31 KST on 1,6,11,16,21,26
   workflow_dispatch:
+    inputs:
+      force:
+        description: "기존 maxReportingDate라도 강제 재수집(백필)"
+        type: boolean
+        default: false
 
 jobs:
   fetch-index1520:
@@ -25,4 +30,5 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          FORCE: ${{ inputs.force }}
         run: node scripts/fetch-index1520.mjs

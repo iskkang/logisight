@@ -36,3 +36,34 @@ on conflict (id) do update set
   latitude = excluded.latitude,
   longitude = excluded.longitude,
   updated_at = now();
+
+-- 국가 중심 좌표 — route view=list 의 국가 O-D(departure_id/destination_id = ISO-2)용. 국가 간 코리도어 라인 렌더.
+insert into public.index1520_locations (id, name, normalized_name, location_type, country_code, latitude, longitude) values
+  ('CN', 'China',          'CHINA',          'country', 'CN', 35.0000, 105.0000),
+  ('BE', 'Belgium',        'BELGIUM',        'country', 'BE', 50.6400,   4.6700),
+  ('DE', 'Germany',        'GERMANY',        'country', 'DE', 51.1600,  10.4500),
+  ('NL', 'Netherlands',    'NETHERLANDS',    'country', 'NL', 52.1300,   5.2900),
+  ('PL', 'Poland',         'POLAND',         'country', 'PL', 51.9200,  19.1500),
+  ('FR', 'France',         'FRANCE',         'country', 'FR', 46.6000,   2.2000),
+  ('IT', 'Italy',          'ITALY',          'country', 'IT', 41.9000,  12.6000),
+  ('ES', 'Spain',          'SPAIN',          'country', 'ES', 40.0000,  -3.7000),
+  ('GB', 'United Kingdom', 'UNITED KINGDOM', 'country', 'GB', 54.0000,  -2.0000),
+  ('CZ', 'Czechia',        'CZECHIA',        'country', 'CZ', 49.8000,  15.5000),
+  ('AT', 'Austria',        'AUSTRIA',        'country', 'AT', 47.6000,  14.1000),
+  ('HU', 'Hungary',        'HUNGARY',        'country', 'HU', 47.2000,  19.5000),
+  ('SK', 'Slovakia',       'SLOVAKIA',       'country', 'SK', 48.7000,  19.7000),
+  ('LT', 'Lithuania',      'LITHUANIA',      'country', 'LT', 55.2000,  23.9000),
+  ('BY', 'Belarus',        'BELARUS',        'country', 'BY', 53.7000,  27.9000),
+  ('RU', 'Russia',         'RUSSIA',         'country', 'RU', 55.7500,  37.6200),
+  ('KZ', 'Kazakhstan',     'KAZAKHSTAN',     'country', 'KZ', 48.0000,  67.0000),
+  ('FI', 'Finland',        'FINLAND',        'country', 'FI', 62.0000,  26.0000),
+  ('SE', 'Sweden',         'SWEDEN',         'country', 'SE', 62.0000,  15.0000),
+  ('TR', 'Turkey',         'TURKEY',         'country', 'TR', 39.0000,  35.0000)
+on conflict (id) do update set
+  name = excluded.name,
+  normalized_name = excluded.normalized_name,
+  location_type = excluded.location_type,
+  country_code = excluded.country_code,
+  latitude = excluded.latitude,
+  longitude = excluded.longitude,
+  updated_at = now();

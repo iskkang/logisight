@@ -88,10 +88,12 @@ async function main() {
     .eq("max_reporting_date", maxReportingDate)
     .maybeSingle();
   if (exErr) throw new Error(`period_status read failed: ${exErr.message}`);
-  if (existing) {
+  const force = process.env.FORCE === "true";
+  if (existing && !force) {
     console.log(`No new Index1520 data found. Latest maxReportingDate: ${maxReportingDate}`);
     return;
   }
+  if (existing && force) console.log(`[index1520] FORCE 모드 — 기존 ${maxReportingDate} 재수집`);
 
   // 3) period / previousPeriod 계산 (YYYY01-YYYYMM / prevYear01-prevYearMM)
   const year = Number(maxReportingDate.slice(0, 4));
@@ -104,7 +106,7 @@ async function main() {
   // 4) transit-service + route + cities/countries/provinces
   const [transit, route, cities, countries, provinces] = await Promise.all([
     fetchJson(`${BASE}/transit-service/?language=en&view=list&section=transit-service&period=${period}&previousPeriod=${previousPeriod}&level=2`),
-    fetchJson(`${BASE}/route/?language=en&view=map&section=route&period=${period}&previousPeriod=${previousPeriod}&level=2`).catch((e) => {
+    fetchJson(`${BASE}/route/?language=en&view=list&section=route&period=${period}&previousPeriod=${previousPeriod}&level=2`).catch((e) => {
       console.warn(`[index1520] route API fetch failed (계속 진행): ${e.message}`);
       return null;
     }),
@@ -170,9 +172,9 @@ async function main() {
       current_shipping_qty: num(row.currentPeriodShippingQty),
       previous_shipping_qty: num(row.previousPeriodShippingQty),
       relative_shipping_qty: num(row.relativeShippingQty),
-      current_transit_time: num(row.currentPeriodTransitTime),
-      previous_transit_time: num(row.previousPeriodTransitTime),
-      relative_transit_time: num(row.relativeTransitTime),
+      current_transit_time: num(row.currentPeriodFullTime ?? row.currentPeriodTransitTime),
+      previous_transit_time: num(row.previousPeriodFullTime ?? row.previousPeriodTransitTime),
+      relative_transit_time: num(row.relativeFullTime ?? row.relativeTransitTime),
       raw: row,
     }));
     nRoute = await upsert(
