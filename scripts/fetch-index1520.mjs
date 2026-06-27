@@ -62,9 +62,14 @@ function isODRoute(row) {
 
 async function upsert(table, rows, onConflict) {
   if (!rows.length) return 0;
-  const { error } = await supabase.from(table).upsert(rows, { onConflict, ignoreDuplicates: false });
+  // 같은 onConflict 키가 한 배치에 중복되면 Postgres가 거부("cannot affect row a second time")
+  // → 키로 dedupe(마지막 우선). 예: cities 응답에 동일 id(YIVU=Yiwu/Yiwuxi)가 2건.
+  const keys = onConflict.split(",").map((s) => s.trim());
+  const byKey = new Map(rows.map((r) => [keys.map((k) => r[k]).join("||"), r]));
+  const deduped = [...byKey.values()];
+  const { error } = await supabase.from(table).upsert(deduped, { onConflict, ignoreDuplicates: false });
   if (error) throw new Error(`upsert ${table} failed: ${error.message}`);
-  return rows.length;
+  return deduped.length;
 }
 
 async function main() {
