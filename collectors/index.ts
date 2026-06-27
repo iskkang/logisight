@@ -30,6 +30,7 @@ import { collect as collectMonthlyAnalysis }   from './monthly_analysis';
 import { collect as collectFreightIndexExcel } from './freight_index_excel';
 import { collect as collectKcciRoutes }        from './kcci_routes';
 import { collect as collectErai }              from './erai';
+import { collect as collectIndex1520Charts }   from './index1520-charts';
 import { collect as collectNewsLogistics }     from './news_logistics';
 import { collect as collectNewsBrowser }       from './news_browser';
 
@@ -45,6 +46,7 @@ const GROUPS = [
       { name: 'freight_index_excel', fn: collectFreightIndexExcel }, // oneksa: BDI · SCFI 레인 · HSFO · VLSFO (주간)
       { name: 'kcci_routes',         fn: collectKcciRoutes },   // KOBC: KCCI 종합 + 13개 권역 항로 (주간)
       { name: 'erai',                fn: collectErai },         // index1520: ERAI 유라시아 철도 운임 컴포지트(월별)
+      { name: 'index1520_charts',    fn: collectIndex1520Charts }, // index1520: ERAI 차트 스냅샷(eurasia_charts jsonb)
       { name: 'bunker',              fn: collectBunker },
       { name: 'air_indices',         fn: collectAir },
     ],
