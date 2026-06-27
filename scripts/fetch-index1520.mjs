@@ -1,7 +1,7 @@
 // scripts/fetch-index1520.mjs
-// Index1520 통계 ETL — periods로 신규 여부 판단 후 transit-service/cities/countries/provinces를 Supabase에 upsert.
-// 스케줄 실행(5일마다). 동일 maxReportingDate면 graceful 종료. 모든 응답 원본을 jsonb(raw)로 보존.
-// 실행: node scripts/fetch-index1520.mjs  (Node 20+, global fetch 사용)
+// Index1520 통계 ETL — periods로 신규 여부 판단 후 transit-service / route / cities / countries / provinces 를 Supabase에 upsert.
+// 5일 주기 실행. 동일 maxReportingDate면 graceful 종료. 모든 응답 원본을 jsonb(raw)로 보존.
+// 실행: node scripts/fetch-index1520.mjs  (Node 20+, global fetch)
 import { createClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -35,7 +35,9 @@ async function fetchJson(url) {
   return json;
 }
 
-// {id,idCountries,countrySet,name} 행 → 테이블 row(raw 포함).
+const num = (v) => (v === null || v === undefined || v === "" ? null : Number(v));
+
+// {id,idCountries,countrySet,name} 행 → ref 테이블 row(raw 포함).
 function mapRef(row) {
   return {
     id: row.id,
@@ -44,6 +46,14 @@ function mapRef(row) {
     name: row.name ?? null,
     raw: row,
   };
+}
+
+// route API 행이 O-D(출발→도착) 형태인지 판별. (현재 route API는 지역 집계라 false)
+function isODRoute(row) {
+  if (!row) return false;
+  const dep = row.departureStationId ?? row.departureId ?? row.departure_id;
+  const dest = row.destinationStationId ?? row.destinationId ?? row.destination_id;
+  return Boolean(dep && dest);
 }
 
 async function upsert(table, rows, onConflict) {
@@ -74,24 +84,35 @@ async function main() {
     return;
   }
 
-  // 3) period 파라미터: YYYY01-YYYYMM (year from maxReportingDate). period_from=YYYY-01-01, period_to=maxReportingDate
-  const year = maxReportingDate.slice(0, 4);
+  // 3) period / previousPeriod 계산 (YYYY01-YYYYMM / prevYear01-prevYearMM)
+  const year = Number(maxReportingDate.slice(0, 4));
   const month = maxReportingDate.slice(5, 7);
   const period = `${year}01-${year}${month}`;
-  const periodFrom = `${year}-01-01`;
-  const periodTo = maxReportingDate;
-  console.log(`[index1520] new data — fetching period ${period}`);
+  const previousPeriod = `${year - 1}01-${year - 1}${month}`;
+  console.log(`[index1520] current period: ${period}`);
+  console.log(`[index1520] previous period: ${previousPeriod}`);
 
-  // 4) transit-service + cities/countries/provinces
-  const [transit, cities, countries, provinces] = await Promise.all([
-    fetchJson(`${BASE}/transit-service/?language=en&view=list&section=transit-service&period=${period}&level=2`),
+  // 4) transit-service + route + cities/countries/provinces
+  const [transit, route, cities, countries, provinces] = await Promise.all([
+    fetchJson(`${BASE}/transit-service/?language=en&view=list&section=transit-service&period=${period}&previousPeriod=${previousPeriod}&level=2`),
+    fetchJson(`${BASE}/route/?language=en&view=map&section=route&period=${period}&previousPeriod=${previousPeriod}&level=2`).catch((e) => {
+      console.warn(`[index1520] route API fetch failed (계속 진행): ${e.message}`);
+      return null;
+    }),
     fetchJson(`${BASE}/cities/?language=en`),
     fetchJson(`${BASE}/countries/?language=en`),
     fetchJson(`${BASE}/provinces/?language=en`),
   ]);
 
-  // transit-service 매핑
+  // reportingPeriod (응답 meta 우선, 없으면 계산값)
+  const rp = transit.meta?.period?.reportingPeriod ?? {};
+  const periodFrom = rp.from ?? `${year}-01-01`;
+  const periodTo = rp.to ?? maxReportingDate;
+
+  // transit-service 매핑 (라우트 지도 소스)
   const transitRows = (transit.data ?? []).map((row) => ({
+    period,
+    previous_period: previousPeriod,
     period_from: periodFrom,
     period_to: periodTo,
     departure_station_id: row.departureStationId,
@@ -99,37 +120,75 @@ async function main() {
     destination_station_id: row.destinationStationId,
     destination_station_name: row.destinationStationName,
     current_teu: Number(row.currentPeriodTeu || 0),
-    current_actual_weight: row.currentPeriodActualWeight,
-    current_shipping_qty: row.currentPeriodShippingQty,
-    current_transit_time: row.currentPeriodTransitTime,
+    current_actual_weight: num(row.currentPeriodActualWeight),
+    current_shipping_qty: num(row.currentPeriodShippingQty),
+    current_transit_time: num(row.currentPeriodTransitTime),
     previous_teu: Number(row.previousPeriodTeu || 0),
-    previous_actual_weight: row.previousPeriodActualWeight,
-    previous_shipping_qty: row.previousPeriodShippingQty,
-    previous_transit_time: row.previousPeriodTransitTime,
-    relative_teu: row.relativeTeu,
-    relative_actual_weight: row.relativeActualWeight,
-    relative_shipping_qty: row.relativeShippingQty,
-    relative_transit_time: row.relativeTransitTime,
+    previous_actual_weight: num(row.previousPeriodActualWeight),
+    previous_shipping_qty: num(row.previousPeriodShippingQty),
+    previous_transit_time: num(row.previousPeriodTransitTime),
+    relative_teu: num(row.relativeTeu),
+    relative_actual_weight: num(row.relativeActualWeight),
+    relative_shipping_qty: num(row.relativeShippingQty),
+    relative_transit_time: num(row.relativeTransitTime),
     raw: row,
   }));
 
-  // 5) upsert (중복 방지)
   const nTransit = await upsert(
     "index1520_transit_service",
     transitRows,
-    "period_from,period_to,departure_station_id,destination_station_id",
+    "period,previous_period,departure_station_id,destination_station_id",
   );
   console.log(`[index1520] transit-service rows saved: ${nTransit}`);
+
+  // route API: O-D 경로면 route_statistics에 저장, 아니면(지역 집계) 스킵 → 페이지는 transit-service 사용
+  let nRoute = 0;
+  const routeData = route?.data ?? [];
+  if (routeData.length && routeData.every(isODRoute)) {
+    const routeRows = routeData.map((row) => ({
+      period,
+      previous_period: previousPeriod,
+      departure_id: row.departureStationId ?? row.departureId ?? row.departure_id,
+      departure_name: row.departureStationName ?? row.departureName ?? row.departure_name,
+      destination_id: row.destinationStationId ?? row.destinationId ?? row.destination_id,
+      destination_name: row.destinationStationName ?? row.destinationName ?? row.destination_name,
+      current_teu: Number(row.currentPeriodTeu ?? row.TEU ?? 0),
+      previous_teu: Number(row.previousPeriodTeu ?? row.previousTEU ?? 0),
+      relative_teu: num(row.relativeTeu ?? row.relativeTEU),
+      current_actual_weight: num(row.currentPeriodActualWeight),
+      previous_actual_weight: num(row.previousPeriodActualWeight),
+      relative_actual_weight: num(row.relativeActualWeight),
+      current_shipping_qty: num(row.currentPeriodShippingQty),
+      previous_shipping_qty: num(row.previousPeriodShippingQty),
+      relative_shipping_qty: num(row.relativeShippingQty),
+      current_transit_time: num(row.currentPeriodTransitTime),
+      previous_transit_time: num(row.previousPeriodTransitTime),
+      relative_transit_time: num(row.relativeTransitTime),
+      raw: row,
+    }));
+    nRoute = await upsert(
+      "index1520_route_statistics",
+      routeRows,
+      "period,previous_period,departure_id,destination_id",
+    );
+    console.log(`[index1520] route rows saved: ${nRoute}`);
+  } else {
+    console.log(
+      `[index1520] route API returned ${routeData.length} non-O-D rows (region aggregates) — route_statistics 스킵, 페이지는 transit-service 사용`,
+    );
+  }
 
   const nCities = await upsert("index1520_cities", (cities.data ?? []).map(mapRef), "id");
   const nCountries = await upsert("index1520_countries", (countries.data ?? []).map(mapRef), "id");
   const nProvinces = await upsert("index1520_provinces", (provinces.data ?? []).map(mapRef), "id");
-  console.log(`[index1520] cities: ${nCities} / countries: ${nCountries} / provinces: ${nProvinces}`);
+  console.log(`[index1520] cities: ${nCities}`);
+  console.log(`[index1520] countries: ${nCountries}`);
+  console.log(`[index1520] provinces: ${nProvinces}`);
 
-  // 6) period_status 마지막 기록(데이터 적재 성공 후) — 실패 시 다음 실행에서 재시도
+  // period_status 마지막 기록(데이터 적재 성공 후) — 실패 시 다음 실행에서 재시도
   await upsert(
     "index1520_period_status",
-    [{ source: "index1520", max_reporting_date: maxReportingDate, raw: periods }],
+    [{ source: "index1520", max_reporting_date: maxReportingDate, current_period: period, previous_period: previousPeriod, raw: periods }],
     "max_reporting_date",
   );
 
