@@ -2,7 +2,11 @@
 // Index1520 통계 ETL — periods로 신규 여부 판단 후 transit-service / route / cities / countries / provinces 를 Supabase에 upsert.
 // 5일 주기 실행. 동일 maxReportingDate면 graceful 종료. 모든 응답 원본을 jsonb(raw)로 보존.
 // 실행: node scripts/fetch-index1520.mjs  (Node 20+, global fetch)
+import ws from "ws";
 import { createClient } from "@supabase/supabase-js";
+
+// Node 20에는 네이티브 WebSocket이 없어 supabase-js RealtimeClient가 throw → ws 주입(기존 수집기와 동일 패턴).
+if (!globalThis.WebSocket) globalThis.WebSocket = ws;
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
