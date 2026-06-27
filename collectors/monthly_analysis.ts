@@ -118,6 +118,17 @@ const MONTHLY_SOURCES_BASE: MonthlySource[] = [
   { name: 'Global Times BRI', url: 'https://www.globaltimes.cn/rss/outbrain.xml',
     type: 'rss', section: 'rail', category: 'deep_analysis' },
 
+  // index1520 (UTLC ERA) Analytics — 격주 "Eurasian logistics market update" 리포트
+  // (중국-유럽 철도 시장 심층: 물동량·운임·코리도어 동향). 철도 섹션 핵심 소스.
+  {
+    name: 'index1520 Analytics',
+    url: 'https://index1520.com/en/analytics/?type[]=2',
+    type: 'html',
+    section: 'rail',
+    category: 'deep_analysis',
+    urlPattern: /index1520\.com\/en\/analytics\/[a-z0-9-]{8,}\/?$/,
+  },
+
   // Xeneta: 항로별 운임 데이터 분석 블로그 (확인됨 — 본문 추출 가능)
   // urlPattern: xeneta.com/blog/(슬러그) (확인됨)
   {
