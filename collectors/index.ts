@@ -27,6 +27,7 @@ import { collect as collectOceanNews }         from './ocean_news';
 import { collect as collectChokepoints }       from './chokepoints';
 import { collect as collectPortStats }         from './port_stats';
 import { collect as collectMonthlyAnalysis }   from './monthly_analysis';
+import { collect as collectIndex1520Reports }  from './index1520_reports';
 import { collect as collectFreightIndexExcel } from './freight_index_excel';
 import { collect as collectKcciRoutes }        from './kcci_routes';
 import { collect as collectErai }              from './erai';
@@ -135,6 +136,7 @@ const GROUPS = [
     name: 'monthly-analysis',
     collectors: [
       { name: 'monthly_analysis',     fn: collectMonthlyAnalysis },
+      { name: 'index1520_reports',    fn: collectIndex1520Reports }, // index1520 격주 리포트 → 철도 섹션(본문 포함)
       { name: 'container_news_sticky', fn: collectContainerNewsSticky },
       { name: 'freight_index_excel',  fn: collectFreightIndexExcel },
     ],
