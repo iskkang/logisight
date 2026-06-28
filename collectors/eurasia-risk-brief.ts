@@ -27,6 +27,7 @@ const SYSTEM =
 type Brief = {
   action: { title: string; sub: string; severity: string };
   risks: { title: string; severity: string }[];
+  outlook: { summary: string; points: string[] };
 };
 
 async function main() {
@@ -74,7 +75,8 @@ async function main() {
     '위 근거로 아래 JSON만 출력하세요. severity는 high|medium|low.\n' +
     '{\n' +
     '  "action": { "title": "지금 챙길 핵심 액션 한 줄(24자 내외)", "sub": "한 줄 근거/수치(40자 내외)", "severity": "high|medium|low" },\n' +
-    '  "risks": [ { "title": "유라시아 철도 리스크(20자 내외)", "severity": "high|medium|low" } ]  // 3~4개, 중요도 순\n' +
+    '  "risks": [ { "title": "유라시아 철도 리스크(20자 내외)", "severity": "high|medium|low" } ],  // 3~4개, 중요도 순\n' +
+    '  "outlook": { "summary": "향후 2~4주 유라시아 철도 시장 전망 2~3문장(운임·물동량·리드타임 방향, 수치 포함)", "points": ["운임 방향 한 줄", "물동량 방향 한 줄", "리드타임/기타 한 줄"] }\n' +
     '}';
 
   let brief: Brief;
@@ -83,9 +85,15 @@ async function main() {
     const action = obj?.action;
     const risks = Array.isArray(obj?.risks) ? obj.risks : [];
     if (!action?.title || !risks.length) throw new Error('빈 응답');
+    const ol = (obj as { outlook?: { summary?: unknown; points?: unknown } })?.outlook;
+    const outlook = {
+      summary: String(ol?.summary ?? '').trim(),
+      points: Array.isArray(ol?.points) ? ol!.points.map((p) => String(p).trim()).filter(Boolean).slice(0, 4) : [],
+    };
     brief = {
       action: { title: String(action.title).trim(), sub: String(action.sub ?? '').trim(), severity: SEV.has(action.severity) ? action.severity : 'medium' },
       risks: risks.filter((r) => r?.title).slice(0, 4).map((r) => ({ title: String(r.title).trim(), severity: SEV.has(r.severity) ? r.severity : 'low' })),
+      outlook,
     };
   } catch (e) {
     console.error('[eurasia-risk-brief] 생성 실패:', (e as Error).message);
