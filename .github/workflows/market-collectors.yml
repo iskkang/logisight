@@ -53,6 +53,14 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           DEEPSEEK_API_KEY:          ${{ secrets.DEEPSEEK_API_KEY }}
 
+      - name: Generate eurasia rail risk brief (리포트+철도뉴스 → eurasia_charts.rail_brief, non-blocking)
+        continue-on-error: true
+        run: npx tsx collectors/eurasia-risk-brief.ts
+        env:
+          SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DEEPSEEK_API_KEY:          ${{ secrets.DEEPSEEK_API_KEY }}
+
       - name: Collect news (news_global · news_korea · news_rail · news_industry)
         run: npm run collect:news
         env:
