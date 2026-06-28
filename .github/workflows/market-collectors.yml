@@ -45,6 +45,14 @@ jobs:
           SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
+      - name: Generate eurasia AI insight (index1520 reports → eurasia_charts.ai_insight, non-blocking)
+        continue-on-error: true
+        run: npx tsx collectors/index1520-insight.ts
+        env:
+          SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DEEPSEEK_API_KEY:          ${{ secrets.DEEPSEEK_API_KEY }}
+
       - name: Collect news (news_global · news_korea · news_rail · news_industry)
         run: npm run collect:news
         env:

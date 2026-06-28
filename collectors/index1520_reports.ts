@@ -19,9 +19,9 @@ const MONTHS: Record<string, number> = {
   july: 7, august: 8, september: 9, october: 10, november: 11, december: 12,
 };
 
-type Listed = { url: string; title: string };
+export type Listed = { url: string; title: string };
 
-async function fetchListing(): Promise<Listed[]> {
+export async function fetchListing(): Promise<Listed[]> {
   const res = await fetch(LIST_URL, { headers: { 'User-Agent': UA, 'Accept-Language': 'en' }, signal: AbortSignal.timeout(20000) });
   if (!res.ok) throw new Error(`listing HTTP ${res.status}`);
   const $ = cheerio.load(await res.text());
