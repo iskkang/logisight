@@ -37,10 +37,12 @@ jobs:
           HTML_PATH="content/drafts/newsletter-${TODAY}.html"
           if [ -f "$HTML_PATH" ]; then
             echo "📄 HTML 발송: $HTML_PATH"
-            node generators/email/send-newsletter.js --html="$HTML_PATH"
+            node generators/email/send-newsletter.js --html="$HTML_PATH" --audience=subscribers
           else
             echo "⚠️ HTML 없음 — 발송 스킵"
           fi
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          SEND_TO: ${{ secrets.INTERNAL_EMAIL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          INTERNAL_EMAIL: ${{ secrets.INTERNAL_EMAIL }}

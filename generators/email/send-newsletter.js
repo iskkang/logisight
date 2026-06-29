@@ -14,6 +14,34 @@ const TYPE = process.argv.find(a => a.startsWith('--type='))?.split('=')[1] || '
 const HTML_FILE = process.argv.find(a => a.startsWith('--html='))?.split('=').slice(1).join('=');
 const TO = process.env.SEND_TO || process.env.INTERNAL_EMAIL;
 const FROM = 'Logisight <newsletter@mtlb.co.kr>';
+const SITE_URL = 'https://logisight.mtlship.com';
+
+// 수신거부 링크 주입 — 생성 HTML의 {{UNSUBSCRIBE_URL}} 치환, 없으면 본문 끝에 최소 푸터 추가.
+// id 없는 내부 사본은 /news 로 대체.
+function withUnsub(html, id) {
+  const url = id ? `${SITE_URL}/unsubscribe?id=${id}` : `${SITE_URL}/news`;
+  if (html.includes('{{UNSUBSCRIBE_URL}}')) return html.split('{{UNSUBSCRIBE_URL}}').join(url);
+  const fallback = `<div style="font-size:11px;color:#94a3b8;text-align:center;padding:16px;">수신거부: <a href="${url}" style="color:#93c5fd;">구독 해지</a> · MTL Shipping Agency</div>`;
+  return html.includes('</body>') ? html.replace('</body>', `${fallback}</body>`) : html + fallback;
+}
+
+// 활성 구독자 조회 — service_role 키로 PostgREST 직접 호출(RLS 우회, 의존성 최소화).
+async function fetchActiveSubscribers() {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) throw new Error('SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY 환경변수가 필요합니다.');
+  const res = await fetch(`${url}/rest/v1/newsletter_subscribers?select=id,email&status=eq.active`, {
+    headers: { apikey: key, Authorization: `Bearer ${key}` },
+  });
+  if (!res.ok) throw new Error(`구독자 조회 실패: HTTP ${res.status}`);
+  return res.json();
+}
+
+function chunk(arr, n) {
+  const out = [];
+  for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n));
+  return out;
+}
 
 // ──────────────────────────────────────────
 // 뉴스 데이터 로드 (수집기 결과 또는 fallback)
@@ -258,10 +286,7 @@ function buildWeeklyHtml(data) {
 // 메인 발송 함수
 // ──────────────────────────────────────────
 async function send() {
-  if (!TO) {
-    console.error('❌ SEND_TO 또는 INTERNAL_EMAIL 환경변수가 없습니다.');
-    process.exit(1);
-  }
+  const AUDIENCE = process.argv.find(a => a.startsWith('--audience='))?.split('=')[1] || 'internal';
 
   const data = loadNewsData();
   let subject, html, attachments = [];
@@ -299,12 +324,44 @@ async function send() {
     }
   }
 
+  // ── 구독자 발송: 개별 발송으로 서로의 주소 노출 방지 + 수신거부 링크 개인화 ──
+  if (AUDIENCE === 'subscribers') {
+    const subs = await fetchActiveSubscribers();
+    console.log(`👥 활성 구독자: ${subs.length}명`);
+    const recipients = subs.map(s => ({ email: s.email, id: s.id }));
+    if (process.env.INTERNAL_EMAIL) recipients.push({ email: process.env.INTERNAL_EMAIL, id: null }); // 모니터링 사본
+    if (!recipients.length) {
+      console.log('구독자가 없어 발송을 건너뜁니다.');
+      return;
+    }
+
+    let sent = 0, failed = 0;
+    for (const group of chunk(recipients, 100)) {
+      const payload = group.map(r => ({ from: FROM, to: [r.email], subject, html: withUnsub(html, r.id) }));
+      const result = await resend.batch.send(payload);
+      if (result.error) {
+        console.error('❌ 배치 발송 실패:', JSON.stringify(result.error));
+        failed += group.length;
+        continue;
+      }
+      sent += group.length;
+    }
+    console.log(`✅ 구독자 발송 완료 — 성공 ${sent} / 실패 ${failed} / 제목: ${subject}`);
+    if (failed > 0) process.exit(1);
+    return;
+  }
+
+  // ── 내부 단일 발송 (기존 동작: 주간·수동) ──
+  if (!TO) {
+    console.error('❌ SEND_TO 또는 INTERNAL_EMAIL 환경변수가 없습니다.');
+    process.exit(1);
+  }
   try {
     const result = await resend.emails.send({
       from: FROM,
       to: [TO],
       subject,
-      html,
+      html: withUnsub(html, null),
       ...(attachments.length > 0 ? { attachments } : {}),
     });
 

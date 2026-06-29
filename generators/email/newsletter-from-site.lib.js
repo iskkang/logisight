@@ -129,7 +129,7 @@ function buildHtml(articles, dateIso) {
       발행: MTL Shipping Agency &nbsp;·&nbsp; newsletter@mtlship.com<br>${esc(dateFormatted)}
     </div>
     <div style="font-size:11px;">
-      <a href="#" style="color:#93C5FD;text-decoration:none;">수신 거부</a>
+      <a href="{{UNSUBSCRIBE_URL}}" style="color:#93C5FD;text-decoration:none;">수신 거부</a>
       &nbsp;&nbsp;|&nbsp;&nbsp;
       <a href="${SITE}/news" rel="noopener noreferrer" style="color:#93C5FD;text-decoration:none;">웹에서 보기</a>
     </div>
