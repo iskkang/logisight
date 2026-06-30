@@ -130,6 +130,9 @@ serve(async () => {
         const xml = await getText(`https://feeds.meteoalarm.org/feeds/meteoalarm-legacy-atom-${m.country}`);
         const entries = xml.match(/<entry\b[\s\S]*?<\/entry>/g) || [];
         let sevSeen = 0;
+        // 같은 경보의 재발령(다른 cap:identifier·다른 effective)을 (국가|경보종류)로 1건으로 합침 —
+        // 가장 최근 effective만 채택. 서로 다른 경보(고온/홍수 등)는 제목이 달라 분리 유지.
+        const maByType = new Map<string, any>();
         entries.forEach((e, i) => {
           const alDigit = (e.match(/awareness_level<\/[^>]+>\s*<[^>]+>\s*(\d)/) || [])[1];
           const al = alDigit ? parseInt(alDigit, 10) : 0;
@@ -142,11 +145,17 @@ serve(async () => {
           const event = (tagText(e, 'cap:event') || tagText(e, 'event') || '기상 경보').trim();
           const ident = (tagText(e, 'cap:identifier') || tagText(e, 'id') || `${m.country}-${i}`).trim();
           const kind = /flood/i.test(event) ? 'flood' : /snow|ice/i.test(event) ? 'snow' : 'storm';
-          out.push({ id: 'meteoalarm-' + ident, source: 'meteoalarm', kind,
+          const eff = tagText(e, 'cap:effective') || null;
+          const row = { id: 'meteoalarm-' + ident, source: 'meteoalarm', kind,
             title: event + ' (' + m.country + ')', severity: lvl, lon: anchor.lon, lat: anchor.lat, area: m.country,
-            starts_at: tagText(e, 'cap:effective') || null, ends_at: tagText(e, 'cap:expires') || null,
-            url: 'https://www.meteoalarm.org/' });
+            starts_at: eff, ends_at: tagText(e, 'cap:expires') || null,
+            url: 'https://www.meteoalarm.org/' };
+          const key = `${m.country}|${event}`;
+          const prev = maByType.get(key);
+          // effective 최신 우선(문자열 ISO 비교). effective 없으면 피드 후순위(나중 등장)를 최신으로 간주.
+          if (!prev || (eff || '') >= (prev.starts_at || '')) maByType.set(key, row);
         });
+        for (const row of maByType.values()) out.push(row);
         // silent-zero 가드: 엔트리는 있는데 severity 신호를 하나도 못 읽으면 피드 포맷 변경 의심.
         if (entries.length > 0 && sevSeen === 0) console.warn(`meteoalarm ${m.country}: ${entries.length} entries, 0 severity parsed — feed format?`);
       } catch (_) {}
