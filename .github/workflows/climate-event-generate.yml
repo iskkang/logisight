@@ -1,12 +1,10 @@
 name: Climate Event — Logistics Impact Draft
 
-# event-ingest(:15)·impact-judge(:25)는 매 2h 유지 → 그 이후 :45에 돌려 최신 데이터를 읽는다.
-# 짝수시에만 실행(ingest/judge도 짝수시 실행).
+# event-ingest(:15)·impact-judge(:25)가 매 2h 도므로, 그 이후 :45에 매 2h 돌려 최신 데이터를 읽는다.
+# 신규 이벤트만 narrate(dedup) → 더 자주 돌아도 비용은 신규 연관 이벤트 수에 비례, 알림 응답성 향상.
 on:
   schedule:
-    - cron: '45 16 * * *'   # KST 01:45
-    - cron: '45 0 * * *'    # KST 09:45
-    - cron: '45 8 * * *'    # KST 17:45
+    - cron: '45 */2 * * *'   # 매 2h(:45), event-ingest·impact-judge 직후
   workflow_dispatch:
 
 jobs:
