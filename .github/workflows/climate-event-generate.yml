@@ -1,0 +1,32 @@
+name: Climate Event — Logistics Impact Draft
+
+# event-ingest(:15)·impact-judge(:25)는 매 2h 유지 → 그 이후 :45에 돌려 최신 데이터를 읽는다.
+# 짝수시에만 실행(ingest/judge도 짝수시 실행).
+on:
+  schedule:
+    - cron: '45 16 * * *'   # KST 01:45
+    - cron: '45 0 * * *'    # KST 09:45
+    - cron: '45 8 * * *'    # KST 17:45
+  workflow_dispatch:
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate climate-event logistics impact drafts
+        run: npm run generate:climate-event
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

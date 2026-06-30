@@ -41,6 +41,8 @@
     "forecast:smoke": "node generators/web/forecast/smoke-assemble.js",
     "generate:climate": "node generators/web/climate/generate.js",
     "test:climate": "node --test generators/web/climate/",
+    "generate:climate-event": "node generators/web/climate-event/generate.js",
+    "test:climate-event": "node --test generators/web/climate-event/",
     "judge:impact": "node generators/web/impact/judge.js",
     "test:impact": "node --test generators/web/impact/",
     "backfill:news": "node scripts/backfill-maritime-news.js",
