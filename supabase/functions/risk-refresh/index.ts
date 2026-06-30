@@ -20,6 +20,8 @@ const CUT = {
   snow: { a: 5, r: 15 },      // 일 강설(cm). ≥.
   temp: { a: -20, r: -35 },   // rail 한파: 일최저기온(°C). 낮을수록 위험(≤).
   ice: { a: 0, r: -10 },      // port-icing proxy, tunable. 결빙항만: 일최고기온(°C) ≤ 0 / −10. ≤.
+  precip: { a: 50, r: 100 },  // inland 침수: 일 강수량 합(mm). ≥. 50mm=호우 경보, 100mm=극한 호우.
+  heat: { a: 38, r: 43 },     // inland 극한 고온: 일최고기온(°C). ≥. 38=열돔 경보, 43=위험 수준.
 };
 // 측정값 → 0..100 점수. amber 컷오프 ↦ 30, red 컷오프 ↦ 60 (temp는 red<amber라 부호 자동 처리).
 function hscore(v: number, c: { a: number; r: number }) { return clamp((v - c.a) / (c.r - c.a) * 30 + 30); }
@@ -59,7 +61,13 @@ serve(async () => {
       // 결빙항만: 일최고기온이 영하권(ICE 프록시). rail의 한파(tmin)와 분리.
       let isFreeze = false;
       if (a.freeze_prone && tmax != null) { const fs = hscore(tmax, CUT.ice); cand.push(['결빙', fs, `일최고 ${tmax.toFixed(0)}℃`]); if (fs >= 30) isFreeze = true; }
-      // precip(강수)는 운영 임계 세트에 미포함 → 점수 미반영, 측정값만 컬럼 기록.
+      // 내륙 자산: 침수(일 강수량) + 극한 고온/저온. 해양 API 미호출(육지).
+      if (a.type === 'inland') {
+        if (prcp != null)  cand.push(['침수', hscore(prcp, CUT.precip), `강수 ${prcp.toFixed(0)}mm`]);
+        if (tmax != null)  cand.push(['극한고온', hscore(tmax, CUT.heat), `일최고 ${tmax.toFixed(0)}℃`]);
+        if (tmin != null)  cand.push(['한파', hscore(tmin, CUT.temp), `${tmin.toFixed(0)}℃`]);
+      }
+      // precip(강수)는 inland 외 자산은 운영 임계 미포함 → 점수 미반영, 측정값만 컬럼 기록.
 
       cand.sort((x, y) => y[1] - x[1]);
       const top = cand[0] || ['정상', 0, ''];
