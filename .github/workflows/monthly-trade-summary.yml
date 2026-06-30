@@ -1,0 +1,59 @@
+name: Monthly Trade Summary
+
+# trade_statistics(원본) → trade_summary(사전집계) 롤업.
+# Monthly Trade Statistics(16일 02:00 KST, item 적재) 이후에 돌도록 1시간 뒤로 스케줄.
+# 책임 1개 = 파일 1개(워크플로 병합 금지). 관세청 월간 데이터라 월 1회.
+
+on:
+  schedule:
+    - cron: '0 18 16 * *'   # 매월 16일 03:00 KST (trade-stats 적재 직후)
+  workflow_dispatch:
+    inputs:
+      period:
+        description: '집계 기준월 (YYYY-MM 또는 YYYYMM, 비우면 전체 재집계)'
+        required: false
+        default: ''
+
+jobs:
+  build-trade-summary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Build trade_summary (pre-aggregate)
+        run: |
+          PERIOD_ARG=""
+          if [ -n "${{ github.event.inputs.period }}" ]; then
+            PERIOD_ARG="--period=${{ github.event.inputs.period }}"
+          fi
+          npx tsx collectors/trade_summary.ts $PERIOD_ARG
+        env:
+          SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Log to data_updates
+        if: always()
+        run: |
+          node -e "
+          const { createClient } = require('@supabase/supabase-js');
+          const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+          const status = process.env.JOB_STATUS === 'success' ? 'ok' : 'error';
+          sb.from('data_updates')
+            .insert({ dataset: 'trade_summary', status, notes: 'monthly-trade-summary workflow' })
+            .then(r => { console.log('data_updates logged:', r.error ? r.error.message : 'ok'); process.exit(0); })
+            .catch(e => { console.error(e.message); process.exit(0); });
+          "
+        env:
+          JOB_STATUS:                ${{ job.status }}
+          SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
