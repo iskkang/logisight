@@ -107,7 +107,8 @@ async function generateClimateDrafts(supabase, callLLM, { asof = new Date(), dry
   // 폐기: 이번에 재생성되지 않은 climate draft(거리-근접 stale, 더 이상 영향 없는 이벤트)는 삭제. 발행/판정은 보존(불변).
   if (!dryRun) {
     const { data: old } = await supabase.from('forecasts').select('id,metric_ref').eq('module', 'climate').eq('status', 'draft');
-    for (const d of (old || []).filter((x) => !currentKeys.has(x.metric_ref))) {
+    // climate:event:%(이벤트-자산 생성기 소관)는 이 route-centric purge에서 제외 — 교차삭제 방지.
+    for (const d of (old || []).filter((x) => !currentKeys.has(x.metric_ref) && !String(x.metric_ref).startsWith('climate:event:'))) {
       const { error } = await supabase.from('forecasts').delete().eq('id', d.id);
       if (!error) { res.purged++; console.log(`🗑️ purge stale [${d.metric_ref}]`); }
     }
