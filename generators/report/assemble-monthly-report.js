@@ -12,10 +12,10 @@ const path = require('path');
 const SECTIONS = require('./sections.config');
 const { parseFrontmatter } = require('./lib/section-runner');
 const { normalizeMonthlyReportMarkdown } = require('./lib/report-style-normalizer');
+const { resolveMonth } = require('./lib/report-month');
 
 const TODAY    = new Date().toISOString().slice(0, 10);
-const monthArg = process.argv.find(a => a.startsWith('--month='));
-const MONTH    = monthArg ? monthArg.split('=')[1] : TODAY.slice(0, 7);
+const MONTH    = resolveMonth(process.argv.slice(2), new Date());
 
 const SEC_DIR  = path.resolve(__dirname, `../../content/monthly-report/${MONTH}`);
 const OUT_DIR  = path.resolve(__dirname, '../../content/drafts');

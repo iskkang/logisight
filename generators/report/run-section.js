@@ -13,6 +13,7 @@ require('dotenv').config({ path: path.resolve(__dirname, '../../.env.local') });
 
 const Anthropic = require('@anthropic-ai/sdk');
 const SECTIONS  = require('./sections.config');
+const { resolveMonth, monthEndISO } = require('./lib/report-month');
 const { loadAllMonthlyItems, loadIndexFactsheet, buildIndexTable } = require('./lib/index-factsheet');
 const { buildOceanIndices }   = require('./lib/ocean-indices');
 const { buildAirIndices }     = require('./lib/air-indices');
@@ -25,7 +26,7 @@ const { runSection, saveSectionFile, parseFrontmatter } = require('./lib/section
 
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
 const TODAY   = new Date().toISOString().slice(0, 10);
-const MONTH   = TODAY.slice(0, 7);
+const MONTH   = resolveMonth(process.argv.slice(2), new Date());
 const OUT_DIR = path.resolve(__dirname, `../../content/monthly-report/${MONTH}`);
 
 if (!ANTHROPIC_KEY) {
