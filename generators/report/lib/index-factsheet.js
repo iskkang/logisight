@@ -29,13 +29,15 @@ function titleKey(item) {
     .trim();
 }
 
-function loadAllMonthlyItems() {
+function loadAllMonthlyItems({ monthEnd } = {}) {
   if (!fs.existsSync(NEWS_PATH)) {
     console.error('ERROR: latest-news.json 없음 — npm run collect:monthly 먼저 실행하세요.');
     process.exit(1);
   }
-  const data     = JSON.parse(fs.readFileSync(NEWS_PATH, 'utf-8'));
-  const SINCE_MS = Date.now() - 45 * 86400000;  // 최근 45일 (월간 리포트 신선도)
+  const data  = JSON.parse(fs.readFileSync(NEWS_PATH, 'utf-8'));
+  // 최근 45일 (월간 리포트 신선도). monthEnd 지정 시 [monthEnd-45d, monthEnd]로 발행월 데이터 배제.
+  const end   = monthEnd ? new Date(`${monthEnd}T23:59:59Z`).getTime() : Date.now();
+  const start = end - 45 * 86400000;
   const all  = [
     ...(data.shipping || []),
     ...(data.air      || []),
@@ -44,10 +46,10 @@ function loadAllMonthlyItems() {
     ...(data.risk     || []),
   ].filter(i => {
     if (!i.source || !i.url || !i.title || i.title.length < 10) return false;
-    // 롤링 스냅샷의 낡은 기사 차단 — 유효한 날짜가 45일보다 오래면 제외
+    // 롤링 스냅샷의 낡은 기사·발행월 데이터 차단 — 유효한 날짜가 창 밖이면 제외
     if (i.published_at) {
       const t = Date.parse(i.published_at);
-      if (!isNaN(t) && t < SINCE_MS) return false;
+      if (!isNaN(t) && (t < start || t > end)) return false;
     }
     // lane_causal 항목은 운임 관련성 재확인 — 스냅샷 잔재 비운임 기사 차단
     if (i.category === 'lane_causal') {

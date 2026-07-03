@@ -65,7 +65,7 @@ async function loadMaritimeNewsItems({ monthEnd }) {
     .gte('published_at', start.toISOString())
     .lte('published_at', end.toISOString())
     .order('published_at', { ascending: false })
-    .limit(1000);
+    .limit(5000);
   if (error) { console.warn('  maritime-news-feed: 조회 실패:', error.message); return []; }
   const items = (data || []).map(normalizeMaritimeRow);
   console.log(`  maritime-news-feed: external ${items.length}건 로드 (${monthEnd} 기준 −${LOOKBACK_DAYS}d)`);

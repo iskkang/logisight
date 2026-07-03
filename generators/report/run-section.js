@@ -26,7 +26,6 @@ const { loadStyleGuide }      = require('./lib/style');
 const { runSection, saveSectionFile, parseFrontmatter } = require('./lib/section-runner');
 
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
-const TODAY   = new Date().toISOString().slice(0, 10);
 const MONTH   = resolveMonth(process.argv.slice(2), new Date());
 const WEEK_END = monthEndISO(MONTH);   // 발행월 데이터 배제용 지수 상한
 const DEFAULT_MONTHLY_ITEM_CAP = 40;   // ocean/air/rail 등 maxItems 미지정 섹션 상한
@@ -59,7 +58,7 @@ async function main() {
     process.exit(1);
   }
 
-  const fileItems  = loadAllMonthlyItems();
+  const fileItems  = loadAllMonthlyItems({ monthEnd: WEEK_END });
   const extraItems = await loadMaritimeNewsItems({ monthEnd: WEEK_END });
   const allItems   = dedupeByUrl([...fileItems, ...extraItems]);
   console.log(`📰 아이템 풀: 파일 ${fileItems.length} + maritime ${extraItems.length} → dedup ${allItems.length}`);
