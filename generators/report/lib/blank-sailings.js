@@ -110,6 +110,10 @@ async function buildBlankSailings({ force = false } = {}) {
     console.warn('  blank-sailings: Drewry 공개 헤드라인 미수집');
     return null;
   }
+  if (!(Number(drewry.scheduled) > 0)) {
+    console.warn('  blank-sailings: scheduled departures 미표기 — 정량 블록 생략');
+    return null;
+  }
 
   const payload = buildPayload(drewry);
   saveCache(payload);
