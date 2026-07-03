@@ -155,7 +155,7 @@ function buildChartData(byCode) {
 // ── Main ───────────────────────────────────────────────────────────────────────
 
 async function buildIntraAsia({ force = false, weekEnd } = {}) {
-  if (!force) {
+  if (!force && !weekEnd) {
     const cached = loadCache();
     if (cached) { console.log('  intra-asia: 캐시 사용 (' + (cached.as_of || '') + ')'); return cached; }
   }
@@ -176,7 +176,7 @@ async function buildIntraAsia({ force = false, weekEnd } = {}) {
     source: 'KOBC (KCCI 역내)',
     table, factText, chartData,
   };
-  saveCache(payload);
+  if (!weekEnd) saveCache(payload);
   console.log('  intra-asia: 완료 (' + latestWeek + ')');
   return payload;
 }
