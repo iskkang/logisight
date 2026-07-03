@@ -15,6 +15,7 @@ const Anthropic = require('@anthropic-ai/sdk');
 const SECTIONS  = require('./sections.config');
 const { resolveMonth, monthEndISO } = require('./lib/report-month');
 const { loadAllMonthlyItems, loadIndexFactsheet, buildIndexTable } = require('./lib/index-factsheet');
+const { loadMaritimeNewsItems, dedupeByUrl, rankAndCap } = require('./lib/maritime-news-feed');
 const { buildOceanIndices }   = require('./lib/ocean-indices');
 const { buildAirIndices }     = require('./lib/air-indices');
 const { buildRailIndices }    = require('./lib/rail-indices');
@@ -28,6 +29,7 @@ const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
 const TODAY   = new Date().toISOString().slice(0, 10);
 const MONTH   = resolveMonth(process.argv.slice(2), new Date());
 const WEEK_END = monthEndISO(MONTH);   // 발행월 데이터 배제용 지수 상한
+const DEFAULT_MONTHLY_ITEM_CAP = 40;   // ocean/air/rail 등 maxItems 미지정 섹션 상한
 const OUT_DIR = path.resolve(__dirname, `../../content/monthly-report/${MONTH}`);
 
 if (!ANTHROPIC_KEY) {
@@ -57,7 +59,10 @@ async function main() {
     process.exit(1);
   }
 
-  const allItems   = loadAllMonthlyItems();
+  const fileItems  = loadAllMonthlyItems();
+  const extraItems = await loadMaritimeNewsItems({ monthEnd: WEEK_END });
+  const allItems   = dedupeByUrl([...fileItems, ...extraItems]);
+  console.log(`📰 아이템 풀: 파일 ${fileItems.length} + maritime ${extraItems.length} → dedup ${allItems.length}`);
   const styleGuide = loadStyleGuide();
   const client     = new Anthropic({ apiKey: ANTHROPIC_KEY });
 
@@ -83,7 +88,7 @@ async function main() {
       }
     }
 
-    const items = sec.filterItems(allItems);
+    const items = rankAndCap(sec.filterItems(allItems), sec.maxItems ?? DEFAULT_MONTHLY_ITEM_CAP);
     console.log(`▶ [${sec.id}] ${sec.title} — 관련 기사 ${items.length}건`);
 
     // ── ocean per-index 지수 블록 + KITA 부산발 참고운임 ──
