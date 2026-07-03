@@ -27,6 +27,7 @@ const { runSection, saveSectionFile, parseFrontmatter } = require('./lib/section
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
 const TODAY   = new Date().toISOString().slice(0, 10);
 const MONTH   = resolveMonth(process.argv.slice(2), new Date());
+const WEEK_END = monthEndISO(MONTH);   // 발행월 데이터 배제용 지수 상한
 const OUT_DIR = path.resolve(__dirname, `../../content/monthly-report/${MONTH}`);
 
 if (!ANTHROPIC_KEY) {
@@ -60,7 +61,7 @@ async function main() {
   const styleGuide = loadStyleGuide();
   const client     = new Anthropic({ apiKey: ANTHROPIC_KEY });
 
-  const indexRows  = await loadIndexFactsheet();
+  const indexRows  = await loadIndexFactsheet({ weekEnd: WEEK_END });
   const { table: indexTable, factText: indexFactText } = buildIndexTable(indexRows);
 
   console.log(`\n📋 monthly items: ${allItems.length}건 | 대상 섹션: ${targets.map(s => s.id).join(', ')}`);
@@ -88,7 +89,7 @@ async function main() {
     // ── ocean per-index 지수 블록 + KITA 부산발 참고운임 ──
     let oceanBlocks = null, oceanFactText = null, kitaSeaBundle = null;
     if (sec.id === 'ocean') {
-      const built  = await buildOceanIndices();
+      const built  = await buildOceanIndices({ weekEnd: WEEK_END });
       oceanBlocks  = built.blocks;
       oceanFactText = built.factText;
       console.log(`▶ [ocean] per-index 지수 블록 ${oceanBlocks.length}개 로드`);

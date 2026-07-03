@@ -28,10 +28,12 @@ const BDI_ORDER  = ['BDI'];
 
 const WCI_CODES = new Set(WCI_ORDER);
 
-async function loadGroup(codes) {
-  const { data, error } = await sb().from('freight_indices')
+async function loadGroup(codes, weekEnd) {
+  let q = sb().from('freight_indices')
     .select('index_code,week_date,value')
-    .in('index_code', codes)
+    .in('index_code', codes);
+  if (weekEnd) q = q.lte('week_date', weekEnd);
+  const { data, error } = await q
     .order('week_date', { ascending: false })
     .limit(codes.length * 14);   // up to ~12 weeks + buffer per code
 
@@ -114,17 +116,17 @@ function render(byCode, order, opts = {}) {
   return { table, factText: factLines.join('\n') };
 }
 
-async function buildOceanIndices() {
+async function buildOceanIndices({ weekEnd } = {}) {
   const [[kcci, scfi, ccfi, wci, bdi], blankData, intraData] = await Promise.all([
     Promise.all([
-      loadGroup(KCCI_ORDER),
-      loadGroup(SCFI_ORDER),
-      loadGroup(CCFI_ORDER),
-      loadGroup(WCI_ORDER),
-      loadGroup(BDI_ORDER),
+      loadGroup(KCCI_ORDER, weekEnd),
+      loadGroup(SCFI_ORDER, weekEnd),
+      loadGroup(CCFI_ORDER, weekEnd),
+      loadGroup(WCI_ORDER, weekEnd),
+      loadGroup(BDI_ORDER, weekEnd),
     ]),
     buildBlankSailings(),
-    buildIntraAsia(),
+    buildIntraAsia({ weekEnd }),
   ]);
 
   const blocks = [

@@ -85,16 +85,18 @@ const LABEL = {
   BDI:       'BDI',
 };
 
-async function loadIndexFactsheet() {
+async function loadIndexFactsheet({ weekEnd } = {}) {
   if (!supabase) {
     console.warn('⚠️ Supabase 미설정 — 지표 수치 없이 진행');
     return null;
   }
   const since = new Date(Date.now() - 80 * 86400000).toISOString().slice(0, 10);
-  const { data, error } = await supabase
+  let q = supabase
     .from('freight_indices')
     .select('index_code,value,week_date,change_pct')
-    .gte('week_date', since)
+    .gte('week_date', since);
+  if (weekEnd) q = q.lte('week_date', weekEnd);
+  const { data, error } = await q
     .order('week_date', { ascending: false });
   if (error) {
     console.warn('⚠️ freight_indices 조회 실패:', error.message);

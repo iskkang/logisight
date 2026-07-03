@@ -27,10 +27,12 @@ function sb() {
   );
 }
 
-async function loadIntraRoutes() {
-  const { data, error } = await sb().from('freight_indices')
+async function loadIntraRoutes(weekEnd) {
+  let q = sb().from('freight_indices')
     .select('index_code,week_date,value')
-    .in('index_code', INTRA_CODES)
+    .in('index_code', INTRA_CODES);
+  if (weekEnd) q = q.lte('week_date', weekEnd);
+  const { data, error } = await q
     .order('week_date', { ascending: false })
     .limit(INTRA_CODES.length * 14);
 
@@ -152,14 +154,14 @@ function buildChartData(byCode) {
 
 // ── Main ───────────────────────────────────────────────────────────────────────
 
-async function buildIntraAsia({ force = false } = {}) {
+async function buildIntraAsia({ force = false, weekEnd } = {}) {
   if (!force) {
     const cached = loadCache();
     if (cached) { console.log('  intra-asia: 캐시 사용 (' + (cached.as_of || '') + ')'); return cached; }
   }
 
   console.log('  intra-asia: Supabase KCCI 역내 항로 수집...');
-  const byCode = await loadIntraRoutes();
+  const byCode = await loadIntraRoutes(weekEnd);
   if (!byCode) { console.warn('  intra-asia: Supabase 데이터 없음'); return null; }
 
   const allRows    = Object.values(byCode).flat().sort((a, b) => b.week.localeCompare(a.week));
