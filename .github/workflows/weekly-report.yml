@@ -45,5 +45,9 @@ jobs:
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add content/weekly-report/*.md content/published/weekly-report-*.pdf
-          git commit -m "chore(weekly-report): auto-publish $(date -u +%G-W%V)" || echo "no changes"
-          git push || echo "push skipped"
+          git commit -m "chore(weekly-report): auto-publish $(date -u +%G-W%V)" || { echo "no changes"; exit 0; }
+          for i in 1 2 3; do
+            if git pull --rebase --autostash origin main && git push; then exit 0; fi
+            echo "push attempt $i failed — retrying"; sleep 5
+          done
+          echo "::error::weekly-report push failed after 3 attempts — 발행 유실 방지 위해 실패 처리"; exit 1
