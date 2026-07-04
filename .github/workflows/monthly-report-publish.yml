@@ -1,12 +1,15 @@
 name: Monthly Report Publish
 
-# 승인 후 자동발행(수동 트리거): monthly-analysis 가 만든 초안을 검수한 뒤
-# Actions에서 Run → PDF 생성 + Storage 업로드 + reports upsert + published PDF 커밋.
+# 자동발행: monthly-analysis(매월 2일)가 만든 초안을 매월 5일 발행.
+# 5일까지 3일간이 검수 창 — 필요 시 초안을 미리 수정. 수동 트리거도 유지.
+# 실행 → PDF 생성 + Storage 업로드 + reports upsert + published PDF 커밋.
 on:
+  schedule:
+    - cron: '0 19 5 * *'   # 매월 5일 04:00 KST — 초안(2일 생성) 검수 후 자동 발행
   workflow_dispatch:
     inputs:
       month:
-        description: '대상 월 (YYYY-MM). 비우면 현재 월(UTC)'
+        description: '대상 월 (YYYY-MM). 비우면 직전 완료월(UTC)'
         required: false
 
 concurrency:
@@ -33,7 +36,7 @@ jobs:
         env:
           MONTH: ${{ github.event.inputs.month }}
         run: |
-          MONTH="${MONTH:-$(date -u +%Y-%m)}"
+          MONTH="${MONTH:-$(date -u -d "$(date -u +%Y-%m-01) -1 day" +%Y-%m)}"
           echo "month=$MONTH" >> "$GITHUB_OUTPUT"
           echo "대상 월: $MONTH"
 
