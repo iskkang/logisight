@@ -50,7 +50,7 @@ jobs:
           git add content/drafts/monthly-analysis-*.md content/monthly-report/**/*.md
           git commit -m "chore(monthly): draft $(date -u +%Y-%m)" || { echo "no changes"; exit 0; }
           for i in 1 2 3; do
-            if git pull --rebase origin main && git push; then exit 0; fi
+            if git pull --rebase --autostash origin main && git push; then exit 0; fi
             echo "push attempt $i failed — retrying"; sleep 5
           done
           echo "::error::draft push failed after 3 attempts — 초안 유실 방지 위해 실패 처리"; exit 1
