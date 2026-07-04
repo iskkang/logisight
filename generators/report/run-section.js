@@ -13,7 +13,7 @@ require('dotenv').config({ path: path.resolve(__dirname, '../../.env.local') });
 
 const Anthropic = require('@anthropic-ai/sdk');
 const SECTIONS  = require('./sections.config');
-const { resolveMonth, monthEndISO } = require('./lib/report-month');
+const { resolveMonth, monthEndISO, prevMonthOf } = require('./lib/report-month');
 const { loadAllMonthlyItems, loadIndexFactsheet, buildIndexTable } = require('./lib/index-factsheet');
 const { loadMaritimeNewsItems, dedupeByUrl, rankAndCap } = require('./lib/maritime-news-feed');
 const { buildOceanIndices }   = require('./lib/ocean-indices');
@@ -26,8 +26,8 @@ const { loadStyleGuide }      = require('./lib/style');
 const { runSection, saveSectionFile, parseFrontmatter } = require('./lib/section-runner');
 
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
-const MONTH   = resolveMonth(process.argv.slice(2), new Date());
-const WEEK_END = monthEndISO(MONTH);   // 발행월 데이터 배제용 지수 상한
+const MONTH   = resolveMonth(process.argv.slice(2), new Date());   // 라벨(발행) 월 — 디렉터리·파일명
+const WEEK_END = monthEndISO(prevMonthOf(MONTH));   // 데이터 상한 = 직전월 말일(발행월 데이터 배제)
 const DEFAULT_MONTHLY_ITEM_CAP = 40;   // ocean/air/rail 등 maxItems 미지정 섹션 상한
 const OUT_DIR = path.resolve(__dirname, `../../content/monthly-report/${MONTH}`);
 
