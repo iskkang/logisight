@@ -2,7 +2,15 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 월간 리포트를 직전 완료월 기준으로 타깃팅하고(발행월 데이터 배제), `maritime_news`의 external 원문을 병합해 뉴스 소스를 넓힌다.
+**Goal:** 월간 리포트를 **라벨=발행월 / 데이터=직전 완료월로 분리**(발행월 데이터 배제)하고, `maritime_news`의 external 원문을 병합해 뉴스 소스를 넓힌다.
+
+> **⚠️ 갱신 (2026-07-04) — 라벨/데이터 분리:** 아래 Task 1~2는 라벨 `MONTH`을 "직전 완료월"로 잡았으나,
+> 확정 요구에 따라 이후 커밋 `75fa385`에서 **라벨=발행(현재)월, 데이터 상한=직전월 말일**로 분리됨.
+> 현재 코드 진실:
+> - `report-month.js` export = `{ resolveMonth, monthEndISO, prevMonthOf }` (구 `prevCompletedMonth` 제거).
+> - `resolveMonth(argv, today)` 기본값 = **현재월**(라벨). `run-section.js`: `WEEK_END = monthEndISO(prevMonthOf(MONTH))`.
+> - 결과: `2026-07` 라벨 + 6월말 데이터 상한. 검증 통과(prod run 커밋 `4fa8e56`).
+> 아래 Task 본문은 최초 구현 이력이며, 최신 동작은 이 배너와 스펙 문서를 기준으로 볼 것.
 
 **Architecture:** 순수 함수(월 계산·정규화·랭킹)는 `node:test`로 TDD하고, Supabase I/O는 `.env.local` 기반 통합 스크립트로 검증한다. `run-section.js`가 오케스트레이션 지점 — 대상 월/월말일을 계산해 지수 로더에 상한으로 전달하고, `maritime_news` 아이템을 파일 아이템 풀에 병합한다. 수집 파이프라인(collectors)은 건드리지 않는다.
 
