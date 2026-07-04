@@ -12,18 +12,33 @@ const CACHE_PATH = path.resolve(__dirname, '../../../outputs/cache/port-throughp
 const CACHE_TTL  = 7 * 24 * 60 * 60 * 1000;
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 
+const ISL_BASE = 'https://www.isl.org';
 const SOURCES = [
   {
-    key:   'ISL',
-    url:   'https://www.isl.org/en/containerindex',
-    label: 'ISL Container Throughput Index',
+    key:      'ISL',
+    url:      'https://www.isl.org/en/services/rwiisl-container-throughput-index',
+    label:    'RWI/ISL Container Throughput Index',
+    discover: discoverLatestIsl,   // 랜딩엔 수치가 없음 → 최신 월 보도자료 링크 추적
   },
   {
     key:   'RWI-ISL',
-    url:   'https://www.rwi-essen.de/en/research-advice/further-research-areas/markets-and-prices/rwi-isl-container-throughput-index',
-    label: 'RWI-ISL Container Throughput Index',
+    url:   'https://www.rwi-essen.de/en/research-advice/research-unit/macroeconomics-and-public-finance/hightlight-topic/rwi-isl-container-throughput-index',
+    label: 'RWI/ISL Container Throughput Index',
   },
 ];
+
+// 랜딩 페이지에서 최신 월별 보도자료 링크 발견.
+// href 패턴: /en/services/rwiisl-container-throughput-index-<M><YY> (예 -526 = 2026-05).
+function discoverLatestIsl(landingHtml) {
+  const re = /\/en\/services\/rwiisl-container-throughput-index-(\d{3,4})\b/gi;
+  const slugs = [];
+  let m;
+  while ((m = re.exec(landingHtml)) !== null) slugs.push(m[1]);
+  if (!slugs.length) return null;
+  const rank = s => (+s.slice(-2)) * 100 + (+s.slice(0, -2));   // (YY*100 + M) 최신 우선
+  const best = slugs.sort((a, b) => rank(b) - rank(a))[0];
+  return ISL_BASE + '/en/services/rwiisl-container-throughput-index-' + best;
+}
 
 // ── Cache I/O ─────────────────────────────────────────────────────────────────
 
@@ -84,6 +99,8 @@ function stripHtml(html) {
 
 function parseIndexValue(text) {
   const PATS = [
+    // "to 141.9 index points" (ISL 보도자료 표현) — "index points" 바로 앞 수치
+    /(\d{2,3}\.\d+)\s+index\s+points?/i,
     // "Container Throughput Index ... 138.2"
     /(?:container\s+throughput\s+index|CTI)[^0-9]{0,80}(\d{2,3}\.?\d+)/i,
     // "index stood at 138.2 points"
@@ -117,11 +134,26 @@ function parseMoM(text) {
   return null;
 }
 
+// "from A (revised) to B" → 직전월 A / 당월 B (명시적 MoM% 없을 때 계산 근거)
+function parseFromTo(text) {
+  const m = text.match(/from\s+(\d{2,3}\.\d+)\s*(?:\(revised\)\s*)?to\s+(\d{2,3}\.\d+)/i);
+  if (!m) return null;
+  const prev = parseFloat(m[1]);
+  const curr = parseFloat(m[2]);
+  if (!(prev > 80 && curr > 80)) return null;
+  return { prev, curr };
+}
+
 function parseHtml(html) {
   const text = stripHtml(html);
   const index = parseIndexValue(text);
   if (!index) return null;
-  return { index, yoy_pct: parseYoY(text), mom_pct: parseMoM(text) };
+  let mom = parseMoM(text);
+  if (mom == null) {
+    const ft = parseFromTo(text);   // 보도자료가 % 대신 "from A to B"만 줄 때 계산
+    if (ft) mom = ((ft.curr - ft.prev) / ft.prev) * 100;
+  }
+  return { index, yoy_pct: parseYoY(text), mom_pct: mom };
 }
 
 // ── Trend accumulation ────────────────────────────────────────────────────────
@@ -214,8 +246,17 @@ async function buildPortThroughput({ force = false } = {}) {
     console.log('  port-throughput: ' + src.key + ' 수집 시도...');
     const html = await fetchPage(src.url);
     if (!html) continue;
+    let usedUrl = src.url;
     parsed = parseHtml(html);
-    if (parsed) { source = src; break; }
+    if (!parsed && src.discover) {
+      const latestUrl = src.discover(html);   // 랜딩에 수치 없으면 최신 월 보도자료로
+      if (latestUrl) {
+        console.log('  port-throughput: 최신 월 링크 발견 → ' + latestUrl);
+        const artHtml = await fetchPage(latestUrl);
+        if (artHtml) { parsed = parseHtml(artHtml); usedUrl = latestUrl; }
+      }
+    }
+    if (parsed) { source = { ...src, url: usedUrl }; break; }
   }
 
   if (!parsed) {
@@ -248,4 +289,4 @@ async function buildPortThroughput({ force = false } = {}) {
   return payload;
 }
 
-module.exports = { buildPortThroughput, CACHE_PATH };
+module.exports = { buildPortThroughput, CACHE_PATH, parseIndexValue, parseFromTo, discoverLatestIsl };
