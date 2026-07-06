@@ -63,11 +63,12 @@ test('laneSpread: 입력 부족(빈 시리즈) — null', () => {
 
 // ── contractSpotGap ───────────────────────────────────────────────────────────
 
-test('contractSpotGap: 정상 케이스 — ratioLatest/ratio4wAgo 계산', () => {
+test('contractSpotGap: 정상 케이스 — ratioLatest/ratio4wAgo 계산 (주별 비율을 다르게 해 anchor 선택 검증)', () => {
+  // 비율: 06-22=0.5, 06-15=0.6, 05-25=0.4 — 상수 비율이면 anchor 오선택을 못 잡으므로 주별로 다르게.
   const ccfi = [
     { week: '2026-06-22', v: 1100 },
-    { week: '2026-06-15', v: 1080 },
-    { week: '2026-05-25', v: 1000 },
+    { week: '2026-06-15', v: 1296 },
+    { week: '2026-05-25', v: 800 },
   ];
   const scfi = [
     { week: '2026-06-22', v: 2200 },
@@ -75,8 +76,8 @@ test('contractSpotGap: 정상 케이스 — ratioLatest/ratio4wAgo 계산', () =
     { week: '2026-05-25', v: 2000 },
   ];
   const r = contractSpotGap(ccfi, scfi);
-  assert.equal(r.ratioLatest, 0.5); // 1100/2200
-  assert.equal(r.ratio4wAgo, 0.5); // 1000/2000 (05-25, 28일 전 최근접)
+  assert.equal(r.ratioLatest, 0.5);  // 1100/2200 — 최신 공통주(06-22)
+  assert.equal(r.ratio4wAgo, 0.4);   // 800/2000 — 06-22−28일 이전 최근접(05-25). 06-15(0.6)를 잡으면 실패
 });
 
 test('contractSpotGap: 매칭 주 8개 미만 — lagWeeks null (throw 없음)', () => {
