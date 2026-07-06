@@ -83,3 +83,21 @@ test('excerpt는 120자 이내로 절단', () => {
   const f = findings.find(x => x.rule === 'forbidden-arrow');
   assert.ok(f.excerpt.length <= 121); // 120 + 말줄임표(…) 1글자
 });
+
+test('발췌는 매치 지점 중심 — 긴 문단 뒤쪽 위반도 발췌에 보임', () => {
+  const long = 'A'.repeat(500) + ' 연쇄 반응이 발생했다. ' + 'B'.repeat(100);
+  const { findings } = lintReport(long, []);
+  const f = findings.find(x => x.rule === 'formal-ending');
+  assert.ok(f, 'formal-ending 검출');
+  assert.match(f.excerpt, /발생했다/);   // 500자 뒤 매치가 발췌에 포함
+});
+
+test('평서체 ~한다./~됐다. 종결도 검출 (§2 전체 커버)', () => {
+  const { findings: f1 } = lintReport('양극화가 심화된다.', []);
+  const { findings: f2 } = lintReport('개편이 단행됐다.', []);
+  assert.ok(f1.some(x => x.rule === 'formal-ending'));
+  assert.ok(f2.some(x => x.rule === 'formal-ending'));
+  // 명사형 정상 문장은 통과
+  const { findings: ok } = lintReport('상승 압력 지속 전망.', []);
+  assert.ok(!ok.some(x => x.rule === 'formal-ending'));
+});

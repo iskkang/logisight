@@ -5,16 +5,21 @@
 
 const EXCERPT_MAX = 120;
 
-function truncate(line) {
+// 발췌는 매치 지점을 중심으로 — 600자 문단의 앞 120자가 아니라, 위반 지점이 보이게.
+function truncate(line, matchIndex = 0) {
   const s = String(line || '').trim();
-  return s.length > EXCERPT_MAX ? s.slice(0, EXCERPT_MAX) + '…' : s;
+  if (s.length <= EXCERPT_MAX) return s;
+  const start = Math.max(0, Math.min(matchIndex - Math.floor(EXCERPT_MAX / 2), s.length - EXCERPT_MAX));
+  const slice = s.slice(start, start + EXCERPT_MAX);
+  return (start > 0 ? '…' : '') + slice + (start + EXCERPT_MAX < s.length ? '…' : '');
 }
 
 // ── ① 금지 패턴 (critical) — 문서 전체 라인 대상 ──────────────────────────────
 const CRITICAL_RULES = [
   { rule: 'forbidden-arrow', re: /[➔☞]/ },
   { rule: 'ops-leak',        re: /(미수집|수집\s*실패|접속\s*실패|다음\s*호\s*업데이트)/ },
-  { rule: 'formal-ending',   re: /(습니다|입니다|했다\.|이다\.)/ },
+  // 스타일 가이드 §2 금지 어미 전체: 경어체(~습니다/입니다) + 평서체(~했다/이다/한다/됐다/된다/인다/온다 종결)
+  { rule: 'formal-ending',   re: /(습니다|입니다|(?:했|이|한|됐|된|인|온|간)다\.)/ },
   { rule: 'flat-with-arrow', re: /[▲▼]\s*0\.0%/ },
 ];
 
@@ -78,11 +83,12 @@ function lintReport(md, injectedNumbers) {
   const findings = [];
   const lines = stripFrontmatter(String(md || '')).split('\n');
 
-  // ① 금지 패턴 — 표/제목 포함 전체 라인 대상
+  // ① 금지 패턴 — 표/제목 포함 전체 라인 대상 (발췌는 매치 지점 중심)
   for (const line of lines) {
     for (const { rule, re } of CRITICAL_RULES) {
-      if (re.test(line)) {
-        findings.push({ rule, severity: 'critical', excerpt: truncate(line) });
+      const m = line.match(re);
+      if (m) {
+        findings.push({ rule, severity: 'critical', excerpt: truncate(line, m.index ?? 0) });
       }
     }
   }
