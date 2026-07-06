@@ -8,9 +8,9 @@ on:
 jobs:
   fetch-kita-fares:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 120   # 108개 노선 × 1.2s → 약 13분, 여유 있게 설정
     permissions:
-      contents: write    # 108개 노선 × 1.2s → 약 13분, 여유 있게 설정
+      contents: write      # 캐시 커밋용
 
     steps:
       - uses: actions/checkout@v4
