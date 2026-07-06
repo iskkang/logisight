@@ -26,6 +26,7 @@ const SCFI_ORDER = ['SCFI', 'SCFI_USWC', 'SCFI_EU', 'SCFI_USEC'];
 const CCFI_ORDER = ['CCFI'];
 const WCI_ORDER  = ['WCI', 'WCI_SHA_RTM', 'WCI_SHA_GOA', 'WCI_SHA_LAX', 'WCI_SHA_NYC'];
 const BDI_ORDER  = ['BDI'];
+const BUNKER_ORDER = ['VLSFO', 'HSFO'];   // 02-8 정량 — freight_index_excel(oneksa) 주간 적재
 
 const WCI_CODES = new Set(WCI_ORDER);
 
@@ -65,7 +66,8 @@ function fmtVal(v, code) {
 function fmtChg(curr, prev) {
   if (prev == null || curr == null || prev === 0) return '—';
   const pct = ((curr - prev) / prev) * 100;
-  return `${pct >= 0 ? '▲' : '▼'} ${Math.abs(pct).toFixed(1)}%`;
+  const dir = pct > 0.05 ? '▲ ' : pct < -0.05 ? '▼ ' : '';   // 보합(±0.05%p)은 기호 없이 — 스타일 가이드 §13-4
+  return `${dir}${Math.abs(pct).toFixed(1)}%`;
 }
 
 function render(byCode, order, opts = {}) {
@@ -118,13 +120,14 @@ function render(byCode, order, opts = {}) {
 }
 
 async function buildOceanIndices({ weekEnd } = {}) {
-  const [[kcci, scfi, ccfi, wci, bdi], blankData, intraData] = await Promise.all([
+  const [[kcci, scfi, ccfi, wci, bdi, bunker], blankData, intraData] = await Promise.all([
     Promise.all([
       loadGroup(KCCI_ORDER, weekEnd),
       loadGroup(SCFI_ORDER, weekEnd),
       loadGroup(CCFI_ORDER, weekEnd),
       loadGroup(WCI_ORDER, weekEnd),
       loadGroup(BDI_ORDER, weekEnd),
+      loadGroup(BUNKER_ORDER, weekEnd),
     ]),
     buildBlankSailings(),
     buildIntraAsia({ weekEnd }),
@@ -151,6 +154,11 @@ async function buildOceanIndices({ weekEnd } = {}) {
     {
       id: 'bdi', chart: 'ocean_bdi', headingKw: ['02-5', 'BDI'],
       ...render(bdi, BDI_ORDER, { source: 'Baltic Exchange' }),
+    },
+    {
+      // 02-8 벙커유 정량 — 표 없이 정성 서술만 하던 페이지에 실측 주입(방향 환각 차단)
+      id: 'bunker', chart: null, headingKw: ['02-8', '벙커'],
+      ...render(bunker, BUNKER_ORDER, { unitNote: 'USD/톤', source: 'oneksa 주간 벙커 시세' }),
     },
     {
       id:        'blank_sailings',

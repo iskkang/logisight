@@ -24,6 +24,7 @@ const { buildPortCongestion } = require('./lib/port-congestion'); // ①
 const { buildKitaSeaReport, buildKitaAirReport } = require('./lib/kita-report');
 const { loadStyleGuide }      = require('./lib/style');
 const { runSection, saveSectionFile, parseFrontmatter } = require('./lib/section-runner');
+const { extractDigest, buildPriorDigestBlock } = require('./lib/section-digest');
 
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
 const MONTH   = resolveMonth(process.argv.slice(2), new Date());   // 라벨(발행) 월 — 디렉터리·파일명
@@ -73,15 +74,18 @@ async function main() {
 
   let generated = 0;
   let skipped   = 0;
+  const priorDigests = [];   // 크로스섹션 dedup — 앞 섹션 핵심 주제 누적
 
   for (const sec of targets) {
     const outPath = path.join(OUT_DIR, `${sec.id}.md`);
 
-    // approved 섹션은 --force 없이 스킵
+    // approved 섹션은 --force 없이 스킵 (스킵해도 dedup 다이제스트에는 포함)
     if (!force && fs.existsSync(outPath)) {
-      const { meta } = parseFrontmatter(fs.readFileSync(outPath, 'utf-8'));
+      const existing = fs.readFileSync(outPath, 'utf-8');
+      const { meta } = parseFrontmatter(existing);
       if (meta.status === 'approved') {
         console.log(`⏭️  [${sec.id}] status: approved — 스킵 (--force 로 재생성 가능)`);
+        priorDigests.push(extractDigest(existing, sec.title));
         skipped++;
         continue;
       }
@@ -150,6 +154,7 @@ async function main() {
       airTable, airFactText,
       portThroughputTable, portThroughputFactText, portCongestionTable,
       kitaSeaBundle, kitaAirBundle,
+      priorDigest: buildPriorDigestBlock(priorDigests),
     });
     const saved   = saveSectionFile(OUT_DIR, sec.id, MONTH, result.status, result.text, {
       pass1_tokens: result.pass1Tokens,
@@ -157,6 +162,7 @@ async function main() {
       items_count:  items.length,
     });
     console.log(`✅ [${sec.id}] 저장: ${saved}\n`);
+    priorDigests.push(extractDigest(result.text, sec.title));   // 다음 섹션 dedup용 누적
     generated++;
   }
 

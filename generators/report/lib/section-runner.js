@@ -148,8 +148,12 @@ function appendStickyRailGuide(lines, items) {
   lines.push('');
 }
 
-function buildSectionUserPrompt(title, items, month, indexFactText, railFactText, airFactText, portThroughputFactText, kitaFactText, topicGuides) {
+function buildSectionUserPrompt(title, items, month, indexFactText, railFactText, airFactText, portThroughputFactText, kitaFactText, topicGuides, priorDigest) {
   const lines = [`분석 기준월: ${month}`, ''];
+
+  if (priorDigest) {
+    lines.push(priorDigest);
+  }
 
   if (indexFactText) {
     lines.push('## 확정 운임 지수 (이 수치만 사용, 다른 숫자 생성 금지)');
@@ -386,7 +390,8 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
                             airBundle = null,
                             airTable = null, airFactText = null,
                             portThroughputTable = null, portThroughputFactText = null, portCongestionTable = null,
-                            kitaSeaBundle = null, kitaAirBundle = null }) {
+                            kitaSeaBundle = null, kitaAirBundle = null,
+                            priorDigest = null }) {
   if (items.length === 0) {
     console.log(`⚠️  [${sectionConfig.id}] 관련 기사 없음 → status: no-data`);
     return { status: 'no-data', text: '', pass1Tokens: 0, pass2Tokens: 0 };
@@ -399,7 +404,7 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
 
   const kitaFactText = (kitaSeaBundle && kitaSeaBundle.factText) || (kitaAirBundle && kitaAirBundle.factText) || null;
   const systemPrompt = buildSectionSystemPrompt(styleGuide, sectionConfig.focus);
-  const userPrompt   = buildSectionUserPrompt(sectionConfig.title, cappedItems, month, indexFactText, railFactText, airFactText, portThroughputFactText, kitaFactText, sectionConfig.topicGuides);
+  const userPrompt   = buildSectionUserPrompt(sectionConfig.title, cappedItems, month, indexFactText, railFactText, airFactText, portThroughputFactText, kitaFactText, sectionConfig.topicGuides, priorDigest);
 
   // PASS 1: 초안 생성 — DEEPSEEK_API_KEY 설정 시 deepseek-v4-pro(스트리밍), 미설정 시 claude-sonnet-4-6
   const pass1Model = process.env.DEEPSEEK_API_KEY ? 'deepseek-v4-pro (stream)' : 'claude-sonnet-4-6';

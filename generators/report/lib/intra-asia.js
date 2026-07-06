@@ -80,7 +80,8 @@ function fmtVal(v) { return (v == null || isNaN(v)) ? '—' : Math.round(v).toLo
 function fmtChg(curr, prev) {
   if (prev == null || curr == null || prev === 0) return '—';
   const pct = ((curr - prev) / prev) * 100;
-  return (pct >= 0 ? '▲' : '▼') + ' ' + Math.abs(pct).toFixed(1) + '%';
+  const dir = pct > 0.05 ? '▲ ' : pct < -0.05 ? '▼ ' : '';   // 보합(±0.05%p)은 기호 없이 — 스타일 가이드 §13-4
+  return dir + Math.abs(pct).toFixed(1) + '%';
 }
 
 function buildTable(byCode) {
