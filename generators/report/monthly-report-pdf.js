@@ -836,11 +836,11 @@ async function main() {
     }
   }
 
-  // B10: 데이터 없는 차트 캔버스 → 안내 박스로 교체
+  // B10: 데이터 없는 차트 캔버스 → 박스 자체를 제거 (운영 문구 노출 금지 — 스타일 가이드 §0-⑥)
   for (const id of noDataIds) {
     bodyHtml = bodyHtml.replace(
       `<figure class="chart-box"><canvas id="chart_${id}"></canvas></figure>`,
-      `<figure class="chart-box no-data"><span class="no-data-msg">데이터 미수집</span></figure>`,
+      "",
     );
   }
 

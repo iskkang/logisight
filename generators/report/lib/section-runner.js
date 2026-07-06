@@ -492,7 +492,8 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
         revised += '\n\n<div class="page-break"></div>\n\n## 02-9. KITA 부산발 해상 운임' + inject;
       }
     } else if (!kita09) {
-      revised += '\n\n## 02-9. KITA 부산발 해상 운임\n\n> ⚠️ **KITA 해상 운임 미수집** — 다음 호 업데이트 예정.\n';
+      // KITA 미수집: 02-9 블록 자체를 생략 — 운영 문구 노출 금지(스타일 가이드 §0-⑥)
+      console.warn('  ⚠️ [ocean] KITA 해상 운임 미수집 — 02-9 블록 생략');
     }
   } else if (indexTable) {
     // 운임 지수 표 삽입 (01. 핵심 시황 섹션)
@@ -563,13 +564,8 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
         }
       }
     } else {
-      // Superset 없음 → 03-3 소제목 아래에 notice 삽입
-      const notice = '\n\n> ⚠️ **항공 운임 추세 차트 미수집** — Superset 접속 실패. BAI 스냅샷으로 현황 대체.\n\n';
-      const anchor = revised.match(/#{2,3}[^\n]*(?:03-3|TAC|BAI|추세|시계열)[^\n]*/);
-      if (anchor) {
-        const at = revised.indexOf(anchor[0]) + anchor[0].length;
-        revised = revised.slice(0, at) + notice + revised.slice(at);
-      }
+      // Superset 없음: 본문 노티스 미주입 — 03-3은 가용 지표(BAI·제트유) 중심 서술(스타일 가이드 §0-⑥)
+      console.warn('  ⚠️ [air] Superset 차트 미수집 — 03-3 노티스 없이 가용 지표로 서술');
     }
 
     // BAI 스냅샷 표는 TAC 보조 데이터로 03-3 하단에 배치한다.
@@ -588,22 +584,9 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
       else    { revised += '\n\n' + ab.jetFuelTable + '\n'; }
     }
 
-    // 완전 미수집인 경우 (airBundle 자체가 null)
+    // 완전 미수집인 경우 (airBundle 자체가 null): 노티스 미주입 — 기사 기반 서술만 남김(§0-⑥)
     if (!ab) {
-      const notice = '\n\n> ⚠️ **이번 회차 항공 데이터 미수집** — TAC/BAI·IATA 수집 실패. 다음 호 업데이트 예정.\n\n';
-      const subAnchor = revised.match(/\n#{2,3}[^\n]*/);
-      if (subAnchor) {
-        const at = revised.indexOf(subAnchor[0]) + subAnchor[0].length;
-        revised = revised.slice(0, at) + notice + revised.slice(at);
-      } else {
-        const secAnchor = revised.match(/^#\s[^\n]*/m);
-        if (secAnchor) {
-          const at = revised.indexOf(secAnchor[0]) + secAnchor[0].length;
-          revised = revised.slice(0, at) + notice + revised.slice(at);
-        } else {
-          revised = notice + revised;
-        }
-      }
+      console.warn('  ⚠️ [air] 항공 정량 데이터 전체 미수집 — 노티스 없이 기사 기반 서술만');
     }
   }
 
@@ -622,14 +605,8 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
       if (anchor) { const at = revised.indexOf(anchor[0]) + anchor[0].length; revised = revised.slice(0, at) + inject + revised.slice(at); }
       else        revised += inject;
     } else {
-      const notice = '\n\n> ⚠️ **이번 회차 항만 물동량 데이터 미수집** — RWI-ISL·ISL 수집 실패. 운임 데이터로 대체 분석.\n\n';
-      const anchor = revised.match(/\n#{2,3}[^\n]*/);
-      if (anchor) {
-        const at = revised.indexOf(anchor[0]) + anchor[0].length;
-        revised = revised.slice(0, at) + notice + revised.slice(at);
-      } else {
-        revised = notice + revised;
-      }
+      // 물동량·혼잡도 미수집: 노티스 미주입 — 기사 기반 방향성 서술만 남김(§0-⑥)
+      console.warn('  ⚠️ [macro] 항만 물동량·혼잡도 미수집 — 노티스 없이 기사 기반 서술만');
     }
   }
 

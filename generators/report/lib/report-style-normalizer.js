@@ -66,8 +66,23 @@ function stripKeywordOnlyBold(markdown) {
   return output;
 }
 
+// §5 시사점·권고 금지: ➔/☞로 시작하는 라인(blockquote 포함) 전체 제거.
+function stripImplicationLines(markdown) {
+  return markdown.replace(/^[ \t]*(?:>[ \t]*)?[➔☞].*$\n?/gm, '');
+}
+
+// §0-⑥ 운영 문구 노출 금지: 미수집/수집·접속 실패/다음 호 업데이트가 포함된 라인 제거.
+// (일반 본문의 "협상 실패" 등은 보존 — 운영 문구 패턴에만 매칭)
+function stripOpsNoticeLines(markdown) {
+  return markdown.replace(/^.*(?:미수집|(?:수집|접속) 실패|다음 호 업데이트).*$\n?/gm, '');
+}
+
 function normalizeMonthlyReportMarkdown(markdown) {
-  return stripKeywordOnlyBold(stripStandaloneLeadPeriods(String(markdown)));
+  return stripKeywordOnlyBold(
+    stripStandaloneLeadPeriods(
+      stripOpsNoticeLines(stripImplicationLines(String(markdown))),
+    ),
+  );
 }
 
 module.exports = {
@@ -75,4 +90,6 @@ module.exports = {
   normalizeMonthlyReportMarkdown,
   stripKeywordOnlyBold,
   stripStandaloneLeadPeriods,
+  stripImplicationLines,
+  stripOpsNoticeLines,
 };
