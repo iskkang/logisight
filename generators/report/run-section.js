@@ -22,6 +22,7 @@ const { buildRailIndices }    = require('./lib/rail-indices');
 const { buildPortThroughput } = require('./lib/port-throughput');
 const { buildPortCongestion } = require('./lib/port-congestion'); // ①
 const { buildKitaSeaReport, buildKitaAirReport } = require('./lib/kita-report');
+const { buildDerivedMetrics, loadKitaLanes } = require('./lib/derived-metrics-loader');
 const { loadStyleGuide }      = require('./lib/style');
 const { runSection, saveSectionFile, parseFrontmatter } = require('./lib/section-runner');
 const { extractDigest, buildPriorDigestBlock, buildSynthesisBlock } = require('./lib/section-digest');
@@ -117,6 +118,12 @@ async function main() {
       kitaSeaBundle = buildKitaSeaReport();
       if (kitaSeaBundle) console.log(`▶ [ocean] KITA 해상 참고운임 로드 (기준 ${kitaSeaBundle.asOf})`);
       else               console.warn('⚠️  [ocean] KITA 해상 운임 미수집 — notice 표시');
+
+      // ── 파생 지표(한중발 스프레드·계약-스팟 갭·KITA 공시-실측 갭) — oceanFactText 뒤에 합류 ──
+      const derived = await buildDerivedMetrics({ weekEnd: WEEK_END, kitaSea: loadKitaLanes() });
+      const derivedTexts = [derived.spreadBlock, derived.gapBlock, derived.kitaGapBlock]
+        .filter(Boolean).map(b => b.factText);
+      if (derivedTexts.length) oceanFactText = [oceanFactText, ...derivedTexts].join('\n\n');
     }
 
     // ── air: IATA·KITA·TAC/BAI·Superset 수집 ──
@@ -146,6 +153,14 @@ async function main() {
       const pcData = await buildPortCongestion();
       if (pcData) { portCongestionTable = pcData.table; }   // ① 항만 혼잡도
       else console.warn('⚠️  [macro] 항만 혼잡도 미수집');
+
+      // ── 혼잡-운임 교차 신호(파생) — portThroughputFactText 뒤에 합류 ──
+      const derived = await buildDerivedMetrics({ weekEnd: WEEK_END, congestion: pcData });
+      if (derived.congestionSignalText) {
+        portThroughputFactText = portThroughputFactText
+          ? `${portThroughputFactText}\n\n${derived.congestionSignalText}`
+          : derived.congestionSignalText;
+      }
     }
 
     // ── rail: Landbridge 중국 철도·中欧班列 정량 데이터 수집 ──

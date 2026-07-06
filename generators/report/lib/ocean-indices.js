@@ -189,5 +189,6 @@ async function buildOceanIndices({ weekEnd } = {}) {
 
 module.exports = {
   buildOceanIndices,
+  loadGroup,
   KCCI_ORDER, SCFI_ORDER, CCFI_ORDER, WCI_ORDER, BDI_ORDER,
 };
