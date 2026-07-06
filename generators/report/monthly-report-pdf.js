@@ -134,7 +134,10 @@ function transformBody(bodyHtml) {
       if (tag.toLowerCase() === "h3" && !mSub && insideNumberedSub) {
         return `<h3 class="article-title">${inner}</h3>`;
       }
-      const cls = leadNext ? "sub lead" : "sub";
+      // 05(지역) 소제목은 페이지를 강제하지 않는 유기적 플로우 — 내용 길이만큼만 차지.
+      // (짧은 이슈 블록마다 1페이지를 배정해 공백·폰트 이질이 생기던 문제의 근본 해소)
+      const isFlowSub = mSub && /^05-/.test(mSub[1]);
+      const cls = isFlowSub ? "sub sub-flow" : leadNext ? "sub lead" : "sub";
       leadNext = false;
       insideNumberedSub = Boolean(mSub);
       const t2 = mSub
@@ -467,6 +470,10 @@ h2.sub{font-family:var(--font-title);font-size:19pt;font-weight:800;color:var(--
   letter-spacing:-.02em;line-height:1.12;white-space:nowrap;margin:0 0 6mm;padding:2mm 0 2.5mm;border-bottom:2.5px solid var(--c-primary);
   break-before:page;break-after:avoid}
 h2.sub.lead{break-before:auto}
+/* 유기적 플로우 소제목(05 지역 등) — 페이지 강제 없음, 내용 길이만큼 흐름. 본문 폰트는 기본 10pt 유지 */
+h2.sub.sub-flow{break-before:auto;break-after:avoid;white-space:normal;font-size:15pt;
+  padding:6mm 0 2mm;margin:0 0 4mm}
+h2.sub.sub-flow:first-of-type{padding-top:2mm}
 h2.sub .sub-no{font-family:var(--font-title);color:var(--c-primary);font-weight:800;margin-right:3mm}
 h3{font-family:var(--font-title);font-size:12pt;font-weight:700;color:var(--c-teal);margin:6mm 0 2.5mm;break-after:avoid}
 
