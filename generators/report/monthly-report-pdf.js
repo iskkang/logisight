@@ -401,15 +401,17 @@ window.__chartsReady = true;
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
 /* ── PAGE GEOMETRY ──────────────────────────────────────────────
-   Chrome PDF의 named @page 적용 편차를 피하기 위해 전체 PDF는 margin:0으로 출력한다.
-   본문 여백은 .flow / topic wrapper가 직접 갖고, 표지·중간표지·뒷표지는 210×297mm 풀블리드로 고정. */
-@page{size:A4;margin:0}
+   상하 마진은 @page가 담당(모든 본문 페이지 — 오버플로 연속 페이지 포함).
+   표지·목차·디바이더·뒷표지는 named page(bleed)로 풀블리드 유지.
+   weekly-report-pdf.js(4f12150)와 동일 방식. 좌우 여백은 .flow 패딩. */
+@page{size:A4;margin:16mm 0 14mm}
+@page bleed{margin:0}
 
 body{font-family:var(--font-sans);color:var(--c-body);font-size:10pt;line-height:1.6;
   margin:0;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 
 /* ── COVER (design.md §4-2① : 차콜 그라운드 + 블루 강조 + 우하단 대각 컷) ── */
-.cover{width:210mm;height:297mm;position:relative;overflow:hidden;break-after:page;
+.cover{page:bleed;width:210mm;height:297mm;position:relative;overflow:hidden;break-after:page;
   background:linear-gradient(160deg,#4D4D4D 0%,#414141 58%,#363636 100%);
   color:#fff;padding:24mm 22mm;display:flex;flex-direction:column;justify-content:space-between}
 .cv-diagonal{position:absolute;right:0;bottom:0;width:118mm;height:82mm;z-index:0;
@@ -434,7 +436,7 @@ body{font-family:var(--font-sans);color:var(--c-body);font-size:10pt;line-height
 .cv-vol{font-family:var(--font-title);font-size:13pt;color:#fff;font-weight:800}
 
 /* ── TABLE OF CONTENTS (페이퍼 화이트 + 블루 강조) ── */
-.toc{width:210mm;height:297mm;background:#fff;padding:26mm 24mm;overflow:hidden;break-after:page}
+.toc{page:bleed;width:210mm;height:297mm;background:#fff;padding:26mm 24mm;overflow:hidden;break-after:page}
 .toc-h{font-family:var(--font-title);font-size:9pt;letter-spacing:6px;color:var(--c-primary);font-weight:700;margin-bottom:3mm}
 .toc-h2{font-family:var(--font-title);font-size:24pt;color:var(--c-ink);font-weight:800;letter-spacing:-.01em;
   border-bottom:2.5px solid var(--c-primary);padding-bottom:5mm;margin-bottom:9mm}
@@ -444,7 +446,7 @@ body{font-family:var(--font-sans);color:var(--c-body);font-size:10pt;line-height
 .toc-tt{font-size:11.5pt;color:var(--c-ink);font-weight:500}
 
 /* ── SECTION DIVIDER (풀블리드, 블루 — 섹션을 브랜드 컬러로 구분) ── */
-.divider{width:210mm;height:297mm;overflow:hidden;color:#fff;break-before:page;break-after:page;
+.divider{page:bleed;width:210mm;height:297mm;overflow:hidden;color:#fff;break-before:page;break-after:page;
   background:linear-gradient(135deg,var(--c-primary) 0%,var(--c-primary-deep) 100%);
   padding:30mm 24mm;display:flex;flex-direction:column;justify-content:center}
 .dv-tag{font-size:9pt;letter-spacing:6px;color:rgba(255,255,255,.85);font-weight:600;margin-bottom:4mm}
@@ -461,14 +463,16 @@ hr{display:none}
 
 /* 서브섹션 제목 = 자기 페이지에서 시작(블루 밑줄). 디바이더 직후 첫 제목만 lead */
 h2.sub{font-family:var(--font-title);font-size:19pt;font-weight:800;color:var(--c-ink);
-  letter-spacing:-.02em;line-height:1.12;white-space:nowrap;margin:0 0 6mm;padding:18mm 0 2.5mm;border-bottom:2.5px solid var(--c-primary);
+  letter-spacing:-.02em;line-height:1.12;white-space:nowrap;margin:0 0 6mm;padding:2mm 0 2.5mm;border-bottom:2.5px solid var(--c-primary);
   break-before:page;break-after:avoid}
 h2.sub.lead{break-before:auto}
 h2.sub .sub-no{font-family:var(--font-title);color:var(--c-primary);font-weight:800;margin-right:3mm}
 h3{font-family:var(--font-title);font-size:12pt;font-weight:700;color:var(--c-teal);margin:6mm 0 2.5mm;break-after:avoid}
 
-/* 해운 02-1~02-9: 각 주제를 정확히 본문 1페이지에 고정 */
-.ocean-topic{height:297mm;overflow:hidden;break-before:page;break-after:page;padding:18mm 0 16mm}
+/* 해운 02-1~02-9: 각 주제를 본문 1페이지에 고정.
+   @page 상하 마진(16+14mm) 적용 후 콘텐츠 높이 267mm — 265mm로 2mm 슬랙을 둬
+   서브픽셀 드리프트로 인한 오버플로 빈 페이지를 방지. */
+.ocean-topic{height:265mm;overflow:hidden;break-before:page;padding:0}
 .ocean-topic h2.sub{break-before:auto;padding-top:0}
 .ocean-topic.compact h2.sub{font-size:16pt;margin-bottom:4mm;padding-bottom:2mm}
 .ocean-topic.compact .chart-box{height:51mm;padding:2.5mm;margin:2.5mm 0 3mm}
@@ -489,8 +493,8 @@ h3{font-family:var(--font-title);font-size:12pt;font-weight:700;color:var(--c-te
 .ocean-topic.ultra tbody td{padding:.72mm 1.3mm}
 .ocean-topic.ultra p{font-size:8.15pt;line-height:1.4;margin-bottom:1.35mm}
 
-/* 표·차트가 긴 비해운 단일 페이지(예: 03-2)는 한 페이지 안에 고정 */
-.fit-topic{height:297mm;overflow:hidden;break-before:page;break-after:page;padding:18mm 0 16mm}
+/* 표·차트가 긴 비해운 단일 페이지(예: 03-2)는 한 페이지 안에 고정 (265mm — ocean-topic과 동일 슬랙) */
+.fit-topic{height:265mm;overflow:hidden;break-before:page;padding:0}
 .fit-topic h2.sub{break-before:auto;padding-top:0}
 .fit-topic.compact h2.sub{font-size:16pt;margin-bottom:3.5mm;padding-bottom:1.8mm}
 .fit-topic.compact .chart-box{height:43mm;padding:2.2mm;margin:2mm 0 2.5mm}
@@ -515,8 +519,8 @@ h3{font-family:var(--font-title);font-size:12pt;font-weight:700;color:var(--c-te
 .fit-topic.ultra p.lead-label{font-size:7.9pt;margin:.9mm 0 .2mm}
 
 /* 짧은 인접 주제 자동 병합: 두 개의 sparse page를 한 A4 안에 2열로 배치 */
-.paired-page{height:297mm;overflow:hidden;break-before:page;break-after:page;
-  padding:18mm 0 16mm;display:grid;grid-template-columns:1fr 1fr;gap:7mm}
+.paired-page{height:265mm;overflow:hidden;break-before:page;
+  padding:0;display:grid;grid-template-columns:1fr 1fr;gap:7mm}
 .pair-item{min-width:0;overflow:hidden}
 .paired-page h2.sub{break-before:auto;padding-top:0;font-size:13pt;line-height:1.12;
   white-space:normal;margin-bottom:3mm;padding-bottom:1.3mm}
@@ -649,7 +653,7 @@ p.article-cat{font-family:var(--font-sans);font-size:7.5pt;letter-spacing:4px;
 .no-data-msg{color:#9aa3af;font-style:italic;font-size:9pt}
 
 /* 뒷표지 */
-.backcover{width:210mm;height:297mm;position:relative;overflow:hidden;break-before:page;
+.backcover{page:bleed;width:210mm;height:297mm;position:relative;overflow:hidden;break-before:page;
   background:linear-gradient(160deg,#4D4D4D 0%,#363636 100%);
   color:#fff;padding:32mm 24mm;display:flex;flex-direction:column;justify-content:flex-end;gap:0}
 .bc-brand{font-family:var(--font-title);font-size:22pt;font-weight:800;letter-spacing:3px;color:#fff;margin-bottom:6mm}
@@ -1120,14 +1124,8 @@ async function main() {
     }
 
     fs.mkdirSync(OUT_DIR, { recursive: true });
-    // ── margin/format 제거, preferCSSPageSize:true 로 CSS @page(풀블리드 포함) 사용 ──
-    await page.pdf({
-      path: OUT_PATH,
-      format: "A4",
-      margin: { top: "0", right: "0", bottom: "0", left: "0" },
-      printBackground: true,
-      preferCSSPageSize: false,
-    });
+    // ── CSS @page가 마진 담당(bleed named page 포함) — weekly-report-pdf.js와 동일 옵션 ──
+    await page.pdf({ path: OUT_PATH, format: "A4", printBackground: true });
     console.log(`✅ PDF 완료: ${OUT_PATH}`);
   } finally {
     await browser.close();
