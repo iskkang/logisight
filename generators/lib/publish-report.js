@@ -42,11 +42,15 @@ async function publishReport(inp) {
   if (!pdfUrl) {
     if (!inp.pdfPath) throw new Error('pdfPath 또는 (pdfUrl + pdfKey) 필요');
     pdfKey = `${inp.type}/${inp.periodStart}.pdf`;
+    const pdfBuf = fs.readFileSync(inp.pdfPath);
     const { error } = await sb.storage.from(BUCKET)
-      .upload(pdfKey, fs.readFileSync(inp.pdfPath), { contentType: 'application/pdf', upsert: true });
+      .upload(pdfKey, pdfBuf, { contentType: 'application/pdf', upsert: true });
     if (error) throw new Error(`PDF 업로드 실패: ${error.message}`);
-    pdfUrl = sb.storage.from(BUCKET).getPublicUrl(pdfKey).data.publicUrl;
-    console.log(`  PDF 업로드: ${pdfKey}`);
+    // 재발행 시 URL이 동일해 브라우저/CDN이 옛 파일을 보여주는 문제 방지 —
+    // 콘텐츠 해시 버전 쿼리를 붙여 파일이 바뀌면 URL도 바뀌게 한다(스토리지 경로는 동일).
+    const ver = require('crypto').createHash('md5').update(pdfBuf).digest('hex').slice(0, 8);
+    pdfUrl = sb.storage.from(BUCKET).getPublicUrl(pdfKey).data.publicUrl + `?v=${ver}`;
+    console.log(`  PDF 업로드: ${pdfKey} (v=${ver})`);
   }
   if (!pdfKey) throw new Error('pdfKey 누락 (pdf_path NOT NULL)');
 
