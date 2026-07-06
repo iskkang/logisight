@@ -8,6 +8,7 @@
 
 const path = require('path');
 const fs   = require('fs');
+const { execSync } = require('child_process');
 
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env.local') });
 
@@ -203,6 +204,19 @@ async function main() {
     console.log(`  1. 각 섹션 파일에서 status: draft → status: approved 로 변경`);
     console.log(`     ${OUT_DIR}/`);
     console.log(`  2. 병합: node generators/report/assemble-monthly-report.js`);
+  }
+
+  // 전 섹션 생성 완료 후 전망(forecasts.json) 자동 추출 — 실패해도 리포트 생성 자체는 성공 유지
+  if (runAll && generated > 0) {
+    try {
+      console.log(`\n📮 전망 추출 실행: node generators/report/extract-forecasts.js --month=${MONTH}`);
+      execSync(`node generators/report/extract-forecasts.js --month=${MONTH}`, {
+        cwd: path.resolve(__dirname, '../..'),
+        stdio: 'inherit',
+      });
+    } catch (e) {
+      console.warn('⚠️  전망 추출 실패(무시) —', e.message);
+    }
   }
 }
 

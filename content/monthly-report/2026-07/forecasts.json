@@ -1,0 +1,114 @@
+[
+  {
+    "section": "index",
+    "claim": "특히 호르무즈 긴장 고조는 유가·보험료 상승을 통해 동서 항로 전반의 운임 구조를 추가로 자극할 수 있는 변수로 상존함.",
+    "metric": null,
+    "direction": "up",
+    "horizon": "M+1"
+  },
+  {
+    "section": "index",
+    "claim": "컨테이너 부문의 강세는 적어도 성수기가 마무리되는 8월 말까지는 하방 지지를 받을 전망.",
+    "metric": null,
+    "direction": null,
+    "horizon": "M+1"
+  },
+  {
+    "section": "index",
+    "claim": "종합하면 2026년 7월 시장은 비용·수요·지정학 삼중 상승 압력이 동시에 작용하며 컨테이너 운임의 여름 고점을 더욱 높이는 양상.",
+    "metric": null,
+    "direction": "up",
+    "horizon": "M+1"
+  },
+  {
+    "section": "ocean",
+    "claim": "원양 항로가 역내 항로를 압도하며 지수 상승을 주도하는 극단적 양극화가 심화된다.",
+    "metric": "KCCI",
+    "direction": "up",
+    "horizon": "M+1"
+  },
+  {
+    "section": "ocean",
+    "claim": "7~8월 미주·유럽 성수기 스팟 운임은 추가 상승 압력에 노출되어 있으며, 장기 계약을 체결하지 않은 화주는 긴급 물량에 대해 프리미엄 부킹 비용을 감수해야 하는 국면.",
+    "metric": "SCFI",
+    "direction": "up",
+    "horizon": "M+1"
+  },
+  {
+    "section": "ocean",
+    "claim": "컨테이너 화주는 BDI 조정을 일시적 현상으로만 보지 말고, 건화물-컨테이너 간 디커플링이 지속될 경우 컨테이너 선복 부족이 예상보다 장기화될 수 있음을 전제로 4분기 계약 전략을 수립해야 함.",
+    "metric": "BDI",
+    "direction": null,
+    "horizon": "M+1"
+  },
+  {
+    "section": "air",
+    "claim": "B2C 이커머스 항공 물량의 구조적 확대가 하반기 성수기 진입과 맞물리며 아시아-북미·유럽 노선의 운임 하방 지지를 강화.",
+    "metric": null,
+    "direction": null,
+    "horizon": "M+1"
+  },
+  {
+    "section": "air",
+    "claim": "중장기적 병목 해소에는 기여하겠으나 2026년 하반기 성수기 공급에는 직접적 영향을 미치지 못하는 요인으로 판단.",
+    "metric": null,
+    "direction": null,
+    "horizon": "M+1"
+  },
+  {
+    "section": "air",
+    "claim": "포워더와 항공사 간 계약·책임 관계의 법적 불확실성이 단기적으로 부킹 프로세스에 마찰을 일으킬 가능성 상존.",
+    "metric": null,
+    "direction": null,
+    "horizon": "M+1"
+  },
+  {
+    "section": "rail",
+    "claim": "중국-유럽 화물열차, 상반기 고성장세 지속…우한 화물가치 첫 1억 달러 돌파",
+    "metric": null,
+    "direction": "up",
+    "horizon": "M+1"
+  },
+  {
+    "section": "rail",
+    "claim": "이는 단순 물동량 증가를 넘어 고부가가치 화물의 철도 운송 전환 추세가 뚜렷해지는 국면임.",
+    "metric": null,
+    "direction": "up",
+    "horizon": "M+1"
+  },
+  {
+    "section": "rail",
+    "claim": "미들 코리도어가 단순한 지정학적 우회로를 넘어 아시아-유럽 간 핵심 화물 동맥으로 격상되는 국면",
+    "metric": null,
+    "direction": "up",
+    "horizon": "M+1"
+  },
+  {
+    "section": "region",
+    "claim": "미국 내 인프라 투자는 트럭 운임 급등→LTL 이전 수요 증가와 맞물리며 공급망 비용 구조 전반에 영향을 미칠 전망.",
+    "metric": null,
+    "direction": "up",
+    "horizon": "M+1"
+  },
+  {
+    "section": "region",
+    "claim": "UNCTAD는 호르무즈 해협이 재개방됐음에도 식량·운송 시스템 회복은 에너지 시장보다 장기화될 것으로 경고.",
+    "metric": null,
+    "direction": null,
+    "horizon": "M+1"
+  },
+  {
+    "section": "macro",
+    "claim": "호르무즈 해협을 둘러싼 긴장이 6월 말 급격히 재고조됨.",
+    "metric": null,
+    "direction": "up",
+    "horizon": "M+1"
+  },
+  {
+    "section": "macro",
+    "claim": "Del Monte는 중동 긴장으로 인한 해상 운임·벙커유·전쟁 관련 할증료·내륙 운송비·비료·포장재 비용 상승으로 약 4,000만~4,500만 달러의 비용 압박이 2분기에 현실화될 전망.",
+    "metric": null,
+    "direction": "up",
+    "horizon": "M+1"
+  }
+]
