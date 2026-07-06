@@ -996,7 +996,7 @@ async function main() {
               item.scrollHeight > item.clientHeight + 2 ||
               item.scrollWidth > item.clientWidth + 2,
           );
-        for (const level of ["tight", "ultra"]) {
+        for (const level of ["tight"]) {
           if (!overflows()) break;
           pair.classList.add(level);
           await nextFrame();
@@ -1045,7 +1045,7 @@ async function main() {
       const details = [];
       for (const topic of document.querySelectorAll(".fit-topic")) {
         const overflows = () => topic.scrollHeight > topic.clientHeight + 2;
-        for (const level of ["compact", "tight", "ultra"]) {
+        for (const level of ["compact", "tight"]) {
           if (!overflows()) break;
           topic.classList.add(level);
           await nextFrame();
@@ -1088,7 +1088,7 @@ async function main() {
       const details = [];
       for (const topic of document.querySelectorAll(".ocean-topic")) {
         const overflows = () => topic.scrollHeight > topic.clientHeight + 2;
-        for (const level of ["compact", "tight", "ultra"]) {
+        for (const level of ["compact", "tight"]) {
           if (!overflows()) break;
           topic.classList.add(level);
           await nextFrame();
