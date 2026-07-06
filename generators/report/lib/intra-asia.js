@@ -9,6 +9,7 @@ const fs   = require('fs');
 require('dotenv').config({ path: path.resolve(__dirname, '../../../.env.local') });
 if (typeof globalThis.WebSocket === 'undefined') { try { globalThis.WebSocket = require('ws'); } catch (_) {} }
 const { createClient } = require('@supabase/supabase-js');
+const { prevAtOrBefore } = require('./series-delta');
 
 const CACHE_PATH = path.resolve(__dirname, '../../../outputs/cache/intra-asia.json');
 const CACHE_TTL  = 7 * 24 * 60 * 60 * 1000;
@@ -95,7 +96,7 @@ function buildTable(byCode) {
       '| ' + (INTRA_LABELS[code] || code) +
       ' | ' + fmtVal(latest) +
       ' | ' + fmtChg(latest, s[1]?.v ?? null) +
-      ' | ' + fmtChg(latest, s[4]?.v ?? null) + ' |'
+      ' | ' + fmtChg(latest, prevAtOrBefore(s, s[0].week, 28)?.v ?? null) + ' |'
     );
   }
 
@@ -120,7 +121,7 @@ function buildFactText(byCode) {
     lines.push(
       (INTRA_LABELS[code] || code) + '(' + code + '): ' + fmtVal(latest) +
       ' 전주=' + fmtChg(latest, s[1]?.v ?? null) +
-      ' 전월=' + fmtChg(latest, s[4]?.v ?? null) +
+      ' 전월=' + fmtChg(latest, prevAtOrBefore(s, s[0].week, 28)?.v ?? null) +
       ' (' + s[0].week + ')'
     );
   }

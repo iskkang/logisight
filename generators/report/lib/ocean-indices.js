@@ -6,6 +6,7 @@ const { createClient } = require('@supabase/supabase-js');
 const { LABELS } = require('./chart-data');
 const { buildBlankSailings } = require('./blank-sailings');
 const { buildIntraAsia }    = require('./intra-asia');
+const { prevAtOrBefore }    = require('./series-delta');
 
 function sb() {
   return createClient(
@@ -71,8 +72,8 @@ function render(byCode, order, opts = {}) {
   const {
     chgLabel1 = '전주대비',
     chgLabel2 = '전월대비',
-    prevIdx1  = 1,
-    prevIdx2  = 4,
+    chgDays1  = 7,    // 전주 = 직전 공표주
+    chgDays2  = 28,   // 전월 = −28일 이전 최근접 공표주 — 01 총론 표(index-factsheet)와 동일 공용 규칙(series-delta)
     unitNote  = '',
     source    = '',
   } = opts;
@@ -92,8 +93,8 @@ function render(byCode, order, opts = {}) {
     if (!latestWeek) latestWeek = s[0].week;
 
     const latest = s[0].v;
-    const prev1  = s[prevIdx1]?.v ?? null;
-    const prev2  = s[prevIdx2]?.v ?? null;
+    const prev1  = (chgDays1 === 7 ? s[1] : prevAtOrBefore(s, s[0].week, chgDays1))?.v ?? null;
+    const prev2  = prevAtOrBefore(s, s[0].week, chgDays2)?.v ?? null;
 
     const valStr  = fmtVal(latest, code);
     const chg1Str = fmtChg(latest, prev1);
@@ -144,14 +145,8 @@ async function buildOceanIndices({ weekEnd } = {}) {
     },
     {
       id: 'wci', chart: 'ocean_wci', headingKw: ['02-4', 'WCI'],
-      ...render(wci, WCI_ORDER, {
-        chgLabel1: '전월대비',
-        chgLabel2: '전분기대비',
-        prevIdx1:  1,
-        prevIdx2:  3,
-        unitNote:  'USD/FEU',
-        source:    'Drewry',
-      }),
+      // WCI도 DB에 주간 적재 — 종전 prevIdx1=1을 '전월대비'로 라벨하던 오표기 제거, 표준 전주/전월 규칙 사용
+      ...render(wci, WCI_ORDER, { unitNote: 'USD/FEU', source: 'Drewry' }),
     },
     {
       id: 'bdi', chart: 'ocean_bdi', headingKw: ['02-5', 'BDI'],

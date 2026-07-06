@@ -7,6 +7,7 @@ globalThis.WebSocket = ws;
 const { createClient } = require('@supabase/supabase-js');
 
 const NEWS_PATH = path.resolve(__dirname, '../../../content/drafts/latest-news.json');
+const { prevAtOrBefore } = require('./series-delta');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -118,11 +119,8 @@ async function loadIndexFactsheet({ weekEnd } = {}) {
     if (!s.length) { rows.push({ code, value: null }); continue; }
     const latest = s[0];
     const wkAgo  = s[1] || null;
-    const target = new Date(new Date(latest.week_date).getTime() - 28 * 86400000);
-    const moAgo  = s.slice(1).reduce((best, r) => {
-      const d = Math.abs(new Date(r.week_date) - target);
-      return (!best || d < best.d) ? { r, d } : best;
-    }, null);
+    // MoM 기준주 = 공용 규칙(series-delta): −28일 이전 최근접 공표주 — 02 해운 표와 동일 계산(정합성 원칙)
+    const moAgo  = prevAtOrBefore(s, latest.week_date, 28);
     rows.push({
       code,
       value:     latest.value,
@@ -131,7 +129,7 @@ async function loadIndexFactsheet({ weekEnd } = {}) {
       // WoW는 저장된 연속 값으로 직접 계산(표의 값↔증감 정합 보장). 직전 값이 없을 때만 적재된 change_pct 사용.
       // (WCI change_pct는 Drewry 산문 파싱이라 부호 오류 가능 — shipping_indices.ts fetchWCI 참고)
       wow:       (wkAgo ? pct(latest.value, wkAgo.value) : latest.change_pct),
-      mom:       moAgo ? pct(latest.value, moAgo.r.value) : null,
+      mom:       moAgo ? pct(latest.value, moAgo.value) : null,
     });
   }
   return rows;
@@ -169,7 +167,7 @@ function buildIndexTable(rows) {
     );
   }
   lines.push('');
-  lines.push('※ 기준주는 각 지수 최종 공표 주차. MoM은 약 4주 전 주간 종가 대비 근사치이며, 격주 공표 지수는 직전 공표치를 기준으로 환산함. 출처: SSE·KOBC·SSE/CCFC·Drewry·Baltic Exchange.');
+  lines.push('※ 기준주는 각 지수 최종 공표 주차. WoW는 직전 공표주, MoM은 4주 전(해당 주 미공표 시 그 이전 최근접 공표주) 대비. 출처: SSE·KOBC·SSE/CCFC·Drewry·Baltic Exchange.');
   return { table: lines.join('\n'), factText: facts.join('\n') };
 }
 
