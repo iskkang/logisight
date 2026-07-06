@@ -17,7 +17,7 @@ const SECTIONS  = require('./sections.config');
 const { resolveMonth, monthEndISO, prevMonthOf } = require('./lib/report-month');
 const { loadAllMonthlyItems, loadIndexFactsheet, buildIndexTable } = require('./lib/index-factsheet');
 const { loadMaritimeNewsItems, dedupeByUrl, rankAndCap } = require('./lib/maritime-news-feed');
-const { buildOceanIndices }   = require('./lib/ocean-indices');
+const { buildOceanIndices, loadGroup } = require('./lib/ocean-indices');
 const { buildAirIndices }     = require('./lib/air-indices');
 const { buildRailIndices }    = require('./lib/rail-indices');
 const { buildPortThroughput } = require('./lib/port-throughput');
@@ -27,6 +27,8 @@ const { buildDerivedMetrics, loadKitaLanes } = require('./lib/derived-metrics-lo
 const { loadStyleGuide }      = require('./lib/style');
 const { runSection, saveSectionFile, parseFrontmatter } = require('./lib/section-runner');
 const { extractDigest, buildPriorDigestBlock, buildSynthesisBlock } = require('./lib/section-digest');
+const { loadForecasts } = require('./lib/forecast-store');
+const { judgeClaims, buildScorecardBlock } = require('./lib/forecast-scorecard');
 
 // 총론(index)용 — 디스크의 타 섹션 파일에서 다이제스트 수집(--all이면 방금 생성분, 단독 실행이면 기존분)
 function collectSectionDigests(outDir) {
@@ -173,6 +175,29 @@ async function main() {
       else console.warn('⚠️  [rail] Landbridge 미수집 — factText 없음');
     }
 
+    // ── index: 전월 전망(forecasts.json) 자동 판정 → 스코어카드를 synthesis 블록에 이어붙임 ──
+    let priorDigest;
+    if (sec.id === 'index') {
+      const synthesis = buildSynthesisBlock(collectSectionDigests(OUT_DIR));   // 총론 = 전 섹션 종합
+      let scorecardFactText = null;
+      try {
+        const prevMonth = prevMonthOf(MONTH);
+        const claims = loadForecasts(prevMonth);
+        if (claims && claims.length) {
+          const seriesByMetric = await loadGroup(['SCFI', 'KCCI', 'CCFI', 'WCI', 'BDI'], WEEK_END);
+          const judged  = judgeClaims(claims, seriesByMetric || {});
+          const block   = buildScorecardBlock(judged, prevMonth);
+          scorecardFactText = block ? block.factText : null;
+          if (scorecardFactText) console.log(`▶ [index] 전월(${prevMonth}) 전망 스코어카드 주입 (${judged.length}건)`);
+        }
+      } catch (e) {
+        console.warn('⚠️  [index] 전망 스코어카드 생성 실패(무시) —', e.message);
+      }
+      priorDigest = [synthesis, scorecardFactText].filter(Boolean).join('\n\n');
+    } else {
+      priorDigest = buildPriorDigestBlock(priorDigests);   // 그 외 = 중복 금지
+    }
+
     const result  = await runSection({
       client, sectionConfig: sec, items, styleGuide, month: MONTH,
       indexTable:    sec.id === 'index' ? indexTable    : null,
@@ -183,9 +208,7 @@ async function main() {
       airTable, airFactText,
       portThroughputTable, portThroughputFactText, portCongestionTable,
       kitaSeaBundle, kitaAirBundle,
-      priorDigest: sec.id === 'index'
-        ? buildSynthesisBlock(collectSectionDigests(OUT_DIR))   // 총론 = 전 섹션 종합
-        : buildPriorDigestBlock(priorDigests),                  // 그 외 = 중복 금지
+      priorDigest,
     });
     const saved   = saveSectionFile(OUT_DIR, sec.id, MONTH, result.status, result.text, {
       pass1_tokens: result.pass1Tokens,
