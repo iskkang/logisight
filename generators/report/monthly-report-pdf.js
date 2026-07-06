@@ -259,7 +259,8 @@ function wrapPairedTopics(html) {
     { ids: ["02-5", "02-6"], layout: "columns" },
     { ids: ["02-7", "02-8"], layout: "columns" },
     { ids: ["03-2", "03-3"], layout: "stack" },
-    { ids: ["05-2", "05-3", "05-4"], layout: "stack3" },
+    // 05 지역 3단(stack3) 병합 제거 — 기본 폰트 7.25pt로 타 페이지와 이질적이고,
+    // 짧은 블록 3개를 고정 높이에 배치해 대형 공백 발생. 05는 일반 플로우(기본 폰트)로 렌더.
     { ids: ["06-1", "06-2"], layout: "columns" },
   ];
 
