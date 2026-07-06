@@ -48,6 +48,22 @@ function collectInjectedNumbers(md) {
   return nums;
 }
 
+// 파생 지표(스프레드·계약-스팟 갭·KITA 갭) factText — 생성 시 프롬프트에 주입됐지만 최종 문서
+// 표에는 없음. 본문이 인용한 '4주 전 스프레드' 등을 창작으로 오판하지 않도록 검증 근거로 재계산.
+async function loadDerivedGrounding(month) {
+  try {
+    const { prevMonthOf, monthEndISO } = require('./lib/report-month');
+    const { buildDerivedMetrics, loadKitaLanes } = require('./lib/derived-metrics-loader');
+    const weekEnd = monthEndISO(prevMonthOf(month));
+    const d = await buildDerivedMetrics({ weekEnd, kitaSea: loadKitaLanes() });
+    const texts = [d.spreadBlock, d.gapBlock, d.kitaGapBlock].filter(Boolean).map(b => b.factText);
+    return texts.length ? texts.join('\n\n') : null;
+  } catch (e) {
+    console.warn('⚠️  파생 지표 근거 재계산 실패(무시) —', e.message);
+    return null;
+  }
+}
+
 // MONTHLY_REPORT_STYLE.md에서 "## ★ 품질 계약" 섹션만 추출(다음 "---" 전까지).
 function loadQualityContract() {
   const content = fs.readFileSync(STYLE_PATH, 'utf-8').replace(/\r\n/g, '\n');
@@ -78,10 +94,13 @@ function parseFindingsJson(text) {
   }
 }
 
-async function runAdversarialCheck(draftMd) {
+async function runAdversarialCheck(draftMd, derivedGrounding) {
   const Anthropic = require('@anthropic-ai/sdk');
   const client = new Anthropic({ apiKey: ANTHROPIC_KEY });
   const system = buildAdversarialSystemPrompt(loadQualityContract());
+  const userContent = derivedGrounding
+    ? `${draftMd}\n\n---\n\n[시스템 주입 근거 데이터 — 문서 표에는 없지만 생성 시 주입된 실측값. 본문이 이 수치를 인용한 것은 창작이 아님]\n\n${derivedGrounding}`
+    : draftMd;
   // max_tokens 16000: claude-sonnet-5는 기본적으로 extended thinking을 쓰며, 이 리포트 전문(500줄+) 분량을
   // 검증하는 thinking 자체가 수천 토큰을 소모함. 4000으로는 thinking만으로 예산이 소진되어 최종 텍스트가
   // 비는 현상을 실측 확인(교신 실험) — 16000으로 상향해 실제 findings 출력을 확보.
@@ -89,7 +108,7 @@ async function runAdversarialCheck(draftMd) {
     model: 'claude-sonnet-5',
     max_tokens: 16000,
     system,
-    messages: [{ role: 'user', content: draftMd }],
+    messages: [{ role: 'user', content: userContent }],
   });
   const text = res.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
   return parseFindingsJson(text);
@@ -148,7 +167,9 @@ function buildQaReport({ month, generatedAt, model, lintFindings, llmFindings, l
 
 async function main() {
   const draftMd = loadDraft();
+  const derivedGrounding = await loadDerivedGrounding(MONTH);
   const injectedNumbers = collectInjectedNumbers(draftMd);
+  if (derivedGrounding) injectedNumbers.push(...extractNumbers(derivedGrounding));
   const { findings: lintFindings } = lintReport(draftMd, injectedNumbers);
 
   let llmFindings = [];
@@ -161,7 +182,7 @@ async function main() {
   } else {
     model = 'claude-sonnet-5';
     try {
-      const result = await runAdversarialCheck(draftMd);
+      const result = await runAdversarialCheck(draftMd, derivedGrounding);
       if (result === null) {
         llmNote = '_LLM 검증 실패(응답 파싱 불가) — 기계 린트 결과만으로 판정._';
         console.warn('⚠️  LLM findings 파싱 실패 — 기계 린트만으로 판정');
