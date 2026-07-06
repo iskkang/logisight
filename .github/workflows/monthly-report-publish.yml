@@ -69,3 +69,27 @@ jobs:
             echo "push attempt $i failed — retrying"; sleep 5
           done
           echo "::error::publish PDF push failed after 3 attempts"; exit 1
+
+      - name: 최종 검증 (QA — 기계 린트 + Claude 교차모델)
+        if: always()   # 발행이 진행됐으면 검증은 항상 수행
+        env:
+          MONTH: ${{ steps.m.outputs.month }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          VERIFY_FAILED=""
+          node generators/report/verify-report.js --month="$MONTH" || VERIFY_FAILED=1
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add content/monthly-report/*/qa-report.md || true
+          if git commit -m "chore(monthly): QA report $MONTH"; then
+            for i in 1 2 3; do
+              if git pull --rebase --autostash origin main && git push; then break; fi
+              echo "qa push attempt $i failed — retrying"; sleep 5
+            done
+          else
+            echo "no qa changes"
+          fi
+          if [ -n "$VERIFY_FAILED" ]; then
+            echo "::error::QA Critical 결함 — qa-report.md 확인 후 핫픽스·재발행 필요 (발행 자체는 유지됨)"
+            exit 1
+          fi
