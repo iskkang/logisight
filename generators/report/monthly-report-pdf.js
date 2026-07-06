@@ -866,14 +866,17 @@ async function main() {
       .trim();
     if (url) ogJobs.push({ full: ogMatch[0], url });
   }
+  const seenOgImages = new Set();   // 동일 이미지(같은 og:image 해석 결과) 리포트 내 1회만 — 중복 로고류 방지
   for (const job of ogJobs) {
     const dataUri = await fetchOgImage(job.url);
+    const isDup = dataUri && seenOgImages.has(dataUri);
+    if (dataUri && !isDup) seenOgImages.add(dataUri);
     bodyHtml = bodyHtml.replace(
       job.full,
-      dataUri ? `<img src="${dataUri}" alt="" loading="eager">` : "",
+      dataUri && !isDup ? `<img src="${dataUri}" alt="" loading="eager">` : "",
     );
     console.log(
-      `  · OGIMG ${job.url.slice(0, 60)}… — ${dataUri ? "OK" : "없음(제거)"}`,
+      `  · OGIMG ${job.url.slice(0, 60)}… — ${!dataUri ? "없음(제거)" : isDup ? "중복(제거)" : "OK"}`,
     );
   }
 
