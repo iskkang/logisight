@@ -85,7 +85,6 @@ function assembleMarkdown(weeklyData, llm) {
       L.push('### 주요 뉴스', '');
       for (const n of sec.news) { L.push(newsArticle(n)); L.push(''); }
     }
-    if (p.sowhat) L.push(`➔ **한국 화주 시사점:** ${p.sowhat}`, '');
   }
 
   return L.join('\n');

@@ -40,7 +40,7 @@ ${blocks}
   "execSummary": [{"topic":"해상","signal":"🔴","basis":"근거 1문장(명사형)"}],
   "overview": {"signal":"🟡","conclusion":"명사형 종합 결론","events":["핵심 이벤트(명사형) 3~5개"],"background":"...","analysis":"...","implication":"..."},
   "sections": {
-    "ocean": {"signal":"🔴","conclusion":"명사형 결론","background":"...","analysis":"...","implication":"...","sowhat":"한국 화주 So-what(명사형)"},
+    "ocean": {"signal":"🔴","conclusion":"명사형 결론","background":"...","analysis":"...","implication":"..."},
     "air": {}, "logistics": {}, "trade": {}
   }
 }

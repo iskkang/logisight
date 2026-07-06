@@ -26,7 +26,12 @@ test('produces frontmatter draft + cover + exec summary + injected ocean table',
   assert.match(md, /## Executive Summary/);
   assert.match(md, /\| SCFI \| 2985 \|/);
   assert.match(md, /과열 구간 진입/);
-  assert.match(md, /➔/);
+});
+
+test('한국 화주 시사점 블록은 렌더링하지 않는다 (LLM이 sowhat을 반환해도 무시)', () => {
+  const md = assembleMarkdown(wd, llm);
+  assert.doesNotMatch(md, /한국 화주 시사점/);
+  assert.doesNotMatch(md, /조기 부킹 권고/);   // 픽스처 sowhat 값이 본문에 새지 않음
 });
 
 test('renders news as article blocks from weeklyData (category/title/subtitle/hero/body)', () => {
