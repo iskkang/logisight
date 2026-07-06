@@ -60,17 +60,14 @@ async function indexSeries(codes, { weeks = 52 } = {}) {
   return { labels, datasets };
 }
 
-// 지수별 추이 차트 — KCCI 전 항로, SCFI와 나머지는 종합선 위주
-const getOceanKcci   = () => indexSeries(
-  ['KCCI','KCCI_USWC','KCCI_USEC','KCCI_NEU','KCCI_MED','KCCI_ME','KCCI_AU','KCCI_SAE','KCCI_SAW','KCCI_ZAF','KCCI_WAF','KCCI_CN','KCCI_JP','KCCI_SEA'],
-  { weeks: 26 },
-);
+// 지수별 추이 차트 — KCCI·WCI는 종합선만(다중선은 가독성 저해 — 2026-07 사용자 피드백).
+// 항로별 상세는 본문 표가 담당하고, 차트는 종합 추세 하나만 크게 보여준다.
+const getOceanKcci   = () => indexSeries(['KCCI'], { weeks: 26 });
 const getOceanScfi   = () => indexSeries(['SCFI']);
 const getOceanCcfi   = () => indexSeries(['CCFI']);
 const getOceanBdi    = () => indexSeries(['BDI']);
 const getOceanBunker = () => indexSeries(['VLSFO', 'HSFO']);
-// WCI는 항로(월별 4개)까지 — 데이터가 적어 다중선이 보기 좋음
-const getOceanWci    = () => indexSeries(['WCI', 'WCI_SHA_RTM', 'WCI_SHA_GOA', 'WCI_SHA_LAX', 'WCI_SHA_NYC']);
+const getOceanWci    = () => indexSeries(['WCI']);
 
 // Air rate: reads from outputs/cache/air-index.json written by air-indices.js
 // Cache schema: { fetched_at, source, chartData: { labels, datasets }, table, factText }
@@ -145,11 +142,11 @@ async function getRailOtp() {
 }
 
 const CHARTS = {
-  ocean_kcci:   { title: 'KCCI(한국형 컨테이너 운임지수) 추이', loader: getOceanKcci,   yLabel: 'index' },
+  ocean_kcci:   { title: 'KCCI 종합지수 추이', loader: getOceanKcci,   yLabel: 'index' },
   ocean_scfi:   { title: 'SCFI(상하이 컨테이너운임지수) 추이',  loader: getOceanScfi,   yLabel: 'index' },
   ocean_ccfi:   { title: 'CCFI(중국 컨테이너운임지수) 추이',    loader: getOceanCcfi,   yLabel: 'index' },
   ocean_bdi:    { title: 'BDI(건화물선운임지수) 추이',          loader: getOceanBdi,    yLabel: 'index' },
-  ocean_wci:    { title: 'WCI(드류리) 종합·항로별 추이',        loader: getOceanWci,    yLabel: 'USD/FEU' },
+  ocean_wci:    { title: 'WCI(드류리) 종합 추이',        loader: getOceanWci,    yLabel: 'USD/FEU' },
   ocean_bunker:          { title: '벙커유(VLSFO·HSFO) 추이',                           loader: getOceanBunker,         yLabel: 'USD/ton' },
   ocean_intra_asia:      { title: '역내(Intra-Asia) 운임 추이 (KCCI 역내 항로 proxy)',    loader: getOceanIntraAsia,      yLabel: 'index' },
   macro_port_throughput: { title: '글로벌 컨테이너 항만 처리량 지수 추이 (ISL/RWI-ISL)', loader: getMacroPortThroughput, yLabel: 'index' },

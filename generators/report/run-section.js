@@ -31,10 +31,10 @@ const { loadForecasts } = require('./lib/forecast-store');
 const { judgeClaims, buildScorecardBlock } = require('./lib/forecast-scorecard');
 
 // 총론(index)용 — 디스크의 타 섹션 파일에서 다이제스트 수집(--all이면 방금 생성분, 단독 실행이면 기존분)
-function collectSectionDigests(outDir) {
+function collectSectionDigests(outDir, excludeId = 'index') {
   const digests = [];
   for (const s of SECTIONS) {
-    if (s.id === 'index') continue;
+    if (s.id === excludeId) continue;
     const p = path.join(outDir, `${s.id}.md`);
     if (fs.existsSync(p)) digests.push(extractDigest(fs.readFileSync(p, 'utf-8'), s.title));
   }
