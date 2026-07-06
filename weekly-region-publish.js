@@ -56,6 +56,9 @@ function plan(week, t) {
     bucketPath: `weekly-region/${week}-${t.region}.pdf`,
     id: `weekly-region-${week}-${t.region}`,                // upsert 키(type+week+region)
     type: 'weekly-region',
+    report_class: 'weekly_regional',   // 프론트 분류(마이그레이션 048) — 권역 매트릭스 탭
+    regionLabel: label,                // 권역 한글명 (예: 미주·중동·극동(러시아·CIS)) — DB region 컬럼용
+    iso_week: week,                    // 'YYYY-Www' 주차 그룹 라벨
     title: `주간 권역 리포트 · ${label} (${week})`,
     period_start: startISO,
     period_end: endISO,
@@ -99,6 +102,9 @@ async function main() {
     const row = {
       id: p.id,
       type: p.type,
+      report_class: p.report_class,   // 048 분류 컬럼 — 프론트 권역 매트릭스
+      region: p.regionLabel,
+      iso_week: p.iso_week,
       period_start: p.period_start,
       period_end: p.period_end,
       period_label: p.period_label,
