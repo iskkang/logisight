@@ -8,7 +8,9 @@ on:
 jobs:
   fetch-kita-fares:
     runs-on: ubuntu-latest
-    timeout-minutes: 120    # 108개 노선 × 1.2s → 약 13분, 여유 있게 설정
+    timeout-minutes: 120
+    permissions:
+      contents: write    # 108개 노선 × 1.2s → 약 13분, 여유 있게 설정
 
     steps:
       - uses: actions/checkout@v4
@@ -32,6 +34,18 @@ jobs:
         env:
           SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Commit cache (repo 캐시 갱신 — 월간 리포트가 이 파일을 읽음)
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add outputs/cache/kita-fare-sea.json outputs/cache/kita-fare-air.json
+          git commit -m "chore(kita): weekly fare cache $(date -u +%Y-%m-%d)" || { echo "no changes"; exit 0; }
+          for i in 1 2 3; do
+            if git pull --rebase --autostash origin main && git push; then exit 0; fi
+            echo "push attempt $i failed — retrying"; sleep 5
+          done
+          echo "::error::KITA cache push failed after 3 attempts — 리포트가 낡은 캐시를 읽게 됨"; exit 1
 
       - name: Log to data_updates
         if: always()
