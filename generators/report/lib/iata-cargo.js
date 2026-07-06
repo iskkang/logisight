@@ -165,14 +165,14 @@ function buildIataTable(data) {
     `| ${r.region} | ${fmtVal(r.share, '%')} | ${fmtPct(r.ctk_yoy)} | ${fmtPct(r.actk_yoy)} | ${fmtVal(r.clf_level, '%')} | ${fmtPct(r.clf_ppt, 'pp')} |`
   );
 
-  return `*IATA Air Cargo Market Analysis, 기준 ${asOf}*\n\n` + [header, sep, ...rows].join('\n');
+  return `*IATA Air Cargo Market Analysis, ${asOf} 발표분*\n\n` + [header, sep, ...rows].join('\n');
 }
 
 function buildIataFactText(data) {
   if (!data?.regions?.length) return null;
 
   const asOf  = data.asOf || '—';
-  const lines = [`## IATA 권역별 항공화물 수요·공급·적재율 (기준 ${asOf})`];
+  const lines = [`## IATA 권역별 항공화물 수요·공급·적재율 (${asOf} 발표분 — 본문 인용 시 이 발표월을 병기)`];
 
   if (data.headline) {
     const h = data.headline;
@@ -266,6 +266,10 @@ async function buildIataCargo({ month, force = false } = {}) {
   try {
     data = await structureWithLlm(text, month || new Date().toISOString().slice(0, 7));
     if (!data?.regions?.length) throw new Error('regions 배열 없음');
+    // 품질 계약 4조(데이터 기준월): asOf는 LLM 추정이 아니라 입력 파일명에서 도출
+    // (예: 2026-05-28-01-cargo.pdf → 2026-05 발표분). 발행월로 오표기되는 문제 차단.
+    const fileMonth = filePath && (path.basename(filePath).match(/(\d{4}-\d{2})/) || [])[1];
+    if (fileMonth) data.asOf = fileMonth;
     console.log(`  iata-cargo: 완료 (asOf=${data.asOf}, ${data.regions.length}개 권역)`);
   } catch (e) {
     console.warn(`  iata-cargo: LLM 구조화 실패: ${e.message}`);

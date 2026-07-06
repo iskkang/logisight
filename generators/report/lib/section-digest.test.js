@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { extractDigest, buildPriorDigestBlock } = require('./section-digest');
+const { extractDigest, buildPriorDigestBlock, buildSynthesisBlock } = require('./section-digest');
 
 const MD = `---
 section: macro
@@ -50,4 +50,16 @@ test('buildPriorDigestBlock: 중복 금지 규칙 + 다이제스트 포함', () 
   assert.match(block, /이미 다룬 주제/);
   assert.match(block, /새로운 각도/);
   assert.match(block, /호르무즈 리스크/);
+});
+
+test('buildSynthesisBlock: 총론 종합 프레이밍 + 다이제스트 포함 (dedup 문구 아님)', () => {
+  const block = buildSynthesisBlock(['[02. 해운 시황]\n- 호르무즈 리스크']);
+  assert.match(block, /각 섹션의 핵심/);
+  assert.match(block, /종합/);
+  assert.match(block, /호르무즈 리스크/);
+  assert.doesNotMatch(block, /중복 서술 금지/);   // 총론은 종합이 목적 — dedup 블록과 반대
+});
+
+test('buildSynthesisBlock: 빈 입력이면 빈 문자열', () => {
+  assert.equal(buildSynthesisBlock([]), '');
 });

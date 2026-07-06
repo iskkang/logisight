@@ -209,26 +209,31 @@ function buildTable(articles, month) {
   const withStats = articles.filter(a => a.stats && Object.keys(a.stats).length > 0);
   if (!withStats.length) return null;
 
-  const maxTrains = Math.max(0, ...withStats.map(a => a.stats.trainCount || 0));
-  const maxTeu    = Math.max(0, ...withStats.map(a => a.stats.teu        || 0));
-  const maxValue  = Math.max(0, ...withStats.map(a => a.stats.valueYi    || 0));
-  const yoyVals   = withStats.map(a => a.stats.yoy).filter(v => v != null && !isNaN(v));
-  const avgYoy    = yoyVals.length ? (yoyVals.reduce((a, b) => a + b, 0) / yoyVals.length) : null;
-  const yoyStr    = avgYoy != null ? `${avgYoy >= 0 ? '▲' : '▼'}${Math.abs(avgYoy).toFixed(1)}% YoY` : '—';
-
+  // 품질 계약 5조(범위 라벨 정확성): 개별 기사(거점)의 수치를 네트워크 전체처럼
+  // 집계·라벨하지 않는다 — 기사별 행으로, 각 행에 자기 자신의 YoY를 붙인다.
   const rows = [];
-  const src  = '[Landbridge](http://www.landbridge.com/yaowen/)';
-
-  if (maxTrains > 0) rows.push(`| 중국-유럽 화물열차 운행편수 | **${maxTrains.toLocaleString()}편** | ${yoyStr} | ${month} |`);
-  if (maxTeu    > 0) rows.push(`| 화물량 | **${maxTeu >= 10000 ? (maxTeu / 10000).toFixed(1) + '만' : maxTeu.toFixed(0)}TEU** | — | ${month} |`);
-  if (maxValue  > 0) rows.push(`| 화물가치 | **${maxValue.toFixed(1)}억 USD** | — | ${month} |`);
+  for (const a of withStats.slice(0, 4)) {
+    const s = a.stats;
+    const vol = [];
+    if (s.trainCount) vol.push(`${s.trainCount.toLocaleString()}편`);
+    if (s.teu)        vol.push(s.teu >= 10000 ? `${(s.teu / 10000).toFixed(1)}만TEU` : `${s.teu.toFixed(0)}TEU`);
+    if (s.valueYi)    vol.push(`${s.valueYi.toFixed(1)}억USD`);
+    if (!vol.length) continue;
+    const yoy   = (s.yoy != null && !isNaN(s.yoy))
+      ? `${s.yoy >= 0 ? '▲' : '▼'}${Math.abs(s.yoy).toFixed(1)}%`
+      : '—';
+    const label = String(a.titleKo || a.title || '').replace(/\|/g, '·').slice(0, 24);
+    rows.push(`| ${label} | **${vol.join(' · ')}** | ${yoy} |`);
+  }
 
   if (!rows.length) return null;
 
   return [
-    '| 지표 | 실적 | YoY | 기준월 |',
-    '|------|------|-----|--------|',
+    '| 거점·이슈 (기사 기준) | 실적 | YoY |',
+    '|------|------|-----|',
     ...rows,
+    '',
+    `※ ${month} 수집 기사 기준. 출처: [Landbridge](http://www.landbridge.com/yaowen/). 각 행은 개별 기사의 거점 실적이며 네트워크 전체 합계가 아님.`,
   ].join('\n');
 }
 
@@ -343,4 +348,4 @@ async function buildRailIndices({ month, force = false } = {}) {
   return payload;
 }
 
-module.exports = { buildRailIndices };
+module.exports = { buildRailIndices, buildTable };

@@ -24,7 +24,18 @@ const { buildPortCongestion } = require('./lib/port-congestion'); // ①
 const { buildKitaSeaReport, buildKitaAirReport } = require('./lib/kita-report');
 const { loadStyleGuide }      = require('./lib/style');
 const { runSection, saveSectionFile, parseFrontmatter } = require('./lib/section-runner');
-const { extractDigest, buildPriorDigestBlock } = require('./lib/section-digest');
+const { extractDigest, buildPriorDigestBlock, buildSynthesisBlock } = require('./lib/section-digest');
+
+// 총론(index)용 — 디스크의 타 섹션 파일에서 다이제스트 수집(--all이면 방금 생성분, 단독 실행이면 기존분)
+function collectSectionDigests(outDir) {
+  const digests = [];
+  for (const s of SECTIONS) {
+    if (s.id === 'index') continue;
+    const p = path.join(outDir, `${s.id}.md`);
+    if (fs.existsSync(p)) digests.push(extractDigest(fs.readFileSync(p, 'utf-8'), s.title));
+  }
+  return digests;
+}
 
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
 const MONTH   = resolveMonth(process.argv.slice(2), new Date());   // 라벨(발행) 월 — 디렉터리·파일명
@@ -49,8 +60,10 @@ async function main() {
     process.exit(1);
   }
 
+  // 총론(index)은 마지막에 생성 — 앞서 생성된 전 섹션 다이제스트를 종합 입력으로 받음.
+  // 문서 순서는 assemble이 SECTIONS 순서로 병합하므로 불변.
   const targets = runAll
-    ? SECTIONS
+    ? [...SECTIONS.filter(s => s.id !== 'index'), ...SECTIONS.filter(s => s.id === 'index')]
     : SECTIONS.filter(s => s.id === sectionId);
 
   if (targets.length === 0) {
@@ -154,7 +167,9 @@ async function main() {
       airTable, airFactText,
       portThroughputTable, portThroughputFactText, portCongestionTable,
       kitaSeaBundle, kitaAirBundle,
-      priorDigest: buildPriorDigestBlock(priorDigests),
+      priorDigest: sec.id === 'index'
+        ? buildSynthesisBlock(collectSectionDigests(OUT_DIR))   // 총론 = 전 섹션 종합
+        : buildPriorDigestBlock(priorDigests),                  // 그 외 = 중복 금지
     });
     const saved   = saveSectionFile(OUT_DIR, sec.id, MONTH, result.status, result.text, {
       pass1_tokens: result.pass1Tokens,

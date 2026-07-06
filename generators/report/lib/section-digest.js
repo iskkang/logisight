@@ -32,4 +32,19 @@ function buildPriorDigestBlock(digests) {
   ].join('\n');
 }
 
-module.exports = { extractDigest, buildPriorDigestBlock };
+// 총론(01)용 — 마지막에 생성되는 총론이 전 섹션을 종합하도록 하는 입력 블록.
+// dedup 블록과 반대 목적: 반복 금지가 아니라 섹션 간 연결·공통 동인 도출.
+function buildSynthesisBlock(digests) {
+  if (!digests || !digests.length) return '';
+  return [
+    '## 본 리포트 각 섹션의 핵심 (총론 종합용)',
+    '아래는 이 리포트의 다른 섹션들이 이미 확정한 핵심 주제다. 총론은 이를 단순 재요약·나열하지 말고,',
+    '섹션을 관통하는 **공통 동인과 단일 프레임**(예: 공급충격 사이클)을 도출해 종합할 것.',
+    '해운-항공-철도-거시 간 연결(한 모드의 변화가 다른 모드에 미치는 파급)을 최소 1개 제시.',
+    '',
+    ...digests,
+    '',
+  ].join('\n');
+}
+
+module.exports = { extractDigest, buildPriorDigestBlock, buildSynthesisBlock };
