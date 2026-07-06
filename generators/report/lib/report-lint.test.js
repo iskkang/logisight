@@ -101,3 +101,24 @@ test('평서체 ~한다./~됐다. 종결도 검출 (§2 전체 커버)', () => {
   const { findings: ok } = lintReport('상승 압력 지속 전망.', []);
   assert.ok(!ok.some(x => x.rule === 'formal-ending'));
 });
+
+test('중국어식 축약(근 1/5 류) — critical 검출', () => {
+  const { findings } = lintReport('세계 석유의 근 1/5이 통과.', []);
+  assert.ok(findings.some(x => x.rule === 'calque'));
+});
+
+test('금지 직역어(주간선) — critical 검출', () => {
+  const { findings } = lintReport("핵심 '주간선'으로 부상.", []);
+  assert.ok(findings.some(x => x.rule === 'calque'));
+});
+
+test('고유명사 표기 혼용(호르무즈/오르무즈 동시 사용) — critical 검출', () => {
+  const md = '호르무즈 해협 긴장.\n\n오르무즈 사태 이후 회복 지연.';
+  const { findings } = lintReport(md, []);
+  assert.ok(findings.some(x => x.rule === 'inconsistent-name'));
+});
+
+test('단일 표기만 쓰면 표기 혼용 미검출', () => {
+  const { findings } = lintReport('호르무즈 해협 긴장 지속. 호르무즈 통항 재개.', []);
+  assert.ok(!findings.some(x => x.rule === 'inconsistent-name'));
+});

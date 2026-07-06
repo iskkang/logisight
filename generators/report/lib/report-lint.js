@@ -21,6 +21,14 @@ const CRITICAL_RULES = [
   // 스타일 가이드 §2 금지 어미 전체: 경어체(~습니다/입니다) + 평서체(~했다/이다/한다/됐다/된다/인다/온다 종결)
   { rule: 'formal-ending',   re: /(습니다|입니다|(?:했|이|한|됐|된|인|온|간)다\.)/ },
   { rule: 'flat-with-arrow', re: /[▲▼]\s*0\.0%/ },
+  // §8 직역 금지: 중국어식 분수 축약(근 1/5·近1/5)과 금지 조어 — 가이드 표와 동기 유지
+  { rule: 'calque',          re: /(근\s*\d+\s*\/\s*\d+|주간선|능력 방출|万吨|逾\d|超\d)/ },
+];
+
+// §13-1-3 고유명사 표기 통일 — 같은 문서에서 두 표기가 함께 쓰이면 critical.
+const NAME_VARIANT_PAIRS = [
+  ['호르무즈', '오르무즈'],
+  ['튀르키예', '터키'],   // 정책상 하나로 통일 필요(어느 쪽이든 단일 사용)
 ];
 
 function stripFrontmatter(md) {
@@ -90,6 +98,17 @@ function lintReport(md, injectedNumbers) {
       if (m) {
         findings.push({ rule, severity: 'critical', excerpt: truncate(line, m.index ?? 0) });
       }
+    }
+  }
+
+  // ①-b 고유명사 표기 혼용 — 문서 전체에서 변형 표기가 함께 등장하면 critical
+  const fullText = lines.join('\n');
+  for (const [a, b] of NAME_VARIANT_PAIRS) {
+    if (fullText.includes(a) && fullText.includes(b)) {
+      findings.push({
+        rule: 'inconsistent-name', severity: 'critical',
+        excerpt: `표기 혼용: "${a}" ↔ "${b}" — 리포트 전체 단일 표기로 통일 필요(§13-1-3)`,
+      });
     }
   }
 

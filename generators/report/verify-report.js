@@ -55,8 +55,11 @@ async function loadDerivedGrounding(month) {
     const { prevMonthOf, monthEndISO } = require('./lib/report-month');
     const { buildDerivedMetrics, loadKitaLanes } = require('./lib/derived-metrics-loader');
     const weekEnd = monthEndISO(prevMonthOf(month));
-    const d = await buildDerivedMetrics({ weekEnd, kitaSea: loadKitaLanes() });
+    let congestion = null;
+    try { congestion = await require('./lib/port-congestion').buildPortCongestion(); } catch (_) {}
+    const d = await buildDerivedMetrics({ weekEnd, kitaSea: loadKitaLanes(), congestion });
     const texts = [d.spreadBlock, d.gapBlock, d.kitaGapBlock].filter(Boolean).map(b => b.factText);
+    if (d.congestionSignalText) texts.push(d.congestionSignalText);
     return texts.length ? texts.join('\n\n') : null;
   } catch (e) {
     console.warn('⚠️  파생 지표 근거 재계산 실패(무시) —', e.message);
