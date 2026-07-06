@@ -34,6 +34,13 @@ test('qualitative: metric null → verdict qualitative, actual —', () => {
   assert.equal(j.actual, '—');
 });
 
+test('qualitative: direction null(방향 없는 주장)은 metric 있어도 판정 불가 — miss 오판 금지', () => {
+  const claims = [{ section: 'ocean', claim: 'BDI 조정을 일시적으로 보지 말 것', metric: 'BDI', direction: null, horizon: 'M+1' }];
+  const series = { BDI: [{ week: '2026-06-22', v: 2644 }, { week: '2026-05-25', v: 3225 }] };
+  const [j] = judgeClaims(claims, series);
+  assert.equal(j.verdict, 'qualitative');
+});
+
 test('qualitative: metric 있지만 시리즈 부족(1건 이하) → qualitative', () => {
   const claims = [{ section: 'ocean', claim: 'KCCI 상승', metric: 'KCCI', direction: 'up', horizon: 'M+1' }];
   const series = { KCCI: [{ week: '2026-06-29', v: 2200 }] };

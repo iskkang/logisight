@@ -17,7 +17,8 @@ function fmtActual(pct, dir) {
 // indexSeriesByMetric: {SCFI:[{week,v}]최신순, KCCI:[...], ...} (ocean-indices.loadGroup 결과와 동일 형태)
 function judgeClaims(claims, indexSeriesByMetric) {
   return (claims || []).map((claim) => {
-    if (!claim.metric) {
+    // metric 또는 direction이 없으면 판정 불가 — 정성 처리 (방향 없는 주장을 miss로 오판하지 않음)
+    if (!claim.metric || !claim.direction) {
       return { ...claim, verdict: 'qualitative', actual: '—' };
     }
 
