@@ -6,6 +6,8 @@ const {
   contractSpotGap,
   congestionRateSignal,
   kitaKcciGap,
+  intraOceanDecoupling,
+  bunkerFreightDivergence,
 } = require('./derived-metrics');
 
 // ── laneSpread ────────────────────────────────────────────────────────────────
@@ -199,4 +201,37 @@ test('kitaKcciGap: 입력 부족 — null', () => {
   assert.equal(kitaKcciGap([], { KCCI_USWC: [{ week: '2026-06-22', v: 2000 }] }), null);
   assert.equal(kitaKcciGap(null, null), null);
   assert.equal(kitaKcciGap([{ destName: '롱비치', feu: 100, yearMon: '202606' }], {}), null);
+});
+
+// ── 확장 지표 ────────────────────────────────────────────────────────────────
+
+test('intraOceanDecoupling: 원양/역내 평균 MoM 격차(탈동조화 폭)', () => {
+  const byCode = {
+    KCCI_USWC: [{ week: '2026-06-29', v: 190 }, { week: '2026-06-01', v: 100 }],  // +90%
+    KCCI_USEC: [{ week: '2026-06-29', v: 170 }, { week: '2026-06-01', v: 100 }],  // +70%
+    KCCI_CN:   [{ week: '2026-06-29', v: 104 }, { week: '2026-06-01', v: 100 }],  // +4%
+    KCCI_JP:   [{ week: '2026-06-29', v: 94 },  { week: '2026-06-01', v: 100 }],  // -6%
+  };
+  const r = intraOceanDecoupling(byCode);
+  assert.equal(Math.round(r.oceanAvgMoM), 80);   // (90+70)/2
+  assert.equal(Math.round(r.intraAvgMoM), -1);   // (4-6)/2
+  assert.equal(Math.round(r.gapPp), 81);         // 탈동조화 81%p
+});
+
+test('intraOceanDecoupling: 시리즈 부족 시 null', () => {
+  assert.equal(intraOceanDecoupling({}), null);
+  assert.equal(intraOceanDecoupling({ KCCI_USWC: [{ week: '2026-06-29', v: 190 }] }), null);
+});
+
+test('bunkerFreightDivergence: 운임 MoM vs 벙커 MoM 괴리(마진 방향 신호)', () => {
+  const kcci  = [{ week: '2026-06-29', v: 146.5 }, { week: '2026-06-01', v: 100 }]; // +46.5%
+  const vlsfo = [{ week: '2026-06-29', v: 81.1 },  { week: '2026-06-01', v: 100 }]; // -18.9%
+  const r = bunkerFreightDivergence(kcci, vlsfo);
+  assert.equal(r.freightMoM.toFixed(1), '46.5');
+  assert.equal(r.bunkerMoM.toFixed(1), '-18.9');
+  assert.equal(r.gapPp.toFixed(1), '65.4');      // 운임-연료 스프레드 확대 = 마진 확대 국면
+});
+
+test('bunkerFreightDivergence: 입력 부족 시 null', () => {
+  assert.equal(bunkerFreightDivergence(null, []), null);
 });

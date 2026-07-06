@@ -5,7 +5,9 @@
 const fs = require('fs');
 const { loadGroup, KCCI_ORDER, SCFI_ORDER, CCFI_ORDER } = require('./ocean-indices');
 const { SEA_CACHE } = require('./kita-report');
-const { laneSpread, contractSpotGap, congestionRateSignal, kitaKcciGap } = require('./derived-metrics');
+const { laneSpread, contractSpotGap, congestionRateSignal, kitaKcciGap, intraOceanDecoupling, bunkerFreightDivergence } = require('./derived-metrics');
+
+function fmtPp(v) { return (v >= 0 ? '▲+' : '▼') + Math.abs(v).toFixed(1) + '%'; }
 
 // ── KITA 해상 캐시 → [{destName, feu, yearMon}] 어댑터 ─────────────────────────
 // kita-report.js는 표/factText만 반환하므로(원본 노선 리스트 미노출), 동일 캐시 파일을
@@ -92,15 +94,36 @@ function buildKitaGapBlock(kitaLanes, kcciByCode) {
 
 // ── 로더 ───────────────────────────────────────────────────────────────────────
 async function buildDerivedMetrics({ weekEnd, congestion, kitaSea } = {}) {
-  const [kcciByCode, scfiByCode, ccfiByCode] = await Promise.all([
+  const [kcciByCode, scfiByCode, ccfiByCode, bunkerByCode] = await Promise.all([
     loadGroup(KCCI_ORDER, weekEnd),
     loadGroup(SCFI_ORDER, weekEnd),
     loadGroup(CCFI_ORDER, weekEnd),
+    loadGroup(['VLSFO'], weekEnd),
   ]);
 
   const spreadBlock  = buildSpreadBlock(kcciByCode, scfiByCode);
   const gapBlock      = buildGapBlock(ccfiByCode, scfiByCode);
   const kitaGapBlock = buildKitaGapBlock(kitaSea, kcciByCode);
+
+  // 확장 지표 ①: 역내-원양 탈동조화 (KCCI 원양 vs 역내 평균 MoM 격차)
+  let decouplingBlock = null;
+  const dec = intraOceanDecoupling(kcciByCode);
+  if (dec) {
+    decouplingBlock = { factText: [
+      '## 역내-원양 탈동조화 지수(파생)',
+      `원양 항로 평균 ${fmtPp(dec.oceanAvgMoM)} MoM vs 역내 항로 평균 ${fmtPp(dec.intraAvgMoM)} MoM — 탈동조화 폭 ${dec.gapPp.toFixed(1)}%p (KCCI 항로 평균, 계산 기준 명시 필수)`,
+    ].join('\n') };
+  }
+
+  // 확장 지표 ②: 벙커-운임 괴리 (KCCI 종합 MoM − VLSFO MoM = 마진 방향 신호)
+  let bunkerDivergenceBlock = null;
+  const div = bunkerFreightDivergence(kcciByCode && kcciByCode.KCCI, bunkerByCode && bunkerByCode.VLSFO);
+  if (div) {
+    bunkerDivergenceBlock = { factText: [
+      '## 벙커-운임 괴리(파생)',
+      `KCCI 종합 ${fmtPp(div.freightMoM)} MoM vs VLSFO ${fmtPp(div.bunkerMoM)} MoM — 괴리 ${div.gapPp.toFixed(1)}%p (운임이 연료비를 크게 앞서는 폭 = 선사 마진 방향의 정량 신호)`,
+    ].join('\n') };
+  }
 
   let congestionSignalText = null;
   if (congestion && Array.isArray(congestion.rows)) {
@@ -113,7 +136,7 @@ async function buildDerivedMetrics({ weekEnd, congestion, kitaSea } = {}) {
     if (signal) congestionSignalText = `혼잡-운임 교차 신호(파생): ${signal.label} — ${signal.detail}`;
   }
 
-  return { spreadBlock, gapBlock, congestionSignalText, kitaGapBlock };
+  return { spreadBlock, gapBlock, congestionSignalText, kitaGapBlock, decouplingBlock, bunkerDivergenceBlock };
 }
 
 module.exports = { buildDerivedMetrics, loadKitaLanes };

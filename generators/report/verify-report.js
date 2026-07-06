@@ -19,6 +19,7 @@ const MONTH          = resolveMonth(process.argv.slice(2), new Date());
 const DRAFT_PATH     = path.resolve(__dirname, `../../content/drafts/monthly-analysis-${MONTH}.md`);
 const OUT_DIR        = path.resolve(__dirname, `../../content/monthly-report/${MONTH}`);
 const QA_PATH        = path.join(OUT_DIR, 'qa-report.md');
+const BRIEF_PATH     = path.join(OUT_DIR, 'editor-brief.md');
 const FORECASTS_PATH = path.join(OUT_DIR, 'forecasts.json');
 const STYLE_PATH     = path.resolve(__dirname, 'MONTHLY_REPORT_STYLE.md');
 
@@ -58,7 +59,7 @@ async function loadDerivedGrounding(month) {
     let congestion = null;
     try { congestion = await require('./lib/port-congestion').buildPortCongestion(); } catch (_) {}
     const d = await buildDerivedMetrics({ weekEnd, kitaSea: loadKitaLanes(), congestion });
-    const texts = [d.spreadBlock, d.gapBlock, d.kitaGapBlock].filter(Boolean).map(b => b.factText);
+    const texts = [d.spreadBlock, d.gapBlock, d.kitaGapBlock, d.decouplingBlock, d.bunkerDivergenceBlock].filter(Boolean).map(b => b.factText);
     if (d.congestionSignalText) texts.push(d.congestionSignalText);
     return texts.length ? texts.join('\n\n') : null;
   } catch (e) {
@@ -168,6 +169,50 @@ function buildQaReport({ month, generatedAt, model, lintFindings, llmFindings, l
   return lines.join('\n');
 }
 
+// ── 에디터 브리프 — 발행 전 30분 검수용: 가장 위험한 주장 top 10만 추림 ──────────
+// 우선순위: critical(전부) → LLM warn(교차검증이 의심한 실질 주장) → 기계 warn(수치 재진술).
+function buildEditorBrief({ month, generatedAt, lintFindings, llmFindings }) {
+  const pick = [];
+  const add = (f, src) => pick.push({ ...f, src });
+  for (const f of (llmFindings || []).filter(x => x.severity === 'critical')) add(f, 'LLM');
+  for (const f of (lintFindings || []).filter(x => x.severity === 'critical')) add(f, '린트');
+  for (const f of (llmFindings || []).filter(x => x.severity === 'warn')) add(f, 'LLM');
+  const seen = new Set();
+  for (const f of (lintFindings || []).filter(x => x.severity === 'warn')) {
+    const key = (f.excerpt || '').slice(0, 40);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    add(f, '린트');
+  }
+  const top = pick.slice(0, 10);
+
+  const lines = [];
+  lines.push(`# 에디터 브리프 — ${month}`);
+  lines.push('');
+  lines.push(`> 발행 전 30분 검수용. 이 ${top.length}건만 확인하면 됩니다. (전체 상세: qa-report.md)`);
+  lines.push(`> 생성: ${generatedAt}`);
+  lines.push('');
+  if (!top.length) {
+    lines.push('✅ 확인이 필요한 위험 주장이 없습니다. 표지·차트 육안 확인 후 발행 가능.');
+  } else {
+    lines.push('| # | 위험도 | 주장/발췌 | 왜 위험한가 | 확인 방법 |');
+    lines.push('|---|---|---|---|---|');
+    top.forEach((f, i) => {
+      const claim = esc(f.claim || f.excerpt || '');
+      const why   = esc(f.why || ({ 'number-mismatch': '본문 수치가 주입 표에 없음 — 재진술 오류 가능', 'calque': '직역·축약 표현', 'formal-ending': '금지 어미', 'inconsistent-name': '표기 혼용' }[f.rule] || f.rule));
+      const how   = f.src === 'LLM' ? '해당 섹션 원문·표와 대조' : '발췌 위치 검색(Ctrl+F) 후 수정';
+      lines.push(`| ${i + 1} | ${f.severity === 'critical' ? '🔴 critical' : '🟡 warn'} | ${claim.slice(0, 90)} | ${why.slice(0, 80)} | ${how} |`);
+    });
+    lines.push('');
+    lines.push('## 3분 육안 체크리스트');
+    lines.push('- [ ] 표지·목차·발행월 표기');
+    lines.push('- [ ] 각 섹션 첫 페이지 차트 렌더 여부');
+    lines.push('- [ ] 총론의 "이번 달 핵심" 문장이 시장 실감과 부합하는가 (전문가 판단)');
+  }
+  lines.push('');
+  return lines.join('\n');
+}
+
 async function main() {
   const draftMd = loadDraft();
   const derivedGrounding = await loadDerivedGrounding(MONTH);
@@ -202,6 +247,8 @@ async function main() {
   const report = buildQaReport({ month: MONTH, generatedAt, model, lintFindings, llmFindings, llmNote });
   fs.mkdirSync(OUT_DIR, { recursive: true });
   fs.writeFileSync(QA_PATH, report, 'utf-8');
+  fs.writeFileSync(BRIEF_PATH, buildEditorBrief({ month: MONTH, generatedAt, lintFindings, llmFindings }), 'utf-8');
+  console.log(`📝 에디터 브리프 작성: ${BRIEF_PATH}`);
 
   const criticalTotal = countBySeverity(lintFindings, 'critical') + countBySeverity(llmFindings, 'critical');
   const warnTotal     = countBySeverity(lintFindings, 'warn')     + countBySeverity(llmFindings, 'warn');

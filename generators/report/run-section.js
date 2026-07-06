@@ -124,7 +124,7 @@ async function main() {
 
       // ── 파생 지표(한중발 스프레드·계약-스팟 갭·KITA 공시-실측 갭) — oceanFactText 뒤에 합류 ──
       const derived = await buildDerivedMetrics({ weekEnd: WEEK_END, kitaSea: loadKitaLanes() });
-      const derivedTexts = [derived.spreadBlock, derived.gapBlock, derived.kitaGapBlock]
+      const derivedTexts = [derived.spreadBlock, derived.gapBlock, derived.kitaGapBlock, derived.decouplingBlock, derived.bunkerDivergenceBlock]
         .filter(Boolean).map(b => b.factText);
       if (derivedTexts.length) oceanFactText = [oceanFactText, ...derivedTexts].join('\n\n');
     }

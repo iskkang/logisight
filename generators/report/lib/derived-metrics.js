@@ -174,4 +174,44 @@ function kitaKcciGap(kitaLanes, kcciByCode) {
   return out.length ? out : null;
 }
 
-module.exports = { laneSpread, contractSpotGap, congestionRateSignal, kitaKcciGap };
+// ── 확장 지표 ────────────────────────────────────────────────────────────────
+
+const OCEAN_LANES = ['KCCI_USWC', 'KCCI_USEC', 'KCCI_NEU', 'KCCI_MED', 'KCCI_ME',
+                     'KCCI_AU', 'KCCI_SAE', 'KCCI_SAW', 'KCCI_ZAF', 'KCCI_WAF'];
+const INTRA_LANES = ['KCCI_CN', 'KCCI_JP', 'KCCI_SEA'];
+
+function laneMoM(series) {
+  if (!series || series.length < 2) return null;
+  const latest = series[0];
+  const prev = prevAtOrBefore(series, weekOf(latest), 28);
+  if (!prev || prev.v == null || prev.v === 0 || latest.v == null) return null;
+  return ((latest.v - prev.v) / prev.v) * 100;
+}
+
+// 역내-원양 탈동조화: 원양 항로 평균 MoM vs 역내 항로 평균 MoM 격차(%p).
+// 매달 한 숫자로 "원양 급등이 역내로 전이되는가"를 추적하는 자체 지표.
+function intraOceanDecoupling(kcciByCode) {
+  if (!kcciByCode) return null;
+  const avg = (lanes) => {
+    const vals = lanes.map((c) => laneMoM(kcciByCode[c])).filter((v) => v != null);
+    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+  };
+  const oceanAvgMoM = avg(OCEAN_LANES);
+  const intraAvgMoM = avg(INTRA_LANES);
+  if (oceanAvgMoM == null || intraAvgMoM == null) return null;
+  return { oceanAvgMoM, intraAvgMoM, gapPp: oceanAvgMoM - intraAvgMoM };
+}
+
+// 벙커-운임 괴리: 운임 MoM − 벙커유 MoM (%p). 양수 확대 = 연료비 대비 운임이
+// 더 빠르게 올라 선사 마진이 확대되는 국면(BAF·EBS 협상의 정량 근거).
+function bunkerFreightDivergence(freightSeries, bunkerSeries) {
+  const freightMoM = laneMoM(freightSeries);
+  const bunkerMoM = laneMoM(bunkerSeries);
+  if (freightMoM == null || bunkerMoM == null) return null;
+  return { freightMoM, bunkerMoM, gapPp: freightMoM - bunkerMoM };
+}
+
+module.exports = {
+  laneSpread, contractSpotGap, congestionRateSignal, kitaKcciGap,
+  intraOceanDecoupling, bunkerFreightDivergence,
+};
