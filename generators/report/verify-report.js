@@ -234,7 +234,16 @@ function buildEditorBrief({ month, generatedAt, lintFindings, llmFindings }) {
 
 async function main() {
   const draftMd = loadDraft();
-  const derivedGrounding = await loadDerivedGrounding(MONTH);
+  let derivedGrounding = await loadDerivedGrounding(MONTH);
+  // 지난달 전망 스코어카드 원문도 근거로 — '지난달 전망 점검' 표를 창작으로 오판하지 않도록
+  if (fs.existsSync(FORECASTS_PATH)) {
+    try {
+      const claimsText = JSON.parse(fs.readFileSync(FORECASTS_PATH, 'utf-8'))
+        .map(c => `- ${c.claim || c.text || JSON.stringify(c)}`).join('\n');
+      const block = `## 지난달 전망 원문(forecasts.json — "지난달 전망 점검" 표의 근거)\n\n${claimsText}`;
+      derivedGrounding = derivedGrounding ? `${derivedGrounding}\n\n${block}` : block;
+    } catch (_) {}
+  }
   const injectedNumbers = collectInjectedNumbers(draftMd);
   if (derivedGrounding) injectedNumbers.push(...extractNumbers(derivedGrounding));
   const { findings: lintFindings } = lintReport(draftMd, injectedNumbers);
