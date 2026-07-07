@@ -8,7 +8,8 @@ const path = require('path');
 const CACHE_DIR = path.resolve(__dirname, '../../../outputs/cache');
 
 const LANE_KO = {
-  KCCI: '종합', KCCI_USWC: '미주서안', KCCI_USEC: '미주동안', KCCI_NEU: '북유럽',
+  // KCCI 종합은 RATES 행과 중복이므로 히트맵에서 제외 (13개 항로만)
+  KCCI_USWC: '미주서안', KCCI_USEC: '미주동안', KCCI_NEU: '북유럽',
   KCCI_MED: '지중해', KCCI_ME: '중동', KCCI_AU: '호주', KCCI_SAE: '남미동안',
   KCCI_SAW: '남미서안', KCCI_ZAF: '남아프리카', KCCI_WAF: '서아프리카',
   KCCI_CN: '중국', KCCI_JP: '일본', KCCI_SEA: '동남아',
@@ -93,7 +94,7 @@ async function buildKcciHeatmap(weekEnd) {
   }).join('');
 
   return `<div class="hm-wrap">
-<div class="dash-band"><span>KCCI 항로별 월간 등락률 히트맵 (%)</span><small>최근 6개월 · 월말 최근접 공표주 기준</small></div>
+<div class="dash-band"><span>KCCI 항로별 월간 등락률 히트맵 (%)</span><small>최근 6개월 · 월말 최근접 공표주 · ±1% 이내 보합 · 출처 KOBC</small></div>
 <table class="heatmap"><thead><tr><th>항로</th>${head}</tr></thead><tbody>${body}</tbody></table>
 <div class="dash-src">출처: KOBC(KCCI) © Logisight — 셀 값은 전월 말 대비 등락률, ±1% 이내는 보합</div>
 </div>`;
@@ -152,6 +153,13 @@ async function buildExecRows(front, weekEnd) {
   if (bunkerLine) demandBullets.push(esc(bunkerLine.replace(/^[-•\s]+/, '')));
   if (demandBullets.length) {
     rows.push({ tag: 'DEMAND · COST', dir: '', headline: '물동량 완만, 연료비 하락', bullets: demandBullets });
+  }
+  if ((front.checkpoints || []).length >= 2) {
+    rows.push({
+      tag: 'NEXT MONTH', dir: '',
+      headline: '다음 달 체크 포인트',
+      bullets: [front.checkpoints.slice(0, 3).map((c, i) => `${['①', '②', '③'][i]} ${esc(c)}`).join(' &nbsp;·&nbsp; ')],
+    });
   }
   return rows;
 }

@@ -412,11 +412,14 @@ window.__chartsReady = true;
     .map((t) => `<li><b>${t.num}</b><span style="flex:1">${t.title}</span></li>`)
     .join("");
 
-  const kpiStrip = (front.kpis || []).length
-    ? `<div class="fr-kpis">${front.kpis
+  const LD_PICK = ["KCCI 종합", "SCFI 종합", "CCFI 종합", "BDI"];
+  const landingKpis = (front.kpis || []).length
+    ? `<div class="ld-kpis">${LD_PICK
+        .map((label) => (front.kpis || []).find((k) => k.label === label))
+        .filter(Boolean)
         .map(
           (k) =>
-            `<div class="fr-kpi"><div class="l">${escapeHtml(k.label)}</div>` +
+            `<div class="ld-kpi"><div class="l">${escapeHtml(k.label)}</div>` +
             `<div class="v">${escapeHtml(k.val)}</div>` +
             `<div class="c ${k.dir}">${escapeHtml(k.mom)} MoM</div></div>`,
         )
@@ -426,14 +429,6 @@ window.__chartsReady = true;
   const frontHeadline = escapeHtml(
     front.headline || "글로벌 해운·항공·철도 운임과 공급망·지정학 동향 종합 분석",
   );
-
-  const checkpointBox = (front.checkpoints || []).length >= 2
-    ? `<div class="fr-box"><div class="fr-boxh">다음 달 체크 포인트</div><ul>${front.checkpoints
-        .map((c, i) => `<li><b>${["①", "②", "③"][i] || "·"}</b><span style="flex:1">${escapeHtml(c)}</span></li>`)
-        .join("")}</ul></div>`
-    : `<div class="fr-box"><div class="fr-boxh">발행 정보</div><ul>` +
-      `<li><span style="flex:1">데이터 기준: 직전월 최종 공표 주차</span></li>` +
-      `<li><span style="flex:1">발행: ${PUB}</span></li></ul></div>`;
 
   return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -473,48 +468,39 @@ html{/* 전 페이지 좌측 네이비 스파인 — 캔버스 배경은 매 페
 body{font-family:var(--font-sans);color:var(--c-body);font-size:10pt;line-height:1.6;
   margin:0;background:transparent;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 
-/* ── FRONT PAGE (Drewry Shipping Insight 문법: 마스트헤드+KPI 스트립+헤드라인+박스) ── */
-.front{page:bleed;width:210mm;height:297mm;background:#fff;display:flex;overflow:hidden;break-after:page}
-.fr-spine{width:6mm;background:linear-gradient(180deg,var(--c-primary) 0%,var(--c-primary-deep) 100%);flex:0 0 auto}
-/* 전 페이지 스파인 텍스트(fixed, 하단 정렬) + 상단 유령 파편 마스크(Chromium 인쇄 quirk) */
-.spine-mask{position:fixed;left:0;top:0;width:6mm;height:88mm;background:#0E3A66;z-index:60}
-.spine-text{position:fixed;left:0;bottom:42mm;width:6mm;height:160mm;z-index:59}
-.spine-text img{width:6mm;height:160mm;display:block}
-.fr-body{flex:1;min-width:0;padding:14mm 14mm 11mm 11mm;display:flex;flex-direction:column}
-.fr-mast{display:flex;justify-content:space-between;align-items:flex-start;
-  border-bottom:1mm solid var(--c-primary);padding-bottom:5mm;margin-bottom:6mm}
-.fr-title{font-family:var(--font-title);font-weight:800;font-size:27pt;color:var(--c-primary);
-  letter-spacing:-.015em;line-height:1.05;margin:0}
-.fr-sub{font-size:9.5pt;color:var(--c-body-soft);font-weight:600;margin-top:2mm}
-.fr-tag{font-size:8pt;color:var(--c-caption);font-style:italic;margin-top:.8mm}
-.fr-logochip{background:var(--c-primary-deep);padding:3.2mm 4mm;display:inline-block}
-.fr-logochip svg{height:7.5mm;width:auto;display:block}
-.fr-pub{font-size:7.5pt;color:var(--c-caption);margin-top:2mm;text-align:right;line-height:1.5}
-.fr-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:4mm 5mm;
-  background:#F1F4F7;border-top:1px solid var(--c-rule);border-bottom:1px solid var(--c-rule);
-  padding:4mm 5mm;margin-bottom:9mm}
-.fr-kpi{border-top:1mm solid var(--c-primary);padding-top:2.2mm}
-.fr-kpi .l{font-size:7.5pt;font-weight:700;color:var(--c-body-soft)}
-.fr-kpi .v{font-family:var(--font-title);font-size:14.5pt;font-weight:800;color:var(--c-ink);
-  font-variant-numeric:tabular-nums;line-height:1.15;margin:.6mm 0 .3mm}
-.fr-kpi .c{font-size:8.5pt;font-weight:700;font-variant-numeric:tabular-nums}
-.fr-kpi .c.up{color:var(--c-up)}.fr-kpi .c.down{color:var(--c-down)}
-.fr-kicker{font-size:8pt;letter-spacing:3px;color:var(--c-primary);font-weight:700;margin-bottom:3mm}
-.fr-head{font-family:var(--font-title);font-size:20.5pt;font-weight:800;color:var(--c-ink);
-  letter-spacing:-.015em;line-height:1.36;margin:0 0 5mm;word-break:keep-all}
-.fr-dek{font-size:10pt;color:var(--c-body-soft);line-height:1.6;margin:0 0 8mm;max-width:150mm}
-.fr-grid{display:grid;grid-template-columns:1fr 1fr;gap:6mm;margin-top:auto}
-.fr-box{border:1px solid var(--c-rule)}
-.fr-boxh{background:var(--c-primary);color:#fff;font-size:9pt;font-weight:800;
-  padding:2mm 3.5mm;letter-spacing:.5px}
-.fr-box ul{list-style:none;margin:0;padding:2mm 3.5mm}
-.fr-box li{display:flex;justify-content:space-between;gap:3mm;align-items:baseline;font-size:8.5pt;
-  padding:1.7mm 0;border-bottom:1px dotted var(--c-rule);color:var(--c-body);line-height:1.45}
-.fr-box li:last-child{border-bottom:0}
-.fr-box li b{color:var(--c-primary);font-weight:800;flex:0 0 auto}
-.fr-box li span.pgno{color:var(--c-primary);font-weight:700}
-.fr-foot{display:flex;justify-content:space-between;border-top:.6mm solid var(--c-primary);
-  margin-top:6mm;padding-top:3mm;font-size:7.5pt;color:var(--c-caption)}
+/* ── LANDING COVER (웹 랜딩 문법: 히어로 타이틀 + KPI 칩 + 섹션 내비) ── */
+.landing{page:bleed;width:210mm;height:297mm;overflow:hidden;break-after:page;position:relative;
+  background:linear-gradient(160deg,#0E3A66 0%,#0A2B4E 55%,#071F38 100%);
+  color:#fff;padding:20mm 18mm 16mm;display:flex;flex-direction:column}
+.landing::after{content:'';position:absolute;right:0;bottom:0;width:120mm;height:74mm;
+  background:linear-gradient(135deg,rgba(45,212,191,.16) 0%,rgba(45,212,191,.04) 100%);
+  clip-path:polygon(100% 0,100% 100%,0 100%)}
+.ld-top{display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1}
+.ld-top svg{height:9mm;width:auto;display:block}
+.ld-vol{font-size:9pt;letter-spacing:3px;color:rgba(255,255,255,.66);font-weight:700}
+.ld-hero{margin-top:auto;position:relative;z-index:1}
+.ld-kicker{font-size:9pt;letter-spacing:5px;color:#2dd4bf;font-weight:700;margin-bottom:6mm}
+.ld-title{font-family:var(--font-title);font-weight:800;font-size:41pt;line-height:1.12;
+  letter-spacing:-.02em;margin:0 0 6mm;color:#fff}
+.ld-rule{width:26mm;height:1.2mm;background:#2dd4bf;margin-bottom:6mm}
+.ld-sub{font-size:11pt;color:rgba(255,255,255,.78);margin:0 0 7mm}
+.ld-head{font-family:var(--font-title);font-size:13.5pt;font-weight:700;line-height:1.5;
+  color:rgba(255,255,255,.94);max-width:162mm;margin:0 0 9mm;word-break:keep-all}
+.ld-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:4mm;margin-bottom:9mm;position:relative;z-index:1}
+.ld-kpi{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);padding:3.4mm 4mm}
+.ld-kpi .l{font-size:7.5pt;font-weight:700;color:rgba(255,255,255,.62);letter-spacing:.5px}
+.ld-kpi .v{font-family:var(--font-title);font-size:15.5pt;font-weight:800;color:#fff;
+  font-variant-numeric:tabular-nums;line-height:1.2;margin:1mm 0 .5mm}
+.ld-kpi .c{font-size:8.5pt;font-weight:700;font-variant-numeric:tabular-nums}
+.ld-kpi .c.up{color:#FF9B9B}.ld-kpi .c.down{color:#8FC3F0}
+.ld-issue{position:relative;z-index:1;border-top:1px solid rgba(255,255,255,.18);padding-top:5mm;margin-bottom:7mm}
+.ld-issue-h{font-size:8pt;letter-spacing:4px;color:#2dd4bf;font-weight:800;margin-bottom:3.5mm}
+.ld-issue ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:1.6mm 10mm}
+.ld-issue li{display:flex;gap:4mm;align-items:baseline;font-size:9.5pt;color:rgba(255,255,255,.85);
+  padding:1.4mm 0;border-bottom:1px dotted rgba(255,255,255,.14)}
+.ld-issue li b{color:#2dd4bf;font-weight:800;font-variant-numeric:tabular-nums}
+.ld-foot{display:flex;justify-content:space-between;position:relative;z-index:1;
+  font-size:8pt;color:rgba(255,255,255,.55)}
 
 /* ── SECTION DIVIDER (풀블리드, 블루 — 섹션을 브랜드 컬러로 구분) ── */
 .divider{page:bleed;width:210mm;height:297mm;overflow:hidden;color:#fff;break-before:page;break-after:page;
@@ -543,25 +529,25 @@ body{font-family:var(--font-sans);color:var(--c-body);font-size:10pt;line-height
 
 /* ── Executive Summary (DHL OFR p2 문법) ── */
 .exec-page{height:265mm;overflow:hidden;break-before:page;break-after:page}
-.exec-page .sec-band{margin-bottom:3.5mm}
-.ex-row{display:flex;gap:5mm;align-items:flex-start;padding:2.3mm 0;border-bottom:1px solid var(--c-rule)}
+.exec-page .sec-band{margin-bottom:2.5mm}
+.ex-row{display:flex;gap:5mm;align-items:flex-start;padding:1.9mm 0;border-bottom:1px solid var(--c-rule)}
 .ex-tag{flex:0 0 30mm;background:var(--c-primary);color:#fff;font-size:8pt;font-weight:800;
   letter-spacing:1px;text-align:center;padding:2.2mm 0;margin-top:.5mm}
 .ex-main{flex:1;min-width:0}
 .ex-head{font-family:var(--font-title);font-size:12pt;font-weight:800;color:var(--c-ink);margin-bottom:1.1mm}
 .ex-head.up{color:var(--c-up)}.ex-head.down{color:var(--c-down)}
 .ex-main ul{list-style:none;padding:0;margin:0}
-.ex-main li{font-size:9pt;color:var(--c-body);line-height:1.5;padding-left:4mm;position:relative;margin-bottom:.8mm}
+.ex-main li{font-size:9pt;color:var(--c-body);line-height:1.45;padding-left:4mm;position:relative;margin-bottom:.5mm}
 .ex-main li::before{content:'';position:absolute;left:0;top:.55em;width:5px;height:5px;background:var(--c-primary)}
 
 /* ── KCCI 히트맵 ── */
-.hm-wrap{margin-top:3.2mm}
+.hm-wrap{margin-top:2.2mm}
 table.heatmap{width:100%;border-collapse:collapse;font-size:8pt;margin:0;
   border-top:0;border-bottom:1px solid var(--c-rule-strong);font-variant-numeric:tabular-nums}
-table.heatmap thead th{background:#F1F4F7;color:var(--c-ink);font-weight:700;padding:1.4mm 2mm;
+table.heatmap thead th{background:#F1F4F7;color:var(--c-ink);font-weight:700;padding:1.1mm 2mm;
   text-align:center;border-bottom:1.5px solid var(--c-primary)}
 table.heatmap thead th:first-child{text-align:left}
-table.heatmap td{padding:1.15mm 2mm;text-align:center;border-bottom:1px dotted var(--c-rule);font-weight:700}
+table.heatmap td{padding:.85mm 2mm;text-align:center;border-bottom:1px dotted var(--c-rule);font-weight:700}
 table.heatmap td:first-child{text-align:left;color:var(--c-ink);font-weight:600;background:#fff}
 td.hm-up{background:#FBEAEA;color:var(--c-up)}
 td.hm-down{background:#E8F0F9;color:var(--c-down)}
@@ -815,34 +801,25 @@ p.article-cat{font-family:var(--font-sans);font-size:7.5pt;letter-spacing:4px;
 </head>
 <body>
 
-<div class="spine-mask"></div>
-<div class="spine-text"><img src="${SPINE_IMG}" alt=""></div>
-
-<section class="front">
-  <div class="fr-spine"></div>
-  <div class="fr-body">
-    <div class="fr-mast">
-      <div>
-        <h1 class="fr-title">월간 시장 인텔리전스</h1>
-        <div class="fr-sub">Monthly Analysis of Global Logistics Markets · ${Number(YY)}년 ${Number(MM)}월호</div>
-        <div class="fr-tag">Data cut-off: 직전월 최종 공표 주차</div>
-      </div>
-      <div>
-        <span class="fr-logochip">${LOGO_SVG}</span>
-        <div class="fr-pub">발행 ${PUB} · VOL.${VOL}</div>
-      </div>
-    </div>
-    ${kpiStrip}
-    <div class="fr-kicker">${Number(MM)}월호 — 이달의 프레임</div>
-    <h2 class="fr-head">${frontHeadline}</h2>
-    <p class="fr-dek">글로벌 해운·항공·철도 운임과 공급망·지정학 동향 종합 분석</p>
-    <div class="fr-grid">
-      ${checkpointBox}
-      <div class="fr-box">
-        <div class="fr-boxh">In this issue</div>
-        <ul>${issueRows}</ul>
-      </div>
-    </div>
+<section class="landing">
+  <div class="spine-mask"></div>
+  <div class="spine-text"><img src="${SPINE_IMG}" alt=""></div>
+  <div class="ld-top">${LOGO_SVG}<span class="ld-vol">VOL.${VOL} · ${ENG_MONTH} ${Number(YY)}</span></div>
+  <div class="ld-hero">
+    <div class="ld-kicker">GLOBAL LOGISTICS &amp; MARKET INTELLIGENCE</div>
+    <h1 class="ld-title">월간 시장<br>인텔리전스</h1>
+    <div class="ld-rule"></div>
+    <p class="ld-sub">글로벌 해운·항공·철도 운임과 공급망·지정학 동향 종합 분석 · ${Number(YY)}년 ${Number(MM)}월호</p>
+    <p class="ld-head">${frontHeadline}</p>
+  </div>
+  ${landingKpis}
+  <div class="ld-issue">
+    <div class="ld-issue-h">IN THIS ISSUE</div>
+    <ul>${issueRows}</ul>
+  </div>
+  <div class="ld-foot">
+    <span>발행 ${PUB} · 데이터 기준: 직전월 최종 공표 주차</span>
+    <span>logisight.mtlship.com</span>
   </div>
 </section>
 
