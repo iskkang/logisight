@@ -122,3 +122,24 @@ test('단일 표기만 쓰면 표기 혼용 미검출', () => {
   const { findings } = lintReport('호르무즈 해협 긴장 지속. 호르무즈 통항 재개.', []);
   assert.ok(!findings.some(x => x.rule === 'inconsistent-name'));
 });
+
+test('STATS/OGIMG 토큰 라인은 수치 대조 제외 (시스템 주입 카드)', () => {
+  const { findings } = lintReport('[[STATS: 141.9|지수|flat ; 7,777|라벨|up :: 출처]]', []);
+  assert.ok(!findings.some(x => x.rule === 'number-mismatch'));
+});
+
+test('기사 귀속 라인("에 따르면")은 수치 대조 제외 — 기사 인용은 교차검증이 담당', () => {
+  const { findings } = lintReport('FreightWaves에 따르면 점유율이 59%로 급증.', []);
+  assert.ok(!findings.some(x => x.rule === 'number-mismatch'));
+});
+
+test('서수·조수사(3중·2차)는 수치로 취급 안 함', () => {
+  const { findings } = lintReport('3중 운송 모드 연쇄와 2차 터널 공사.', []);
+  assert.ok(!findings.some(x => x.rule === 'number-mismatch'));
+});
+
+test('미매칭 수치는 발췌에 명시 — 검토 용이성', () => {
+  const { findings } = lintReport('운임이 9,999달러를 기록.', [100]);
+  const f = findings.find(x => x.rule === 'number-mismatch');
+  assert.ok(f && /9999|9,999/.test(f.excerpt));
+});

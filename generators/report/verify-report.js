@@ -82,6 +82,10 @@ function buildAdversarialSystemPrompt(qualityContract) {
 
 너는 이 리포트를 발행 전 마지막으로 심문하는 적대적 검증자다. 본문 주장 중 (1) 문서 내 표·수치와 모순 (2) 계약 12조 위반 (3) 근거 없이 단정된 사실을 찾아라.
 
+단, 출처 기관이 문장에 명시된 인용(예: "X에 따르면", "X 집계 기준", "X 보도")의 수치는
+생성 시 주입된 뉴스 기사에서 온 것으로, 문서 내 표와의 대조 대상이 아니다 — 표·주입 데이터에
+없다는 이유만으로 창작 판정하지 마라(기관 귀속 없이 단정한 수치만 창작 후보).
+
 findings JSON만 출력: [{"severity":"critical"|"warn","rule":"...","claim":"...","why":"..."}]
 발견 사항이 없으면 빈 배열 []만 출력하라. JSON 외 설명·코드펜스·서두 문구 없이 출력하라.`;
 }
@@ -94,6 +98,14 @@ function parseFindingsJson(text) {
     const parsed = JSON.parse(s);
     return Array.isArray(parsed) ? parsed : null;
   } catch (e) {
+    // 서두 문구·후기가 섞인 경우 첫 '['~마지막 ']' 구간만 재시도
+    const a = s.indexOf('['), b = s.lastIndexOf(']');
+    if (a !== -1 && b > a) {
+      try {
+        const parsed = JSON.parse(s.slice(a, b + 1));
+        return Array.isArray(parsed) ? parsed : null;
+      } catch (_) { /* fallthrough */ }
+    }
     return null;
   }
 }
@@ -110,12 +122,19 @@ async function runAdversarialCheck(draftMd, derivedGrounding) {
   // 비는 현상을 실측 확인(교신 실험) — 16000으로 상향해 실제 findings 출력을 확보.
   const res = await client.messages.create({
     model: 'claude-sonnet-5',
-    max_tokens: 16000,
+    max_tokens: 32000,
     system,
     messages: [{ role: 'user', content: userContent }],
   });
+  console.log(`  LLM 교차검증 응답: stop=${res.stop_reason}, out=${res.usage?.output_tokens} tokens, blocks=${res.content.map(b => b.type).join(',')}`);
   const text = res.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
-  return parseFindingsJson(text);
+  const findings = parseFindingsJson(text);
+  if (findings === null) {
+    // 원인 추적용 — 파싱 실패한 원문을 남긴다(레포 밖 산출물 아님, QA 디버그 전용)
+    const dump = path.join(__dirname, `../../content/monthly-report/${MONTH}/llm-raw-response.txt`);
+    try { fs.writeFileSync(dump, text); console.warn(`⚠️  LLM 원문 덤프: ${dump}`); } catch (_) {}
+  }
+  return findings;
 }
 
 function countBySeverity(findings, severity) {

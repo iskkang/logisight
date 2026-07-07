@@ -41,6 +41,18 @@ function collectSectionDigests(outDir, excludeId = 'index') {
   return digests;
 }
 
+// 맺음말(07)용 — 파생 지표 전체 factText (해석 렌즈의 재료)
+async function buildClosingDerivedBlock() {
+  try {
+    const d = await buildDerivedMetrics({ weekEnd: WEEK_END, kitaSea: loadKitaLanes() });
+    const texts = [d.spreadBlock, d.gapBlock, d.kitaGapBlock, d.decouplingBlock, d.bunkerDivergenceBlock]
+      .filter(Boolean).map(b => b.factText);
+    return texts.length
+      ? '## 파생 지표 (해석 렌즈 적용 대상 — 이 수치만 사용)\n\n' + texts.join('\n\n')
+      : null;
+  } catch (e) { console.warn('  closing 파생 로드 실패(무시):', e.message); return null; }
+}
+
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
 const MONTH   = resolveMonth(process.argv.slice(2), new Date());   // 라벨(발행) 월 — 디렉터리·파일명
 const WEEK_END = monthEndISO(prevMonthOf(MONTH));   // 데이터 상한 = 직전월 말일(발행월 데이터 배제)
@@ -67,7 +79,9 @@ async function main() {
   // 총론(index)은 마지막에 생성 — 앞서 생성된 전 섹션 다이제스트를 종합 입력으로 받음.
   // 문서 순서는 assemble이 SECTIONS 순서로 병합하므로 불변.
   const targets = runAll
-    ? [...SECTIONS.filter(s => s.id !== 'index'), ...SECTIONS.filter(s => s.id === 'index')]
+    ? [...SECTIONS.filter(s => s.id !== 'index' && s.id !== 'closing'),
+       ...SECTIONS.filter(s => s.id === 'index'),
+       ...SECTIONS.filter(s => s.id === 'closing')]   // 맺음말은 총론까지 본 뒤 최후 생성
     : SECTIONS.filter(s => s.id === sectionId);
 
   if (targets.length === 0) {

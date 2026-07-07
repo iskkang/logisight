@@ -43,6 +43,7 @@ function isNonProseLine(line) {
   if (t.startsWith('#')) return true;       // 제목
   if (/^-{3,}$/.test(t)) return true;       // 구분선
   if (t.startsWith('<!--')) return true;    // HTML 주석
+  if (t.startsWith('[[')) return true;       // [[STATS:]]/[[OGIMG:]]/[[CHART:]] 시스템 토큰
   if (/^https?:\/\//.test(t)) return true;  // 단독 URL 라인
   return false;
 }
@@ -71,6 +72,7 @@ function proseNumberTokens(line) {
   s = s.replace(/\d{1,2}분기/g, '');                               // 분기(quarter)
   s = s.replace(/\d{1,2}월(\s*\d{1,2}일)?/g, '');                  // 월/일(한국어 날짜)
   s = s.replace(/\b(19\d{2}|20\d{2})\b/g, '');                    // 연도
+  s = s.replace(/\d+\s*(?:중|차|단계|가지|배|곳|명|회|종|개국|개(?!월)|건(?!당)|척|대|기|편|주)(?=[\s.,·)의를이가은는도와과]|$)/g, '');  // 서수·조수사(3중·13개 항로·2배 등) — 한글엔 \b 미작동
   return extractNumbers(s);
 }
 
@@ -116,12 +118,15 @@ function lintReport(md, injectedNumbers) {
   const injectedSet = buildInjectedSet(injectedNumbers);
   for (const line of lines) {
     if (isNonProseLine(line)) continue;
+    // 기사 귀속 문장은 제외 — 기사 인용 수치의 검증은 Claude 교차검증이 담당(표 재진술 오류가 이 규칙의 타깃)
+    if (/에 따르면|보도에|통계에서|보고서는|조사에서/.test(line)) continue;
     const nums = proseNumberTokens(line);
-    for (const n of nums) {
-      if (!injectedSet.has(roundKey(n))) {
-        findings.push({ rule: 'number-mismatch', severity: 'warn', excerpt: truncate(line) });
-        break; // 라인당 1건만 — 스팸 방지
-      }
+    const missing = nums.filter((n) => !injectedSet.has(roundKey(n)));
+    if (missing.length) {
+      findings.push({
+        rule: 'number-mismatch', severity: 'warn',
+        excerpt: `[미매칭: ${missing.slice(0, 4).join(', ')}] ` + truncate(line),
+      });
     }
   }
 
