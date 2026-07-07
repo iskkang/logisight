@@ -12,12 +12,16 @@ const { marked } = require("marked");
 const puppeteer = require("puppeteer-core");
 const { buildChart } = require("./lib/chart-data");
 const { fetchOgImage } = require("./lib/og-image");
+const { buildExecPage } = require("./lib/exec-page");
+const { resolveMonth, monthEndISO, prevMonthOf } = require("./lib/report-month");
 
 const TODAY = new Date().toISOString().slice(0, 10);
 const monthArg = process.argv.find((a) => a.startsWith("--month="));
 const outArg = process.argv.find((a) => a.startsWith("--out="));
 const MONTH = monthArg ? monthArg.split("=")[1] : TODAY.slice(0, 7);
 const [YY, MM] = MONTH.split("-");
+const ENG_MONTH = ["JANUARY","FEBRUARY","MARCH","APRIL","MAY","JUNE","JULY",
+  "AUGUST","SEPTEMBER","OCTOBER","NOVEMBER","DECEMBER"][Number(MM) - 1] || "";
 const VOL = MM; // 5월 → "05"
 let PUB = TODAY; // 발행일(아래 main에서 md의 발행일로 보정)
 
@@ -363,6 +367,15 @@ function wrapFitTopics(html, skipIds = new Set()) {
 }
 
 function buildHtml(transformed, chartConfigs = [], front = {}) {
+  // 스파인 세로 텍스트 — 회전을 SVG 내부에서 처리(인쇄 시 transform/writing-mode 파편화 회피)
+  const spineLabel = `LOGISIGHT MONTHLY INTELLIGENCE · VOL.${VOL} · ${ENG_MONTH} ${Number(YY)}`;
+  const spineSvg =
+    `<svg xmlns='http://www.w3.org/2000/svg' width='23' height='605' viewBox='0 0 23 605'>` +
+    `<text x='0' y='0' transform='translate(15,600) rotate(-90)' font-family='Arial,Helvetica,sans-serif' ` +
+    `font-size='8.8' font-weight='bold' letter-spacing='2.2' fill='rgba(255,255,255,0.92)'>${spineLabel}</text></svg>`;
+  const SPINE_IMG = `data:image/svg+xml;utf8,${encodeURIComponent(spineSvg)}`;
+
+
   // 차트 라인 팔레트 = design.md §5-4 (primary → slate → gray → … → teal/red)
   const chartScript = chartConfigs.length
     ? `
@@ -455,17 +468,18 @@ window.__chartsReady = true;
 @page{size:A4;margin:16mm 0 14mm}
 @page bleed{margin:0}
 
-html{/* 전 페이지 좌측 네이비 스파인 — 캔버스 배경은 마진 포함 매 페이지 반복 */
+html{/* 전 페이지 좌측 네이비 스파인 — 캔버스 배경은 매 페이지 반복 */
   background:linear-gradient(90deg,#0E3A66 0,#0E3A66 6mm,#fff 6mm)}
 body{font-family:var(--font-sans);color:var(--c-body);font-size:10pt;line-height:1.6;
   margin:0;background:transparent;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 
 /* ── FRONT PAGE (Drewry Shipping Insight 문법: 마스트헤드+KPI 스트립+헤드라인+박스) ── */
 .front{page:bleed;width:210mm;height:297mm;background:#fff;display:flex;overflow:hidden;break-after:page}
-.fr-spine{width:6mm;background:linear-gradient(180deg,var(--c-primary) 0%,var(--c-primary-deep) 100%);
-  display:flex;align-items:flex-end;justify-content:center;padding-bottom:10mm;flex:0 0 auto}
-.fr-spine span{writing-mode:vertical-rl;transform:rotate(180deg);color:rgba(255,255,255,.85);
-  font-size:7pt;letter-spacing:3px;font-weight:700}
+.fr-spine{width:6mm;background:linear-gradient(180deg,var(--c-primary) 0%,var(--c-primary-deep) 100%);flex:0 0 auto}
+/* 전 페이지 스파인 텍스트(fixed, 하단 정렬) + 상단 유령 파편 마스크(Chromium 인쇄 quirk) */
+.spine-mask{position:fixed;left:0;top:0;width:6mm;height:88mm;background:#0E3A66;z-index:60}
+.spine-text{position:fixed;left:0;bottom:42mm;width:6mm;height:160mm;z-index:59}
+.spine-text img{width:6mm;height:160mm;display:block}
 .fr-body{flex:1;min-width:0;padding:14mm 14mm 11mm 11mm;display:flex;flex-direction:column}
 .fr-mast{display:flex;justify-content:space-between;align-items:flex-start;
   border-bottom:1mm solid var(--c-primary);padding-bottom:5mm;margin-bottom:6mm}
@@ -526,6 +540,41 @@ body{font-family:var(--font-sans);color:var(--c-body);font-size:10pt;line-height
 .dash-band small{font-size:8pt;font-weight:700;color:#fff;opacity:.92}
 .dash-plot{height:56mm;padding:2mm 2.5mm;background:#fff}
 .dash-src{font-size:7.5pt;color:var(--c-caption);font-style:italic;margin-top:4mm}
+
+/* ── Executive Summary (DHL OFR p2 문법) ── */
+.exec-page{height:265mm;overflow:hidden;break-before:page;break-after:page}
+.exec-page .sec-band{margin-bottom:3.5mm}
+.ex-row{display:flex;gap:5mm;align-items:flex-start;padding:2.3mm 0;border-bottom:1px solid var(--c-rule)}
+.ex-tag{flex:0 0 30mm;background:var(--c-primary);color:#fff;font-size:8pt;font-weight:800;
+  letter-spacing:1px;text-align:center;padding:2.2mm 0;margin-top:.5mm}
+.ex-main{flex:1;min-width:0}
+.ex-head{font-family:var(--font-title);font-size:12pt;font-weight:800;color:var(--c-ink);margin-bottom:1.1mm}
+.ex-head.up{color:var(--c-up)}.ex-head.down{color:var(--c-down)}
+.ex-main ul{list-style:none;padding:0;margin:0}
+.ex-main li{font-size:9pt;color:var(--c-body);line-height:1.5;padding-left:4mm;position:relative;margin-bottom:.8mm}
+.ex-main li::before{content:'';position:absolute;left:0;top:.55em;width:5px;height:5px;background:var(--c-primary)}
+
+/* ── KCCI 히트맵 ── */
+.hm-wrap{margin-top:3.2mm}
+table.heatmap{width:100%;border-collapse:collapse;font-size:8pt;margin:0;
+  border-top:0;border-bottom:1px solid var(--c-rule-strong);font-variant-numeric:tabular-nums}
+table.heatmap thead th{background:#F1F4F7;color:var(--c-ink);font-weight:700;padding:1.4mm 2mm;
+  text-align:center;border-bottom:1.5px solid var(--c-primary)}
+table.heatmap thead th:first-child{text-align:left}
+table.heatmap td{padding:1.15mm 2mm;text-align:center;border-bottom:1px dotted var(--c-rule);font-weight:700}
+table.heatmap td:first-child{text-align:left;color:var(--c-ink);font-weight:600;background:#fff}
+td.hm-up{background:#FBEAEA;color:var(--c-up)}
+td.hm-down{background:#E8F0F9;color:var(--c-down)}
+td.hm-flat{background:#F4F5F6;color:var(--c-body-soft)}
+td.hm-na{color:var(--c-caption)}
+tr.hm-total td{background:#EDF2F8;border-bottom:1.5px solid var(--c-primary)}
+tr.hm-total td.hm-up{background:#F6DFDF}
+
+/* ── TAKEAWAY 밴드 (블록 마지막 전망 문장 승격) ── */
+.takeaway{background:#F0F4F8;border-left:2.4mm solid var(--c-primary);
+  padding:2.4mm 4mm;margin:3mm 0 4mm;break-inside:avoid}
+.takeaway p{margin:0;font-size:9.2pt;color:var(--c-primary-deep);font-weight:600;line-height:1.5}
+.takeaway p::before{content:'≫  ';color:var(--c-primary);font-weight:800}
 
 /* ── FLOW CONTENT ── */
 .flow{padding:0 18mm}
@@ -766,8 +815,11 @@ p.article-cat{font-family:var(--font-sans);font-size:7.5pt;letter-spacing:4px;
 </head>
 <body>
 
+<div class="spine-mask"></div>
+<div class="spine-text"><img src="${SPINE_IMG}" alt=""></div>
+
 <section class="front">
-  <div class="fr-spine"><span>LOGISIGHT MONTHLY INTELLIGENCE · VOL.${VOL} · ${YY}.${MM}</span></div>
+  <div class="fr-spine"></div>
   <div class="fr-body">
     <div class="fr-mast">
       <div>
@@ -790,10 +842,6 @@ p.article-cat{font-family:var(--font-sans);font-size:7.5pt;letter-spacing:4px;
         <div class="fr-boxh">In this issue</div>
         <ul>${issueRows}</ul>
       </div>
-    </div>
-    <div class="fr-foot">
-      <span>© ${Number(YY)} Logisight Maritime Intelligence · logisight.mtlship.com</span>
-      <span>monthly-analysis-${MONTH}</span>
     </div>
   </div>
 </section>
@@ -839,6 +887,12 @@ async function main() {
     ids.push(id);
     return `<figure class="chart-box"><canvas id="chart_${id}"></canvas></figure>`;
   });
+
+  // [[TAKEAWAY: 문장]] → 블록 하단 전망 밴드 (명시 토큰 — 8월호부터 생성 규격)
+  bodyHtml = bodyHtml.replace(
+    /<p>\s*\[\[TAKEAWAY:([\s\S]*?)\]\]\s*<\/p>|\[\[TAKEAWAY:([\s\S]*?)\]\]/g,
+    (_m, a, b) => '<div class="takeaway"><p>' + String(a || b || '').trim() + '</p></div>',
+  );
 
   // [[STATS: 값|라벨|up/down ; ... :: 캡션]] → 숫자 콜아웃 스트립
   bodyHtml = bodyHtml.replace(
@@ -972,6 +1026,12 @@ async function main() {
   // 헤딩 분류(디바이더/서브섹션) + 목차 수집, 표 등락 색상
   const transformed = transformBody(bodyHtml);
   transformed.html = colorDeltas(transformed.html);
+  // 블록 마지막 문단이 전망형 명사 종결(짧은 단락)이면 TAKEAWAY 밴드로 자동 승격
+  transformed.html = transformed.html.replace(
+    /<p>((?:(?!<\/p>|<div class="takeaway")[\s\S]){30,320}?(?:전망|국면|가능성|공산|주목|판정 포인트)\.?)<\/p>\s*(?=<h2|<section|<hr|$)/g,
+    '<div class="takeaway"><p>$1</p></div>',
+  );
+
   transformed.html = wrapFitTopics(transformed.html, new Set(["03-2"]));
   transformed.html = wrapOceanTopics(
     transformed.html,
@@ -1020,7 +1080,20 @@ async function main() {
     }
   }
 
+  // Executive Summary + KCCI 히트맵 페이지 — 본문 최앞(01 디바이더 앞)에 삽입
+  try {
+    const weekEnd = monthEndISO(prevMonthOf(MONTH));
+    const execHtml = await buildExecPage(front, weekEnd);
+    if (execHtml) {
+      transformed.html = execHtml + transformed.html;
+      console.log('  ✓ Executive Summary + KCCI 히트맵 페이지 생성');
+    }
+  } catch (e) {
+    console.warn('  ⚠️ Exec Summary 생성 실패(생략):', e.message);
+  }
+
   const html = buildHtml(transformed, chartConfigs, front);
+  if (process.env.HTML_DUMP) fs.writeFileSync(process.env.HTML_DUMP, html);
 
   const browser = await puppeteer.launch({
     executablePath:
@@ -1260,11 +1333,13 @@ async function main() {
         '<div style="width:100%;height:16mm;position:relative;-webkit-print-color-adjust:exact;">' +
         '<div style="position:absolute;left:0;top:0;width:6mm;height:16mm;background:#0E3A66;"></div></div>',
       footerTemplate:
-        '<div style="width:100%;position:relative;font-size:6.5px;color:#8B9198;-webkit-print-color-adjust:exact;' +
-        'font-family:Arial,sans-serif;padding:0 18mm 4mm 24mm;display:flex;justify-content:space-between;box-sizing:border-box;">' +
+        '<div style="position:relative;width:100%;height:14mm;-webkit-print-color-adjust:exact;font-family:Arial,Helvetica,sans-serif;">' +
         '<div style="position:absolute;left:0;top:-2mm;width:6mm;height:20mm;background:#0E3A66;"></div>' +
-        `<span>© ${Number(YY)} Logisight Maritime Intelligence · logisight.mtlship.com</span>` +
-        `<span>monthly-analysis-${MONTH} · <span class="pageNumber"></span></span></div>`,
+        '<div style="position:absolute;left:24mm;right:18mm;top:1.2mm;border-top:1.2px solid #0E3A66;' +
+        'padding-top:1.8mm;font-size:7.5px;color:#6B7178;display:flex;justify-content:space-between;">' +
+        `<span>© ${Number(YY)} Logisight Maritime Intelligence</span>` +
+        `<span>monthly-analysis-${MONTH} · <span class="pageNumber"></span></span>` +
+        '</div></div>',
     });
     console.log(`✅ PDF 완료: ${OUT_PATH}`);
   } finally {
