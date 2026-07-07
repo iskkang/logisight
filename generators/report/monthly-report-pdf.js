@@ -21,6 +21,8 @@ const [YY, MM] = MONTH.split("-");
 const VOL = MM; // 5월 → "05"
 let PUB = TODAY; // 발행일(아래 main에서 md의 발행일로 보정)
 
+const LOGO_SVG = fs.readFileSync(path.join(__dirname, 'assets/logisight_logo.svg'), 'utf-8');
+
 const MD_PATH = path.resolve(
   __dirname,
   `../../content/drafts/monthly-analysis-${MONTH}.md`,
@@ -29,6 +31,27 @@ const OUT_DIR = path.resolve(__dirname, "../../content/published");
 const OUT_PATH = outArg
   ? path.resolve(process.cwd(), outArg.split("=").slice(1).join("="))
   : path.join(OUT_DIR, `monthly-analysis-${MONTH}.pdf`);
+
+// Drewry 프런트 페이지 재료 — 지수 표 KPI 4종·이달의 프레임 헤드라인·다음 달 체크포인트
+function parseFrontMatterials(md) {
+  // 운임 지수 동향 표의 전 행(최대 8종)을 KPI 카드로 — 4×2 그리드로 프런트 충전
+  const kpis = [];
+  const rowRe = /^\|\s*([A-Z][A-Za-z ]*[^|]*?)\s*\|\s*([^|]+?)\s*\|\s*[^|]+\|\s*[^|]+\|\s*([^|]+?)\s*\|\s*$/gm;
+  let rm;
+  while ((rm = rowRe.exec(md)) !== null && kpis.length < 8) {
+    const label = rm[1].trim();
+    if (/^지수|^[-:\s]+$/.test(label)) continue;
+    const mom = rm[3].trim();
+    if (!/[▲▼]/.test(mom)) continue;
+    kpis.push({ label, val: rm[2].trim(), mom, dir: mom.includes('▼') ? 'down' : 'up' });
+  }
+  const hm = md.match(/\*\*이번 달 핵심\*\*\s*\n+([^\n]+)/);
+  const headline = hm ? hm[1].trim() : null;
+  const cps = (md.match(/^(첫째|둘째|셋째)[,.][^\n]*/gm) || [])
+    .slice(0, 3)
+    .map((t) => t.split('. ')[0].replace(/^([첫둘셋]째)[,.]\s*/, '').trim());
+  return { kpis, headline, checkpoints: cps };
+}
 
 function loadMarkdown() {
   if (!fs.existsSync(MD_PATH)) {
@@ -339,19 +362,19 @@ function wrapFitTopics(html, skipIds = new Set()) {
   return result + html.slice(cursor);
 }
 
-function buildHtml(transformed, chartConfigs = []) {
+function buildHtml(transformed, chartConfigs = [], front = {}) {
   // 차트 라인 팔레트 = design.md §5-4 (primary → slate → gray → … → teal/red)
   const chartScript = chartConfigs.length
     ? `
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-const PALETTE = ['#0070C0','#5484CC','#7E7E7E','#9DAEAC','#008C8C','#C0392B'];
+const PALETTE = ['#0E3A66','#7FB3DC','#00818A','#9AA6B2','#C0392B','#5B6167'];
 const CFG = ${JSON.stringify(chartConfigs)};
 CFG.forEach(c => {
   const el = document.getElementById('chart_' + c.id);
   if (!el) return;
-  (c.data.datasets || []).forEach((d, i) => {            // 색이 지정되지 않은 계열만 팔레트 적용
-    if (!d.borderColor) d.borderColor = PALETTE[i % PALETTE.length];
+  (c.data.datasets || []).forEach((d, i) => {            // 팔레트 강제 — 차트 간 색 언어 통일
+    d.borderColor = PALETTE[i % PALETTE.length];
     if (d.backgroundColor == null) d.backgroundColor = 'transparent';
     if (d.borderWidth == null) d.borderWidth = 1.6;
     if (d.pointRadius == null) d.pointRadius = 0;
@@ -360,10 +383,10 @@ CFG.forEach(c => {
   new Chart(el, { type:'line', data:c.data, options:{
     responsive:true, maintainAspectRatio:false, animation:false,
     plugins:{ title:{display:false},
-      legend:{position:'bottom',labels:{font:{size:9},boxWidth:14,color:'#555555'}} },
+      legend:{position:'bottom',labels:{font:{size:8.5},boxWidth:13,boxHeight:2.5,color:'#5E646B'}} },
     scales:{
-      x:{ticks:{font:{size:7},maxRotation:45,autoSkip:true,maxTicksLimit:10,color:'#888888'},grid:{display:false}},
-      y:{ticks:{font:{size:7},color:'#888888'},grid:{color:'#E6E6E6'}}
+      x:{ticks:{font:{size:7},maxRotation:45,autoSkip:true,maxTicksLimit:10,color:'#8B9198'},grid:{display:false},border:{color:'#B9C0C7'}},
+      y:{ticks:{font:{size:7},color:'#8B9198'},grid:{color:'#E3E6E9'},border:{display:false}}
     }
   }});
 });
@@ -372,12 +395,32 @@ window.__chartsReady = true;
     : "";
 
   // t.title은 marked 출력에서 추출 → 이미 HTML-encoded. escapeHtml() 재호출 금지(이중 인코딩).
-  const tocRows = transformed.toc
-    .map(
-      (t) =>
-        `<li><span class="toc-no">${t.num}</span><span class="toc-tt">${t.title}</span></li>`,
-    )
+  const issueRows = transformed.toc
+    .map((t) => `<li><b>${t.num}</b><span style="flex:1">${t.title}</span></li>`)
     .join("");
+
+  const kpiStrip = (front.kpis || []).length
+    ? `<div class="fr-kpis">${front.kpis
+        .map(
+          (k) =>
+            `<div class="fr-kpi"><div class="l">${escapeHtml(k.label)}</div>` +
+            `<div class="v">${escapeHtml(k.val)}</div>` +
+            `<div class="c ${k.dir}">${escapeHtml(k.mom)} MoM</div></div>`,
+        )
+        .join("")}</div>`
+    : "";
+
+  const frontHeadline = escapeHtml(
+    front.headline || "글로벌 해운·항공·철도 운임과 공급망·지정학 동향 종합 분석",
+  );
+
+  const checkpointBox = (front.checkpoints || []).length >= 2
+    ? `<div class="fr-box"><div class="fr-boxh">다음 달 체크 포인트</div><ul>${front.checkpoints
+        .map((c, i) => `<li><b>${["①", "②", "③"][i] || "·"}</b><span style="flex:1">${escapeHtml(c)}</span></li>`)
+        .join("")}</ul></div>`
+    : `<div class="fr-box"><div class="fr-boxh">발행 정보</div><ul>` +
+      `<li><span style="flex:1">데이터 기준: 직전월 최종 공표 주차</span></li>` +
+      `<li><span style="flex:1">발행: ${PUB}</span></li></ul></div>`;
 
   return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -391,13 +434,14 @@ window.__chartsReady = true;
 
 /* ── DESIGN TOKENS (design.md §7) ── */
 :root{
-  --c-primary:#0070C0; --c-primary-deep:#005599;
-  --c-teal:#008C8C; --c-teal-cyan:#0090A8; --c-charcoal:#4D4D4D;
+  --c-primary:#0E3A66; --c-primary-deep:#082A4C;   /* 구조색 = 네이비 (Drewry 문법) */
+  --c-mint:#2dd4bf; --c-mint-deep:#0ea5a0;           /* 로고 브랜드 민트 */
+  --c-teal:#00818A; --c-teal-cyan:#0090A8; --c-charcoal:#4D4D4D;
   --c-ink:#1A1A1A; --c-body:#333333; --c-body-soft:#555555; --c-caption:#888888;
   --c-rule:#D9D9D9; --c-rule-strong:#BFBFBF;
-  --c-thead:#7E7E7E; --c-thead-2:#A6A6A6; --c-zebra:#F2F2F2;
+  --c-thead:#0E3A66; --c-thead-2:#A6A6A6; --c-zebra:#F2F4F6;
   --c-box-fill:#EDEDED; --c-band-gray:#E6E6E6;
-  --c-up:#C00000; --c-down:#0070C0;
+  --c-up:#C00000; --c-down:#1F5FA8;   /* 하락색을 브랜드색과 분리 */
   --font-title:'GyeonggiTitle','Pretendard','Noto Sans KR',sans-serif;
   --font-sans:'Pretendard','Noto Sans KR','Malgun Gothic',sans-serif;
   --font-serif:'Noto Serif KR',serif;  /* 인용·각주 한정(거의 미사용) */
@@ -411,43 +455,52 @@ window.__chartsReady = true;
 @page{size:A4;margin:16mm 0 14mm}
 @page bleed{margin:0}
 
+html{/* 전 페이지 좌측 네이비 스파인 — 캔버스 배경은 마진 포함 매 페이지 반복 */
+  background:linear-gradient(90deg,#0E3A66 0,#0E3A66 6mm,#fff 6mm)}
 body{font-family:var(--font-sans);color:var(--c-body);font-size:10pt;line-height:1.6;
-  margin:0;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  margin:0;background:transparent;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 
-/* ── COVER (design.md §4-2① : 차콜 그라운드 + 블루 강조 + 우하단 대각 컷) ── */
-.cover{page:bleed;width:210mm;height:297mm;position:relative;overflow:hidden;break-after:page;
-  background:linear-gradient(160deg,#4D4D4D 0%,#414141 58%,#363636 100%);
-  color:#fff;padding:24mm 22mm;display:flex;flex-direction:column;justify-content:space-between}
-.cv-diagonal{position:absolute;right:0;bottom:0;width:118mm;height:82mm;z-index:0;
-  background:linear-gradient(135deg,var(--c-primary) 0%,var(--c-primary-deep) 100%);
-  clip-path:polygon(100% 0,100% 100%,0 100%)}
-.cv-top,.cv-mid,.cv-foot{position:relative;z-index:1}
-.cv-top{display:flex;align-items:center;gap:5mm}
-.cv-mark{width:11mm;height:11mm;flex:0 0 auto}
-.cv-brand{font-family:var(--font-title);font-weight:800;font-size:15pt;letter-spacing:2px}
-.cv-brand small{display:block;font-family:var(--font-sans);font-weight:500;font-size:7pt;
-  letter-spacing:4px;color:#7FC0F0;margin-top:1mm}
-.cv-mid{margin-top:auto}
-.cv-kicker{font-size:9pt;letter-spacing:5px;color:#5EB0EE;font-weight:600;margin-bottom:7mm}
-.cv-title{font-family:var(--font-title);font-weight:800;font-size:40pt;line-height:1.12;
-  letter-spacing:-.02em;margin-bottom:7mm}
-.cv-rule{width:26mm;height:3px;background:var(--c-primary);margin:0 0 8mm}
-.cv-issue{font-family:var(--font-title);font-size:13pt;color:#34C7C7;font-weight:800;margin-bottom:7mm}
-.cv-sub{font-size:11pt;color:rgba(255,255,255,.78);font-weight:400;max-width:150mm;line-height:1.65}
-.cv-foot{display:flex;justify-content:space-between;align-items:flex-end;
-  border-top:1px solid rgba(255,255,255,.18);padding-top:6mm;font-size:8.5pt;color:rgba(255,255,255,.62)}
-.cv-foot strong{color:#fff;font-weight:600}
-.cv-vol{font-family:var(--font-title);font-size:13pt;color:#fff;font-weight:800}
-
-/* ── TABLE OF CONTENTS (페이퍼 화이트 + 블루 강조) ── */
-.toc{page:bleed;width:210mm;height:297mm;background:#fff;padding:26mm 24mm;overflow:hidden;break-after:page}
-.toc-h{font-family:var(--font-title);font-size:9pt;letter-spacing:6px;color:var(--c-primary);font-weight:700;margin-bottom:3mm}
-.toc-h2{font-family:var(--font-title);font-size:24pt;color:var(--c-ink);font-weight:800;letter-spacing:-.01em;
-  border-bottom:2.5px solid var(--c-primary);padding-bottom:5mm;margin-bottom:9mm}
-.toc ol{list-style:none}
-.toc li{display:flex;align-items:baseline;gap:6mm;padding:4mm 0;border-bottom:1px solid var(--c-rule)}
-.toc-no{font-family:var(--font-title);font-size:14pt;font-weight:800;color:var(--c-primary);min-width:14mm}
-.toc-tt{font-size:11.5pt;color:var(--c-ink);font-weight:500}
+/* ── FRONT PAGE (Drewry Shipping Insight 문법: 마스트헤드+KPI 스트립+헤드라인+박스) ── */
+.front{page:bleed;width:210mm;height:297mm;background:#fff;display:flex;overflow:hidden;break-after:page}
+.fr-spine{width:6mm;background:linear-gradient(180deg,var(--c-primary) 0%,var(--c-primary-deep) 100%);
+  display:flex;align-items:flex-end;justify-content:center;padding-bottom:10mm;flex:0 0 auto}
+.fr-spine span{writing-mode:vertical-rl;transform:rotate(180deg);color:rgba(255,255,255,.85);
+  font-size:7pt;letter-spacing:3px;font-weight:700}
+.fr-body{flex:1;min-width:0;padding:14mm 14mm 11mm 11mm;display:flex;flex-direction:column}
+.fr-mast{display:flex;justify-content:space-between;align-items:flex-start;
+  border-bottom:1mm solid var(--c-primary);padding-bottom:5mm;margin-bottom:6mm}
+.fr-title{font-family:var(--font-title);font-weight:800;font-size:27pt;color:var(--c-primary);
+  letter-spacing:-.015em;line-height:1.05;margin:0}
+.fr-sub{font-size:9.5pt;color:var(--c-body-soft);font-weight:600;margin-top:2mm}
+.fr-tag{font-size:8pt;color:var(--c-caption);font-style:italic;margin-top:.8mm}
+.fr-logochip{background:var(--c-primary-deep);padding:3.2mm 4mm;display:inline-block}
+.fr-logochip svg{height:7.5mm;width:auto;display:block}
+.fr-pub{font-size:7.5pt;color:var(--c-caption);margin-top:2mm;text-align:right;line-height:1.5}
+.fr-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:4mm 5mm;
+  background:#F1F4F7;border-top:1px solid var(--c-rule);border-bottom:1px solid var(--c-rule);
+  padding:4mm 5mm;margin-bottom:9mm}
+.fr-kpi{border-top:1mm solid var(--c-primary);padding-top:2.2mm}
+.fr-kpi .l{font-size:7.5pt;font-weight:700;color:var(--c-body-soft)}
+.fr-kpi .v{font-family:var(--font-title);font-size:14.5pt;font-weight:800;color:var(--c-ink);
+  font-variant-numeric:tabular-nums;line-height:1.15;margin:.6mm 0 .3mm}
+.fr-kpi .c{font-size:8.5pt;font-weight:700;font-variant-numeric:tabular-nums}
+.fr-kpi .c.up{color:var(--c-up)}.fr-kpi .c.down{color:var(--c-down)}
+.fr-kicker{font-size:8pt;letter-spacing:3px;color:var(--c-primary);font-weight:700;margin-bottom:3mm}
+.fr-head{font-family:var(--font-title);font-size:20.5pt;font-weight:800;color:var(--c-ink);
+  letter-spacing:-.015em;line-height:1.36;margin:0 0 5mm;word-break:keep-all}
+.fr-dek{font-size:10pt;color:var(--c-body-soft);line-height:1.6;margin:0 0 8mm;max-width:150mm}
+.fr-grid{display:grid;grid-template-columns:1fr 1fr;gap:6mm;margin-top:auto}
+.fr-box{border:1px solid var(--c-rule)}
+.fr-boxh{background:var(--c-primary);color:#fff;font-size:9pt;font-weight:800;
+  padding:2mm 3.5mm;letter-spacing:.5px}
+.fr-box ul{list-style:none;margin:0;padding:2mm 3.5mm}
+.fr-box li{display:flex;justify-content:space-between;gap:3mm;align-items:baseline;font-size:8.5pt;
+  padding:1.7mm 0;border-bottom:1px dotted var(--c-rule);color:var(--c-body);line-height:1.45}
+.fr-box li:last-child{border-bottom:0}
+.fr-box li b{color:var(--c-primary);font-weight:800;flex:0 0 auto}
+.fr-box li span.pgno{color:var(--c-primary);font-weight:700}
+.fr-foot{display:flex;justify-content:space-between;border-top:.6mm solid var(--c-primary);
+  margin-top:6mm;padding-top:3mm;font-size:7.5pt;color:var(--c-caption)}
 
 /* ── SECTION DIVIDER (풀블리드, 블루 — 섹션을 브랜드 컬러로 구분) ── */
 .divider{page:bleed;width:210mm;height:297mm;overflow:hidden;color:#fff;break-before:page;break-after:page;
@@ -455,9 +508,24 @@ body{font-family:var(--font-sans);color:var(--c-body);font-size:10pt;line-height
   padding:30mm 24mm;display:flex;flex-direction:column;justify-content:center}
 .dv-tag{font-size:9pt;letter-spacing:6px;color:rgba(255,255,255,.85);font-weight:600;margin-bottom:4mm}
 .dv-num{font-family:var(--font-title);font-size:120pt;font-weight:800;line-height:.86;color:rgba(255,255,255,.16)}
-.dv-rule{width:30mm;height:3px;background:#fff;margin:7mm 0}
+.dv-rule{width:30mm;height:3px;background:var(--c-mint);margin:7mm 0}
 .dv-title{font-family:var(--font-title);font-size:28pt;font-weight:800;color:#fff;
   letter-spacing:-.01em;border:none;padding:0;margin:0}
+
+/* ── 섹션 대시보드 (02 해운: 디바이더 대신 4차트 오프너 — Drewry 스몰 멀티플 문법) ── */
+.dash-page{height:265mm;overflow:hidden;break-before:page;break-after:page}
+.sec-band{display:flex;justify-content:space-between;align-items:baseline;
+  border-bottom:1mm solid var(--c-primary);padding-bottom:2.5mm;margin-bottom:6mm}
+.sec-band .st{font-family:var(--font-title);font-size:20pt;font-weight:800;color:var(--c-primary);letter-spacing:-.01em}
+.sec-band .st .no{margin-right:4mm}
+.sec-band .sp{font-size:8.5pt;color:var(--c-caption);font-weight:600}
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:6mm}
+.dash-fig{border:1px solid var(--c-rule)}
+.dash-band{background:var(--c-primary);color:#fff;font-size:9pt;font-weight:700;
+  padding:1.8mm 3mm;display:flex;justify-content:space-between;letter-spacing:.3px}
+.dash-band small{font-size:8pt;font-weight:700;color:#fff;opacity:.92}
+.dash-plot{height:56mm;padding:2mm 2.5mm;background:#fff}
+.dash-src{font-size:7.5pt;color:var(--c-caption);font-style:italic;margin-top:4mm}
 
 /* ── FLOW CONTENT ── */
 .flow{padding:0 18mm}
@@ -624,7 +692,7 @@ p.lead-label strong{color:var(--c-primary-deep);font-weight:800}
 .flow ol>li::marker{color:var(--c-primary);font-weight:700}
 
 /* 콜아웃(blockquote) — 블루 좌측바 + 박스필 */
-blockquote{background:#F2F6FB;border-left:3px solid var(--c-primary);border-radius:0 4px 4px 0;
+blockquote{background:#F0F4F8;border-left:3px solid var(--c-primary);border-radius:0;
   padding:4mm 6mm;margin:5mm 0;break-inside:avoid}
 blockquote p{font-size:9.6pt;color:var(--c-primary-deep);font-weight:500;margin:0;line-height:1.6}
 
@@ -642,13 +710,13 @@ td.up{color:var(--c-up);font-weight:700}
 td.down{color:var(--c-down);font-weight:700}
 
 /* 차트 카드 = design.md §5-4 : 라이트 박스 */
-.chart-box{height:64mm;background:#FAFAFA;border:1px solid var(--c-band-gray);border-radius:6px;
-  padding:4mm 4mm 3mm;margin:4mm 0 5mm;break-inside:avoid}
+.chart-box{height:64mm;background:#fff;border:1px solid var(--c-rule);border-top:1mm solid var(--c-primary);
+  border-radius:0;padding:3mm 3mm 2mm;margin:4mm 0 5mm;break-inside:avoid}
 .chart-box canvas{max-width:100%}
 
 /* 기사 이미지 */
 .flow img{display:block;width:100%;height:auto;max-height:95mm;object-fit:cover;
-  border-radius:6px;margin:4mm 0 5mm;break-inside:avoid}
+  border-radius:0;margin:4mm 0 5mm;break-inside:avoid}
 .flow p em{color:var(--c-caption);font-style:italic;font-size:8.5pt}
 .flow p:last-child em{color:#9aa3af}
 
@@ -662,10 +730,10 @@ p.article-cat{font-family:var(--font-sans);font-size:7.5pt;letter-spacing:4px;
 
 /* 뒷표지 */
 .backcover{page:bleed;width:210mm;height:297mm;position:relative;overflow:hidden;break-before:page;
-  background:linear-gradient(160deg,#4D4D4D 0%,#363636 100%);
+  background:linear-gradient(160deg,#0E3A66 0%,#071F38 100%);
   color:#fff;padding:32mm 24mm;display:flex;flex-direction:column;justify-content:flex-end;gap:0}
-.bc-brand{font-family:var(--font-title);font-size:22pt;font-weight:800;letter-spacing:3px;color:#fff;margin-bottom:6mm}
-.bc-rule{width:24mm;height:3px;background:var(--c-primary);margin-bottom:8mm}
+.bc-brand{margin-bottom:6mm}.bc-brand svg{height:11mm;width:auto;display:block}
+.bc-rule{width:24mm;height:3px;background:var(--c-mint);margin-bottom:8mm}
 .bc-statement{font-size:11pt;color:rgba(255,255,255,.8);line-height:1.7;margin-bottom:auto;padding-bottom:20mm}
 .bc-disclaimer{font-size:8pt;color:rgba(255,255,255,.5);line-height:1.6;margin-bottom:4mm}
 .bc-contact{font-size:8.5pt;color:rgba(255,255,255,.65);margin-bottom:2mm}
@@ -698,32 +766,36 @@ p.article-cat{font-family:var(--font-sans);font-size:7.5pt;letter-spacing:4px;
 </head>
 <body>
 
-<section class="cover">
-  <div class="cv-diagonal"></div>
-  <div class="cv-top">
-    <svg class="cv-mark" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="20" cy="20" r="18" stroke="rgba(255,255,255,.55)" stroke-width="1.4"/>
-      <path d="M20 5 L23 18 L35 20 L23 22 L20 35 L17 22 L5 20 L17 18 Z" fill="#0070C0"/>
-    </svg>
-    <div class="cv-brand">LOGISIGHT<small>MARITIME INTELLIGENCE</small></div>
+<section class="front">
+  <div class="fr-spine"><span>LOGISIGHT MONTHLY INTELLIGENCE · VOL.${VOL} · ${YY}.${MM}</span></div>
+  <div class="fr-body">
+    <div class="fr-mast">
+      <div>
+        <h1 class="fr-title">월간 시장 인텔리전스</h1>
+        <div class="fr-sub">Monthly Analysis of Global Logistics Markets · ${Number(YY)}년 ${Number(MM)}월호</div>
+        <div class="fr-tag">Data cut-off: 직전월 최종 공표 주차</div>
+      </div>
+      <div>
+        <span class="fr-logochip">${LOGO_SVG}</span>
+        <div class="fr-pub">발행 ${PUB} · VOL.${VOL}</div>
+      </div>
+    </div>
+    ${kpiStrip}
+    <div class="fr-kicker">${Number(MM)}월호 — 이달의 프레임</div>
+    <h2 class="fr-head">${frontHeadline}</h2>
+    <p class="fr-dek">글로벌 해운·항공·철도 운임과 공급망·지정학 동향 종합 분석</p>
+    <div class="fr-grid">
+      ${checkpointBox}
+      <div class="fr-box">
+        <div class="fr-boxh">In this issue</div>
+        <ul>${issueRows}</ul>
+      </div>
+    </div>
+    <div class="fr-foot">
+      <span>© ${Number(YY)} Logisight Maritime Intelligence · logisight.mtlship.com</span>
+      <span>monthly-analysis-${MONTH}</span>
+    </div>
   </div>
-  <div class="cv-mid">
-    <div class="cv-kicker">GLOBAL LOGISTICS &amp; MARKET INTELLIGENCE</div>
-    <div class="cv-title">월간 시장<br>인텔리전스 리포트</div>
-    <div class="cv-rule"></div>
-    <div class="cv-issue">${Number(YY)}년 ${Number(MM)}월호 · VOL.${VOL}</div>
-    <div class="cv-sub">글로벌 해운·항공·철도 운임과 공급망·지정학 동향 종합 분석</div>
-  </div>
-  <div class="cv-foot">
-    <div>STRATEGIC INTELLIGENCE FOR GLOBAL SHIPPING<br><strong>발행 ${PUB}</strong></div>
-    <div class="cv-vol">VOL.${VOL}</div>
-  </div>
-</section>
-
-<section class="toc">
-  <div class="toc-h">CONTENTS</div>
-  <div class="toc-h2">목차</div>
-  <ol>${tocRows}</ol>
 </section>
 
 <main class="flow">
@@ -731,11 +803,11 @@ ${transformed.html}
 </main>
 
 <section class="backcover">
-  <div class="bc-brand">LOGISIGHT</div>
+  <div class="bc-brand">${LOGO_SVG}</div>
   <div class="bc-rule"></div>
   <div class="bc-statement">Global Logistics &amp; Market Intelligence<br>해운·항공·철도 운임과 공급망 동향 종합 분석</div>
   <div class="bc-disclaimer">본 리포트는 공개 출처 기반 분석이며, 수치는 Logisight 지표 대시보드를 참조 바람. 무단 전재·재배포 금지.</div>
-  <div class="bc-contact">contact@logisight.com · www.logisight.com</div>
+  <div class="bc-contact">logisight.mtlship.com</div>
   <div class="bc-copy">© ${Number(YY)} Logisight / MTL Shipping Agency. All rights reserved.</div>
 </section>
 
@@ -751,6 +823,7 @@ async function main() {
   const pubMatch = md.match(/발행일[^\d]{0,8}(\d{4}-\d{2}-\d{2})/);
   if (pubMatch) PUB = pubMatch[1];
 
+  const front = parseFrontMatterials(md);   // 프런트 페이지 재료 (KPI·헤드라인·체크포인트)
   md = stripCitations(md);
   // `---` 앞뒤에 빈 줄 보장 — 단락 바로 뒤의 `---`가 Setext H2로 파싱되는 것을 방지
   md = md.replace(/([^\n])\n(---+)(\n)/g, "$1\n\n$2\n\n");
@@ -906,7 +979,48 @@ async function main() {
   );
   transformed.html = wrapPairedTopics(transformed.html);
 
-  const html = buildHtml(transformed, chartConfigs);
+  // ── 02 해운: 네이비 디바이더 페이지 → 4차트 대시보드 오프너로 교체 ──
+  const DASH = [
+    { id: 'ocean_kcci', title: 'KCCI 종합 (p)', kpi: 'KCCI 종합' },
+    { id: 'ocean_scfi', title: 'SCFI 종합 (p)', kpi: 'SCFI 종합' },
+    { id: 'ocean_ccfi', title: 'CCFI 종합 (p)', kpi: 'CCFI 종합' },
+    { id: 'ocean_wci',  title: 'WCI 종합 (USD/FEU)', kpi: 'WCI 종합' },
+    { id: 'ocean_bunker', title: '벙커유 (USD/톤)', kpi: null },
+    { id: 'ocean_intra_asia', title: '역내 항로 (KCCI)', kpi: null },
+  ];
+  const dashFigs = [];
+  for (const d of DASH) {
+    const src = chartConfigs.find((c) => c.id === d.id);
+    if (!src) continue;
+    const ds = (src.data.datasets || []).filter((x) => String(x.label || '').includes('종합'));
+    chartConfigs.push({
+      id: 'dash_' + d.id,
+      data: { labels: src.data.labels, datasets: (ds.length ? ds : src.data.datasets).map((x) => Object.assign({}, x)) },
+    });
+    const k = (front.kpis || []).find((x) => x.label === d.kpi);
+    const badge = k ? '<small>' + escapeHtml(k.mom) + ' MoM</small>' : '';
+    dashFigs.push(
+      '<div class="dash-fig"><div class="dash-band"><span>' + d.title + '</span>' + badge + '</div>' +
+      '<div class="dash-plot"><canvas id="chart_dash_' + d.id + '"></canvas></div></div>',
+    );
+  }
+  if (dashFigs.length >= 4) {
+    const openTag = '<section class="divider"><div class="dv-tag">SECTION 02</div>';
+    const di = transformed.html.indexOf(openTag);
+    if (di !== -1) {
+      const de = transformed.html.indexOf('</section>', di) + '</section>'.length;
+      const dashHtml =
+        '<section class="dash-page"><div class="sec-band">' +
+        '<span class="st"><span class="no">02</span>해운 시황</span>' +
+        '<span class="sp">Container Freight · 데이터 기준 직전월 최종 공표 주차</span></div>' +
+        '<div class="dash-grid">' + dashFigs.join('') + '</div>' +
+        '<div class="dash-src">출처: KOBC·SSE·CCFC·Drewry © Logisight — 상세 항로별 분석은 02-1~02-9 참조</div>' +
+        '</section>';
+      transformed.html = transformed.html.slice(0, di) + dashHtml + transformed.html.slice(de);
+    }
+  }
+
+  const html = buildHtml(transformed, chartConfigs, front);
 
   const browser = await puppeteer.launch({
     executablePath:
@@ -1136,7 +1250,22 @@ async function main() {
 
     fs.mkdirSync(OUT_DIR, { recursive: true });
     // ── CSS @page가 마진 담당(bleed named page 포함) — weekly-report-pdf.js와 동일 옵션 ──
-    await page.pdf({ path: OUT_PATH, format: "A4", printBackground: true });
+    await page.pdf({
+      path: OUT_PATH,
+      format: "A4",
+      printBackground: true,
+      displayHeaderFooter: true,
+      // 상하 마진 구간까지 스파인을 잇는 네이비 블록 (bleed 페이지는 마진 0이라 미표시)
+      headerTemplate:
+        '<div style="width:100%;height:16mm;position:relative;-webkit-print-color-adjust:exact;">' +
+        '<div style="position:absolute;left:0;top:0;width:6mm;height:16mm;background:#0E3A66;"></div></div>',
+      footerTemplate:
+        '<div style="width:100%;position:relative;font-size:6.5px;color:#8B9198;-webkit-print-color-adjust:exact;' +
+        'font-family:Arial,sans-serif;padding:0 18mm 4mm 24mm;display:flex;justify-content:space-between;box-sizing:border-box;">' +
+        '<div style="position:absolute;left:0;top:-2mm;width:6mm;height:20mm;background:#0E3A66;"></div>' +
+        `<span>© ${Number(YY)} Logisight Maritime Intelligence · logisight.mtlship.com</span>` +
+        `<span>monthly-analysis-${MONTH} · <span class="pageNumber"></span></span></div>`,
+    });
     console.log(`✅ PDF 완료: ${OUT_PATH}`);
   } finally {
     await browser.close();

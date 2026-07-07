@@ -85,7 +85,12 @@ function main() {
 
   function numberRegionSubheadings(body) {
     let n = 0;
-    return body.replace(/^### (.+)$/gm, (_m, title) => `## 05-${++n}. ${title}`);
+    // 제목이 이미 "05-N. "으로 시작하면 번호 재부여 없이 승격만 (중복 번호 방지)
+    return body.replace(/^### (.+)$/gm, (_m, title) => {
+      n++;
+      const clean = title.replace(/^05-\d+\.\s*/, '');
+      return `## 05-${n}. ${clean}`;
+    });
   }
 
   const bodyParts = approved.map(s => {
