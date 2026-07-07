@@ -1335,7 +1335,7 @@ async function main() {
       footerTemplate:
         '<div style="position:relative;width:100%;height:14mm;-webkit-print-color-adjust:exact;font-family:Arial,Helvetica,sans-serif;">' +
         '<div style="position:absolute;left:0;top:-2mm;width:6mm;height:20mm;background:#0E3A66;"></div>' +
-        '<div style="position:absolute;left:24mm;right:18mm;top:1.2mm;border-top:1.2px solid #0E3A66;' +
+        '<div style="position:absolute;left:24mm;right:18mm;top:5.5mm;border-top:1.2px solid #0E3A66;' +
         'padding-top:1.8mm;font-size:7.5px;color:#6B7178;display:flex;justify-content:space-between;">' +
         `<span>© ${Number(YY)} Logisight Maritime Intelligence</span>` +
         `<span>monthly-analysis-${MONTH} · <span class="pageNumber"></span></span>` +
