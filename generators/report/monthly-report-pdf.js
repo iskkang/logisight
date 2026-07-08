@@ -414,10 +414,6 @@ window.__chartsReady = true;
     .map((t) => `<li><b>${t.num}</b><span style="flex:1">${t.title}</span></li>`)
     .join("");
 
-  const frontHeadline = escapeHtml(
-    front.headline || "글로벌 해운·항공·철도 운임과 공급망·지정학 동향 종합 분석",
-  );
-
   return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
@@ -466,9 +462,7 @@ body{font-family:var(--font-sans);color:var(--c-body);font-size:10pt;line-height
 .ld-title{font-family:var(--font-title);font-weight:800;font-size:32pt;line-height:1.15;
   letter-spacing:.02em;color:#fff;margin:0 0 5mm}
 .ld-rule{width:22mm;height:.8mm;background:#C8B37E;margin:0 auto 5mm}
-.ld-sub{font-size:9.5pt;color:rgba(255,255,255,.78);margin:0 0 4.5mm}
-.ld-head{font-size:9.5pt;line-height:1.55;color:rgba(255,255,255,.86);max-width:150mm;
-  margin:0 auto;word-break:keep-all}
+.ld-sub{font-size:9.5pt;color:rgba(255,255,255,.78);margin:0}
 .ld-bottom{position:absolute;left:14mm;right:14mm;bottom:9mm;z-index:2}
 .ld-issue{border-top:1px solid rgba(200,179,126,.45);padding-top:3.5mm;margin-bottom:4mm}
 .ld-issue-h{font-size:7.5pt;letter-spacing:4px;color:#C8B37E;font-weight:800;margin-bottom:2.5mm;text-align:center}
@@ -794,7 +788,6 @@ p.article-cat{font-family:var(--font-sans);font-size:7.5pt;letter-spacing:4px;
     <h1 class="ld-title">월간 시장 인텔리전스</h1>
     <div class="ld-rule"></div>
     <p class="ld-sub">글로벌 해운·항공·철도 운임과 공급망·지정학 동향 종합 분석 · ${Number(YY)}년 ${Number(MM)}월호</p>
-    <p class="ld-head">${frontHeadline}</p>
   </div>
   <div class="ld-bottom">
     <div class="ld-issue">

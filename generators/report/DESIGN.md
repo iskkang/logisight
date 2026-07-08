@@ -17,8 +17,9 @@
 - **타이틀 블록** (`.ld-head-zone`, top:15mm, 중앙 정렬):
   키커 `MONTHLY MARKET INTELLIGENCE · VOL.{MM} · {ENG_MONTH} {YYYY}` (스틸블루 #9FBCDD)
   → 타이틀 "월간 시장 인텔리전스" (GyeonggiTitle 800, 32pt, 흰색)
-  → 금색 룰 22mm (#C8B37E) → 부제+월호 → 이달의 프레임 헤드라인(`**이번 달 핵심**`에서 자동 추출).
-  표지 액센트는 아트의 금색·스틸 톤(#C8B37E·#9FBCDD)을 따른다 — 민트는 표지에 쓰지 않는다.
+  → 금색 룰 22mm (#C8B37E) → 부제+월호. 여기서 끝 — **월별 헤드라인·문장류는 표지에 넣지 않는다**
+  (2026-07 사용자 확정: 표지는 깔끔하게). 표지 액센트는 아트의 금색·스틸 톤(#C8B37E·#9FBCDD)을
+  따른다 — 민트는 표지에 쓰지 않는다.
 - **하단** (`.ld-bottom`, bottom:9mm): IN THIS ISSUE 2열 목차(자동, toc) + 발행일·URL 풋라인.
 - KPI 칩은 표지에 넣지 않는다 (P2 Executive Summary와 중복).
 
