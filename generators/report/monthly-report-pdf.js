@@ -452,15 +452,12 @@ window.__chartsReady = true;
 @page{size:A4;margin:16mm 0 14mm}
 @page bleed{margin:0}
 
-html{/* 전 페이지 좌측 네이비 스파인 — 캔버스 배경은 매 페이지 반복 */
-  background:linear-gradient(90deg,#0E3A66 0,#0E3A66 6mm,#fff 6mm)}
 body{font-family:var(--font-sans);color:var(--c-body);font-size:10pt;line-height:1.6;
   margin:0;background:transparent;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 
 /* ── LANDING COVER (표지 아트 풀블리드 + 타이틀 오버레이 — 원본 상단 로고 텍스트는 .ld-shade가 가림) ── */
 .landing{page:bleed;width:210mm;height:297mm;overflow:hidden;break-after:page;position:relative;
   background:#0A2036 url('${COVER_IMG}') center/cover no-repeat;color:#fff}
-.ld-spineband{position:absolute;left:0;top:0;width:6mm;height:297mm;background:#0E3A66;z-index:5}
 .ld-shade{position:absolute;left:0;top:0;right:0;height:33%;z-index:1;
   background:linear-gradient(90deg,#011126 0%,#0C2847 52%,#193B5E 100%);
   -webkit-mask-image:linear-gradient(180deg,#000 0,#000 72%,transparent 100%);
@@ -480,7 +477,11 @@ body{font-family:var(--font-sans);color:var(--c-body);font-size:10pt;line-height
 .ld-issue li{display:flex;gap:3mm;align-items:baseline;font-size:8.5pt;color:rgba(255,255,255,.82);padding:.8mm 0}
 .ld-issue li b{color:#C8B37E;font-weight:800;font-variant-numeric:tabular-nums}
 .ld-foot{display:flex;justify-content:space-between;font-size:7.5pt;color:rgba(255,255,255,.5)}
-/* 전 페이지 스파인 텍스트(fixed, 하단 정렬) + 상단 유령 파편 마스크(Chromium 인쇄 quirk) */
+/* 전 페이지 좌측 스파인 — 단일 fixed 밴드(마진 구간 포함 풀하이트, 매 페이지 반복 인쇄).
+   캔버스 배경·헤더/푸터 템플릿 블록 3조각 방식은 폭·오프셋이 서로 어긋나 폐기.
+   top:-20mm/340mm = 콘텐츠 페이지의 fixed 마진 오프셋(+16mm)까지 흡수해 0~297mm 전체 커버 */
+.spine-band{position:fixed;left:0;top:-20mm;width:6mm;height:340mm;background:#0E3A66;z-index:58}
+/* 스파인 텍스트(fixed, 하단 정렬) + 상단 유령 파편 마스크(Chromium 인쇄 quirk) */
 .spine-mask{position:fixed;left:0;top:0;width:6mm;height:88mm;background:#0E3A66;z-index:60}
 .spine-text{position:fixed;left:0;bottom:42mm;width:6mm;height:160mm;z-index:59}
 .spine-text img{width:6mm;height:160mm;display:block}
@@ -785,9 +786,9 @@ p.article-cat{font-family:var(--font-sans);font-size:7.5pt;letter-spacing:4px;
 <body>
 
 <section class="landing">
+  <div class="spine-band"></div>
   <div class="spine-mask"></div>
   <div class="spine-text"><img src="${SPINE_IMG}" alt=""></div>
-  <div class="ld-spineband"></div>
   <div class="ld-shade"></div>
   <div class="ld-head-zone">
     <div class="ld-kicker">MONTHLY MARKET INTELLIGENCE · VOL.${VOL} · ${ENG_MONTH} ${Number(YY)}</div>
@@ -1289,10 +1290,11 @@ async function main() {
       format: "A4",
       printBackground: true,
       displayHeaderFooter: true,
-      // 상하 마진 구간까지 스파인을 잇는 네이비 블록 (bleed 페이지는 마진 0이라 미표시)
+      // 스파인 3구간: 콘텐츠 박스는 .spine-band(fixed), 상하 마진은 템플릿 블록.
+      // 헤더 콘텐츠는 Chromium이 ~6mm 아래로 밀어 그림 → top:-6.5mm로 상쇄(박스에 클리핑됨)
       headerTemplate:
         '<div style="width:100%;height:16mm;position:relative;-webkit-print-color-adjust:exact;">' +
-        '<div style="position:absolute;left:0;top:0;width:6mm;height:16mm;background:#0E3A66;"></div></div>',
+        '<div style="position:absolute;left:0;top:-6.5mm;width:6mm;height:24mm;background:#0E3A66;"></div></div>',
       footerTemplate:
         '<div style="position:relative;width:100%;height:14mm;-webkit-print-color-adjust:exact;font-family:Arial,Helvetica,sans-serif;">' +
         '<div style="position:absolute;left:0;top:-2mm;width:6mm;height:20mm;background:#0E3A66;"></div>' +
