@@ -43,7 +43,8 @@ async function main() {
       const { error: upErr } = await supabase.storage.from(REPORTS_BUCKET)
         .upload(objectPath, fs.readFileSync(pdfPath), { contentType: 'application/pdf', upsert: true });
       if (upErr) throw new Error(`PDF 업로드 실패: ${upErr.message}`);
-      pdfUrl = supabase.storage.from(REPORTS_BUCKET).getPublicUrl(objectPath).data.publicUrl;
+      // 공개 링크는 자체 도메인 경유 — Vercel rewrite(/reports/:type/:file)가 Supabase 스토리지로 프록시
+      pdfUrl = `https://logisight.mtlship.com/reports/${objectPath}`;
       console.log(`  PDF 업로드: ${objectPath}`);
     }
   }

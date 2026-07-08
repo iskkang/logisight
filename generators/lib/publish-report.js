@@ -8,6 +8,8 @@ const ws = require('ws'); globalThis.WebSocket = ws;
 const { createClient } = require('@supabase/supabase-js');
 
 const BUCKET = 'reports';
+// 공개 링크는 자체 도메인 경유 — Vercel rewrite(/reports/:type/:file)가 Supabase 스토리지로 프록시
+const SITE_BASE = 'https://logisight.mtlship.com';
 
 function client() {
   const url = process.env.SUPABASE_URL;
@@ -49,7 +51,7 @@ async function publishReport(inp) {
     // 재발행 시 URL이 동일해 브라우저/CDN이 옛 파일을 보여주는 문제 방지 —
     // 콘텐츠 해시 버전 쿼리를 붙여 파일이 바뀌면 URL도 바뀌게 한다(스토리지 경로는 동일).
     const ver = require('crypto').createHash('md5').update(pdfBuf).digest('hex').slice(0, 8);
-    pdfUrl = sb.storage.from(BUCKET).getPublicUrl(pdfKey).data.publicUrl + `?v=${ver}`;
+    pdfUrl = `${SITE_BASE}/reports/${pdfKey}?v=${ver}`;
     console.log(`  PDF 업로드: ${pdfKey} (v=${ver})`);
   }
   if (!pdfKey) throw new Error('pdfKey 누락 (pdf_path NOT NULL)');
@@ -61,7 +63,7 @@ async function publishReport(inp) {
     const { error } = await sb.storage.from(BUCKET)
       .upload(coverKey, fs.readFileSync(inp.coverPath), { contentType: 'image/png', upsert: true });
     if (error) throw new Error(`표지 업로드 실패: ${error.message}`);
-    coverUrl = sb.storage.from(BUCKET).getPublicUrl(coverKey).data.publicUrl;
+    coverUrl = `${SITE_BASE}/reports/${coverKey}`;
   }
 
   // ② reports 카탈로그 upsert
