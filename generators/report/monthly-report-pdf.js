@@ -26,6 +26,9 @@ const VOL = MM; // 5월 → "05"
 let PUB = TODAY; // 발행일(아래 main에서 md의 발행일로 보정)
 
 const LOGO_SVG = fs.readFileSync(path.join(__dirname, 'assets/logisight_logo.svg'), 'utf-8');
+// 표지 아트 (content/templates/report2.png 원본 → q85 JPEG) — 상단 원본 로고 텍스트는 .ld-shade가 가림
+const COVER_IMG = 'data:image/jpeg;base64,' +
+  fs.readFileSync(path.join(__dirname, 'assets/cover-art.jpg')).toString('base64');
 
 const MD_PATH = path.resolve(
   __dirname,
@@ -412,20 +415,6 @@ window.__chartsReady = true;
     .map((t) => `<li><b>${t.num}</b><span style="flex:1">${t.title}</span></li>`)
     .join("");
 
-  const LD_PICK = ["KCCI 종합", "SCFI 종합", "CCFI 종합", "BDI"];
-  const landingKpis = (front.kpis || []).length
-    ? `<div class="ld-kpis">${LD_PICK
-        .map((label) => (front.kpis || []).find((k) => k.label === label))
-        .filter(Boolean)
-        .map(
-          (k) =>
-            `<div class="ld-kpi"><div class="l">${escapeHtml(k.label)}</div>` +
-            `<div class="v">${escapeHtml(k.val)}</div>` +
-            `<div class="c ${k.dir}">${escapeHtml(k.mom)} MoM</div></div>`,
-        )
-        .join("")}</div>`
-    : "";
-
   const frontHeadline = escapeHtml(
     front.headline || "글로벌 해운·항공·철도 운임과 공급망·지정학 동향 종합 분석",
   );
@@ -468,39 +457,33 @@ html{/* 전 페이지 좌측 네이비 스파인 — 캔버스 배경은 매 페
 body{font-family:var(--font-sans);color:var(--c-body);font-size:10pt;line-height:1.6;
   margin:0;background:transparent;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 
-/* ── LANDING COVER (웹 랜딩 문법: 히어로 타이틀 + KPI 칩 + 섹션 내비) ── */
+/* ── LANDING COVER (표지 아트 풀블리드 + 타이틀 오버레이 — 원본 상단 로고 텍스트는 .ld-shade가 가림) ── */
 .landing{page:bleed;width:210mm;height:297mm;overflow:hidden;break-after:page;position:relative;
-  background:linear-gradient(160deg,#0E3A66 0%,#0A2B4E 55%,#071F38 100%);
-  color:#fff;padding:20mm 18mm 16mm;display:flex;flex-direction:column}
-.landing::after{content:'';position:absolute;right:0;bottom:0;width:120mm;height:74mm;
-  background:linear-gradient(135deg,rgba(45,212,191,.16) 0%,rgba(45,212,191,.04) 100%);
-  clip-path:polygon(100% 0,100% 100%,0 100%)}
-.ld-top{display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1}
-.ld-top svg{height:9mm;width:auto;display:block}
-.ld-vol{font-size:9pt;letter-spacing:3px;color:rgba(255,255,255,.66);font-weight:700}
-.ld-hero{margin-top:auto;position:relative;z-index:1}
-.ld-kicker{font-size:9pt;letter-spacing:5px;color:#2dd4bf;font-weight:700;margin-bottom:6mm}
-.ld-title{font-family:var(--font-title);font-weight:800;font-size:41pt;line-height:1.12;
-  letter-spacing:-.02em;margin:0 0 6mm;color:#fff}
-.ld-rule{width:26mm;height:1.2mm;background:#2dd4bf;margin-bottom:6mm}
-.ld-sub{font-size:11pt;color:rgba(255,255,255,.78);margin:0 0 7mm}
-.ld-head{font-family:var(--font-title);font-size:13.5pt;font-weight:700;line-height:1.5;
-  color:rgba(255,255,255,.94);max-width:162mm;margin:0 0 9mm;word-break:keep-all}
-.ld-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:4mm;margin-bottom:9mm;position:relative;z-index:1}
-.ld-kpi{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);padding:3.4mm 4mm}
-.ld-kpi .l{font-size:7.5pt;font-weight:700;color:rgba(255,255,255,.62);letter-spacing:.5px}
-.ld-kpi .v{font-family:var(--font-title);font-size:15.5pt;font-weight:800;color:#fff;
-  font-variant-numeric:tabular-nums;line-height:1.2;margin:1mm 0 .5mm}
-.ld-kpi .c{font-size:8.5pt;font-weight:700;font-variant-numeric:tabular-nums}
-.ld-kpi .c.up{color:#FF9B9B}.ld-kpi .c.down{color:#8FC3F0}
-.ld-issue{position:relative;z-index:1;border-top:1px solid rgba(255,255,255,.18);padding-top:5mm;margin-bottom:7mm}
-.ld-issue-h{font-size:8pt;letter-spacing:4px;color:#2dd4bf;font-weight:800;margin-bottom:3.5mm}
-.ld-issue ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:1.6mm 10mm}
-.ld-issue li{display:flex;gap:4mm;align-items:baseline;font-size:9.5pt;color:rgba(255,255,255,.85);
-  padding:1.4mm 0;border-bottom:1px dotted rgba(255,255,255,.14)}
-.ld-issue li b{color:#2dd4bf;font-weight:800;font-variant-numeric:tabular-nums}
-.ld-foot{display:flex;justify-content:space-between;position:relative;z-index:1;
-  font-size:8pt;color:rgba(255,255,255,.55)}
+  background:#0A2036 url('${COVER_IMG}') center/cover no-repeat;color:#fff}
+.ld-spineband{position:absolute;left:0;top:0;width:6mm;height:297mm;background:#0E3A66;z-index:5}
+.ld-shade{position:absolute;left:0;top:0;right:0;height:33%;z-index:1;
+  background:linear-gradient(90deg,#011126 0%,#0C2847 52%,#193B5E 100%);
+  -webkit-mask-image:linear-gradient(180deg,#000 0,#000 72%,transparent 100%);
+  mask-image:linear-gradient(180deg,#000 0,#000 72%,transparent 100%)}
+.ld-head-zone{position:absolute;left:0;right:0;top:15mm;z-index:2;text-align:center;padding:0 20mm}
+.ld-kicker{font-size:8.5pt;letter-spacing:4.5px;color:#9FBCDD;font-weight:700;margin-bottom:5.5mm}
+.ld-title{font-family:var(--font-title);font-weight:800;font-size:32pt;line-height:1.15;
+  letter-spacing:.02em;color:#fff;margin:0 0 5mm}
+.ld-rule{width:22mm;height:.8mm;background:#C8B37E;margin:0 auto 5mm}
+.ld-sub{font-size:9.5pt;color:rgba(255,255,255,.78);margin:0 0 4.5mm}
+.ld-head{font-size:9.5pt;line-height:1.55;color:rgba(255,255,255,.86);max-width:150mm;
+  margin:0 auto;word-break:keep-all}
+.ld-bottom{position:absolute;left:14mm;right:14mm;bottom:9mm;z-index:2}
+.ld-issue{border-top:1px solid rgba(200,179,126,.45);padding-top:3.5mm;margin-bottom:4mm}
+.ld-issue-h{font-size:7.5pt;letter-spacing:4px;color:#C8B37E;font-weight:800;margin-bottom:2.5mm;text-align:center}
+.ld-issue ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:1mm 9mm}
+.ld-issue li{display:flex;gap:3mm;align-items:baseline;font-size:8.5pt;color:rgba(255,255,255,.82);padding:.8mm 0}
+.ld-issue li b{color:#C8B37E;font-weight:800;font-variant-numeric:tabular-nums}
+.ld-foot{display:flex;justify-content:space-between;font-size:7.5pt;color:rgba(255,255,255,.5)}
+/* 전 페이지 스파인 텍스트(fixed, 하단 정렬) + 상단 유령 파편 마스크(Chromium 인쇄 quirk) */
+.spine-mask{position:fixed;left:0;top:0;width:6mm;height:88mm;background:#0E3A66;z-index:60}
+.spine-text{position:fixed;left:0;bottom:42mm;width:6mm;height:160mm;z-index:59}
+.spine-text img{width:6mm;height:160mm;display:block}
 
 /* ── SECTION DIVIDER (풀블리드, 블루 — 섹션을 브랜드 컬러로 구분) ── */
 .divider{page:bleed;width:210mm;height:297mm;overflow:hidden;color:#fff;break-before:page;break-after:page;
@@ -804,22 +787,24 @@ p.article-cat{font-family:var(--font-sans);font-size:7.5pt;letter-spacing:4px;
 <section class="landing">
   <div class="spine-mask"></div>
   <div class="spine-text"><img src="${SPINE_IMG}" alt=""></div>
-  <div class="ld-top">${LOGO_SVG}<span class="ld-vol">VOL.${VOL} · ${ENG_MONTH} ${Number(YY)}</span></div>
-  <div class="ld-hero">
-    <div class="ld-kicker">GLOBAL LOGISTICS &amp; MARKET INTELLIGENCE</div>
-    <h1 class="ld-title">월간 시장<br>인텔리전스</h1>
+  <div class="ld-spineband"></div>
+  <div class="ld-shade"></div>
+  <div class="ld-head-zone">
+    <div class="ld-kicker">MONTHLY MARKET INTELLIGENCE · VOL.${VOL} · ${ENG_MONTH} ${Number(YY)}</div>
+    <h1 class="ld-title">월간 시장 인텔리전스</h1>
     <div class="ld-rule"></div>
     <p class="ld-sub">글로벌 해운·항공·철도 운임과 공급망·지정학 동향 종합 분석 · ${Number(YY)}년 ${Number(MM)}월호</p>
     <p class="ld-head">${frontHeadline}</p>
   </div>
-  ${landingKpis}
-  <div class="ld-issue">
-    <div class="ld-issue-h">IN THIS ISSUE</div>
-    <ul>${issueRows}</ul>
-  </div>
-  <div class="ld-foot">
-    <span>발행 ${PUB} · 데이터 기준: 직전월 최종 공표 주차</span>
-    <span>logisight.mtlship.com</span>
+  <div class="ld-bottom">
+    <div class="ld-issue">
+      <div class="ld-issue-h">IN THIS ISSUE</div>
+      <ul>${issueRows}</ul>
+    </div>
+    <div class="ld-foot">
+      <span>발행 ${PUB} · 데이터 기준: 직전월 최종 공표 주차</span>
+      <span>logisight.mtlship.com</span>
+    </div>
   </div>
 </section>
 
@@ -1300,8 +1285,7 @@ async function main() {
 
     fs.mkdirSync(OUT_DIR, { recursive: true });
     // ── CSS @page가 마진 담당(bleed named page 포함) — weekly-report-pdf.js와 동일 옵션 ──
-    await page.pdf({
-      path: OUT_PATH,
+    const pdfOpts = {
       format: "A4",
       printBackground: true,
       displayHeaderFooter: true,
@@ -1317,8 +1301,25 @@ async function main() {
         `<span>© ${Number(YY)} Logisight Maritime Intelligence</span>` +
         `<span>monthly-analysis-${MONTH} · <span class="pageNumber"></span></span>` +
         '</div></div>',
-    });
-    console.log(`✅ PDF 완료: ${OUT_PATH}`);
+    };
+    // Chromium은 footerTemplate를 bleed(마진 0) 페이지에도 콘텐츠 위에 겹쳐 그린다.
+    // 표지(1)·뒷표지(마지막)는 위치가 항상 고정이므로 footer 없는 렌더의 페이지로 교체.
+    const withFooter = await page.pdf(pdfOpts);
+    const noFooter = await page.pdf({ ...pdfOpts, displayHeaderFooter: false });
+    const { PDFDocument } = require("pdf-lib");
+    const dstDoc = await PDFDocument.load(withFooter);
+    const cleanDoc = await PDFDocument.load(noFooter);
+    const total = dstDoc.getPageCount();
+    if (cleanDoc.getPageCount() !== total) {
+      throw new Error(`footer 유무 렌더 페이지 수 불일치: ${total} vs ${cleanDoc.getPageCount()}`);
+    }
+    const [cover, back] = await dstDoc.copyPages(cleanDoc, [0, total - 1]);
+    dstDoc.removePage(0);
+    dstDoc.insertPage(0, cover);
+    dstDoc.removePage(total - 1);
+    dstDoc.insertPage(total - 1, back);
+    fs.writeFileSync(OUT_PATH, await dstDoc.save());
+    console.log(`✅ PDF 완료: ${OUT_PATH} (${total}p, 표지·뒷표지 footer 제거)`);
   } finally {
     await browser.close();
   }
