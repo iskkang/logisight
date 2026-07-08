@@ -1,8 +1,7 @@
 "use strict";
 // generators/report/monthly-report-pdf.js
 // 월간 리포트 마크다운 → PDF
-// ── 디자인: design.md(증권사 리서치 계열 — 블루 #0070C0 + 틸 #008C8C + 무채색,
-//    Pretendard/경기천년제목, 회색 헤더밴드 + 점선 표) 적용본 ──
+// ── 디자인 계약: generators/report/DESIGN.md (2026-07 확정 — 표지 아트·스파인·푸터 2-pass 규칙) ──
 // ── 파이프라인·페이지 구성(표지/목차/섹션디바이더/서브섹션/해운1p)·해운 압축 로직은 원본 유지 ──
 // 사용법: node generators/report/monthly-report-pdf.js [--month=2026-05]
 
