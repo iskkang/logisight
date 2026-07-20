@@ -37,6 +37,7 @@
     "forecast:drewry": "node generators/web/forecast/persist-drewry.js",
     "forecast:iata-fuel": "node generators/web/forecast/persist-iata-fuel.js",
     "forecast:diversion": "node generators/web/forecast/persist-diversion.js",
+    "calibration:forecasts": "node generators/web/forecast/calibration.js",
     "test:forecast": "node --test generators/web/forecast/",
     "forecast:smoke": "node generators/web/forecast/smoke-assemble.js",
     "generate:climate": "node generators/web/climate/generate.js",
