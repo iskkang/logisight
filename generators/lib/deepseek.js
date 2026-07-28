@@ -18,7 +18,8 @@ async function callDeepSeek({ system, messages, max_tokens = 4096, responseForma
   const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) throw new Error('DEEPSEEK_API_KEY 미설정');
 
-  const body = { model: 'deepseek-chat', max_tokens, messages: [] };
+  // 2026-07 DeepSeek 구모델명(deepseek-chat) 폐기 — Edge Function들과 동일 규약(DEEPSEEK_MODEL 우선)
+  const body = { model: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro', max_tokens, messages: [] };
   if (responseFormat) body.response_format = responseFormat;
   if (system) body.messages.push({ role: 'system', content: system });
   for (const m of messages) body.messages.push(m);
