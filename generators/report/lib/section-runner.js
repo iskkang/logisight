@@ -331,6 +331,7 @@ async function callDeepSeekStream(systemPrompt, userContent, maxTokens) {
     body: JSON.stringify({
       model:      'deepseek-v4-pro',
       max_tokens: maxTokens,
+      thinking:   { type: 'disabled' },  // v4 추론이 본문 예산(12k) 잠식 방지 — 구 deepseek-chat 동작 복원
       stream:     true,
       messages:   [
         { role: 'system', content: systemPrompt },

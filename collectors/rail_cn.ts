@@ -129,6 +129,7 @@ async function translateBatch(items: NewsItem[]): Promise<TranslatedItem[]> {
       body: JSON.stringify({
         model: 'deepseek-v4-pro',
         max_tokens: 2048,
+        thinking: { type: 'disabled' },  // v4 추론의 소예산 잠식 방지 (번역 작업 — 추론 불필요)
         messages: [{
           role: 'user',
           content: `아래 중국어 물류·철도 뉴스 제목을 영어로 번역하고 한 줄 요약을 추가하세요.

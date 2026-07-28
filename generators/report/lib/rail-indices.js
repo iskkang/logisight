@@ -181,6 +181,7 @@ async function translateItems(items) {
       body:    JSON.stringify({
         model:      'deepseek-v4-pro',
         max_tokens: 2000,
+        thinking:   { type: 'disabled' },  // v4 추론의 소예산 잠식 방지 (번역 작업 — 추론 불필요)
         messages: [{
           role:    'user',
           content: `아래 중국어 철도·물류 기사 제목을 한국어로 번역. JSON 배열만 반환.\n입력: ${JSON.stringify(toTranslate)}\n출력 형식: [{"idx":0,"titleKo":"..."}]`,
