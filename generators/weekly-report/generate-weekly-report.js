@@ -1,12 +1,12 @@
 // generators/weekly-report/generate-weekly-report.js
 'use strict';
-// 주간 리포트 초안 생성: 데이터 조립 -> DeepSeek -> 마크다운 -> content/weekly-report/YYYY-Www.md
+// 주간 리포트 초안 생성: 데이터 조립 -> Claude(sonnet-5, 품질 민감 경로) -> 마크다운 -> content/weekly-report/YYYY-Www.md
 const fs = require('fs');
 const path = require('path');
 const ws = require('ws'); globalThis.WebSocket = ws;
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env.local') });
 const { createClient } = require('@supabase/supabase-js');
-const { callDeepSeekJson } = require('../lib/deepseek');
+const { callClaudeJson } = require('../lib/claude');
 const { assembleWeeklyData } = require('./lib/weekly-data');
 const { buildMessages } = require('./lib/prompt');
 const { assembleMarkdown } = require('./lib/assemble');
@@ -20,7 +20,8 @@ async function main() {
 
   const wd = await assembleWeeklyData(supabase, new Date());
   const { system, messages } = buildMessages(wd);
-  const llm = await callDeepSeekJson({ system, messages, max_tokens: 4096 });
+  // sonnet-5 adaptive thinking이 max_tokens를 함께 쓰므로 구 4096 대비 여유 예산
+  const llm = await callClaudeJson({ system, messages, max_tokens: 8192 });
   const md = assembleMarkdown(wd, llm);
 
   fs.mkdirSync(OUT_DIR, { recursive: true });

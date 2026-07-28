@@ -407,17 +407,20 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
   const systemPrompt = buildSectionSystemPrompt(styleGuide, sectionConfig.focus);
   const userPrompt   = buildSectionUserPrompt(sectionConfig.title, cappedItems, month, indexFactText, railFactText, airFactText, portThroughputFactText, kitaFactText, sectionConfig.topicGuides, priorDigest);
 
-  // PASS 1: 초안 생성 — DEEPSEEK_API_KEY 설정 시 deepseek-v4-pro(스트리밍), 미설정 시 claude-sonnet-4-6
-  const pass1Model = process.env.DEEPSEEK_API_KEY ? 'deepseek-v4-pro (stream)' : 'claude-sonnet-4-6';
+  // PASS 1: 초안 생성 — 품질 민감 경로(2026-07 하이브리드 정책): claude-sonnet-5 우선,
+  // ANTHROPIC_API_KEY 미설정 시에만 deepseek-v4-pro(스트리밍) 폴백.
+  // sonnet-5는 adaptive thinking이 max_tokens를 함께 쓰므로 예산 16000 (구 12000 + 여유).
+  const useClaude = !!process.env.ANTHROPIC_API_KEY;
+  const pass1Model = useClaude ? 'claude-sonnet-5' : 'deepseek-v4-pro (stream)';
   console.log(`⏳ [${sectionConfig.id}] PASS 1 — 초안 생성 (${pass1Model})...`);
   const pass1Res = await callWithRetry(
-    () => process.env.DEEPSEEK_API_KEY
-      ? callDeepSeekStream(systemPrompt, userPrompt, 12000)
-      : client.messages.create({
-          model: 'claude-sonnet-4-6', max_tokens: 12000,
+    () => useClaude
+      ? client.messages.create({
+          model: 'claude-sonnet-5', max_tokens: 16000,
           system: systemPrompt,
           messages: [{ role: 'user', content: userPrompt }],
-        }),
+        })
+      : callDeepSeekStream(systemPrompt, userPrompt, 12000),
     { tries: 3, baseMs: 4000 }
   );
   const draft = pass1Res.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
@@ -431,8 +434,8 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
   console.log(`⏳ [${sectionConfig.id}] PASS 2 — 자기검수·수정...`);
   const pass2Res = await callWithRetry(
     () => client.messages.create({
-      model:      'claude-sonnet-4-6',
-      max_tokens: 12000,
+      model:      'claude-sonnet-5',
+      max_tokens: 16000,
       system:     buildCritiqueSystemPrompt(styleGuide),
       messages:   [{ role: 'user', content: buildCritiqueUserPrompt(draft) }],
     }),
