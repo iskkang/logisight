@@ -14,12 +14,19 @@ if (!process.env.DEEPSEEK_API_KEY) {
   require('dotenv').config({ path: path.resolve(__dirname, '../../.env.local') });
 }
 
-async function callDeepSeek({ system, messages, max_tokens = 4096, responseFormat }) {
+async function callDeepSeek({ system, messages, max_tokens = 4096, responseFormat, thinking }) {
   const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) throw new Error('DEEPSEEK_API_KEY 미설정');
 
   // 2026-07 DeepSeek 구모델명(deepseek-chat) 폐기 — Edge Function들과 동일 규약(DEEPSEEK_MODEL 우선)
-  const body = { model: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro', max_tokens, messages: [] };
+  // v4는 추론 모델: 추론이 max_tokens를 잠식해 소예산 호출이 빈 응답으로 죽는다(rates-brief #12).
+  // 기존 호출부는 비추론(deepseek-chat) 기준 예산이므로 기본 추론 비활성 — 필요 시 thinking:{type:'enabled'}.
+  const body = {
+    model: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
+    max_tokens,
+    thinking: thinking || { type: 'disabled' },
+    messages: [],
+  };
   if (responseFormat) body.response_format = responseFormat;
   if (system) body.messages.push({ role: 'system', content: system });
   for (const m of messages) body.messages.push(m);
