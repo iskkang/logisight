@@ -49,18 +49,22 @@ async function loadPortContext() {
     const sb = createClient(url, svcKey);
     const twoMonthsAgo = new Date();
     twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
-    const { data } = await sb
+    const { data, error } = await sb
       .from('port_throughput')
       .select('port_code,year,month,teu')
       .gte('year', twoMonthsAgo.getFullYear())
       .order('year', { ascending: false })
       .order('month', { ascending: false })
       .limit(10);
+    // supabase-js는 PostgREST 오류를 throw하지 않고 error로 돌려준다 → catch가 못 잡는다.
+    // 항만 통계는 선택적이라 계속 진행하되, 조용히 사라지지 않게 로그는 남긴다.
+    if (error) { console.warn(`⚠️ port_throughput 조회 실패 — 항만 통계 없이 진행: ${error.message}`); return ''; }
     if (!data || data.length === 0) return '';
     return '\n[항만 최신 통계]\n' + data
       .map(r => `- ${r.port_code}: ${r.year}-${String(r.month).padStart(2, '0')} = ${r.teu?.toLocaleString() || 'N/A'} TEU`)
       .join('\n');
-  } catch {
+  } catch (e) {
+    console.warn(`⚠️ port_throughput 조회 실패 — 항만 통계 없이 진행: ${e.message}`);
     return '';
   }
 }
