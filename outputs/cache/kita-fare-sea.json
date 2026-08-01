@@ -1,18 +1,11 @@
 {
-  "fetchedAt": "2026-07-25T19:03:03.356Z",
+  "fetchedAt": "2026-08-01T19:03:43.224Z",
   "routes": [
     {
       "originName": "부산",
       "destName": "롱비치",
       "regionName": "북미",
       "indices": [
-        {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
         {
           "yearMon": "202507",
           "radis": 1703,
@@ -107,18 +100,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 5200,
-          "feu": 6500,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 2200,
           "feu": 2700,
-          "teuChg": -3000,
-          "feuChg": -3800
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -212,13 +198,6 @@
       "regionName": "북미",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -312,18 +291,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 5200,
-          "feu": 6500,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 2200,
           "feu": 2700,
-          "teuChg": -3000,
-          "feuChg": -3800
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -417,13 +389,6 @@
       "regionName": "북미",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -517,18 +482,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 5200,
-          "feu": 6500,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 2200,
           "feu": 2700,
-          "teuChg": -3000,
-          "feuChg": -3800
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -622,13 +580,6 @@
       "regionName": "북미",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -722,18 +673,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 6000,
-          "feu": 7500,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 4300,
           "feu": 4800,
-          "teuChg": -1700,
-          "feuChg": -2700
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -820,18 +764,11 @@
           "feuChg": 3350
         },
         {
-          "yearMon": "202506",
-          "teu": 6000,
-          "feu": 7500,
-          "teuChg": -1500,
-          "feuChg": -2000
-        },
-        {
           "yearMon": "202507",
           "teu": 4300,
           "feu": 4800,
-          "teuChg": -1700,
-          "feuChg": -2700
+          "teuChg": -3200,
+          "feuChg": -4700
         },
         {
           "yearMon": "202508",
@@ -925,13 +862,6 @@
       "regionName": "북미",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -1025,18 +955,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 6000,
-          "feu": 7500,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 4300,
           "feu": 4800,
-          "teuChg": -1700,
-          "feuChg": -2700
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -1130,13 +1053,6 @@
       "regionName": "북미",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -1230,18 +1146,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 6000,
-          "feu": 7500,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 4300,
           "feu": 4800,
-          "teuChg": -1700,
-          "feuChg": -2700
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -1335,13 +1244,6 @@
       "regionName": "북미",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -1435,18 +1337,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 5200,
-          "feu": 6500,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 2200,
           "feu": 2700,
-          "teuChg": -3000,
-          "feuChg": -3800
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -1540,13 +1435,6 @@
       "regionName": "북미",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -1640,18 +1528,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 7200,
-          "feu": 8600,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 4900,
           "feu": 5800,
-          "teuChg": -2300,
-          "feuChg": -2800
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -1745,13 +1626,6 @@
       "regionName": "북미",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -1845,18 +1719,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 7200,
-          "feu": 9000,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 4900,
           "feu": 5800,
-          "teuChg": -2300,
-          "feuChg": -3200
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -1950,13 +1817,6 @@
       "regionName": "북미",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -2050,18 +1910,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 7200,
-          "feu": 9000,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 4900,
           "feu": 5800,
-          "teuChg": -2300,
-          "feuChg": -3200
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -2155,13 +2008,6 @@
       "regionName": "북미",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -2255,18 +2101,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 5900,
-          "feu": 7500,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 2400,
           "feu": 3000,
-          "teuChg": -3500,
-          "feuChg": -4500
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -2360,13 +2199,6 @@
       "regionName": "북미",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -2460,18 +2292,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 7300,
-          "feu": 9100,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 4600,
           "feu": 5500,
-          "teuChg": -2700,
-          "feuChg": -3600
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -2565,13 +2390,6 @@
       "regionName": "북미",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -2665,18 +2483,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 7300,
-          "feu": 9100,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 4600,
           "feu": 5500,
-          "teuChg": -2700,
-          "feuChg": -3600
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -2770,13 +2581,6 @@
       "regionName": "중남미",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -2870,18 +2674,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 4500,
-          "feu": 5500,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 2400,
           "feu": 2600,
-          "teuChg": -2100,
-          "feuChg": -2900
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -2975,13 +2772,6 @@
       "regionName": "중남미",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -3075,18 +2865,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 3200,
-          "feu": 3500,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 6700,
           "feu": 6900,
-          "teuChg": 3500,
-          "feuChg": 3400
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -3180,13 +2963,6 @@
       "regionName": "중남미",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -3280,18 +3056,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 3200,
-          "feu": 3500,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 6700,
           "feu": 6900,
-          "teuChg": 3500,
-          "feuChg": 3400
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -3385,13 +3154,6 @@
       "regionName": "중남미",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -3485,18 +3247,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 3200,
-          "feu": 3500,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 6700,
           "feu": 6900,
-          "teuChg": 3500,
-          "feuChg": 3400
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -3590,13 +3345,6 @@
       "regionName": "중남미",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -3690,18 +3438,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 4300,
-          "feu": 5500,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 2400,
           "feu": 2600,
-          "teuChg": -1900,
-          "feuChg": -2900
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -3795,13 +3536,6 @@
       "regionName": "중남미",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -3895,18 +3629,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 4500,
-          "feu": 5500,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 2400,
           "feu": 2600,
-          "teuChg": -2100,
-          "feuChg": -2900
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -4000,13 +3727,6 @@
       "regionName": "중남미",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -4100,18 +3820,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 5700,
-          "feu": 6900,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 5700,
           "feu": 5900,
-          "teuChg": 0,
-          "feuChg": -1000
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -4205,13 +3918,6 @@
       "regionName": "중남미",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -4305,18 +4011,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 5700,
-          "feu": 6900,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 5700,
           "feu": 5900,
-          "teuChg": 0,
-          "feuChg": -1000
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -4410,13 +4109,6 @@
       "regionName": "유럽",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -4510,18 +4202,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 2380,
-          "feu": 3500,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 2000,
           "feu": 3300,
-          "teuChg": -380,
-          "feuChg": -200
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -4615,13 +4300,6 @@
       "regionName": "유럽",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -4715,18 +4393,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 2380,
-          "feu": 3500,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 2000,
           "feu": 3300,
-          "teuChg": -380,
-          "feuChg": -200
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -4820,13 +4491,6 @@
       "regionName": "유럽",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -4920,18 +4584,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 2380,
-          "feu": 3500,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 2000,
           "feu": 3300,
-          "teuChg": -380,
-          "feuChg": -200
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -5025,13 +4682,6 @@
       "regionName": "유럽",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -5125,18 +4775,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 2380,
-          "feu": 3500,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 2000,
           "feu": 3300,
-          "teuChg": -380,
-          "feuChg": -200
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -5230,13 +4873,6 @@
       "regionName": "유럽",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -5330,18 +4966,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 2380,
-          "feu": 3500,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 2000,
           "feu": 3300,
-          "teuChg": -380,
-          "feuChg": -200
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -5435,13 +5064,6 @@
       "regionName": "유럽",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -5535,18 +5157,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 3400,
-          "feu": 5000,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 2900,
           "feu": 3900,
-          "teuChg": -500,
-          "feuChg": -1100
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -5640,13 +5255,6 @@
       "regionName": "유럽",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -5740,18 +5348,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 3400,
-          "feu": 5000,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 2900,
           "feu": 3900,
-          "teuChg": -500,
-          "feuChg": -1100
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -5845,13 +5446,6 @@
       "regionName": "유럽",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -5945,18 +5539,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 3400,
-          "feu": 5000,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 2900,
           "feu": 3900,
-          "teuChg": -500,
-          "feuChg": -1100
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -6050,13 +5637,6 @@
       "regionName": "유럽",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -6150,18 +5730,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 3500,
-          "feu": 5000,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 3100,
           "feu": 4100,
-          "teuChg": -400,
-          "feuChg": -900
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -6255,13 +5828,6 @@
       "regionName": "유럽",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -6355,18 +5921,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 3500,
-          "feu": 5000,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 3100,
           "feu": 4100,
-          "teuChg": -400,
-          "feuChg": -900
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -6460,13 +6019,6 @@
       "regionName": "유럽",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -6560,18 +6112,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 3500,
-          "feu": 5000,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 3100,
           "feu": 4100,
-          "teuChg": -400,
-          "feuChg": -900
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -6665,13 +6210,6 @@
       "regionName": "유럽",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -6765,18 +6303,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 3500,
-          "feu": 5000,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 3100,
           "feu": 4100,
-          "teuChg": -400,
-          "feuChg": -900
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -6870,13 +6401,6 @@
       "regionName": "유럽",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -6970,18 +6494,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 2800,
-          "feu": 4000,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 2900,
           "feu": 4100,
-          "teuChg": 100,
-          "feuChg": 100
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -7075,13 +6592,6 @@
       "regionName": "유럽",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -7175,18 +6685,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 2800,
-          "feu": 4000,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 2900,
           "feu": 4100,
-          "teuChg": 100,
-          "feuChg": 100
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -7280,13 +6783,6 @@
       "regionName": "아시아",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -7380,18 +6876,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 550,
-          "feu": 1000,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 750,
           "feu": 1300,
-          "teuChg": 200,
-          "feuChg": 300
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -7485,13 +6974,6 @@
       "regionName": "아시아",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -7585,18 +7067,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 500,
-          "feu": 900,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 500,
           "feu": 1000,
-          "teuChg": 0,
-          "feuChg": 100
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -7690,13 +7165,6 @@
       "regionName": "아시아",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -7790,18 +7258,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 500,
-          "feu": 900,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 500,
           "feu": 1000,
-          "teuChg": 0,
-          "feuChg": 100
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -7882,13 +7343,6 @@
         },
         {
           "yearMon": "202607",
-          "teu": 500,
-          "feu": 900,
-          "teuChg": 0,
-          "feuChg": 0
-        },
-        {
-          "yearMon": "202506",
           "teu": 500,
           "feu": 900,
           "teuChg": 0,
@@ -7993,13 +7447,6 @@
       "regionName": "아시아",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -8093,18 +7540,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 500,
-          "feu": 900,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 500,
           "feu": 1000,
-          "teuChg": 0,
-          "feuChg": 100
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -8198,13 +7638,6 @@
       "regionName": "아시아",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -8298,18 +7731,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 400,
-          "feu": 750,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 400,
           "feu": 800,
-          "teuChg": 0,
-          "feuChg": 50
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -8403,13 +7829,6 @@
       "regionName": "아시아",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -8503,18 +7922,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 150,
-          "feu": 250,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 200,
           "feu": 300,
-          "teuChg": 50,
-          "feuChg": 50
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -8608,13 +8020,6 @@
       "regionName": "아시아",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -8708,18 +8113,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 650,
-          "feu": 1200,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 700,
           "feu": 1300,
-          "teuChg": 50,
-          "feuChg": 100
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -8813,13 +8211,6 @@
       "regionName": "아시아",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -8913,18 +8304,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 700,
-          "feu": 1200,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 700,
           "feu": 1400,
-          "teuChg": 0,
-          "feuChg": 200
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -9018,13 +8402,6 @@
       "regionName": "아시아",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -9118,18 +8495,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 700,
-          "feu": 1200,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 800,
           "feu": 1400,
-          "teuChg": 100,
-          "feuChg": 200
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -9223,13 +8593,6 @@
       "regionName": "아시아",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -9323,18 +8686,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 500,
-          "feu": 950,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 600,
           "feu": 1000,
-          "teuChg": 100,
-          "feuChg": 50
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -9428,13 +8784,6 @@
       "regionName": "아시아",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -9528,18 +8877,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 500,
-          "feu": 1000,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 650,
           "feu": 1000,
-          "teuChg": 150,
-          "feuChg": 0
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -9633,13 +8975,6 @@
       "regionName": "아시아",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -9733,18 +9068,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 250,
-          "feu": 400,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 300,
           "feu": 500,
-          "teuChg": 50,
-          "feuChg": 100
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -9838,13 +9166,6 @@
       "regionName": "아시아",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -9938,18 +9259,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
+          "yearMon": "202507",
           "teu": 300,
           "feu": 500,
           "teuChg": null,
           "feuChg": null
-        },
-        {
-          "yearMon": "202507",
-          "teu": 300,
-          "feu": 500,
-          "teuChg": 0,
-          "feuChg": 0
         },
         {
           "yearMon": "202508",
@@ -10043,13 +9357,6 @@
       "regionName": "아시아",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -10143,18 +9450,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 800,
-          "feu": 1350,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 1500,
           "feu": 2400,
-          "teuChg": 700,
-          "feuChg": 1050
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -10248,13 +9548,6 @@
       "regionName": "아시아",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -10348,18 +9641,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 600,
-          "feu": 1000,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 600,
           "feu": 1200,
-          "teuChg": 0,
-          "feuChg": 200
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -10453,13 +9739,6 @@
       "regionName": "아시아",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -10553,18 +9832,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 1250,
-          "feu": 2000,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 1600,
           "feu": 2100,
-          "teuChg": 350,
-          "feuChg": 100
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -10658,13 +9930,6 @@
       "regionName": "아시아",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -10758,18 +10023,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 1700,
-          "feu": 2000,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 2300,
           "feu": 2500,
-          "teuChg": 600,
-          "feuChg": 500
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -10863,13 +10121,6 @@
       "regionName": "아시아",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -10963,18 +10214,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 1200,
-          "feu": 1500,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 1600,
           "feu": 2000,
-          "teuChg": 400,
-          "feuChg": 500
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -11068,13 +10312,6 @@
       "regionName": "아시아",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -11168,18 +10405,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 2600,
-          "feu": 4100,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 2600,
           "feu": 4150,
-          "teuChg": 0,
-          "feuChg": 50
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -11273,13 +10503,6 @@
       "regionName": "아시아",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -11373,18 +10596,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 1350,
-          "feu": 1550,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 1900,
           "feu": 2000,
-          "teuChg": 550,
-          "feuChg": 450
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -11478,13 +10694,6 @@
       "regionName": "아시아",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -11578,18 +10787,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 1600,
-          "feu": 1950,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 2000,
           "feu": 2500,
-          "teuChg": 400,
-          "feuChg": 550
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -11683,13 +10885,6 @@
       "regionName": "아시아",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -11783,18 +10978,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 1250,
-          "feu": 1650,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 1600,
           "feu": 2000,
-          "teuChg": 350,
-          "feuChg": 350
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -11888,13 +11076,6 @@
       "regionName": "일본",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -11988,18 +11169,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 100,
-          "feu": 200,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 200,
           "feu": 300,
-          "teuChg": 100,
-          "feuChg": 100
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -12093,13 +11267,6 @@
       "regionName": "일본",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -12193,18 +11360,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 100,
-          "feu": 200,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 200,
           "feu": 300,
-          "teuChg": 100,
-          "feuChg": 100
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -12298,13 +11458,6 @@
       "regionName": "일본",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -12398,18 +11551,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
+          "yearMon": "202507",
           "teu": 100,
           "feu": 200,
           "teuChg": null,
           "feuChg": null
-        },
-        {
-          "yearMon": "202507",
-          "teu": 100,
-          "feu": 200,
-          "teuChg": 0,
-          "feuChg": 0
         },
         {
           "yearMon": "202508",
@@ -12503,13 +11649,6 @@
       "regionName": "일본",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -12603,18 +11742,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
+          "yearMon": "202507",
           "teu": 200,
           "feu": 300,
           "teuChg": null,
           "feuChg": null
-        },
-        {
-          "yearMon": "202507",
-          "teu": 200,
-          "feu": 300,
-          "teuChg": 0,
-          "feuChg": 0
         },
         {
           "yearMon": "202508",
@@ -12708,13 +11840,6 @@
       "regionName": "일본",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -12808,18 +11933,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
+          "yearMon": "202507",
           "teu": 200,
           "feu": 300,
           "teuChg": null,
           "feuChg": null
-        },
-        {
-          "yearMon": "202507",
-          "teu": 200,
-          "feu": 300,
-          "teuChg": 0,
-          "feuChg": 0
         },
         {
           "yearMon": "202508",
@@ -12913,13 +12031,6 @@
       "regionName": "일본",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -13013,18 +12124,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 30,
-          "feu": 50,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 50,
           "feu": 100,
-          "teuChg": 20,
-          "feuChg": 50
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -13118,13 +12222,6 @@
       "regionName": "일본",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -13218,18 +12315,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
+          "yearMon": "202507",
           "teu": 700,
           "feu": 1400,
           "teuChg": null,
           "feuChg": null
-        },
-        {
-          "yearMon": "202507",
-          "teu": 700,
-          "feu": 1400,
-          "teuChg": 0,
-          "feuChg": 0
         },
         {
           "yearMon": "202508",
@@ -13316,18 +12406,11 @@
           "feuChg": 0
         },
         {
-          "yearMon": "202506",
+          "yearMon": "202507",
           "teu": 700,
           "feu": 1400,
           "teuChg": -50,
           "feuChg": -100
-        },
-        {
-          "yearMon": "202507",
-          "teu": 700,
-          "feu": 1400,
-          "teuChg": 0,
-          "feuChg": 0
         },
         {
           "yearMon": "202508",
@@ -13421,13 +12504,6 @@
       "regionName": "일본",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -13521,18 +12597,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
+          "yearMon": "202507",
           "teu": 650,
           "feu": 1300,
           "teuChg": null,
           "feuChg": null
-        },
-        {
-          "yearMon": "202507",
-          "teu": 650,
-          "feu": 1300,
-          "teuChg": 0,
-          "feuChg": 0
         },
         {
           "yearMon": "202508",
@@ -13619,18 +12688,11 @@
           "feuChg": 0
         },
         {
-          "yearMon": "202506",
+          "yearMon": "202507",
           "teu": 650,
           "feu": 1300,
           "teuChg": -100,
           "feuChg": -200
-        },
-        {
-          "yearMon": "202507",
-          "teu": 650,
-          "feu": 1300,
-          "teuChg": 0,
-          "feuChg": 0
         },
         {
           "yearMon": "202508",
@@ -13723,13 +12785,6 @@
       "destName": "하카타(Ferry)",
       "regionName": "일본",
       "indices": [
-        {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
         {
           "yearMon": "202507",
           "radis": 1703,
@@ -13830,13 +12885,6 @@
       "regionName": "중국",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -13930,18 +12978,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
+          "yearMon": "202507",
           "teu": 30,
           "feu": 50,
           "teuChg": null,
           "feuChg": null
-        },
-        {
-          "yearMon": "202507",
-          "teu": 30,
-          "feu": 50,
-          "teuChg": 0,
-          "feuChg": 0
         },
         {
           "yearMon": "202508",
@@ -14035,13 +13076,6 @@
       "regionName": "중국",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -14135,18 +13169,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
+          "yearMon": "202507",
           "teu": 30,
           "feu": 50,
           "teuChg": null,
           "feuChg": null
-        },
-        {
-          "yearMon": "202507",
-          "teu": 30,
-          "feu": 50,
-          "teuChg": 0,
-          "feuChg": 0
         },
         {
           "yearMon": "202508",
@@ -14240,13 +13267,6 @@
       "regionName": "중국",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -14340,18 +13360,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
+          "yearMon": "202507",
           "teu": 30,
           "feu": 50,
           "teuChg": null,
           "feuChg": null
-        },
-        {
-          "yearMon": "202507",
-          "teu": 30,
-          "feu": 50,
-          "teuChg": 0,
-          "feuChg": 0
         },
         {
           "yearMon": "202508",
@@ -14445,13 +13458,6 @@
       "regionName": "중국",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -14545,18 +13551,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
+          "yearMon": "202507",
           "teu": 30,
           "feu": 50,
           "teuChg": null,
           "feuChg": null
-        },
-        {
-          "yearMon": "202507",
-          "teu": 30,
-          "feu": 50,
-          "teuChg": 0,
-          "feuChg": 0
         },
         {
           "yearMon": "202508",
@@ -14650,13 +13649,6 @@
       "regionName": "중국",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -14750,18 +13742,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
+          "yearMon": "202507",
           "teu": 250,
           "feu": 450,
           "teuChg": null,
           "feuChg": null
-        },
-        {
-          "yearMon": "202507",
-          "teu": 250,
-          "feu": 450,
-          "teuChg": 0,
-          "feuChg": 0
         },
         {
           "yearMon": "202508",
@@ -14855,13 +13840,6 @@
       "regionName": "중국",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -14955,18 +13933,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
+          "yearMon": "202507",
           "teu": 250,
           "feu": 450,
           "teuChg": null,
           "feuChg": null
-        },
-        {
-          "yearMon": "202507",
-          "teu": 250,
-          "feu": 450,
-          "teuChg": 0,
-          "feuChg": 0
         },
         {
           "yearMon": "202508",
@@ -15060,13 +14031,6 @@
       "regionName": "중국",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -15160,18 +14124,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 250,
-          "feu": 450,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 50,
           "feu": 100,
-          "teuChg": -200,
-          "feuChg": -350
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -15265,13 +14222,6 @@
       "regionName": "중국",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -15365,18 +14315,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
+          "yearMon": "202507",
           "teu": 100,
           "feu": 150,
           "teuChg": null,
           "feuChg": null
-        },
-        {
-          "yearMon": "202507",
-          "teu": 100,
-          "feu": 150,
-          "teuChg": 0,
-          "feuChg": 0
         },
         {
           "yearMon": "202508",
@@ -15470,13 +14413,6 @@
       "regionName": "중국",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -15570,18 +14506,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 30,
-          "feu": 50,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 30,
           "feu": 52,
-          "teuChg": 0,
-          "feuChg": 2
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -15675,13 +14604,6 @@
       "regionName": "중국",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -15775,18 +14697,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
+          "yearMon": "202507",
           "teu": 50,
           "feu": 100,
           "teuChg": null,
           "feuChg": null
-        },
-        {
-          "yearMon": "202507",
-          "teu": 50,
-          "feu": 100,
-          "teuChg": 0,
-          "feuChg": 0
         },
         {
           "yearMon": "202508",
@@ -15880,13 +14795,6 @@
       "regionName": "중국",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -15980,18 +14888,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
+          "yearMon": "202507",
           "teu": 50,
           "feu": 100,
           "teuChg": null,
           "feuChg": null
-        },
-        {
-          "yearMon": "202507",
-          "teu": 50,
-          "feu": 100,
-          "teuChg": 0,
-          "feuChg": 0
         },
         {
           "yearMon": "202508",
@@ -16085,13 +14986,6 @@
       "regionName": "중국",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -16185,18 +15079,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 30,
-          "feu": 50,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 30,
           "feu": 60,
-          "teuChg": 0,
-          "feuChg": 10
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -16290,13 +15177,6 @@
       "regionName": "중국",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -16390,18 +15270,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
+          "yearMon": "202507",
           "teu": 30,
           "feu": 50,
           "teuChg": null,
           "feuChg": null
-        },
-        {
-          "yearMon": "202507",
-          "teu": 30,
-          "feu": 50,
-          "teuChg": 0,
-          "feuChg": 0
         },
         {
           "yearMon": "202508",
@@ -16495,13 +15368,6 @@
       "regionName": "아프리카",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -16595,18 +15461,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 2200,
-          "feu": 3200,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 3400,
           "feu": 5100,
-          "teuChg": 1200,
-          "feuChg": 1900
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -16700,13 +15559,6 @@
       "regionName": "아프리카",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -16800,18 +15652,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 2300,
-          "feu": 3300,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 3800,
           "feu": 5500,
-          "teuChg": 1500,
-          "feuChg": 2200
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -16905,13 +15750,6 @@
       "regionName": "아프리카",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -17005,18 +15843,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 2400,
-          "feu": 3300,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 3100,
           "feu": 4700,
-          "teuChg": 700,
-          "feuChg": 1400
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -17110,13 +15941,6 @@
       "regionName": "아프리카",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -17210,18 +16034,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 3200,
-          "feu": 4800,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 4300,
           "feu": 6100,
-          "teuChg": 1100,
-          "feuChg": 1300
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -17315,13 +16132,6 @@
       "regionName": "아프리카",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -17415,18 +16225,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 3300,
-          "feu": 5000,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 4500,
           "feu": 6500,
-          "teuChg": 1200,
-          "feuChg": 1500
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -17520,13 +16323,6 @@
       "regionName": "아프리카",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -17620,18 +16416,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 3200,
-          "feu": 4700,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 4300,
           "feu": 5900,
-          "teuChg": 1100,
-          "feuChg": 1200
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -17725,13 +16514,6 @@
       "regionName": "아프리카",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -17825,18 +16607,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 2500,
-          "feu": 3600,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 3400,
           "feu": 5200,
-          "teuChg": 900,
-          "feuChg": 1600
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -17930,13 +16705,6 @@
       "regionName": "아프리카",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -18030,18 +16798,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 2300,
-          "feu": 3100,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 3300,
           "feu": 5400,
-          "teuChg": 1000,
-          "feuChg": 2300
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -18135,13 +16896,6 @@
       "regionName": "아프리카",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -18235,18 +16989,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 4100,
-          "feu": 5300,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 4100,
           "feu": 6100,
-          "teuChg": 0,
-          "feuChg": 800
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -18340,13 +17087,6 @@
       "regionName": "아프리카",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -18440,18 +17180,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 4500,
-          "feu": 6500,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 4500,
           "feu": 5800,
-          "teuChg": 0,
-          "feuChg": -700
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -18545,13 +17278,6 @@
       "regionName": "아프리카",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -18645,18 +17371,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 5100,
-          "feu": 7200,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 4800,
           "feu": 7000,
-          "teuChg": -300,
-          "feuChg": -200
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -18750,13 +17469,6 @@
       "regionName": "아프리카",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -18850,18 +17562,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 5500,
-          "feu": 7300,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 4700,
           "feu": 6800,
-          "teuChg": -800,
-          "feuChg": -500
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -18955,13 +17660,6 @@
       "regionName": "오세아니아",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -19055,18 +17753,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
+          "yearMon": "202507",
           "teu": 900,
           "feu": 1700,
           "teuChg": null,
           "feuChg": null
-        },
-        {
-          "yearMon": "202507",
-          "teu": 900,
-          "feu": 1700,
-          "teuChg": 0,
-          "feuChg": 0
         },
         {
           "yearMon": "202508",
@@ -19160,13 +17851,6 @@
       "regionName": "오세아니아",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -19260,18 +17944,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
+          "yearMon": "202507",
           "teu": 900,
           "feu": 1700,
           "teuChg": null,
           "feuChg": null
-        },
-        {
-          "yearMon": "202507",
-          "teu": 900,
-          "feu": 1700,
-          "teuChg": 0,
-          "feuChg": 0
         },
         {
           "yearMon": "202508",
@@ -19365,13 +18042,6 @@
       "regionName": "오세아니아",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -19465,18 +18135,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
+          "yearMon": "202507",
           "teu": 900,
           "feu": 1700,
           "teuChg": null,
           "feuChg": null
-        },
-        {
-          "yearMon": "202507",
-          "teu": 900,
-          "feu": 1700,
-          "teuChg": 0,
-          "feuChg": 0
         },
         {
           "yearMon": "202508",
@@ -19570,13 +18233,6 @@
       "regionName": "오세아니아",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -19670,18 +18326,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
+          "yearMon": "202507",
           "teu": 900,
           "feu": 1550,
           "teuChg": null,
           "feuChg": null
-        },
-        {
-          "yearMon": "202507",
-          "teu": 900,
-          "feu": 1550,
-          "teuChg": 0,
-          "feuChg": 0
         },
         {
           "yearMon": "202508",
@@ -19775,13 +18424,6 @@
       "regionName": "오세아니아",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -19875,18 +18517,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
+          "yearMon": "202507",
           "teu": 1080,
           "feu": 1600,
           "teuChg": null,
           "feuChg": null
-        },
-        {
-          "yearMon": "202507",
-          "teu": 1080,
-          "feu": 1600,
-          "teuChg": 0,
-          "feuChg": 0
         },
         {
           "yearMon": "202508",
@@ -19973,18 +18608,11 @@
           "feuChg": 450
         },
         {
-          "yearMon": "202506",
+          "yearMon": "202507",
           "teu": 1080,
           "feu": 1600,
           "teuChg": -720,
           "feuChg": -1600
-        },
-        {
-          "yearMon": "202507",
-          "teu": 1080,
-          "feu": 1600,
-          "teuChg": 0,
-          "feuChg": 0
         },
         {
           "yearMon": "202508",
@@ -20078,13 +18706,6 @@
       "regionName": "중동",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -20178,18 +18799,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 1300,
-          "feu": 1600,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 1600,
           "feu": 2100,
-          "teuChg": 300,
-          "feuChg": 500
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -20276,13 +18890,6 @@
       "regionName": "중동",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -20376,18 +18983,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 2460,
-          "feu": 3700,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 2700,
           "feu": 3800,
-          "teuChg": 240,
-          "feuChg": 100
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -20474,13 +19074,6 @@
       "regionName": "중동",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -20574,18 +19167,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 1300,
-          "feu": 1700,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 1700,
           "feu": 2200,
-          "teuChg": 400,
-          "feuChg": 500
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -20672,13 +19258,6 @@
       "regionName": "중동",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -20772,18 +19351,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 1700,
-          "feu": 2300,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 2050,
           "feu": 2800,
-          "teuChg": 350,
-          "feuChg": 500
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -20869,13 +19441,6 @@
       "destName": "반다르아바스",
       "regionName": "중동",
       "indices": [
-        {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
         {
           "yearMon": "202507",
           "radis": 1703,
@@ -20976,13 +19541,6 @@
       "regionName": "중동",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -21076,18 +19634,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 1400,
-          "feu": 1800,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 1750,
           "feu": 2300,
-          "teuChg": 350,
-          "feuChg": 500
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -21174,13 +19725,6 @@
       "regionName": "러시아/CIS",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -21274,18 +19818,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 1000,
-          "feu": 1200,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 900,
           "feu": 1100,
-          "teuChg": -100,
-          "feuChg": -100
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -21344,13 +19881,6 @@
       "regionName": "러시아/CIS",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -21444,18 +19974,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 4000,
-          "feu": 5700,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 3800,
           "feu": 5400,
-          "teuChg": -200,
-          "feuChg": -300
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -21542,18 +20065,11 @@
           "feuChg": 300
         },
         {
-          "yearMon": "202506",
-          "teu": 4000,
-          "feu": 5700,
-          "teuChg": -400,
-          "feuChg": -600
-        },
-        {
           "yearMon": "202507",
           "teu": 3800,
           "feu": 5400,
-          "teuChg": -200,
-          "feuChg": -300
+          "teuChg": -600,
+          "feuChg": -900
         },
         {
           "yearMon": "202508",
@@ -21647,13 +20163,6 @@
       "regionName": "러시아/CIS",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -21747,18 +20256,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 3600,
-          "feu": 5150,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 3550,
           "feu": 4550,
-          "teuChg": -50,
-          "feuChg": -600
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -21852,13 +20354,6 @@
       "regionName": "러시아/CIS",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -21952,18 +20447,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 2200,
-          "feu": 3200,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 2300,
           "feu": 3400,
-          "teuChg": 100,
-          "feuChg": 200
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -22057,13 +20545,6 @@
       "regionName": "러시아/CIS",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -22157,18 +20638,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 3500,
-          "feu": 5200,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 3400,
           "feu": 5100,
-          "teuChg": -100,
-          "feuChg": -100
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
@@ -22262,13 +20736,6 @@
       "regionName": "러시아/CIS",
       "indices": [
         {
-          "yearMon": "202506",
-          "radis": 2703,
-          "naIndex": 7100,
-          "euIndex": 3950,
-          "asiaIndex": 423
-        },
-        {
           "yearMon": "202507",
           "radis": 1703,
           "naIndex": 3240,
@@ -22362,18 +20829,11 @@
       ],
       "rates": [
         {
-          "yearMon": "202506",
-          "teu": 5000,
-          "feu": 6700,
-          "teuChg": null,
-          "feuChg": null
-        },
-        {
           "yearMon": "202507",
           "teu": 5000,
           "feu": 6300,
-          "teuChg": 0,
-          "feuChg": -400
+          "teuChg": null,
+          "feuChg": null
         },
         {
           "yearMon": "202508",
