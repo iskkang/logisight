@@ -3,11 +3,18 @@ name: Deploy Edge Functions
 # globe-risk 파이프라인 함수 자동 배포 — 코드(supabase/functions/<name>)가 main에 푸시되면 Supabase로 배포.
 # git push는 코드만 올리고 Supabase는 '배포된' 함수를 실행하므로, 코드 변경 시 배포가 필요하다. 그걸 자동화.
 #
-# 범위 = event-ingest, risk-refresh 만. (나머지 함수는 verify_jwt 등 설정을 확정 못해 제외 —
-#  supabase/config.toml이 없어 blanket deploy 시 전 함수가 verify_jwt=true로 덮여 공개 웹훅이 깨질 위험.
-#  다른 함수도 자동배포하려면: 그 함수가 verify_jwt=true가 맞는지 확인 후 아래 steps에 한 줄 추가.)
+# 범위 = event-ingest, risk-refresh + 계측 3종(track, resend-webhook, track-record).
+#  (그 외 함수는 verify_jwt 등 설정을 확정 못해 제외 — supabase/config.toml이 없어
+#   blanket deploy 시 전 함수가 verify_jwt=true로 덮여 공개 웹훅이 깨질 위험.
+#   다른 함수도 자동배포하려면: 그 함수가 verify_jwt=true가 맞는지 확인 후 아래 steps에 한 줄 추가.)
+#
+# 계측 3종은 전부 --no-verify-jwt 로 배포한다. 각각 JWT가 아닌 다른 방어선을 쓴다:
+#   track          브라우저 비콘이라 JWT를 붙일 수 없음 → 이벤트 allowlist·필드 상한으로 방어
+#   resend-webhook Resend가 호출하므로 JWT 없음 → Svix 서명 검증이 인증(시크릿 없으면 전량 거부)
+#   track-record   공개 읽기 API → forecasts의 published/resolved 공개 정책에만 의존
 #
 # 필요 시크릿: SUPABASE_ACCESS_TOKEN = infinityflow@naver.com 계정 액세스 토큰.
+# 필요 함수 시크릿(Supabase 대시보드): RESEND_WEBHOOK_SECRET (resend-webhook)
 
 on:
   push:
@@ -15,7 +22,10 @@ on:
     paths:
       - 'supabase/functions/event-ingest/**'
       - 'supabase/functions/risk-refresh/**'
-  workflow_dispatch: {}        # 수동 실행 (두 함수 모두 배포)
+      - 'supabase/functions/track/**'
+      - 'supabase/functions/resend-webhook/**'
+      - 'supabase/functions/track-record/**'
+  workflow_dispatch: {}        # 수동 실행 (전 대상 배포)
 
 jobs:
   deploy:
@@ -35,3 +45,12 @@ jobs:
 
       - name: Deploy risk-refresh
         run: supabase functions deploy risk-refresh --project-ref hmgbvqczmyjixkqbruzp
+
+      - name: Deploy track (계측 수집 — 브라우저 비콘)
+        run: supabase functions deploy track --project-ref hmgbvqczmyjixkqbruzp --no-verify-jwt
+
+      - name: Deploy resend-webhook (뉴스레터 반응 — Svix 서명으로 인증)
+        run: supabase functions deploy resend-webhook --project-ref hmgbvqczmyjixkqbruzp --no-verify-jwt
+
+      - name: Deploy track-record (예보 적중률 공개 API)
+        run: supabase functions deploy track-record --project-ref hmgbvqczmyjixkqbruzp --no-verify-jwt

@@ -7,14 +7,17 @@
 const { Resend } = require('resend');
 const fs = require('fs');
 const path = require('path');
+const { campaignId, withUtm } = require('./lib/campaign');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const TYPE = process.argv.find(a => a.startsWith('--type='))?.split('=')[1] || 'daily';
 const HTML_FILE = process.argv.find(a => a.startsWith('--html='))?.split('=').slice(1).join('=');
 const TO = process.env.SEND_TO || process.env.INTERNAL_EMAIL;
-const FROM = 'Logisight <newsletter@mtlb.co.kr>';
-const SITE_URL = 'https://logisight.mtlship.com';
+// 발신 주소·사이트는 환경변수로 뺀다 — Logisight를 MTL 도메인에서 분리할 때 DNS/Resend 검증만 마치면
+// 코드 변경 없이 전환된다. 미설정 시 현행 값 유지(동작 불변).
+const FROM = process.env.NEWSLETTER_FROM || 'Logisight <newsletter@mtlb.co.kr>';
+const SITE_URL = process.env.SITE_URL || 'https://logisight.mtlship.com';
 
 // 수신거부 링크 주입 — 생성 HTML의 {{UNSUBSCRIBE_URL}} 치환, 없으면 본문 끝에 최소 푸터 추가.
 // id 없는 내부 사본은 /news 로 대체.
@@ -41,6 +44,33 @@ function chunk(arr, n) {
   const out = [];
   for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n));
   return out;
+}
+
+// ──────────────────────────────────────────
+// 계측 — 발송 기록 (058)
+// ──────────────────────────────────────────
+// 발송 1회 = newsletter_sends 1행. 이게 있어야 오픈율의 분모가 생긴다.
+// 계측 실패가 발송을 되돌리지는 않는다 — 경고만 남기고 진행한다(메일은 이미 나갔다).
+async function recordSend({ campaign, kind, subject, recipients, failed }) {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) { console.warn('⚠️ Supabase 미설정 — 발송 기록 생략'); return; }
+  try {
+    const res = await fetch(`${url}/rest/v1/newsletter_sends?on_conflict=campaign_id`, {
+      method: 'POST',
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        'Content-Type': 'application/json',
+        Prefer: 'resolution=merge-duplicates',
+      },
+      body: JSON.stringify({ campaign_id: campaign, kind, subject, recipients, failed }),
+    });
+    if (!res.ok) console.warn(`⚠️ 발송 기록 실패: HTTP ${res.status} ${await res.text()}`);
+    else console.log(`📈 발송 기록: ${campaign} (수신자 ${recipients} / 실패 ${failed})`);
+  } catch (e) {
+    console.warn(`⚠️ 발송 기록 실패: ${e.message}`);
+  }
 }
 
 // ──────────────────────────────────────────
@@ -335,9 +365,17 @@ async function send() {
       return;
     }
 
+    // 계측: 캠페인 ID를 Resend tag로 심어야 웹훅(오픈·클릭)이 이 발송으로 귀속된다.
+    const kind = ['daily', 'weekly', 'report'].includes(TYPE) ? TYPE : 'daily';
+    const campaign = campaignId(kind);
+    const trackedHtml = withUtm(html, campaign, SITE_URL);
+
     let sent = 0, failed = 0;
     for (const group of chunk(recipients, 100)) {
-      const payload = group.map(r => ({ from: FROM, to: [r.email], subject, html: withUnsub(html, r.id) }));
+      const payload = group.map(r => ({
+        from: FROM, to: [r.email], subject, html: withUnsub(trackedHtml, r.id),
+        tags: [{ name: 'campaign_id', value: campaign }],
+      }));
       const result = await resend.batch.send(payload);
       if (result.error) {
         console.error('❌ 배치 발송 실패:', JSON.stringify(result.error));
@@ -347,6 +385,7 @@ async function send() {
       sent += group.length;
     }
     console.log(`✅ 구독자 발송 완료 — 성공 ${sent} / 실패 ${failed} / 제목: ${subject}`);
+    await recordSend({ campaign, kind, subject, recipients: sent, failed });
     if (failed > 0) process.exit(1);
     return;
   }
