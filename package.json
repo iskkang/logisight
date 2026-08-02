@@ -80,6 +80,8 @@
     "kita:air:push": "node generators/report/lib/kita-fare.js --air --force --push",
     "kita:all:push": "npm run kita:sea:push && npm run kita:air:push",
     "rates-brief:generate": "node generators/web/rates-brief/generate-rates-brief.js",
+    "kpi:weekly": "node scripts/kpi-weekly.js",
+    "test:kpi": "node --test scripts/kpi-weekly.test.js",
     "lint": "eslint collectors generators scripts --ext ts,js"
   },
   "dependencies": {

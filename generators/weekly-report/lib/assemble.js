@@ -41,8 +41,7 @@ function assembleMarkdown(weeklyData, llm) {
   L.push(`# ${wn}주차 글로벌 물류 시황`, '');
   L.push('| 항목 | 내용 |', '|---|---|');
   L.push(`| 작성일 | ${generatedAt} |`);
-  L.push('| 작성자 | 경영기획팀 |');
-  L.push('| 보고대상 | 임원회의 |');
+  L.push('| 발행 | Logisight |');
   L.push(`| 보고기간 | ${period.start} ~ ${period.end} (${wn}주차) |`, '');
 
   // Executive Summary — 종합 행이 없으면 overview로 보강

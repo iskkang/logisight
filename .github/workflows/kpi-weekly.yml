@@ -1,0 +1,35 @@
+name: Weekly KPI Digest
+
+# 매주 월요일: 지난 7일 계측 지표를 한 화면으로 요약해 Slack으로 보낸다.
+#   구독자 · 사이트 퍼널 · 뉴스레터 오픈/클릭 · 예보 적중률 · 상위 콘텐츠.
+#
+# 왜 자동화하나: 지표를 쌓기만 하고 아무도 열어보지 않으면 계측은 없는 것과 같다.
+#   공개 오픈 전에는 대부분 0으로 나오는 게 정상이며, 그 0이 이후 비교의 기준선이다.
+#
+# 필요 secrets: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SLACK_WEBHOOK(선택 — 없으면 로그로만 남음)
+on:
+  schedule:
+    - cron: '0 0 * * 1'      # 월요일 09:00 KST (00:00 UTC)
+  workflow_dispatch: {}
+
+concurrency:
+  group: kpi-weekly
+  cancel-in-progress: false
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22', cache: 'npm' }
+      - run: npm ci
+
+      # --slack 은 SLACK_WEBHOOK 이 있을 때만 실제 전송한다(없으면 콘솔 출력으로 끝).
+      - name: 주간 KPI 다이제스트
+        run: node scripts/kpi-weekly.js --slack
