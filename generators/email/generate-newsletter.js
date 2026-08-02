@@ -157,7 +157,7 @@ function build(rail, ocean) {
   <!-- HEADER -->
   <tr><td style="background:#EFF6FF;padding:24px 28px 20px;border-bottom:3px solid #1B4D8C;">
     <div style="font-size:11px;font-weight:700;color:#1B4D8C;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:4px;">
-      MTL Logisight Intelligence
+      Logisight Intelligence
     </div>
     <div style="font-size:24px;font-weight:800;color:#0F2D5A;line-height:1.2;margin-bottom:4px;">Logisight Daily</div>
     <div style="font-size:13px;color:#475569;">${dateFormatted}</div>
@@ -185,7 +185,7 @@ function build(rail, ocean) {
   <tr><td style="background:#1E293B;border-radius:0 0 16px 16px;padding:20px 24px;text-align:center;">
     <div style="font-size:12px;font-weight:700;color:#FFFFFF;margin-bottom:4px;">Logisight Daily</div>
     <div style="font-size:11px;color:#94A3B8;line-height:1.8;margin-bottom:8px;">
-      발행: MTL Shipping Agency &nbsp;·&nbsp; newsletter@mtlship.com<br>${dateFormatted}
+      발행: Logisight &nbsp;·&nbsp; logisight.mtlship.com<br>${dateFormatted}
     </div>
     <div style="font-size:11px;">
       <a href="#" style="color:#93C5FD;text-decoration:none;">수신 거부</a>

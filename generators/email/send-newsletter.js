@@ -24,7 +24,7 @@ const SITE_URL = process.env.SITE_URL || 'https://logisight.mtlship.com';
 function withUnsub(html, id) {
   const url = id ? `${SITE_URL}/unsubscribe?id=${id}` : `${SITE_URL}/news`;
   if (html.includes('{{UNSUBSCRIBE_URL}}')) return html.split('{{UNSUBSCRIBE_URL}}').join(url);
-  const fallback = `<div style="font-size:11px;color:#94a3b8;text-align:center;padding:16px;">수신거부: <a href="${url}" style="color:#93c5fd;">구독 해지</a> · MTL Shipping Agency</div>`;
+  const fallback = `<div style="font-size:11px;color:#94a3b8;text-align:center;padding:16px;">수신거부: <a href="${url}" style="color:#93c5fd;">구독 해지</a> · Logisight</div>`;
   return html.includes('</body>') ? html.replace('</body>', `${fallback}</body>`) : html + fallback;
 }
 
@@ -177,7 +177,7 @@ function buildDailyHtml(data) {
               <tr>
                 <td>
                   <div style="font-size:12px;color:#6b7280;">
-                    <strong style="color:#1B4D8C;">Logisight</strong> · MTL Shipping Agency<br>
+                    <strong style="color:#1B4D8C;">Logisight</strong><br>
                     <a href="https://logisight.mtlship.com" style="color:#1B4D8C;">logisight.mtlship.com</a>
                   </div>
                 </td>
@@ -278,7 +278,7 @@ function buildWeeklyHtml(data) {
             ${(data.highlights || [
               '미주 동안 운임 3주 만에 반등, 선사 할증료 영향',
               'EU ETS 2단계 시행 임박, 해운사 비용 전가 가속',
-              'TCR Q1 실적 사상 최고치, MTL 차별화 기회',
+              'TCR Q1 실적 사상 최고치',
             ]).map((item, i) => `
               <div style="display:flex;align-items:flex-start;margin-bottom:10px;">
                 <span style="background:#1B4D8C;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;margin-right:10px;white-space:nowrap;margin-top:2px;">
@@ -294,11 +294,11 @@ function buildWeeklyHtml(data) {
         <tr>
           <td style="background:#f9fafb;border-top:1px solid #e5e7eb;padding:20px 32px;">
             <div style="font-size:12px;color:#6b7280;">
-              <strong style="color:#1B4D8C;">Logisight</strong> · MTL Shipping Agency ·
+              <strong style="color:#1B4D8C;">Logisight</strong> ·
               <a href="https://logisight.mtlship.com" style="color:#1B4D8C;">logisight.mtlship.com</a>
             </div>
             <div style="font-size:11px;color:#9ca3af;margin-top:8px;">
-              본 보고서는 공개 데이터 기반 자동 생성 자료입니다. 실제 운임은 MTL 영업팀에 문의하세요.
+              본 보고서는 공개 데이터 기반 자동 생성 자료입니다.
             </div>
           </td>
         </tr>

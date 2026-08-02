@@ -124,7 +124,7 @@ blockquote{color:var(--c-cap);font-size:8.8pt;border-left:3px solid var(--c-rule
     <div class="cv-rule"></div>
     <div class="cv-sub">보고기간 ${meta.period || ''} · 작성 ${meta.generated_at || ''}</div>
   </div>
-  <div class="cv-foot"><span>경영기획팀 · 임원회의 보고</span><span class="cv-vol">${meta.week || ''}</span></div>
+  <div class="cv-foot"><span>Logisight 편집팀</span><span class="cv-vol">${meta.week || ''}</span></div>
 </section>
 <div class="flow">${body}</div>
 </body></html>`;

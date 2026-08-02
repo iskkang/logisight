@@ -140,7 +140,7 @@ ol.cl li strong{color:#1E3A5F;display:block;font-size:9pt;margin-bottom:0.8mm}
   <div class="cover-footer">
     <div class="cover-meta">
       <strong>2026년 5월 11일</strong>
-      발행: Logisight Team &middot; MTL Shipping Agency
+      발행: Logisight Team
     </div>
     <div class="cover-meta" style="text-align:right">
       <strong>logisight.mtlship.com</strong>
@@ -314,7 +314,7 @@ ol.cl li strong{color:#1E3A5F;display:block;font-size:9pt;margin-bottom:0.8mm}
   <div class="sf">
     <p>본 보고서는 Logisight Market Intelligence Hub가 공개 데이터를 바탕으로 작성한 정보 제공용 자료입니다.</p>
     <p style="margin-top:2mm">투자·매매 결정의 근거로 활용 시 원본 출처를 반드시 확인하십시오.</p>
-    <p style="margin-top:5mm;color:#2E86AB;font-weight:700">logisight.mtlship.com &nbsp;&middot;&nbsp; MTL Shipping Agency</p>
+    <p style="margin-top:5mm;color:#2E86AB;font-weight:700">logisight.mtlship.com</p>
   </div>
 </div>
 

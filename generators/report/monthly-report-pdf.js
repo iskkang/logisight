@@ -811,7 +811,7 @@ ${transformed.html}
   <div class="bc-statement">Global Logistics &amp; Market Intelligence<br>해운·항공·철도 운임과 공급망 동향 종합 분석</div>
   <div class="bc-disclaimer">본 리포트는 공개 출처 기반 분석이며, 수치는 Logisight 지표 대시보드를 참조 바람. 무단 전재·재배포 금지.</div>
   <div class="bc-contact">logisight.mtlship.com</div>
-  <div class="bc-copy">© ${Number(YY)} Logisight / MTL Shipping Agency. All rights reserved.</div>
+  <div class="bc-copy">© ${Number(YY)} Logisight. All rights reserved.</div>
 </section>
 
 ${chartScript}
