@@ -46,6 +46,13 @@ test('extractNumbers: 조수사가 붙은 개수는 제외', () => {
   assert.deepEqual(vals, []);
 });
 
+// 실제 실행에서 「1カ月のずれ」「2軸との関係」이 위반으로 잡혀 발행이 막혔다.
+// 기간·개수를 세는 말이지 데이터 주장이 아니다.
+test('extractNumbers: 기간·축을 세는 조수사도 제외', () => {
+  const vals = extractNumbers('1カ月のずれがある。この2軸の関係は3年間で2回みられる').map((g) => g.value);
+  assert.deepEqual(vals, []);
+});
+
 test('extractNumbers: 조수사를 걸러도 실제 수치는 남는다', () => {
   const vals = extractNumbers('主要6港の合計は117万7,717TEU').map((g) => g.value);
   assert.deepEqual(vals, [1177717]);

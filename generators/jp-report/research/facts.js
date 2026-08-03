@@ -65,7 +65,18 @@ function buildSppiFacts(rows, prevRows, at) {
       note: `契約通貨ベース ${s.contract} — 基準年(2020年)を下回る。円ベース ${s.yen} との差は為替要因。`,
     }));
 
-  return { period: period(at), source: SOURCES.sppi, baseYear: '2020', unit: 'index', series, signals };
+  return {
+    period: period(at),
+    source: SOURCES.sppi,
+    baseYear: '2020',
+    unit: 'index',
+    // 두 기준의 차이가 환율이라는 것은 지수の定義であって特定系列の特性ではない。
+    // これを書いておかないと、検査側が系列ごとに根拠を求めて差し戻す。
+    basisNote: '円ベースは契約通貨ベースに為替変動を加えたもの。両者の差は定義上すべて為替要因であり、'
+      + '個別系列ごとの根拠を要しない。契約通貨ベースが運賃そのものの動きに近い。',
+    series,
+    signals,
+  };
 }
 
 function buildPortFacts(rows, at) {

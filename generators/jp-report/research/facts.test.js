@@ -55,6 +55,16 @@ test('buildPortFacts·buildTradeFacts·buildCommodityFacts: 각 축이 출처를
   assert.match(buildCommodityFacts(commodityRows, { year: 2026, month: 6 }).source, /財務省/);
 });
 
+// 검수가 「外航貨物輸送には為替要因の注記がない」로 반려했다.
+// 두 기준의 차이가 환율이라는 건 지수의 정의이지 특정 계열의 특성이 아니다.
+// 팩트시트에 정의를 담지 않으면 검수자가 계열마다 근거를 요구한다.
+test('buildSppiFacts: 두 기준의 정의를 담는다', () => {
+  const f = buildSppiFacts(sppiRows, sppiPrev, { year: 2026, month: 6 });
+  assert.ok(f.basisNote, 'basisNote 누락');
+  assert.match(f.basisNote, /為替/);
+  assert.match(f.basisNote, /契約通貨/);
+});
+
 test('buildSppiFacts: 전년 데이터가 없으면 전년비는 null — 임의로 채우지 않는다', () => {
   const f = buildSppiFacts(sppiRows, [], { year: 2026, month: 6 });
   assert.equal(f.series[0].yoyYenPct, null);
