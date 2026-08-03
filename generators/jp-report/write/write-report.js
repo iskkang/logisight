@@ -11,8 +11,9 @@ const fs = require('fs');
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../../../.env.local') });
 
-const { callClaude } = require('../../lib/claude');
+const { callClaude, callClaudeJson } = require('../../lib/claude');
 const { verifyNumbers } = require('../verify/numbers');
+const { reviewSection, needsRewrite, buildIssueFeedback, splitBySeverity } = require('../verify/editorial');
 const { generationOrder, outputOrder, slimFactsheet } = require('./sections');
 const { normalizeHeading } = require('./heading');
 
@@ -33,7 +34,7 @@ function systemPrompt() {
   ].join('\n');
 }
 
-function userPrompt(section, slim, digests, violations) {
+function userPrompt(section, slim, digests, violations, issues) {
   const parts = [
     `セクション「${section.no}. ${section.title}」の本文を書け。`,
     '',
@@ -48,8 +49,12 @@ function userPrompt(section, slim, digests, violations) {
       digests.map((d) => `- ${d.title}: ${d.digest}`).join('\n'));
   }
   if (violations && violations.length > 0) {
-    parts.push('', '【前回の指摘】以下の数値はファクトシートに存在しない。書き直せ。',
+    parts.push('', '【前回の指摘・数値】以下の数値はファクトシートに存在しない。書き直せ。',
       violations.map((v) => `- 「${v.raw}」 … ${v.context}`).join('\n'));
+  }
+  if (issues && issues.length > 0) {
+    parts.push('', '【前回の指摘・編集】編集デスクの指摘である。すべて反映して書き直せ。',
+      buildIssueFeedback(issues));
   }
   parts.push('', '見出し(## で始まる行)と本文のみを出力する。前置きや説明は書かない。');
   return parts.join('\n');
@@ -65,26 +70,55 @@ function digestOf(body) {
   return plain.split(/(?<=。)/).slice(0, 2).join('').slice(0, 180);
 }
 
+/**
+ * 두 층으로 검수한다.
+ * (a) 결정적 수치 대조 — 코드. 통과해야 (b)로 넘어간다(틀린 수치를 편집 검수에 보낼 이유가 없다).
+ * (b) LLM 편집 검수 — 추측·출처 없는 단정·signals 누락·문체.
+ */
 async function writeSection(section, factsheet, digests) {
   const slim = slimFactsheet(factsheet, section.id);
   let violations = null;
+  let issues = null;
   let body = '';
 
   for (let attempt = 0; attempt <= MAX_RETRY; attempt += 1) {
     const res = await callClaude({
       max_tokens: MAX_TOKENS,
       system: systemPrompt(),
-      messages: [{ role: 'user', content: userPrompt(section, slim, digests, violations) }],
+      messages: [{ role: 'user', content: userPrompt(section, slim, digests, violations, issues) }],
     });
     body = textOf(res);
     if (!body) throw new Error(`${section.id}: 본문이 비었다 (thinking이 예산을 소진했을 수 있다)`);
 
-    const check = verifyNumbers(body, factsheet);
-    if (check.ok) return { body, violations: [], attempts: attempt + 1 };
-    violations = check.violations;
-    console.warn(`  ⚠️ ${section.id}: 수치 위반 ${violations.length}건 — ${attempt < MAX_RETRY ? '재생성' : '기록 후 통과'}`);
+    const last = attempt === MAX_RETRY;
+
+    const numbers = verifyNumbers(body, factsheet);
+    if (!numbers.ok) {
+      violations = numbers.violations;
+      issues = null;
+      console.warn(`  ⚠️ ${section.id}: 수치 위반 ${violations.length}건 — ${last ? '기록 후 통과' : '재생성'}`);
+      continue;
+    }
+    violations = null;
+
+    // 검수자에게는 전체 팩트시트를 준다. 슬림본을 주면 총론이 인용한 수치를
+    // 출처 불명으로 오판한다(실제로 그렇게 오탐이 났다).
+    const review = await reviewSection(callClaudeJson, section, body, factsheet);
+    if (!needsRewrite(review.verdict)) {
+      return { body, violations: [], issues: [], warnings: [], attempts: attempt + 1 };
+    }
+    const { blocking, warnings } = splitBySeverity(review.issues);
+    // 문체 지적만 남았으면 통과시킨다. 그것만으로 영구히 막히면 자동 발행이 성립하지 않는다.
+    if (blocking.length === 0) {
+      console.warn(`  ℹ️ ${section.id}: 문체 지적 ${warnings.length}건 — 기록 후 통과`);
+      return { body, violations: [], issues: [], warnings, attempts: attempt + 1 };
+    }
+    issues = review.issues;
+    console.warn(`  ⚠️ ${section.id}: 편집 검수 ${review.verdict} 차단 ${blocking.length}건 — ${last ? '기록 후 통과' : '재생성'}`);
+    console.warn(`      ${blocking[0].type}: ${blocking[0].reason}`.slice(0, 110));
   }
-  return { body, violations, attempts: MAX_RETRY + 1 };
+  const { blocking, warnings } = splitBySeverity(issues || []);
+  return { body, violations: violations || [], issues: blocking, warnings, attempts: MAX_RETRY + 1 };
 }
 
 async function writeReport(factsheet) {
@@ -94,10 +128,12 @@ async function writeReport(factsheet) {
 
   for (const section of generationOrder()) {
     console.log(`  ▸ ${section.no}. ${section.title}`);
-    const { body, violations } = await writeSection(section, factsheet, digests);
+    const { body, violations, issues } = await writeSection(section, factsheet, digests);
     // 재생성된 섹션이 제목 번호를 잃는 일이 있다. 출력 순서·목차가 번호에 의존한다.
     bodies.set(section.id, normalizeHeading(body, section));
-    if (violations.length > 0) allViolations.push({ section: section.id, violations });
+    if (violations.length > 0 || issues.length > 0) {
+      allViolations.push({ section: section.id, violations, issues });
+    }
     // 총론은 요지를 소비하는 쪽이므로 자신의 요지는 넘기지 않는다.
     if (!section.generateLast) digests.push({ title: section.title, digest: digestOf(body) });
   }
@@ -127,9 +163,12 @@ async function main() {
   console.log(`✅ ${outPath} (${markdown.length}자)`);
 
   if (violations.length > 0) {
-    console.warn(`⚠️ 수치 위반이 남은 섹션 ${violations.length}개 — verifier 단계에서 판정 필요`);
-    violations.forEach((v) => v.violations.forEach((x) => console.warn(`   ${v.section}: 「${x.raw}」 …${x.context}…`)));
-    process.exitCode = 2; // 발행 파이프라인이 이 코드를 보고 멈춘다
+    console.warn(`⚠️ 미해결 지적이 남은 섹션 ${violations.length}개 — 발행하지 않는다`);
+    violations.forEach((v) => {
+      v.violations.forEach((x) => console.warn(`   ${v.section} 수치: 「${x.raw}」 …${x.context}…`));
+      v.issues.forEach((x) => console.warn(`   ${v.section} 편집(${x.type}): ${x.reason}`));
+    });
+    process.exitCode = 2; // 발행 파이프라인이 이 코드를 보고 멈춘다(fail-closed)
   }
 }
 
