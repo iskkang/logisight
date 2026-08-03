@@ -1,7 +1,27 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { resolveSite } = require('./site');
+const { resolveSite, resolveSender } = require('./site');
+
+// 발신 주소 — Resend에 logisight.net 도메인 검증이 끝나기 전에 기본값을 바꾸면
+// 발송이 전부 실패한다. 그래서 기본값은 현행 주소, 전환은 환경변수 한 개.
+test('resolveSender: NEWSLETTER_EMAIL 미설정 시 현행 발신 주소', () => {
+  assert.deepEqual(resolveSender({}), {
+    email: 'newsletter@mtlb.co.kr',
+    from: 'Logisight <newsletter@mtlb.co.kr>',
+  });
+});
+
+test('resolveSender: NEWSLETTER_EMAIL 설정 시 그 주소로 발신', () => {
+  assert.deepEqual(resolveSender({ NEWSLETTER_EMAIL: 'newsletter@logisight.net' }), {
+    email: 'newsletter@logisight.net',
+    from: 'Logisight <newsletter@logisight.net>',
+  });
+});
+
+test('resolveSender: 공백만 있는 값은 미설정과 동일', () => {
+  assert.equal(resolveSender({ NEWSLETTER_EMAIL: '   ' }).email, 'newsletter@mtlb.co.kr');
+});
 
 test('resolveSite: SITE_URL 미설정 시 정본 도메인', () => {
   assert.deepEqual(resolveSite({}), {

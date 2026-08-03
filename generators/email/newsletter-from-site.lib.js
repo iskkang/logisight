@@ -2,7 +2,7 @@
 // 사이트(maritime_news) 내부 기사 → 데일리 뉴스레터 HTML (순수 함수만, I/O 없음)
 'use strict';
 
-const { SITE_URL: SITE } = require('../lib/site');
+const { SITE_URL: SITE, NEWSLETTER_EMAIL } = require('../lib/site');
 const SECTION_ORDER = ['해상', '항공', '철도', '무역', '물류'];
 const SECTION_ICONS = { 해상: '🚢', 항공: '✈️', 철도: '🚂', 무역: '📜', 물류: '📦' };
 
@@ -126,7 +126,7 @@ function buildHtml(articles, dateIso) {
   <tr><td style="background:#1E293B;border-radius:0 0 16px 16px;padding:20px 24px;text-align:center;">
     <div style="font-size:12px;font-weight:700;color:#FFFFFF;margin-bottom:4px;">Logisight Daily</div>
     <div style="font-size:11px;color:#94A3B8;line-height:1.8;margin-bottom:8px;">
-      발행: MTL Shipping Agency &nbsp;·&nbsp; newsletter@mtlship.com<br>${esc(dateFormatted)}
+      발행: Logisight &nbsp;·&nbsp; ${NEWSLETTER_EMAIL}<br>${esc(dateFormatted)}
     </div>
     <div style="font-size:11px;">
       <a href="{{UNSUBSCRIBE_URL}}" style="color:#93C5FD;text-decoration:none;">수신 거부</a>
