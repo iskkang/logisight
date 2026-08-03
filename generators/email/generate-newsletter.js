@@ -6,7 +6,7 @@
 
 const fs   = require('fs');
 const path = require('path');
-const { SITE_URL } = require('../lib/site');
+const { SITE_URL, NEWSLETTER_EMAIL } = require('../lib/site');
 
 const RAIL_PATH  = path.resolve(__dirname, '../../content/drafts/curated-rail.json');
 const OCEAN_PATH = path.resolve(__dirname, '../../content/drafts/curated-ocean.json');
@@ -186,7 +186,7 @@ function build(rail, ocean) {
   <tr><td style="background:#1E293B;border-radius:0 0 16px 16px;padding:20px 24px;text-align:center;">
     <div style="font-size:12px;font-weight:700;color:#FFFFFF;margin-bottom:4px;">Logisight Daily</div>
     <div style="font-size:11px;color:#94A3B8;line-height:1.8;margin-bottom:8px;">
-      발행: MTL Shipping Agency &nbsp;·&nbsp; newsletter@mtlship.com<br>${dateFormatted}
+      발행: Logisight &nbsp;·&nbsp; ${NEWSLETTER_EMAIL}<br>${dateFormatted}
     </div>
     <div style="font-size:11px;">
       <a href="#" style="color:#93C5FD;text-decoration:none;">수신 거부</a>

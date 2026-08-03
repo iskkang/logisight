@@ -13,15 +13,14 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const TYPE = process.argv.find(a => a.startsWith('--type='))?.split('=')[1] || 'daily';
 const HTML_FILE = process.argv.find(a => a.startsWith('--html='))?.split('=').slice(1).join('=');
 const TO = process.env.SEND_TO || process.env.INTERNAL_EMAIL;
-const FROM = 'Logisight <newsletter@mtlb.co.kr>';
-const { SITE_URL, SITE_HOST } = require('../lib/site');
+const { SITE_URL, SITE_HOST, NEWSLETTER_FROM: FROM } = require('../lib/site');
 
 // 수신거부 링크 주입 — 생성 HTML의 {{UNSUBSCRIBE_URL}} 치환, 없으면 본문 끝에 최소 푸터 추가.
 // id 없는 내부 사본은 /news 로 대체.
 function withUnsub(html, id) {
   const url = id ? `${SITE_URL}/unsubscribe?id=${id}` : `${SITE_URL}/news`;
   if (html.includes('{{UNSUBSCRIBE_URL}}')) return html.split('{{UNSUBSCRIBE_URL}}').join(url);
-  const fallback = `<div style="font-size:11px;color:#94a3b8;text-align:center;padding:16px;">수신거부: <a href="${url}" style="color:#93c5fd;">구독 해지</a> · MTL Shipping Agency</div>`;
+  const fallback = `<div style="font-size:11px;color:#94a3b8;text-align:center;padding:16px;">수신거부: <a href="${url}" style="color:#93c5fd;">구독 해지</a> · Logisight</div>`;
   return html.includes('</body>') ? html.replace('</body>', `${fallback}</body>`) : html + fallback;
 }
 
@@ -147,7 +146,7 @@ function buildDailyHtml(data) {
               <tr>
                 <td>
                   <div style="font-size:12px;color:#6b7280;">
-                    <strong style="color:#1B4D8C;">Logisight</strong> · MTL Shipping Agency<br>
+                    <strong style="color:#1B4D8C;">Logisight</strong><br>
                     <a href="${SITE_URL}" style="color:#1B4D8C;">${SITE_HOST}</a>
                   </div>
                 </td>
@@ -264,11 +263,11 @@ function buildWeeklyHtml(data) {
         <tr>
           <td style="background:#f9fafb;border-top:1px solid #e5e7eb;padding:20px 32px;">
             <div style="font-size:12px;color:#6b7280;">
-              <strong style="color:#1B4D8C;">Logisight</strong> · MTL Shipping Agency ·
+              <strong style="color:#1B4D8C;">Logisight</strong> ·
               <a href="${SITE_URL}" style="color:#1B4D8C;">${SITE_HOST}</a>
             </div>
             <div style="font-size:11px;color:#9ca3af;margin-top:8px;">
-              본 보고서는 공개 데이터 기반 자동 생성 자료입니다. 실제 운임은 MTL 영업팀에 문의하세요.
+              본 보고서는 공개 데이터 기반 자동 생성 자료입니다. 수치는 원 출처를 확인하시기 바랍니다.
             </div>
           </td>
         </tr>
