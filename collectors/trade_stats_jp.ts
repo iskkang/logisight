@@ -131,6 +131,24 @@ export function parseTradeCsv(csvText: string): TradeRow[] {
   return rows;
 }
 
+/**
+ * 같은 국가·연월 행을 하나로 줄인다.
+ * 한 회차가 지역별 CSV 9개로 쪼개져 있는데 'Grand Total'이 9개 파일 모두에 들어 있다.
+ * 그대로 upsert하면 Postgres가 거부한다:
+ *   ON CONFLICT DO UPDATE command cannot affect row a second time
+ */
+export function dedupeTradeRows(rows: TradeRow[]): TradeRow[] {
+  const seen = new Set<string>();
+  const out: TradeRow[] = [];
+  for (const r of rows) {
+    const key = `${r.country_name}_${r.year}_${r.month}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(r);
+  }
+  return out;
+}
+
 async function fetchLatestResources(appId: string): Promise<{ period: string; urls: string[] }> {
   const url = `${CATALOG}?appId=${appId}&statsCode=${STATS_CODE}&limit=100&searchWord=${encodeURIComponent(SEARCH_WORD)}`;
   const res = await fetch(url, { signal: AbortSignal.timeout(60000) });
@@ -183,14 +201,14 @@ export async function collect(): Promise<CollectorResult> {
   try {
     const { period, urls } = await rateLimited('財務省貿易統計 카탈로그', () => fetchLatestResources(appId));
 
-    const rows: TradeRow[] = [];
+    const raw: TradeRow[] = [];
     const failed: string[] = [];
     for (const [i, url] of urls.entries()) {
       try {
         const csv = await rateLimited(`貿易統計 파일${i + 1}`, () => fetchCsv(url));
         const parsed = parseTradeCsv(csv);
         if (parsed.length === 0) failed.push(`파일${i + 1}(파싱 0건)`);
-        rows.push(...parsed);
+        raw.push(...parsed);
       } catch (e) {
         // 지역 파일 하나가 깨져도 나머지는 살린다.
         failed.push(`파일${i + 1}(${(e as Error).message})`);
@@ -198,6 +216,7 @@ export async function collect(): Promise<CollectorResult> {
     }
 
     if (failed.length > 0) console.warn(`⚠️ ${failed.length}개 파일 실패: ${failed.slice(0, 4).join(', ')}`);
+    const rows = dedupeTradeRows(raw);
     if (rows.length === 0) throw new Error('적재할 행 없음');
 
     await dbUpsert(

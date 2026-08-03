@@ -1,7 +1,33 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { parseTradePeriod, parseTradeCsv } from './trade_stats_jp';
+import { parseTradePeriod, parseTradeCsv, dedupeTradeRows } from './trade_stats_jp';
+
+// 한 회차가 지역별 CSV 9개로 쪼개져 있고, 'Grand Total'이 9개 파일 모두에 들어 있다.
+// 그대로 upsert하면 같은 키가 9번이라 Postgres가 거부한다:
+//   ON CONFLICT DO UPDATE command cannot affect row a second time
+const row = (name: string, exp: number) => ({
+  country_name: name, region: null, is_aggregate: true, year: 2026, month: 6,
+  export_jpy: exp, import_jpy: null, yoy_export_pct: null, yoy_import_pct: null,
+  unit: 'thousand_jpy', source: 's', source_url: 'u',
+});
+
+test('dedupeTradeRows: 같은 국가·연월은 하나만 남긴다', () => {
+  const out = dedupeTradeRows([row('Grand Total', 100), row('Grand Total', 100), row('CHINA', 50)]);
+  assert.equal(out.length, 2);
+  assert.equal(out.filter((r) => r.country_name === 'Grand Total').length, 1);
+});
+
+test('dedupeTradeRows: 먼저 나온 행을 유지한다', () => {
+  const out = dedupeTradeRows([row('Grand Total', 100), row('Grand Total', 999)]);
+  assert.equal(out[0].export_jpy, 100);
+});
+
+test('dedupeTradeRows: 연월이 다르면 별개', () => {
+  const may = { ...row('CHINA', 10), month: 5 };
+  const out = dedupeTradeRows([row('CHINA', 20), may]);
+  assert.equal(out.length, 2);
+});
 
 test('parseTradePeriod: 월차 라벨', () => {
   assert.deepEqual(parseTradePeriod('2026 Jun.'), { year: 2026, month: 6 });
