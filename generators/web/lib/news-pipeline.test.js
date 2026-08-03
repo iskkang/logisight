@@ -1,7 +1,41 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { parseKsgArticle, sanitizeArticleUrl } = require('./news-pipeline');
+const { parseKsgArticle, sanitizeArticleUrl, pickIndex } = require('./news-pipeline');
+
+// 대체 이미지 선택 — 같은 검색어에서 1등만 쓰면 카테고리마다 사진 한 장이 영원히 반복된다.
+// 무작위 대신 기사 URL 해시로 고르는 이유: 재발행해도 같은 기사는 같은 사진이어야 하고,
+// 결정적이어야 테스트할 수 있다.
+test('pickIndex: 같은 시드는 항상 같은 인덱스', () => {
+  const a = pickIndex('https://example.com/a', 30);
+  assert.equal(pickIndex('https://example.com/a', 30), a);
+  assert.equal(pickIndex('https://example.com/a', 30), a);
+});
+
+test('pickIndex: 다른 시드는 서로 다른 인덱스로 흩어진다', () => {
+  const seeds = Array.from({ length: 20 }, (_, i) => `https://example.com/article-${i}`);
+  const picked = new Set(seeds.map((s) => pickIndex(s, 30)));
+  // 20개가 전부 달라야 하는 건 아니지만(해시 충돌 가능), 한두 개로 뭉치면 반복 문제가 그대로다.
+  assert.ok(picked.size >= 10, `분산 부족: ${picked.size}개 인덱스만 사용`);
+});
+
+test('pickIndex: 항상 0 이상 length 미만', () => {
+  for (let i = 0; i < 100; i += 1) {
+    const idx = pickIndex(`seed-${i}`, 7);
+    assert.ok(idx >= 0 && idx < 7, `범위 이탈: ${idx}`);
+  }
+});
+
+test('pickIndex: 후보가 1장이면 0', () => {
+  assert.equal(pickIndex('https://example.com/a', 1), 0);
+});
+
+test('pickIndex: 후보 없음·잘못된 길이는 0 (호출부 가드용)', () => {
+  assert.equal(pickIndex('x', 0), 0);
+  assert.equal(pickIndex('x', -3), 0);
+  assert.equal(pickIndex(null, 30), 0);
+  assert.equal(pickIndex(undefined, 30), 0);
+});
 
 // 원문 URL 검증 — 스킴 접두어(/^https?:\/\//)만 보면 앵커 쓰레기 값이 통과해
 // 사이트에서 깨진 리다이렉트(Location: https://javascript:void(0);)가 나갔다.
