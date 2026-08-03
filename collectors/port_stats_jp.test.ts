@@ -68,6 +68,30 @@ test('buildPortRows: 같은 항만·같은 달의 輸出(110)·輸入(120)을 �
   assert.equal(rows[0].country, 'JP');
 });
 
+// 속보(port_prelim_jp)와 같은 테이블을 쓴다. 확보가 나중에 같은 달을 덮을 때
+// 이 컬럼들을 payload에 넣지 않으면 속보가 남긴 값이 그대로 남아,
+// 한 행 안에 teu는 확보·export_teu는 속보가 섞인다.
+test('buildPortRows: 輸出·輸入을 따로도 담고 확보임을 명시한다', () => {
+  const rows = buildPortRows([
+    { '@cat01': '110', '@cat02': '13001', '@time': '2025000707', $: '154408' },
+    { '@cat01': '120', '@cat02': '13001', '@time': '2025000707', $: '160000' },
+  ]);
+  assert.equal(rows[0].export_teu, 154408);
+  assert.equal(rows[0].import_teu, 160000);
+  assert.equal(rows[0].is_preliminary, false);
+  // 확보에는 전년동월비가 없다. 속보 값이 남지 않도록 명시적으로 비운다.
+  assert.equal(rows[0].yoy_pct, null);
+});
+
+test('buildPortRows: 한쪽만 공표된 달은 있는 쪽만 채운다', () => {
+  const rows = buildPortRows([
+    { '@cat01': '110', '@cat02': '13001', '@time': '2025000707', $: '154408' },
+  ]);
+  assert.equal(rows[0].teu, 154408);
+  assert.equal(rows[0].export_teu, 154408);
+  assert.equal(rows[0].import_teu, null);
+});
+
 test('buildPortRows: 매핑에 없는 항만 코드는 제외', () => {
   const rows = buildPortRows([
     { '@cat01': '110', '@cat02': '99999', '@time': '2025000707', $: '100' },
