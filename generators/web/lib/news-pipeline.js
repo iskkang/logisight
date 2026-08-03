@@ -93,17 +93,34 @@ function stripHtml(value) {
     .trim();
 }
 
-async function fetchUnsplash(keyword) {
+// 후보 중 한 장을 고른다. 1등만 쓰면 카테고리 검색어가 고정이라 같은 사진이 영원히 반복된다.
+// 무작위가 아니라 시드(기사 URL) 해시로 고르는 이유 — 재발행해도 같은 기사는 같은 사진이어야
+// 하고, 결정적이어야 테스트할 수 있다. FNV-1a.
+function pickIndex(seed, length) {
+  if (!Number.isInteger(length) || length <= 0) return 0;
+  const text = String(seed ?? '');
+  if (!text) return 0;
+  let hash = 2166136261;
+  for (let i = 0; i < text.length; i += 1) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) % length;
+}
+
+async function fetchUnsplash(keyword, seed) {
   const key = process.env.UNSPLASH_ACCESS_KEY;
   if (!key) return null;
-  const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(keyword)}&orientation=landscape&per_page=1&client_id=${key}`;
+  const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(keyword)}&orientation=landscape&per_page=30&client_id=${key}`;
   try {
     const response = await fetch(url, {
       headers: { 'Accept-Version': 'v1' },
       signal: AbortSignal.timeout(10000),
     });
     if (!response.ok) return null;
-    const photo = (await response.json())?.results?.[0];
+    const results = (await response.json())?.results;
+    if (!Array.isArray(results) || results.length === 0) return null;
+    const photo = results[pickIndex(seed, results.length)];
     if (!photo?.urls?.regular) return null;
     const photographer = photo.user?.name || photo.user?.username || 'Unsplash';
     return {
@@ -116,7 +133,7 @@ async function fetchUnsplash(keyword) {
   }
 }
 
-async function fetchUnsplashFallback({ keyword, title, source } = {}) {
+async function fetchUnsplashFallback({ keyword, title, source, seed } = {}) {
   const queries = [
     [keyword, title].filter(Boolean).join(' '),
     keyword,
@@ -131,7 +148,7 @@ async function fetchUnsplashFallback({ keyword, title, source } = {}) {
     const key = query.toLocaleLowerCase('en-US');
     if (seen.has(key)) continue;
     seen.add(key);
-    const image = await fetchUnsplash(query);
+    const image = await fetchUnsplash(query, seed);
     if (image) return image;
   }
   return null;
@@ -175,7 +192,8 @@ async function resolveArticle(url, { source, keyword, title } = {}) {
     };
   }
 
-  const unsplash = await fetchUnsplashFallback({ keyword, title, source });
+  // 시드는 기사 URL — 기사마다 다른 사진이 되고, 같은 기사는 재발행해도 같은 사진이 된다.
+  const unsplash = await fetchUnsplashFallback({ keyword, title, source, seed: url });
   return {
     imageUrl: unsplash?.imageUrl || null,
     imageSource: unsplash?.imageSource || null,
@@ -273,6 +291,7 @@ module.exports = {
   CATEGORY_MAP,
   buildMainContent,
   categoryFor,
+  pickIndex,
   sanitizeArticleUrl,
   generateKoreanAnalysis,
   normalizeMarkdownBody,
