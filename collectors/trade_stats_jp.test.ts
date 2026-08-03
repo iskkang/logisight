@@ -88,6 +88,33 @@ test('parseTradeCsv: 총계·지역합계를 집계 행으로 표시하고 국�
 });
 
 // 前年同月比가 또 지수 표기다(119.3 = +19.3%). 그대로 저장하면 100%p 틀린다.
+// 위치 규칙(파일당 앞 2열)만으로는 하위 집계를 놓친다.
+// 실제로 ASIA NIES(2,564십억엔)·ASEAN·EU가 국가로 잡혀, 수출 상위 목록에서
+// USA·CHINA와 나란히 비교됐다. 모집단이 달라 비교가 성립하지 않는다.
+test('parseTradeCsv: 하위 지역 집계도 이름으로 판정한다', () => {
+  const csv = [
+    'Year & Month,Grand Total,,ASIA,,ASIA NIES,,ASEAN,,CHINA,',
+    ',Exports,Imports,Exports,Imports,Exports,Imports,Exports,Imports,Exports,Imports',
+    '2026 Jun.,100,100,60,60,25,25,16,16,18,18',
+  ].join('\n');
+  const rows = parseTradeCsv(csv);
+  const agg = (n: string) => rows.find((r) => r.country_name === n)!.is_aggregate;
+  assert.equal(agg('ASIA NIES'), true);
+  assert.equal(agg('ASEAN'), true);
+  assert.equal(agg('CHINA'), false);
+});
+
+test('parseTradeCsv: EU도 집계로 판정 — WESTERN EUROPE 파일의 하위 집계다', () => {
+  const csv = [
+    'Year & Month,Grand Total,,WESTERN EUROPE,,EU,,GERMANY,',
+    ',Exports,Imports,Exports,Imports,Exports,Imports,Exports,Imports',
+    '2026 Jun.,100,100,12,12,9,9,2,2',
+  ].join('\n');
+  const rows = parseTradeCsv(csv);
+  assert.equal(rows.find((r) => r.country_name === 'EU')!.is_aggregate, true);
+  assert.equal(rows.find((r) => r.country_name === 'GERMANY')!.is_aggregate, false);
+});
+
 test('parseTradeCsv: 전년동월비 지수를 증감률로 바꿔 최신 월에만 붙인다', () => {
   const rows = parseTradeCsv(CSV);
   const june = rows.find((r) => r.country_name === 'CHINA' && r.month === 6);
