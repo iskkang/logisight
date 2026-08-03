@@ -13,9 +13,15 @@
 // 외항화물은 달러로 계약하므로 둘이 크게 벌어진다(2026-06: 엔 233.8 vs 계약통화 160.8).
 // 구분 없이 인용하면 기사에 틀린 해석이 나가므로 basis를 함께 저장한다.
 
+import * as path from 'path';
+import * as dotenv from 'dotenv';
+
 import { rateLimited } from './utils/rate_limiter';
 import { dbUpsert } from './utils/supabase_writer';
 import type { CollectorResult } from './types';
+
+// 단독 실행 시에는 index.ts를 거치지 않아 env가 비어 있다.
+dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
 
 const ZIP_URL = 'https://www.stat-search.boj.or.jp/info/sppi_m_jp.zip';
 const SOURCE = '日本銀行 企業向けサービス価格指数(SPPI)';

@@ -8,9 +8,15 @@
 //         (예: 東京 輸出 2025-07 154,408 → 2025-08 3,688). 그대로 적재하면
 //         사이트에 물동량 급감으로 표시되므로 filterImplausible로 걸러낸다.
 
+import * as path from 'path';
+import * as dotenv from 'dotenv';
+
 import { rateLimited } from './utils/rate_limiter';
 import { dbUpsert } from './utils/supabase_writer';
 import type { CollectorResult } from './types';
+
+// 단독 실행(npm run collect:port:jp) 시에는 index.ts를 거치지 않아 env가 비어 있다.
+dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
 
 const API = 'https://api.e-stat.go.jp/rest/3.0/app/json/getStatsData';
 const STATS_DATA_ID = '0003130478';
@@ -52,6 +58,11 @@ export interface PortRow {
   year: number;
   month: number;
   teu: number;
+  export_teu: number | null;
+  import_teu: number | null;
+  /** 확보에는 전년동월비가 없다. 속보가 남긴 값이 살아남지 않도록 명시적으로 null을 쓴다. */
+  yoy_pct: null;
+  is_preliminary: false;
   source: string;
   source_url: string;
 }
@@ -65,7 +76,11 @@ export function parseEstatTime(code: string): { year: number; month: number } | 
   return { year, month };
 }
 
-/** 같은 항만·같은 달의 輸出+輸入을 합산해 적재용 행으로 만든다. */
+/**
+ * 같은 항만·같은 달의 輸出+輸入을 합산해 적재용 행으로 만든다.
+ * 수출·수입을 따로도 담는 이유 — 속보와 같은 테이블을 쓰므로, 확보가 같은 달을
+ * 덮을 때 이 컬럼들을 함께 보내지 않으면 속보가 남긴 값이 그대로 남는다.
+ */
 export function buildPortRows(values: EstatValue[]): PortRow[] {
   const acc = new Map<string, PortRow>();
   for (const v of values) {
@@ -76,20 +91,28 @@ export function buildPortRows(values: EstatValue[]): PortRow[] {
     if (!t) continue;
     const teu = Number(String(v.$).replace(/,/g, ''));
     if (!Number.isFinite(teu)) continue; // '-', 'X' 등 비공표 기호
+
     const key = `${portCode}_${t.year}_${t.month}`;
-    const existing = acc.get(key);
-    if (existing) existing.teu += teu;
-    else {
-      acc.set(key, {
+    let row = acc.get(key);
+    if (!row) {
+      row = {
         port_code: portCode,
         country: 'JP',
         year: t.year,
         month: t.month,
-        teu,
+        teu: 0,
+        export_teu: null,
+        import_teu: null,
+        yoy_pct: null,
+        is_preliminary: false,
         source: SOURCE,
         source_url: SOURCE_URL,
-      });
+      };
+      acc.set(key, row);
     }
+    row.teu += teu;
+    if (v['@cat01'] === '110') row.export_teu = (row.export_teu ?? 0) + teu;
+    else row.import_teu = (row.import_teu ?? 0) + teu;
   }
   return [...acc.values()];
 }

@@ -9,11 +9,16 @@
 // 실행 순서 주의: 같은 달을 둘 다 다루면 확보가 이겨야 한다.
 // 워크플로에서는 이 수집기를 먼저, port_stats_jp를 나중에 돌린다.
 
+import * as path from 'path';
 import * as XLSX from 'xlsx';
+import * as dotenv from 'dotenv';
 
 import { rateLimited } from './utils/rate_limiter';
 import { dbUpsert } from './utils/supabase_writer';
 import type { CollectorResult } from './types';
+
+// 단독 실행 시에는 index.ts를 거치지 않아 env가 비어 있다.
+dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
 
 const CATALOG = 'https://api.e-stat.go.jp/rest/3.0/app/json/getDataCatalog';
 const STATS_CODE = '00600280';
