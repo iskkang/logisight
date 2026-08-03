@@ -3,24 +3,26 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { resolveSite, resolveSender } = require('./site');
 
-// 발신 주소 — Resend에 logisight.net 도메인 검증이 끝나기 전에 기본값을 바꾸면
-// 발송이 전부 실패한다. 그래서 기본값은 현행 주소, 전환은 환경변수 한 개.
-test('resolveSender: NEWSLETTER_EMAIL 미설정 시 현행 발신 주소', () => {
+// 발신 주소 — RESEND_API_KEY가 logisight.net이 검증된 계정 키로 교체됐다.
+// 기본값이 구 주소로 남아 있으면 변수를 비웠을 때 롤백이 아니라 발송 실패가 된다.
+test('resolveSender: NEWSLETTER_EMAIL 미설정 시 정본 발신 주소', () => {
   assert.deepEqual(resolveSender({}), {
-    email: 'newsletter@mtlb.co.kr',
-    from: 'Logisight <newsletter@mtlb.co.kr>',
-  });
-});
-
-test('resolveSender: NEWSLETTER_EMAIL 설정 시 그 주소로 발신', () => {
-  assert.deepEqual(resolveSender({ NEWSLETTER_EMAIL: 'newsletter@logisight.net' }), {
     email: 'newsletter@logisight.net',
     from: 'Logisight <newsletter@logisight.net>',
   });
 });
 
+// 오버라이드 값은 기본값과 달라야 검증이 성립한다.
+// 구 주소로 되돌리려면 RESEND_API_KEY도 옛 계정 키로 함께 바꿔야 한다.
+test('resolveSender: NEWSLETTER_EMAIL 설정 시 그 주소로 발신', () => {
+  assert.deepEqual(resolveSender({ NEWSLETTER_EMAIL: 'newsletter@mtlb.co.kr' }), {
+    email: 'newsletter@mtlb.co.kr',
+    from: 'Logisight <newsletter@mtlb.co.kr>',
+  });
+});
+
 test('resolveSender: 공백만 있는 값은 미설정과 동일', () => {
-  assert.equal(resolveSender({ NEWSLETTER_EMAIL: '   ' }).email, 'newsletter@mtlb.co.kr');
+  assert.equal(resolveSender({ NEWSLETTER_EMAIL: '   ' }).email, 'newsletter@logisight.net');
 });
 
 test('resolveSite: SITE_URL 미설정 시 정본 도메인', () => {
