@@ -28,6 +28,13 @@ const SOURCE = '財務省貿易統計';
 const SOURCE_URL = 'https://www.customs.go.jp/toukei/info/tsdl.htm';
 const UNIT = 'thousand_jpy';
 
+/**
+ * 위치 규칙(파일당 [0]=Grand Total, [1]=지역 합계)만으로는 하위 집계를 놓친다.
+ * ASIA 파일 안에 ASIA NIES·ASEAN이, WESTERN EUROPE 파일 안에 EU가 별도 열로 들어 있어
+ * 국가로 잡히면 수출 상위 목록에서 USA·CHINA와 나란히 비교된다(모집단이 다르다).
+ */
+const SUB_AGGREGATES = new Set(['ASIA NIES', 'ASEAN', 'EU']);
+
 const MONTHS: Record<string, number> = {
   Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6,
   Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12,
@@ -115,7 +122,7 @@ export function parseTradeCsv(csvText: string): TradeRow[] {
       rows.push({
         country_name: name,
         region: c === 0 ? null : region,
-        is_aggregate: c <= 1,
+        is_aggregate: c <= 1 || SUB_AGGREGATES.has(name.trim().toUpperCase()),
         year: period.year,
         month: period.month,
         export_jpy: num(cells[idx]),
