@@ -6,6 +6,7 @@
 
 const fs   = require('fs');
 const path = require('path');
+const { SITE_URL } = require('../lib/site');
 
 const RAIL_PATH  = path.resolve(__dirname, '../../content/drafts/curated-rail.json');
 const OCEAN_PATH = path.resolve(__dirname, '../../content/drafts/curated-ocean.json');
@@ -173,7 +174,7 @@ function build(rail, ocean) {
       <tr><td style="padding:20px;">
         <div style="font-size:14px;font-weight:700;color:#0F2D5A;margin-bottom:4px;">📊 더 깊은 데이터가 필요하다면</div>
         <div style="font-size:12px;color:#475569;margin-bottom:12px;">SCFI·WCI·KCCI 실시간 + TCR/TSR 동향 + 화물 트래킹</div>
-        <a href="https://logisight.mtlship.com" target="_blank" rel="noopener noreferrer"
+        <a href="${SITE_URL}" target="_blank" rel="noopener noreferrer"
            style="display:inline-block;background:#1B4D8C;color:#FFFFFF;font-size:12px;font-weight:700;text-decoration:none;padding:8px 18px;border-radius:6px;">
           Logisight 대시보드 →
         </a>
@@ -190,7 +191,7 @@ function build(rail, ocean) {
     <div style="font-size:11px;">
       <a href="#" style="color:#93C5FD;text-decoration:none;">수신 거부</a>
       &nbsp;&nbsp;|&nbsp;&nbsp;
-      <a href="https://logisight.mtlship.com" rel="noopener noreferrer" style="color:#93C5FD;text-decoration:none;">웹에서 보기</a>
+      <a href="${SITE_URL}" rel="noopener noreferrer" style="color:#93C5FD;text-decoration:none;">웹에서 보기</a>
     </div>
   </td></tr>
 

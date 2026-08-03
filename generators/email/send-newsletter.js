@@ -14,7 +14,7 @@ const TYPE = process.argv.find(a => a.startsWith('--type='))?.split('=')[1] || '
 const HTML_FILE = process.argv.find(a => a.startsWith('--html='))?.split('=').slice(1).join('=');
 const TO = process.env.SEND_TO || process.env.INTERNAL_EMAIL;
 const FROM = 'Logisight <newsletter@mtlb.co.kr>';
-const SITE_URL = 'https://logisight.mtlship.com';
+const { SITE_URL, SITE_HOST } = require('../lib/site');
 
 // 수신거부 링크 주입 — 생성 HTML의 {{UNSUBSCRIBE_URL}} 치환, 없으면 본문 끝에 최소 푸터 추가.
 // id 없는 내부 사본은 /news 로 대체.
@@ -148,11 +148,11 @@ function buildDailyHtml(data) {
                 <td>
                   <div style="font-size:12px;color:#6b7280;">
                     <strong style="color:#1B4D8C;">Logisight</strong> · MTL Shipping Agency<br>
-                    <a href="https://logisight.mtlship.com" style="color:#1B4D8C;">logisight.mtlship.com</a>
+                    <a href="${SITE_URL}" style="color:#1B4D8C;">${SITE_HOST}</a>
                   </div>
                 </td>
                 <td align="right">
-                  <a href="https://logisight.mtlship.com/market" 
+                  <a href="${SITE_URL}/market"
                      style="background:#1B4D8C;color:#ffffff;font-size:12px;font-weight:600;text-decoration:none;padding:8px 16px;border-radius:6px;display:inline-block;">
                     운임 대시보드 →
                   </a>
@@ -265,7 +265,7 @@ function buildWeeklyHtml(data) {
           <td style="background:#f9fafb;border-top:1px solid #e5e7eb;padding:20px 32px;">
             <div style="font-size:12px;color:#6b7280;">
               <strong style="color:#1B4D8C;">Logisight</strong> · MTL Shipping Agency ·
-              <a href="https://logisight.mtlship.com" style="color:#1B4D8C;">logisight.mtlship.com</a>
+              <a href="${SITE_URL}" style="color:#1B4D8C;">${SITE_HOST}</a>
             </div>
             <div style="font-size:11px;color:#9ca3af;margin-top:8px;">
               본 보고서는 공개 데이터 기반 자동 생성 자료입니다. 실제 운임은 MTL 영업팀에 문의하세요.

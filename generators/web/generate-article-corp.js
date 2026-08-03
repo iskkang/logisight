@@ -12,6 +12,7 @@ const path      = require('path');
 const { callDeepSeek } = require('../lib/deepseek');
 const { insertArticle } = require('../../lib/supabase-insert');
 const { resolveArticle } = require('./lib/news-pipeline');
+const { SITE_URL } = require('../lib/site');
 
 const TODAY        = new Date().toISOString().slice(0, 10);
 const NEWS_PATH    = path.resolve(__dirname, '../../content/drafts/latest-news.json');
@@ -211,7 +212,7 @@ async function main() {
 
   // maritime_news upsert
   const slug2        = makeSlug(selectedItem.title_en || selectedItem.title);
-  const canonicalUrl = `https://logisight.mtlship.com/article/${TODAY}-corp-${slug2}`;
+  const canonicalUrl = `${SITE_URL}/article/${TODAY}-corp-${slug2}`;
   await insertArticle({
     markdownContent: article,
     canonicalUrl,

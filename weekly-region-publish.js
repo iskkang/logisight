@@ -10,6 +10,7 @@ const ws = require('ws'); globalThis.WebSocket = ws;
 require('dotenv').config({ path: path.resolve(__dirname, '.env.local') });
 const { createClient } = require('@supabase/supabase-js');
 const META = require('./config/region-meta');
+const { SITE_URL } = require('./generators/lib/site');
 
 const BUCKET = 'reports';
 const PUB_DIR = path.join(__dirname, 'content/published');
@@ -98,7 +99,7 @@ async function main() {
       .upload(p.bucketPath, fs.readFileSync(p.localPdf), { contentType: 'application/pdf', upsert: true });
     if (upErr) throw new Error(`[${p.region}] PDF 업로드 실패: ${upErr.message}`);
     // 공개 링크는 자체 도메인 경유 — Vercel rewrite(/reports/:type/:file)가 Supabase 스토리지로 프록시
-    const pdfUrl = `https://logisight.mtlship.com/reports/${p.bucketPath}`;
+    const pdfUrl = `${SITE_URL}/reports/${p.bucketPath}`;
 
     const row = {
       id: p.id,

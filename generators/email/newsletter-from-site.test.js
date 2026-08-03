@@ -2,6 +2,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { kstToday, pickArticles, buildHtml } = require('./newsletter-from-site.lib');
+const { SITE_URL } = require('../lib/site');
 
 test('kstToday: UTC 23:00 = KST 다음날', () => {
   assert.equal(kstToday(new Date('2026-06-11T23:00:00Z')), '2026-06-12');
@@ -43,7 +44,7 @@ test('buildHtml: 카드 링크는 사이트 /article/{slug}, 제목 HTML 이스�
     [{ slug: '2026-06-12-ocean-x', title: '운임 <상승>', summary: '부제목', category: '해상', image_url: null, image_credit: null }],
     '2026-06-12',
   );
-  assert.ok(html.includes('https://logisight.mtlship.com/article/2026-06-12-ocean-x'));
+  assert.ok(html.includes(`${SITE_URL}/article/2026-06-12-ocean-x`));
   assert.ok(html.includes('운임 &lt;상승&gt;'));
   assert.ok(html.includes('부제목'));
 });
@@ -53,7 +54,7 @@ test('buildHtml: 푸터 "웹에서 보기"는 /news로 연결', () => {
     [{ slug: 's', title: 't', summary: null, category: '물류', image_url: null, image_credit: null }],
     '2026-06-12',
   );
-  assert.ok(html.includes('https://logisight.mtlship.com/news'));
+  assert.ok(html.includes(`${SITE_URL}/news`));
 });
 
 test('buildHtml: summary 없으면 생략하고 undefined 문자열이 없어야 함', () => {
