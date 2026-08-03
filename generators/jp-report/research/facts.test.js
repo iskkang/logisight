@@ -41,6 +41,20 @@ test('buildSppiFacts: 계약통화 지수 100 미만을 신호로 표시', () =>
   assert.ok(!f.signals.some((s) => s.series === '外航貨物輸送'));
 });
 
+// 검수에서 「出典名を断定的に付与している」로 걸렸다. 출처가 팩트시트에 없으면
+// 본문이 기관명을 써도 검수자가 확인할 수 없다.
+test('buildSppiFacts: 출처를 함께 담는다', () => {
+  const f = buildSppiFacts(sppiRows, sppiPrev, { year: 2026, month: 6 });
+  assert.ok(f.source && f.source.length > 0);
+  assert.match(f.source, /日本銀行/);
+});
+
+test('buildPortFacts·buildTradeFacts·buildCommodityFacts: 각 축이 출처를 갖는다', () => {
+  assert.match(buildPortFacts(portRows, { year: 2026, month: 5 }).source, /国土交通省/);
+  assert.match(buildTradeFacts(tradeRows, { year: 2026, month: 6 }).source, /財務省/);
+  assert.match(buildCommodityFacts(commodityRows, { year: 2026, month: 6 }).source, /財務省/);
+});
+
 test('buildSppiFacts: 전년 데이터가 없으면 전년비는 null — 임의로 채우지 않는다', () => {
   const f = buildSppiFacts(sppiRows, [], { year: 2026, month: 6 });
   assert.equal(f.series[0].yoyYenPct, null);
