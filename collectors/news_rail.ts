@@ -27,7 +27,16 @@ async function scrapePage(page: Page, source: NewsSource): Promise<NewsItem[]> {
         };
       })
       .filter((item) => {
-        if (item.title.length < 10 || item.title.length > 200 || !/^https?:\/\//.test(item.url)) return false;
+        if (item.title.length < 10 || item.title.length > 200) return false;
+        // 스킴 접두어만 보면 <a href="https://javascript:void(0);"> 같은 값이 통과해
+        // 사이트에서 깨진 리다이렉트가 된다 — 실제 파싱 + 호스트 형태까지 확인
+        try {
+          const u = new URL(item.url);
+          if (u.protocol !== 'http:' && u.protocol !== 'https:') return false;
+          if (!u.hostname.includes('.')) return false;
+        } catch {
+          return false;
+        }
         if (seen.has(item.url)) return false;
         seen.add(item.url);
         return true;
