@@ -8,6 +8,12 @@ on:
   #   - cron: '0 2 * * 4'   # (이전) 목요일 02:00 UTC (11:00 KST) — WCI 발표일
   workflow_dispatch:
 
+# 발신 주소 전환용. 리포지터리 변수 NEWSLETTER_EMAIL이 없으면 빈 값이 되고,
+# generators/lib/site.js가 현행 주소를 기본값으로 쓴다(동작 불변).
+# 발송 스텝뿐 아니라 생성 스텝도 이 값을 푸터 표기에 쓰므로 워크플로 전역으로 둔다.
+env:
+  NEWSLETTER_EMAIL: ${{ vars.NEWSLETTER_EMAIL }}
+
 jobs:
   weekly:
     runs-on: ubuntu-latest
