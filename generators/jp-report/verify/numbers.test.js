@@ -51,6 +51,19 @@ test('extractNumbers: 조수사를 걸러도 실제 수치는 남는다', () => 
   assert.deepEqual(vals, [1177717]);
 });
 
+// 목업 검증에서 '## 02. 海上・航空運賃'의 02가 위반으로 잡혔다.
+// 섹션 번호는 데이터가 아니라 문서 구조다.
+test('extractNumbers: 마크다운 제목의 섹션 번호는 제외', () => {
+  const text = '## 02. 海上・航空運賃\n外航貨物輸送は233.8となった。\n### 3. 小見出し';
+  const vals = extractNumbers(text).map((g) => g.value);
+  assert.deepEqual(vals, [233.8]);
+});
+
+test('extractNumbers: 목록 번호도 제외', () => {
+  const vals = extractNumbers('1. 最初の項目\n2. 次の項目').map((g) => g.value);
+  assert.deepEqual(vals, []);
+});
+
 test('extractNumbers: 문맥을 함께 담는다 — REVISE 지시가 구체적이어야 한다', () => {
   const got = extractNumbers('両者には15ポイント超の開きが生じている');
   assert.equal(got.length, 1);
