@@ -5,6 +5,7 @@
 
 const fs   = require('fs');
 const path = require('path');
+const { SITE_URL } = require('../lib/site');
 
 const DATA  = path.resolve(__dirname, '../content/drafts/latest-news-curated.json');
 const TODAY = new Date().toISOString().slice(0, 10);
@@ -316,7 +317,7 @@ function build(d) {
           <table role="presentation" cellspacing="0" cellpadding="0" border="0">
             <tr>
               <td style="padding-right:10px;">
-                <a href="https://logisight.mtlship.com" target="_blank" rel="noopener noreferrer"
+                <a href="${SITE_URL}" target="_blank" rel="noopener noreferrer"
                    style="display:inline-block;background:#1B4D8C;color:#FFFFFF;
                           font-size:13px;font-weight:700;text-decoration:none;
                           padding:10px 20px;border-radius:8px;">
@@ -352,7 +353,7 @@ function build(d) {
       <div style="font-size:11px;">
         <a href="#" style="color:#93C5FD;text-decoration:none;">수신 거부</a>
         &nbsp;&nbsp;|&nbsp;&nbsp;
-        <a href="https://logisight.mtlship.com" rel="noopener noreferrer" style="color:#93C5FD;text-decoration:none;">웹에서 보기</a>
+        <a href="${SITE_URL}" rel="noopener noreferrer" style="color:#93C5FD;text-decoration:none;">웹에서 보기</a>
       </div>
     </td>
   </tr>

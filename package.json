@@ -24,6 +24,7 @@
     "curate:logistics": "node generators/web/curate-logistics.js",
     "newsletter:generate": "node generators/email/generate-newsletter.js",
     "newsletter:from-site": "node generators/email/generate-newsletter-from-site.js",
+    "test:lib": "node --test generators/lib/",
     "test:email": "node --test generators/email/",
     "article:corp": "node generators/web/generate-article-corp.js",
     "article:brief": "node generators/email/generate-article-brief.js",

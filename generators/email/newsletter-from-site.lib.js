@@ -2,7 +2,7 @@
 // 사이트(maritime_news) 내부 기사 → 데일리 뉴스레터 HTML (순수 함수만, I/O 없음)
 'use strict';
 
-const SITE = 'https://logisight.mtlship.com';
+const { SITE_URL: SITE } = require('../lib/site');
 const SECTION_ORDER = ['해상', '항공', '철도', '무역', '물류'];
 const SECTION_ICONS = { 해상: '🚢', 항공: '✈️', 철도: '🚂', 무역: '📜', 물류: '📦' };
 

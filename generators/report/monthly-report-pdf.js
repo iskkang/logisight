@@ -13,6 +13,7 @@ const { buildChart } = require("./lib/chart-data");
 const { fetchOgImage } = require("./lib/og-image");
 const { buildExecPage } = require("./lib/exec-page");
 const { resolveMonth, monthEndISO, prevMonthOf } = require("./lib/report-month");
+const { SITE_HOST } = require("../lib/site");
 
 const TODAY = new Date().toISOString().slice(0, 10);
 const monthArg = process.argv.find((a) => a.startsWith("--month="));
@@ -796,7 +797,7 @@ p.article-cat{font-family:var(--font-sans);font-size:7.5pt;letter-spacing:4px;
     </div>
     <div class="ld-foot">
       <span>발행 ${PUB} · 데이터 기준: 직전월 최종 공표 주차</span>
-      <span>logisight.mtlship.com</span>
+      <span>${SITE_HOST}</span>
     </div>
   </div>
 </section>
@@ -810,7 +811,7 @@ ${transformed.html}
   <div class="bc-rule"></div>
   <div class="bc-statement">Global Logistics &amp; Market Intelligence<br>해운·항공·철도 운임과 공급망 동향 종합 분석</div>
   <div class="bc-disclaimer">본 리포트는 공개 출처 기반 분석이며, 수치는 Logisight 지표 대시보드를 참조 바람. 무단 전재·재배포 금지.</div>
-  <div class="bc-contact">logisight.mtlship.com</div>
+  <div class="bc-contact">${SITE_HOST}</div>
   <div class="bc-copy">© ${Number(YY)} Logisight / MTL Shipping Agency. All rights reserved.</div>
 </section>
 
