@@ -1,9 +1,10 @@
 'use strict';
 // generators/lib/site.js
 // 사이트 도메인 단일 소스 — 도메인 전환은 SITE_URL 환경변수 하나로 끝난다.
-// 미설정 시 현행 도메인을 유지하므로 전환 전에 도입해도 동작이 바뀌지 않는다.
+// 정본은 apex(www 아님) — www.logisight.net은 apex로 308 리다이렉트된다.
+// 문제 시 SITE_URL=https://logisight.mtlship.com 으로 구 도메인 롤백 가능.
 
-const DEFAULT_SITE_URL = 'https://logisight.mtlship.com';
+const DEFAULT_SITE_URL = 'https://logisight.net';
 
 /**
  * @param {Record<string,string|undefined>} [env]
