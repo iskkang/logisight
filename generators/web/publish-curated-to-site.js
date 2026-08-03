@@ -12,6 +12,7 @@ const {
   categoryFor,
   generateKoreanAnalysis,
   resolveArticle,
+  sanitizeArticleUrl,
 } = require('./lib/news-pipeline');
 
 const DRAFTS_DIR = path.resolve(__dirname, '../../content/drafts');
@@ -101,8 +102,14 @@ async function publishMain(curated) {
 }
 
 async function publishLink(link, section, date) {
-  if (!link.title_ko || !link.url || !link.source) return;
-  const asset = await resolveArticle(link.url, {
+  // 외부 링크 행은 사이트에서 원문으로 리다이렉트된다 — 무효 URL이 저장되면 깨진 Location이 나간다.
+  const url = sanitizeArticleUrl(link.url);
+  if (link.url && !url) {
+    console.warn(`  ⚠️ [${section}] 원문 URL 무효 — 건너뜀: ${link.url}`);
+    return;
+  }
+  if (!link.title_ko || !url || !link.source) return;
+  const asset = await resolveArticle(url, {
     source: link.source,
     keyword: KEYWORDS[section],
     title: link.title_ko,
@@ -120,7 +127,7 @@ async function publishLink(link, section, date) {
     title: (isInternal && generated?.title) || link.title_ko,
     summary: link.summary_ko || link.title_ko,
     content,
-    url: link.url,
+    url,
     source: link.source,
     category: categoryFor(section),
     lang: 'ko',

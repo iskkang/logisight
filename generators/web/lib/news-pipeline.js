@@ -38,6 +38,20 @@ function sanitizeImageUrl(value) {
   }
 }
 
+// 기사 원문 URL 검증. 스킴 접두어(/^https?:\/\//)만 보면 앵커 쓰레기 값이 통과한다 —
+// "https://javascript:void(0);"는 파싱에서, "https://javascript"는 호스트 검사에서 걸린다.
+function sanitizeArticleUrl(value) {
+  if (!value) return null;
+  const raw = String(value).trim();
+  try {
+    const url = new URL(raw);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
+    return url.hostname.includes('.') ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
 function metaContent(html, key, attr) {
   const patterns = [
     new RegExp(`<meta[^>]+${attr}=["']${key}["'][^>]+content=["']([^"']+)["']`, 'i'),
@@ -259,6 +273,7 @@ module.exports = {
   CATEGORY_MAP,
   buildMainContent,
   categoryFor,
+  sanitizeArticleUrl,
   generateKoreanAnalysis,
   normalizeMarkdownBody,
   parseKsgArticle,

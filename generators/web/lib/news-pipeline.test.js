@@ -1,7 +1,38 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { parseKsgArticle } = require('./news-pipeline');
+const { parseKsgArticle, sanitizeArticleUrl } = require('./news-pipeline');
+
+// 원문 URL 검증 — 스킴 접두어(/^https?:\/\//)만 보면 앵커 쓰레기 값이 통과해
+// 사이트에서 깨진 리다이렉트(Location: https://javascript:void(0);)가 나갔다.
+test('sanitizeArticleUrl: 정상 기사 URL은 그대로', () => {
+  assert.equal(
+    sanitizeArticleUrl('https://splash247.com/a-b-c'),
+    'https://splash247.com/a-b-c',
+  );
+  assert.equal(sanitizeArticleUrl('http://www.ksg.co.kr/news/1?a=2'), 'http://www.ksg.co.kr/news/1?a=2');
+});
+
+test('sanitizeArticleUrl: 스킴 접두어만 맞는 값 — 실제 수집된 https://javascript:void(0);', () => {
+  assert.equal(sanitizeArticleUrl('https://javascript:void(0);'), null);
+});
+
+test('sanitizeArticleUrl: 점 없는 호스트는 거부', () => {
+  assert.equal(sanitizeArticleUrl('https://javascript'), null);
+  assert.equal(sanitizeArticleUrl('https://localhost/x'), null);
+});
+
+test('sanitizeArticleUrl: http(s) 아닌 스킴 거부', () => {
+  assert.equal(sanitizeArticleUrl('javascript:void(0);'), null);
+  assert.equal(sanitizeArticleUrl('mailto:a@b.com'), null);
+});
+
+test('sanitizeArticleUrl: 상대경로·빈값·null 거부', () => {
+  assert.equal(sanitizeArticleUrl('/news/1'), null);
+  assert.equal(sanitizeArticleUrl('  '), null);
+  assert.equal(sanitizeArticleUrl(null), null);
+  assert.equal(sanitizeArticleUrl(undefined), null);
+});
 
 test('parseKsgArticle: TITLE/BODY 분리', () => {
   const r = parseKsgArticle(
