@@ -16,9 +16,10 @@ function resolveSite(env = process.env) {
   return { url, host: url.replace(/^https?:\/\//, '') };
 }
 
-// 발신 주소는 도메인과 별개로 움직인다 — Resend에 logisight.net 도메인 검증(DKIM·SPF)이
-// 끝나기 전에 바꾸면 발송이 전부 실패하므로, 기본값은 현행 주소로 두고 검증 완료 후 전환한다.
-const DEFAULT_NEWSLETTER_EMAIL = 'newsletter@mtlb.co.kr';
+// 발신 주소. RESEND_API_KEY는 logisight.net이 검증된 Resend 계정의 키다
+// (무료 플랜이 도메인 1개라 계정을 분리했다). 따라서 구 주소로 되돌리려면
+// NEWSLETTER_EMAIL만 바꿔서는 안 되고 API 키도 옛 계정 것으로 함께 바꿔야 한다.
+const DEFAULT_NEWSLETTER_EMAIL = 'newsletter@logisight.net';
 const SENDER_NAME = 'Logisight';
 
 /**
