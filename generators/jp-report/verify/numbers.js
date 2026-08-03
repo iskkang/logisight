@@ -57,6 +57,10 @@ function extractNumbers(text) {
     const raw = m[0];
     const after = src.slice(m.index + raw.length, m.index + raw.length + 3);
     if (SKIP_SUFFIX.test(after)) continue;
+    // '## 02. 海上運賃' / '1. 項目' — 섹션·목록 번호는 데이터가 아니라 문서 구조다.
+    const lineStart = src.lastIndexOf('\n', m.index) + 1;
+    const before = src.slice(lineStart, m.index);
+    if (/^#{0,6}\s*$/.test(before) && /^\.\s/.test(after)) continue;
     const value = parseJpNumber(raw);
     if (!Number.isFinite(value)) continue;
     out.push({
