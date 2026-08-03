@@ -20,6 +20,17 @@ const PORT_NAMES = {
 /** 지수의 기준연도 값. 계약통화 기준이 이보다 낮으면 실질 운임이 기준연도 이하라는 뜻이다. */
 const INDEX_BASE = 100;
 
+/**
+ * 축별 출처. 팩트시트에 없으면 본문이 기관명을 써도 검수자가 확인할 수 없어
+ * 「出典名を断定的に付与している」으로 반려된다(실제로 그렇게 걸렸다).
+ */
+const SOURCES = {
+  sppi: '日本銀行 企業向けサービス価格指数(SPPI)',
+  port: '国土交通省 港湾統計',
+  trade: '財務省貿易統計',
+  commodity: '財務省貿易統計 概況品別国別表',
+};
+
 const pct = (cur, prev) =>
   (Number.isFinite(cur) && Number.isFinite(prev) && prev !== 0 ? (cur / prev - 1) * 100 : null);
 
@@ -54,7 +65,7 @@ function buildSppiFacts(rows, prevRows, at) {
       note: `契約通貨ベース ${s.contract} — 基準年(2020年)を下回る。円ベース ${s.yen} との差は為替要因。`,
     }));
 
-  return { period: period(at), baseYear: '2020', unit: 'index', series, signals };
+  return { period: period(at), source: SOURCES.sppi, baseYear: '2020', unit: 'index', series, signals };
 }
 
 function buildPortFacts(rows, at) {
@@ -73,6 +84,7 @@ function buildPortFacts(rows, at) {
 
   return {
     period: period(at),
+    source: SOURCES.port,
     unit: 'TEU',
     scope: '主要6港 外国貿易コンテナ',
     // 속보와 확보는 모집단·확정도가 다르다. 어느 쪽인지 밝히지 않으면 비교가 어긋난다.
@@ -106,6 +118,7 @@ function buildTradeFacts(rows, at) {
 
   return {
     period: period(at),
+    source: SOURCES.trade,
     unit: 'thousand_jpy',
     total: total
       ? {
@@ -132,7 +145,10 @@ function buildCommodityFacts(rows, at) {
       .map(([name, valueJpy]) => ({ name, valueJpy, sharePct: sum ? (valueJpy / sum) * 100 : null }))
       .sort((a, b) => b.valueJpy - a.valueJpy);
   };
-  return { period: period(at), unit: 'thousand_jpy', export: group('export'), import: group('import') };
+  return {
+    period: period(at), source: SOURCES.commodity, unit: 'thousand_jpy',
+    export: group('export'), import: group('import'),
+  };
 }
 
 /** 현재 수집 범위에 없는 것. 없는 줄 모르고 쓰면 근거 없는 서술이 나온다. */
