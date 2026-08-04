@@ -45,3 +45,27 @@ test('flagsFor(ja): 알려진 플래그에 한글이 남지 않는다', () => {
   ];
   for (const s of flagsFor(all, 'ja')) assert.ok(!/[가-힣]/.test(s), s);
 });
+
+// strength도 config의 한국어 라벨이다. 행에 저장돼 카드에 그대로 나온다.
+test('strengthFor: 강도 라벨을 옮긴다', () => {
+  const { strengthFor } = require('./flags');
+  assert.equal(strengthFor('상승 우세', 'ja'), '上昇優勢');
+  assert.equal(strengthFor('방향성 약함(보합권)', 'ja'), '方向感が弱い(横ばい)');
+  assert.equal(strengthFor('하락 가능성 높음', 'ja'), '下落の可能性が高い');
+});
+
+test('strengthFor: ko는 그대로, 모르는 값은 원문', () => {
+  const { strengthFor } = require('./flags');
+  assert.equal(strengthFor('상승 우세', 'ko'), '상승 우세');
+  assert.equal(strengthFor('알 수 없음', 'ja'), '알 수 없음');
+  assert.equal(strengthFor(null, 'ja'), null);
+});
+
+// 다섯 등급이 전부 매핑돼야 한다. 하나라도 빠지면 그 등급만 한국어로 남는다.
+test('strengthFor: THRESHOLDS의 다섯 등급을 모두 덮는다', () => {
+  const { strengthFor } = require('./flags');
+  const { THRESHOLDS } = require('./config/forecast-model');
+  for (const t of Object.values(THRESHOLDS)) {
+    assert.ok(!/[가-힣]/.test(strengthFor(t.strength, 'ja')), `누락: ${t.strength}`);
+  }
+});

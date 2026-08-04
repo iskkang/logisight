@@ -3,7 +3,7 @@
 // 기준: docs/specs/freight-rate-forecast-prompt-v1.4.1.md (style_rules 5문장 구조, H1~H13, 한국발 중국변수 우선).
 // narration_validation 7종: 1)enum 누설 2)결측 단정 3)방향 일치 4)단위 5)분량 6)기준 월 명시 7)관측1건 추세동사.
 
-const { flagsFor } = require('./flags');
+const { flagsFor, strengthFor } = require('./flags');
 
 const ENUM_LEAK = /(stable|expanding|easing|mixed|proxy|tracker|up_[23]|down_[23])/i;
 
@@ -113,7 +113,7 @@ function buildNarratePrompt(input, verdict, { news = [], lang = 'ko' } = {}) {
   // 올바른 일본어는 欠航·欠測이다.
   const facts = lang === 'ja' ? {
     指標: input.metric_ref, ラベル: input.label, 頻度: input.cadence, horizon: input.horizon_date,
-    判定: { 方向: verdict.direction, 強さ: verdict.strength, 想定レンジ: verdict.expected_range_pct, 信頼度: verdict.confidence },
+    判定: { 方向: verdict.direction, 強さ: strengthFor(verdict.strength, 'ja'), 想定レンジ: verdict.expected_range_pct, 信頼度: verdict.confidence },
     運賃: input.rate_series && { 基準月: input.rate_series.period_label, 直近: input.rate_series.latest, 単位: input.rate_series.unit, 前月比: input.rate_series.mom_pct, 傾向: input.rate_series.trend_3p },
     供給_欠航: bs && { 出典: bs.source_type, 欠航率: bs.ratio_pct, 方向: bs.direction, 実効船腹: bs.effective_capacity_chg_pct },
     china_factor: input.china_factor || null,

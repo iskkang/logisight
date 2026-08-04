@@ -1,7 +1,7 @@
 'use strict';
 // verdict + prose + input → forecasts 행. 순수 함수.
 
-const { flagsFor } = require('./flags');
+const { flagsFor, strengthFor } = require('./flags');
 
 const EDITOR_PLACEHOLDER = '[AI 초안 · 에디터 검수 필요 — 본문 작성]';
 
@@ -38,7 +38,8 @@ function mapVerdictToRow(input, verdict, prose, asof = new Date(), lang = 'ko') 
     cadence: input.cadence,
     horizon_date: input.horizon_date,
     direction: verdict.direction,
-    strength: verdict.strength,
+    // 강도 라벨도 설정의 한국어다. 옮기지 않으면 카드에 '상승 우세'가 남는다.
+    strength: strengthFor(verdict.strength, lang),
     composite_score: verdict.composite_score,
     range_low_pct: verdict.range_low_pct,
     range_high_pct: verdict.range_high_pct,

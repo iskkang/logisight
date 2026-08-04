@@ -38,4 +38,22 @@ function flagsFor(flags, lang) {
   return lang === 'ja' ? list.map(flagJa) : list;
 }
 
-module.exports = { flagJa, flagsFor, RULES };
+/**
+ * verdict.strength도 config/forecast-model.js의 한국어 라벨이다.
+ * 행에 저장돼 화면에 나오고, 프롬프트의 근거로도 들어간다 — 두 곳 다 옮겨야 한다.
+ */
+const STRENGTH_JA = {
+  '상승 가능성 높음': '上昇の可能性が高い',
+  '상승 우세': '上昇優勢',
+  '방향성 약함(보합권)': '方向感が弱い(横ばい)',
+  '하락 우세': '下落優勢',
+  '하락 가능성 높음': '下落の可能性が高い',
+};
+
+/** 모르는 값은 원문 그대로 — 지우면 강도를 알 수 없게 된다. */
+function strengthFor(strength, lang) {
+  if (lang !== 'ja' || strength == null) return strength;
+  return STRENGTH_JA[strength] ?? strength;
+}
+
+module.exports = { flagJa, flagsFor, strengthFor, RULES, STRENGTH_JA };
