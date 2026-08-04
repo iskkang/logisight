@@ -31,9 +31,14 @@ function parseHeadline(html) {
   const desc  = descM ? decodeEntities(descM[1]).trim() : null;
   if (!desc) return null;
 
-  // M blank sailings ... out of N scheduled departures
+  // "M blank sailings ... out of N <형용사> sailings|departures"
+  //
+  // 분모의 문구는 Drewry가 바꾼다. 2026-07 이전 "scheduled departures" →
+  // 현재 "planned sailings". 한 표현만 보면 분모가 null이 되고, 비율을 못 구해
+  // 리딩 전체가 버려진다(수집은 성공하는데 결과가 사라져 원인이 안 보인다).
+  // 형용사 자리는 있든 없든 받고, 명사는 sailings/departures 둘 다 받는다.
   const cntM = desc.match(/([0-9,]+)\s+blank sailings/i);
-  const schM = desc.match(/out of\s+([0-9,]+)\s+scheduled departures/i);
+  const schM = desc.match(/out of\s+([0-9,]+)\s+(?:[a-z]+\s+)?(?:sailings|departures)/i);
   const blank     = cntM ? parseInt(cntM[1].replace(/,/g, ''), 10) : null;
   const scheduled = schM ? parseInt(schM[1].replace(/,/g, ''), 10) : null;
   // 비율: scheduled가 있으면 계산, 없으면 문장에 명시된 "N% cancellation rate" 직접 인용.
@@ -92,4 +97,4 @@ async function buildDrewryHeadline() {
   }
 }
 
-module.exports = { buildDrewryHeadline, TRACKER_URL };
+module.exports = { buildDrewryHeadline, parseHeadline, TRACKER_URL };
