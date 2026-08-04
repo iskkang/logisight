@@ -11,6 +11,27 @@ const { SITE_URL } = require('./site');
 const BUCKET = 'reports';
 // 공개 링크는 자체 도메인 경유 — Vercel rewrite(/reports/:type/:file)가 Supabase 스토리지로 프록시
 
+/** 언어별 정본 도메인. PDF 공개 URL이 이 호스트를 탄다. */
+const SITE_BY_LANG = { ko: SITE_URL, ja: 'https://jpn.logisight.net' };
+
+/**
+ * id·스토리지 키의 언어 접두사.
+ *
+ * 처음엔 `${type}-${periodStart}`만 썼다. reports 테이블과 스토리지 버킷을 한국판·일본판이
+ * 공유하는데 언어 차원이 없어, 일본 6월호를 발행하자 같은 id·같은 경로로 한국 6월호를
+ * DB 행과 PDF 양쪽에서 덮어썼다. 언어는 키에 반드시 들어가야 한다.
+ * 한국판은 기존 id를 유지해야 하므로(발행 이력·링크) 접두사를 붙이지 않는다.
+ */
+const langPrefix = (lang) => (lang === 'ko' ? '' : `${lang}-`);
+const langDir = (lang) => (lang === 'ko' ? '' : `${lang}/`);
+
+/** 카탈로그 id. 언어가 빠지면 다른 언어의 같은 기간 리포트를 덮어쓴다. */
+const reportId = (type, periodStart, lang = 'ko') => `${langPrefix(lang)}${type}-${periodStart}`;
+/** 스토리지 키. 마찬가지로 언어가 빠지면 PDF를 덮어쓴다. */
+const reportPdfKey = (type, periodStart, lang = 'ko') => `${langDir(lang)}${type}/${periodStart}.pdf`;
+/** 공개 URL의 호스트. */
+const reportSite = (lang = 'ko') => SITE_BY_LANG[lang] ?? SITE_URL;
+
 function client() {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -36,14 +57,16 @@ function client() {
  */
 async function publishReport(inp) {
   const sb = client();
-  const id = `${inp.type}-${inp.periodStart}`;
+  const lang = inp.lang ?? 'ko';
+  const site = reportSite(lang);
+  const id = reportId(inp.type, inp.periodStart, lang);
 
   // ① PDF: 이미 업로드돼 있으면 재사용, 아니면 reports 버킷에 업로드
   let pdfKey = inp.pdfKey || null;
   let pdfUrl = inp.pdfUrl || null;
   if (!pdfUrl) {
     if (!inp.pdfPath) throw new Error('pdfPath 또는 (pdfUrl + pdfKey) 필요');
-    pdfKey = `${inp.type}/${inp.periodStart}.pdf`;
+    pdfKey = reportPdfKey(inp.type, inp.periodStart, lang);
     const pdfBuf = fs.readFileSync(inp.pdfPath);
     const { error } = await sb.storage.from(BUCKET)
       .upload(pdfKey, pdfBuf, { contentType: 'application/pdf', upsert: true });
@@ -51,7 +74,7 @@ async function publishReport(inp) {
     // 재발행 시 URL이 동일해 브라우저/CDN이 옛 파일을 보여주는 문제 방지 —
     // 콘텐츠 해시 버전 쿼리를 붙여 파일이 바뀌면 URL도 바뀌게 한다(스토리지 경로는 동일).
     const ver = require('crypto').createHash('md5').update(pdfBuf).digest('hex').slice(0, 8);
-    pdfUrl = `${SITE_URL}/reports/${pdfKey}?v=${ver}`;
+    pdfUrl = `${site}/reports/${pdfKey}?v=${ver}`;
     console.log(`  PDF 업로드: ${pdfKey} (v=${ver})`);
   }
   if (!pdfKey) throw new Error('pdfKey 누락 (pdf_path NOT NULL)');
@@ -59,11 +82,11 @@ async function publishReport(inp) {
   // ①b 표지(선택)
   let coverUrl = null;
   if (inp.coverPath) {
-    const coverKey = `${inp.type}/${inp.periodStart}.png`;
+    const coverKey = `${langDir(lang)}${inp.type}/${inp.periodStart}.png`;
     const { error } = await sb.storage.from(BUCKET)
       .upload(coverKey, fs.readFileSync(inp.coverPath), { contentType: 'image/png', upsert: true });
     if (error) throw new Error(`표지 업로드 실패: ${error.message}`);
-    coverUrl = `${SITE_URL}/reports/${coverKey}`;
+    coverUrl = `${site}/reports/${coverKey}`;
   }
 
   // ② reports 카탈로그 upsert
@@ -82,7 +105,7 @@ async function publishReport(inp) {
     published_at: new Date().toISOString(),
     // reports 테이블은 한국판·일본판이 공유한다. 언어를 안 박으면 기본값 'ko'가 되어
     // 일본 리포트가 한국 사이트 목록에 뜬다(migration 20260804000002).
-    lang: inp.lang ?? 'ko',
+    lang,
   };
   const { error } = await sb.from('reports').upsert(row, { onConflict: 'id' });
   if (error) throw new Error(`reports upsert 실패: ${error.message}`);
@@ -91,4 +114,4 @@ async function publishReport(inp) {
   return { id, pdfUrl };
 }
 
-module.exports = { publishReport };
+module.exports = { publishReport, reportId, reportPdfKey, reportSite };
