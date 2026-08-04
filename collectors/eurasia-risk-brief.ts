@@ -19,10 +19,44 @@ const { callDeepSeekJson } = require('../generators/lib/deepseek.js') as {
 
 const SOURCE = 'index1520';
 const SEV = new Set(['high', 'medium', 'low']);
-const SYSTEM =
-  '당신은 유라시아 철도 물류 리스크 애널리스트입니다. index1520(ERAI) 격주 시장 리포트와 최근 철도 뉴스를 근거로 ' +
-  '한국 화주·포워더가 바로 쓸 수 있는 핵심 액션 1건과 주요 리스크 3~4건을 도출합니다. ' +
-  '평이한 한국어로 쓰고 어려운 한자어는 쓰지 않습니다. 추측 금지(근거 있는 것만). JSON만 출력합니다.';
+
+// 언어별로 따로 생성한다. 같은 근거(리포트·뉴스)에서 각 언어로 쓰게 하고,
+// eurasia_charts는 key-value 테이블이라 키를 나눈다(rail_brief / rail_brief_ja).
+// 번역하지 않는 이유는 forecasts와 같다 — 대상 독자가 다르다.
+const LANGS = [
+  {
+    lang: 'ko',
+    key: 'rail_brief',
+    system:
+      '당신은 유라시아 철도 물류 리스크 애널리스트입니다. index1520(ERAI) 격주 시장 리포트와 최근 철도 뉴스를 근거로 '
+      + '한국 화주·포워더가 바로 쓸 수 있는 핵심 액션 1건과 주요 리스크 3~4건을 도출합니다. '
+      + '평이한 한국어로 쓰고 어려운 한자어는 쓰지 않습니다. 추측 금지(근거 있는 것만). JSON만 출력합니다.',
+    ask:
+      '위 근거로 아래 JSON만 출력하세요. severity는 high|medium|low. 본문은 한국어로 작성하세요.\n'
+      + '{\n'
+      + '  "action": { "title": "지금 챙길 핵심 액션 한 줄(24자 내외)", "sub": "한 줄 근거/수치(40자 내외)", "severity": "high|medium|low" },\n'
+      + '  "risks": [ { "title": "유라시아 철도 리스크(20자 내외)", "severity": "high|medium|low" } ],\n'
+      + '  "outlook": { "summary": "향후 2~4주 유라시아 철도 시장 전망 2~3문장(운임·물동량·리드타임 방향, 수치 포함)", "points": ["운임 방향 한 줄", "물동량 방향 한 줄", "리드타임/기타 한 줄"] }\n'
+      + '}',
+  },
+  {
+    lang: 'ja',
+    key: 'rail_brief_ja',
+    system:
+      'あなたはユーラシア鉄道物流のリスクアナリストである。index1520(ERAI)の隔週マーケットレポートと直近の鉄道ニュースを根拠に、'
+      + '日本の荷主・フォワーダーがすぐ使える重要アクション1件と主要リスク3〜4件を導く。'
+      + '常体(だ・である)で平易に書く。推測は禁止(根拠のあることだけ)。JSON のみを出力する。',
+    // 出力言語の指示はユーザーメッセージ側にも要る。system だけ日本語にして
+    // スキーマ説明を韓国語のままにしたら、モデルは韓国語で書いてきた(実際にそうなった)。
+    ask:
+      '上記の根拠から、以下の JSON だけを出力すること。severity は high|medium|low。本文はすべて日本語(常体)で書く。\n'
+      + '{\n'
+      + '  "action": { "title": "今すぐ押さえるべき打ち手を一行(全角24字程度)", "sub": "根拠・数値を一行(全角40字程度)", "severity": "high|medium|low" },\n'
+      + '  "risks": [ { "title": "ユーラシア鉄道のリスク(全角20字程度)", "severity": "high|medium|low" } ],\n'
+      + '  "outlook": { "summary": "今後2〜4週のユーラシア鉄道市況の見通しを2〜3文(運賃・輸送量・リードタイムの方向、数値を含める)", "points": ["運賃の方向を一行", "輸送量の方向を一行", "リードタイムなどを一行"] }\n'
+      + '}',
+  },
+] as const;
 
 type Brief = {
   action: { title: string; sub: string; severity: string };
@@ -69,40 +103,39 @@ async function main() {
     return;
   }
 
-  const user =
-    `# index1520 격주 리포트\n${reportBlocks.join('\n\n') || '(없음)'}\n\n` +
-    `# 최근 철도 뉴스\n${newsBlock || '(없음)'}\n\n` +
-    '위 근거로 아래 JSON만 출력하세요. severity는 high|medium|low.\n' +
-    '{\n' +
-    '  "action": { "title": "지금 챙길 핵심 액션 한 줄(24자 내외)", "sub": "한 줄 근거/수치(40자 내외)", "severity": "high|medium|low" },\n' +
-    '  "risks": [ { "title": "유라시아 철도 리스크(20자 내외)", "severity": "high|medium|low" } ],  // 3~4개, 중요도 순\n' +
-    '  "outlook": { "summary": "향후 2~4주 유라시아 철도 시장 전망 2~3문장(운임·물동량·리드타임 방향, 수치 포함)", "points": ["운임 방향 한 줄", "물동량 방향 한 줄", "리드타임/기타 한 줄"] }\n' +
-    '}';
+  const evidence =
+    `# index1520 격주 리포트\n${reportBlocks.join('\n\n') || '(없음)'}\n\n`
+    + `# 최근 철도 뉴스\n${newsBlock || '(없음)'}\n\n`;
 
-  let brief: Brief;
-  try {
-    const obj = (await callDeepSeekJson({ system: SYSTEM, messages: [{ role: 'user', content: user }], max_tokens: 1500, debugPrefix: 'eurasia-risk-brief' })) as Brief;
-    const action = obj?.action;
-    const risks = Array.isArray(obj?.risks) ? obj.risks : [];
-    if (!action?.title || !risks.length) throw new Error('빈 응답');
-    const ol = (obj as { outlook?: { summary?: unknown; points?: unknown } })?.outlook;
-    const outlook = {
-      summary: String(ol?.summary ?? '').trim(),
-      points: Array.isArray(ol?.points) ? ol!.points.map((p) => String(p).trim()).filter(Boolean).slice(0, 4) : [],
-    };
-    brief = {
-      action: { title: String(action.title).trim(), sub: String(action.sub ?? '').trim(), severity: SEV.has(action.severity) ? action.severity : 'medium' },
-      risks: risks.filter((r) => r?.title).slice(0, 4).map((r) => ({ title: String(r.title).trim(), severity: SEV.has(r.severity) ? r.severity : 'low' })),
-      outlook,
-    };
-  } catch (e) {
-    console.error('[eurasia-risk-brief] 생성 실패:', (e as Error).message);
-    return;
+  // 한 언어가 실패해도 다른 언어는 살린다 — 한쪽 때문에 둘 다 못 쓰면 손해다.
+  for (const L of LANGS) {
+    const user = evidence + L.ask;
+
+    let brief: Brief;
+    try {
+      const obj = (await callDeepSeekJson({ system: L.system, messages: [{ role: 'user', content: user }], max_tokens: 1500, debugPrefix: `eurasia-risk-brief-${L.lang}` })) as Brief;
+      const action = obj?.action;
+      const risks = Array.isArray(obj?.risks) ? obj.risks : [];
+      if (!action?.title || !risks.length) throw new Error('빈 응답');
+      const ol = (obj as { outlook?: { summary?: unknown; points?: unknown } })?.outlook;
+      const outlook = {
+        summary: String(ol?.summary ?? '').trim(),
+        points: Array.isArray(ol?.points) ? ol!.points.map((p) => String(p).trim()).filter(Boolean).slice(0, 4) : [],
+      };
+      brief = {
+        action: { title: String(action.title).trim(), sub: String(action.sub ?? '').trim(), severity: SEV.has(action.severity) ? action.severity : 'medium' },
+        risks: risks.filter((r) => r?.title).slice(0, 4).map((r) => ({ title: String(r.title).trim(), severity: SEV.has(r.severity) ? r.severity : 'low' })),
+        outlook,
+      };
+    } catch (e) {
+      console.error(`[eurasia-risk-brief:${L.lang}] 생성 실패:`, (e as Error).message);
+      continue;
+    }
+
+    const payload = { ...brief, lang: L.lang, basedOn: picks.map((r) => r.title), newsCount: (news ?? []).length, generatedAt: new Date().toISOString() };
+    await dbUpsert('eurasia_charts', [{ key: L.key, payload, source: SOURCE, source_url: 'https://index1520.com/en/analytics/', updated_at: new Date().toISOString() }], 'key');
+    console.log(`✅ eurasia-risk-brief[${L.lang}]: action="${brief.action.title}" risks=${brief.risks.length} → eurasia_charts.${L.key}`);
   }
-
-  const payload = { ...brief, basedOn: picks.map((r) => r.title), newsCount: (news ?? []).length, generatedAt: new Date().toISOString() };
-  await dbUpsert('eurasia_charts', [{ key: 'rail_brief', payload, source: SOURCE, source_url: 'https://index1520.com/en/analytics/', updated_at: new Date().toISOString() }], 'key');
-  console.log(`✅ eurasia-risk-brief: action="${brief.action.title}" risks=${brief.risks.length} → eurasia_charts.rail_brief`);
 }
 
 main().catch((e) => {
