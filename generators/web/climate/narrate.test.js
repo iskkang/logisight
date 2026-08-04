@@ -125,3 +125,95 @@ test('narrateClimate: 검증 실패 반복 시 needs_editor=true', async () => {
   assert.equal(out.needs_editor, true);
   assert.equal(out.weather, null);
 });
+
+// ── 언어 축 ─────────────────────────────────────────────────────────────
+// 가드가 한국어 어휘만 보면 일본어 초안은 무조건 통과한다. 가드가 있으나 마나가 된다.
+const jaCtx = (over = {}) => ({ event: { name: 'Typhoon MAWAR', kind: 'cyclone' }, lang: 'ja', ...over });
+const jaBody = (over = {}) => ({
+  weather: '台風は現在、宮古海峡の東にある。',
+  impact: 'リードタイムは +2~4日程度と推定される。',
+  action: '出港時期の調整を検討する。',
+  event_echo: 'Typhoon MAWAR',
+  ...over,
+});
+
+test('validateClimate(ja): 정상 본문은 통과', () => {
+  assert.equal(validateClimate(jaBody(), jaCtx()).ok, true);
+});
+
+test('validateClimate(ja): 일본어 단정 표현을 잡는다', () => {
+  const v = validateClimate(jaBody({ impact: '必ず遅延する。' }), jaCtx());
+  assert.ok(v.issues.includes('단정 표현 포함'), `잡히지 않음: ${v.issues}`);
+});
+
+// 한국어 가드로 일본어를 검사하면 그냥 통과해버린다 — 이 대비가 회귀를 막는다.
+test('validateClimate: 언어를 안 넘기면 일본어 단정을 놓친다', () => {
+  const body = jaBody({ impact: '必ず遅延する。' });
+  assert.ok(!validateClimate(body, jaCtx({ lang: 'ko' })).issues.includes('단정 표현 포함'));
+});
+
+test('validateClimate(ja): 헤지 없는 정량은 반려', () => {
+  const v = validateClimate(jaBody({ impact: 'リードタイムは 3日 増える。' }), jaCtx());
+  assert.ok(v.issues.some((i) => i.includes('정량 단정')), `잡히지 않음: ${v.issues}`);
+});
+
+test('validateClimate(ja): 헤지가 있으면 정량 허용', () => {
+  assert.equal(validateClimate(jaBody({ impact: 'リードタイムは 3日 程度と推定される。' }), jaCtx()).ok, true);
+});
+
+test('validateClimate(ja): 트랙 시각 단언을 잡는다', () => {
+  const v = validateClimate(jaBody({ weather: '3日後に宮古海峡を通過する。' }), jaCtx());
+  assert.ok(v.issues.includes('트랙 시각 미제공인데 통과 시점 단언'), `잡히지 않음: ${v.issues}`);
+});
+
+test('buildClimatePrompt: lang에 따라 출력 언어 지시가 바뀐다', () => {
+  const ctx = {
+    asof: new Date('2026-06-30'),
+    event: { name: 'MAWAR', title: 'Typhoon MAWAR', kind: 'cyclone', severity: 'r', lon: 130, lat: 25, area: null },
+    route: { id: 'r1', name: 'アジア–欧州' },
+    viaPassage: { id: 'miyako_strait', name_ko: '미야코해협', name_ja: '宮古海峡' },
+    viaMinKm: 80,
+    trackSummary: { hasTrack: false },
+  };
+  const ko = buildClimatePrompt(ctx, 'ko');
+  const ja = buildClimatePrompt(ctx, 'ja');
+  assert.ok(ko.system.includes('한국어로'));
+  assert.ok(ja.system.includes('日本語で'));
+  // 관문명을 한국어로 넣으면 일본어 본문에 '미야코해협'이 섞인다.
+  assert.ok(ja.user.includes('宮古海峡') && !ja.user.includes('미야코해협'));
+  assert.ok(ko.user.includes('미야코해협'));
+});
+
+// 노선명이 자산명을 품는다: '아시아–유럽 (희망봉 우회)' ⊃ '희망봉'.
+// 이 대비가 없으면 그 노선을 부르는 것만으로 초안 전체가 환각으로 보류된다.
+// 연관 자산이 비고 노선만 걸린 이벤트에서 특히 자주 터졌다(일본어 10건 중 4건).
+test('validateClimate: 허용된 이름의 일부인 지명은 환각이 아니다', () => {
+  const ctx = {
+    event: { name: 'MAWAR', kind: 'cyclone' },
+    gazetteer: ['희망봉', '싱가포르'],
+    allowedPlaces: new Set(['아시아–유럽 (희망봉 우회)']),
+  };
+  const body = {
+    weather: '이벤트가 관측되었다.',
+    impact: '아시아–유럽 (희망봉 우회) 노선에 영향 가능성이 있다.',
+    action: '모니터링을 강화한다.',
+    event_echo: 'MAWAR',
+  };
+  assert.equal(validateClimate(body, ctx).ok, true);
+});
+
+// 그렇다고 아무 지명이나 통과시키면 환각 가드가 죽는다.
+test('validateClimate: 입력과 무관한 지명은 여전히 잡는다', () => {
+  const ctx = {
+    event: { name: 'MAWAR', kind: 'cyclone' },
+    gazetteer: ['희망봉', '싱가포르'],
+    allowedPlaces: new Set(['아시아–유럽 (희망봉 우회)']),
+  };
+  const body = {
+    weather: '이벤트가 관측되었다.',
+    impact: '싱가포르 항만이 영향을 받을 가능성이 있다.',
+    action: '모니터링을 강화한다.',
+    event_echo: 'MAWAR',
+  };
+  assert.ok(validateClimate(body, ctx).issues.some((i) => i.includes('환각')));
+});

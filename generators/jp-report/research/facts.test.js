@@ -5,8 +5,11 @@ const {
   buildSppiFacts,
   buildPortFacts,
   buildTradeFacts,
+  countryJa,
   buildCommodityFacts,
   buildFactsheet,
+  buildGlobalHistory,
+  buildSppiHistory,
 } = require('./facts');
 
 // ── SPPI ────────────────────────────────────────────────────────────────
@@ -55,6 +58,16 @@ test('buildPortFacts·buildTradeFacts·buildCommodityFacts: 각 축이 출처를
   assert.match(buildCommodityFacts(commodityRows, { year: 2026, month: 6 }).source, /財務省/);
 });
 
+// 검수가 「外航貨物輸送には為替要因の注記がない」로 반려했다.
+// 두 기준의 차이가 환율이라는 건 지수의 정의이지 특정 계열의 특성이 아니다.
+// 팩트시트에 정의를 담지 않으면 검수자가 계열마다 근거를 요구한다.
+test('buildSppiFacts: 두 기준의 정의를 담는다', () => {
+  const f = buildSppiFacts(sppiRows, sppiPrev, { year: 2026, month: 6 });
+  assert.ok(f.basisNote, 'basisNote 누락');
+  assert.match(f.basisNote, /為替/);
+  assert.match(f.basisNote, /契約通貨/);
+});
+
 test('buildSppiFacts: 전년 데이터가 없으면 전년비는 null — 임의로 채우지 않는다', () => {
   const f = buildSppiFacts(sppiRows, [], { year: 2026, month: 6 });
   assert.equal(f.series[0].yoyYenPct, null);
@@ -101,8 +114,20 @@ test('buildTradeFacts: 총계와 국가를 분리한다', () => {
 
 test('buildTradeFacts: 수출 내림차순, 무역수지 포함', () => {
   const f = buildTradeFacts(tradeRows, { year: 2026, month: 6 });
-  assert.equal(f.countries[0].name, 'USA');
-  assert.equal(f.countries.find((c) => c.name === 'CHINA').balanceJpy, 1824000000 - 2645000000);
+  assert.equal(f.countries[0].name, '米国');
+  assert.equal(f.countries.find((c) => c.name === '中国').balanceJpy, 1824000000 - 2645000000);
+});
+
+// 재무성 원본은 'HG KONG' 'SNGAPOR' 같은 영문 약어다. 표만 영문으로 남으면
+// 일본어 리포트로서 어색하고, 본문 번역을 모델에 맡기면 오역 위험이 남는다.
+test('countryJa: 영문 약어를 일본어명으로 바꾼다', () => {
+  assert.equal(countryJa('HG KONG'), '香港');
+  assert.equal(countryJa('SNGAPOR'), 'シンガポール');
+  assert.equal(countryJa('AUSTRAL'), 'オーストラリア');
+});
+
+test('countryJa: 매핑에 없으면 원문을 그대로 쓴다', () => {
+  assert.equal(countryJa('NEWLAND'), 'NEWLAND');
 });
 
 // ── 品目 ────────────────────────────────────────────────────────────────
@@ -154,4 +179,80 @@ test('buildFactsheet: 결측 데이터를 명시한다', () => {
   });
   assert.ok(fs.gaps.length > 0);
   assert.ok(fs.gaps.some((g) => /為替|환율/.test(g)));
+});
+
+// ── 추이(차트 전용) ──────────────────────────────────────────────────────
+// 系列ごとに公表日が違う。日付の和集合を軸にし、欠測は null のまま残さないと
+// 図が「その週も観測があった」ように見えてしまう。
+
+const weekRows = [
+  { index_code: 'SCFI', week_date: '2026-07-27', value: 3206 },
+  { index_code: 'SCFI', week_date: '2026-07-20', value: 3061 },
+  { index_code: 'CCFI', week_date: '2026-07-20', value: 1300 },
+  { index_code: 'BDI', week_date: '2026-07-27', value: 1800 },   // 컨테이너가 아니라 추이에서 뺀다
+  { index_code: 'SCFI', week_date: '2026-07-13', value: null },
+];
+
+test('buildGlobalHistory: 컨테이너 계열만 시간순으로 모은다', () => {
+  const h = buildGlobalHistory(weekRows);
+  assert.deepEqual(h.weeks, ['2026-07-20', '2026-07-27']);
+  assert.deepEqual(h.series.map((s) => s.code), ['SCFI', 'CCFI']);
+  assert.deepEqual(h.series[0].values, [3061, 3206]);
+});
+
+test('buildGlobalHistory: 공표가 없는 주는 null로 둔다', () => {
+  const h = buildGlobalHistory(weekRows);
+  assert.deepEqual(h.series[1].values, [1300, null]); // CCFI는 7/27 미공표
+});
+
+test('buildGlobalHistory: 관측이 1주뿐이면 추이가 아니다', () => {
+  assert.equal(buildGlobalHistory([{ index_code: 'SCFI', week_date: '2026-07-27', value: 3206 }]), null);
+  assert.equal(buildGlobalHistory([]), null);
+});
+
+const histRows = [
+  { year: 2026, month: 6, series_name: '外航貨物輸送', basis: 'yen', value: 233.8 },
+  { year: 2026, month: 6, series_name: '外航貨物輸送', basis: 'contract', value: 160.8 },
+  { year: 2026, month: 5, series_name: '外航貨物輸送', basis: 'yen', value: 228.0 },
+  { year: 2026, month: 5, series_name: '外航貨物輸送', basis: 'contract', value: 159.0 },
+  { year: 2026, month: 6, series_name: '外航貨物輸送', basis: 'ex_tax', value: 233.8 },
+  { year: 2026, month: 6, series_name: '港湾運送', basis: 'yen', value: 105.1 },  // 추이 대상 아님
+];
+
+test('buildSppiHistory: 두 기준을 각각 시간순으로 모은다', () => {
+  const h = buildSppiHistory(histRows);
+  assert.deepEqual(h.months, ['2026-05', '2026-06']);
+  assert.equal(h.series.length, 1);
+  assert.deepEqual(h.series[0].yen, [228.0, 233.8]);
+  assert.deepEqual(h.series[0].contract, [159.0, 160.8]);
+});
+
+test('buildSppiHistory: 소비세 제외 계열은 넣지 않는다', () => {
+  const h = buildSppiHistory(histRows);
+  assert.ok(!JSON.stringify(h).includes('ex_tax'));
+});
+
+// history가 프롬프트로 새면 본문이 시계열 수치를 인용하기 시작한다.
+test('slimFactsheet: history를 프롬프트에서 잘라낸다', () => {
+  const { slimFactsheet } = require('../write/sections');
+  const slim = slimFactsheet({
+    periods: { sppi: '2026-06' },
+    sppi: { series: [], signals: [], history: { months: ['2026-05'], series: [] } },
+    global: { indices: [], history: { weeks: ['2026-07-27'], series: [] } },
+  }, 'ocean');
+  assert.ok(!('history' in slim.sppi));
+  assert.ok(!('history' in slim.global));
+});
+
+// WCI が一度だけ火曜に公表された週があった。合集合を軸にすると、その日は他系列が
+// 全て null になり、SCFI の線がそこで丸ごと切れる — データではなく軸の作り方の問題だった。
+test('buildGlobalHistory: 한 계열만 요일이 어긋난 날은 축에 넣지 않는다', () => {
+  const h = buildGlobalHistory([
+    { index_code: 'SCFI', week_date: '2026-05-11', value: 2140 },
+    { index_code: 'SCFI', week_date: '2026-05-18', value: 2218 },
+    { index_code: 'SCFI', week_date: '2026-05-25', value: 2571 },
+    { index_code: 'WCI', week_date: '2026-05-19', value: 2711 },   // 화요일 — 단독 공표
+  ]);
+  assert.ok(!h.weeks.includes('2026-05-19'));
+  assert.deepEqual(h.series.find((s) => s.code === 'SCFI').values, [2140, 2218, 2571]);
 });

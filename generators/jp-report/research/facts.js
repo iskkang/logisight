@@ -17,6 +17,41 @@ const PORT_NAMES = {
   JPUKB: '神戸港',
 };
 
+/**
+ * 재무성 무역통계의 국가명은 영문 약어다('HG KONG' 'SNGAPOR' 'AUSTRAL').
+ * 그대로 두면 표만 영문이 되고, 본문 번역을 모델에 맡기게 되어 오역 위험이 남는다.
+ * 매핑에 없는 이름은 원문을 그대로 쓴다 — 새 상대국이 들어와도 표가 비지 않는다.
+ */
+const COUNTRY_NAMES_JA = {
+  USA: '米国',
+  CHINA: '中国',
+  TAIWAN: '台湾',
+  'R KOREA': '韓国',
+  'HG KONG': '香港',
+  THAILND: 'タイ',
+  SNGAPOR: 'シンガポール',
+  VIETNAM: 'ベトナム',
+  INDIA: 'インド',
+  AUSTRAL: 'オーストラリア',
+  MALYSIA: 'マレーシア',
+  GERMANY: 'ドイツ',
+  CANADA: 'カナダ',
+  MEXICO: 'メキシコ',
+  'U KING': '英国',
+  INDNSIA: 'インドネシア',
+  PHILPIN: 'フィリピン',
+  FRANCE: 'フランス',
+  ITALY: 'イタリア',
+  NETHRLD: 'オランダ',
+  BRAZIL: 'ブラジル',
+  RUSSIA: 'ロシア',
+  'SAUDI A': 'サウジアラビア',
+  UAE: 'アラブ首長国連邦',
+  'S AFRICA': '南アフリカ',
+};
+
+const countryJa = (name) => COUNTRY_NAMES_JA[name] || name;
+
 /** 지수의 기준연도 값. 계약통화 기준이 이보다 낮으면 실질 운임이 기준연도 이하라는 뜻이다. */
 const INDEX_BASE = 100;
 
@@ -29,12 +64,167 @@ const SOURCES = {
   port: '国土交通省 港湾統計',
   trade: '財務省貿易統計',
   commodity: '財務省貿易統計 概況品別国別表',
+  global: '各指数の公表機関(SSE・Drewry・Freightos・Baltic Exchange ほか)',
 };
+
+/**
+ * 世界のスポット運賃指数。日本版レポートに載せる系列。
+ *
+ * KCCI(韓国発)・KITA は韓国発着が基準なので入れない。日本の荷主にとって
+ * 意味を持つのは、発表元が世界共通の SCFI・CCFI・WCI・FBX・BDI とバンカーである。
+ *
+ * SPPI は「日本国内の価格」、これらは「世界のスポット」。並べて初めて
+ * 日本の動きが世界の流れの中でどこにあるかが読める — それがこの軸の目的である。
+ */
+const GLOBAL_SERIES = [
+  { code: 'SCFI', label: 'SCFI 総合' },
+  { code: 'SCFI_EU', label: 'SCFI 上海→欧州' },
+  { code: 'SCFI_USWC', label: 'SCFI 上海→米西岸' },
+  { code: 'SCFI_USEC', label: 'SCFI 上海→米東岸' },
+  { code: 'CCFI', label: 'CCFI 総合' },
+  { code: 'WCI', label: 'WCI 総合' },
+  { code: 'FBX', label: 'FBX 総合' },
+  { code: 'BDI', label: 'BDI(バルク)' },
+  { code: 'VLSFO', label: 'VLSFO(低硫黄C重油)' },
+  { code: 'HSFO', label: 'HSFO(高硫黄C重油)' },
+];
+
+/** ユーラシア鉄道。ERAI(Eurasian Rail Alliance Index)の公開値。 */
+const RAIL_SERIES = [
+  { code: 'ERAI', label: 'ERAI 総合' },
+  { code: 'ERAI_WEST', label: 'ERAI 西航(中国→欧州)' },
+  { code: 'ERAI_EAST', label: 'ERAI 東航(欧州→中国)' },
+  { code: 'ERAI_TRANSIT_DAYS', label: 'ERAI 平均輸送日数', unit: '日' },
+];
+
+const GLOBAL_CODES = [...GLOBAL_SERIES, ...RAIL_SERIES].map((s) => s.code);
+
+/** 系列定義 → 最新行を当てはめる共通処理。系列ごとに公表日が違う。 */
+function pickLatest(rows, defs) {
+  const latest = new Map();
+  for (const r of rows || []) if (!latest.has(r.index_code)) latest.set(r.index_code, r);
+  return defs.map(({ code, label, unit }) => {
+    const r = latest.get(code);
+    return {
+      code,
+      label,
+      unit: unit ?? null,
+      value: r && r.value !== null && r.value !== undefined ? Number(r.value) : null,
+      changePct: r && r.change_pct !== null && r.change_pct !== undefined ? Number(r.change_pct) : null,
+      asOf: r ? r.week_date : null,
+    };
+  });
+}
+
+/** ユーラシア鉄道の指数。海運・航空と同じ形にそろえる。 */
+function buildRailFacts(rows) {
+  const indices = pickLatest(rows, RAIL_SERIES);
+  return {
+    source: 'ERAI (Eurasian Rail Alliance Index)',
+    asOf: indices.map((i) => i.asOf).filter(Boolean).sort().pop() ?? null,
+    indices,
+    note: '中国–欧州の鉄道運賃と輸送日数。日本発着ではないが、アジア–欧州の代替ルートとして参照する。',
+  };
+}
+
+/**
+ * 世界のスポット指数を1軸にまとめる。
+ *
+ * 系列ごとに公表日が違うので、系列ごとの最新行を拾う。
+ * 週次であり、日本の統計(月次)とは基準日が揃わない — その事実を asOfNote に持たせ、
+ * 本文が同一時点として扱わないようにする。
+ */
+function buildGlobalFacts(rows) {
+  const indices = pickLatest(rows, GLOBAL_SERIES);
+
+  const withChange = indices.filter((i) => i.changePct !== null);
+  const container = withChange.filter((i) => !['BDI', 'VLSFO', 'HSFO'].includes(i.code));
+
+  return {
+    source: SOURCES.global,
+    unit: 'index / USD',
+    asOf: indices.map((i) => i.asOf).filter(Boolean).sort().pop() ?? null,
+    indices,
+    // 局面を一言で言うための集計。個別系列を数え直させない。
+    containerUp: container.filter((i) => i.changePct > 0).length,
+    containerDown: container.filter((i) => i.changePct < 0).length,
+    containerTotal: container.length,
+    asOfNote:
+      '世界のスポット指数は週次、日本の統計は月次で基準日が揃わない。'
+      + '両者を同一時点の動きとして比較してはならない。同時期に観測された事実として並べるまでである。',
+  };
+}
+
+/**
+ * 시계열은 차트 전용이다. 본문은 단면 수치만 쓴다.
+ *
+ * 단면만으로는 「今がどの局面か」を示せない — 前年同月比が正でも、それは前年より高い
+ * という意味しかなく、上がってきたのか下げ止まったのかは分からない。その形は
+ * 図でしか渡せない。ただし本文が時系列の数値を引用し始めると単月の断面という
+ * 前提が崩れるので、sections.slimFactsheet が history をプロンプトから外す。
+ */
+const TREND_CODES = ['SCFI', 'CCFI', 'WCI', 'FBX'];
+const SPPI_TREND_SERIES = ['外航貨物輸送', '国際航空貨物輸送'];
+
+/** 週次スポットの推移。系列ごとに公表日が違う。 */
+function buildGlobalHistory(rows, { weeks = 26 } = {}) {
+  const byCode = new Map();
+  for (const r of rows || []) {
+    if (!TREND_CODES.includes(r.index_code) || r.value === null || r.value === undefined) continue;
+    if (!byCode.has(r.index_code)) byCode.set(r.index_code, new Map());
+    byCode.get(r.index_code).set(r.week_date, Number(r.value));
+  }
+
+  // 축이 될 날짜는 가장 촘촘한 계열의 공표일로 잡는다.
+  // 전 계열의 합집합을 쓰면, 한 계열만 요일이 어긋난 날(WCI가 화요일에 공표한 주가 있다)이
+  // 축에 끼어들고, 그 자리에서 다른 모든 계열의 선이 통째로 끊긴다.
+  let grid = null;
+  for (const at of byCode.values()) if (!grid || at.size > grid.size) grid = at;
+  if (!grid) return null;
+  const window = [...grid.keys()].sort().slice(-weeks);
+  if (window.length < 2) return null;
+
+  const series = TREND_CODES.filter((c) => byCode.has(c)).map((code) => ({
+    code,
+    label: GLOBAL_SERIES.find((s) => s.code === code).label,
+    // 欠測は null のまま。線をつなぐと無い観測を有るように見せる。
+    values: window.map((d) => byCode.get(code).get(d) ?? null),
+  }));
+  return series.length ? { weeks: window, series } : null;
+}
 
 const pct = (cur, prev) =>
   (Number.isFinite(cur) && Number.isFinite(prev) && prev !== 0 ? (cur / prev - 1) * 100 : null);
 
 const period = ({ year, month }) => `${year}-${String(month).padStart(2, '0')}`;
+
+/** SPPI の月次推移。円ベースと契約通貨ベースの開きが広がったのかを図で示す。 */
+function buildSppiHistory(rows, { months = 24 } = {}) {
+  const byName = new Map();
+  const periods = new Set();
+  for (const r of rows || []) {
+    if (r.basis === 'ex_tax' || r.value === null || r.value === undefined) continue;
+    if (!SPPI_TREND_SERIES.includes(r.series_name)) continue;
+    const p = period(r);
+    periods.add(p);
+    if (!byName.has(r.series_name)) byName.set(r.series_name, new Map());
+    const at = byName.get(r.series_name);
+    if (!at.has(p)) at.set(p, {});
+    at.get(p)[r.basis] = Number(r.value);
+  }
+  const window = [...periods].sort().slice(-months);
+  if (window.length < 2) return null;
+
+  const series = SPPI_TREND_SERIES.filter((n) => byName.has(n)).map((name) => {
+    const at = byName.get(name);
+    return {
+      name,
+      yen: window.map((p) => at.get(p)?.yen ?? null),
+      contract: window.map((p) => at.get(p)?.contract ?? null),
+    };
+  });
+  return series.length ? { months: window, series } : null;
+}
 
 function buildSppiFacts(rows, prevRows, at) {
   const byName = new Map();
@@ -65,7 +255,18 @@ function buildSppiFacts(rows, prevRows, at) {
       note: `契約通貨ベース ${s.contract} — 基準年(2020年)を下回る。円ベース ${s.yen} との差は為替要因。`,
     }));
 
-  return { period: period(at), source: SOURCES.sppi, baseYear: '2020', unit: 'index', series, signals };
+  return {
+    period: period(at),
+    source: SOURCES.sppi,
+    baseYear: '2020',
+    unit: 'index',
+    // 두 기준의 차이가 환율이라는 것은 지수の定義であって特定系列の特性ではない。
+    // これを書いておかないと、検査側が系列ごとに根拠を求めて差し戻す。
+    basisNote: '円ベースは契約通貨ベースに為替変動を加えたもの。両者の差は定義上すべて為替要因であり、'
+      + '個別系列ごとの根拠を要しない。契約通貨ベースが運賃そのものの動きに近い。',
+    series,
+    signals,
+  };
 }
 
 function buildPortFacts(rows, at) {
@@ -106,7 +307,7 @@ function buildTradeFacts(rows, at) {
   const countries = rows
     .filter((r) => !r.is_aggregate)
     .map((r) => ({
-      name: r.country_name,
+      name: countryJa(r.country_name),
       exportJpy: r.export_jpy === null ? null : Number(r.export_jpy),
       importJpy: r.import_jpy === null ? null : Number(r.import_jpy),
       balanceJpy:
@@ -158,7 +359,7 @@ const KNOWN_GAPS = [
   '日本発着ブランクセーリング — 供給side の説明ができない',
 ];
 
-function buildFactsheet({ sppi, port, trade, commodity }) {
+function buildFactsheet({ sppi, port, trade, commodity, global, rail }) {
   const periods = {
     sppi: sppi.period,
     port: port.period,
@@ -172,15 +373,31 @@ function buildFactsheet({ sppi, port, trade, commodity }) {
     // 기준월이 섞였다는 사실을 감추면 "6월 리포트"에 5월 항만 수치가 조용히 들어간다.
     periodMismatch: distinct.size > 1,
     gaps: [...KNOWN_GAPS],
+    // 世界のスポットは週次で最新まで、日本の統計は月次で遅れて出る。
+    // この非対称が「次に出る日本の数字がどちらを向くか」を語る根拠になる。
+    publicationLag:
+      '世界のスポット指数は週次で直近まで公表される。日本の企業向けサービス価格指数は月次で、'
+      + '当月分の公表までに約2か月かかる。したがって、直近のスポットの動きは、'
+      + 'まだ公表されていない日本の指数がどちらを向くかを考える材料になる。'
+      + 'ただし転嫁の幅と時期は契約条件によって異なり、データからは特定できない。',
     sppi,
     port,
     trade,
     commodity,
+    global: global ?? null,
+    rail: rail ?? null,
   };
 }
 
 module.exports = {
   PORT_NAMES,
+  GLOBAL_CODES,
+  SPPI_TREND_SERIES,
+  countryJa,
+  buildGlobalFacts,
+  buildGlobalHistory,
+  buildSppiHistory,
+  buildRailFacts,
   buildSppiFacts,
   buildPortFacts,
   buildTradeFacts,

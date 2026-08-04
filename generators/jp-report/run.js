@@ -62,8 +62,12 @@ function main() {
     console.log('   발행하려면 --publish 를 붙여 실행한다.');
     return;
   }
-  console.log('\n▶ ④ publish');
-  console.warn('   ⚠️ 발행 단계는 미구현이다. 사이트(jpn.logisight.net) 구축 후 연결한다.');
+  const pub = step('④ publish — PDF 업로드 + reports 등록', 'publish.js', [`--period=${period}`]);
+  if (!pub.ok) {
+    console.error('\n❌ 발행 실패 — 원고·PDF는 남아 있다. 로그를 보고 재실행한다.');
+    process.exit(1);
+  }
+  console.log(`\n🌐 https://jpn.logisight.net/reports/monthly/${period}`);
 }
 
 if (require.main === module) main();

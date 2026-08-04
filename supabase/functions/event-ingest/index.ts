@@ -125,7 +125,9 @@ serve(async () => {
       const low = /Depression/i.test(intensity) || /^Tropical Storm$/i.test(intensity);
       out.push({ id: 'hko-' + id, source: 'hko', kind: 'cyclone',
         title: (name || 'Tropical Cyclone') + (intensity ? ' (' + intensity + ')' : ''),
-        severity: low ? 'a' : 'r', lon, lat, area: '북서태평양', starts_at: null, ends_at: null, url, track });
+        // area는 다른 소스가 전부 원문 영어로 채운다('Greece'·'China'·'Washington, RI').
+        // 여기만 한국어를 박아 두면 일본 사이트 화면에 '북서태평양'이 그대로 나온다.
+        severity: low ? 'a' : 'r', lon, lat, area: 'NW Pacific', starts_at: null, ends_at: null, url, track });
     }));
   } catch (_) {}
   return out;

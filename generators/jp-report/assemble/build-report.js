@@ -11,20 +11,54 @@ const path = require('path');
 const { marked } = require('marked');
 
 const { deriveTitle, deriveDescription, buildJsonLd, periodJa, SITE_NAME } = require('./seo');
-const { sppiChart, portChart } = require('../image/charts');
+const {
+  sppiChart, portChart, globalTrendChart, sppiTrendChart, tradeChart,
+} = require('../image/charts');
 
 const DRAFTS = path.resolve(__dirname, '../../../content/drafts');
 const SITE_URL = process.env.JP_SITE_URL || 'https://jpn.logisight.net';
 
-/** 차트를 해당 섹션 뒤에 끼워 넣는다. 섹션이 없으면 넣지 않는다(빈 그림이 남지 않게). */
+/**
+ * どの図をどの節に置くか。節番号ではなくモードで決める — 番号は構成を変えるとずれる。
+ * データが無ければ make が null を返し、その図は出さない(空枠を残さない)。
+ */
+const CHART_PLAN = [
+  { section: '01', key: 'sppi', alt: '運賃指数 円ベースと契約通貨ベース', make: sppiChart },
+  { section: '02', key: 'global-trend', alt: '世界のコンテナスポット指数 推移', make: globalTrendChart },
+  { section: '02', key: 'sppi-ocean', alt: '外航貨物輸送 円・契約通貨ベース推移', make: (f) => sppiTrendChart(f, '外航貨物輸送') },
+  { section: '03', key: 'sppi-air', alt: '国際航空貨物輸送 円・契約通貨ベース推移', make: (f) => sppiTrendChart(f, '国際航空貨物輸送') },
+  { section: '05', key: 'port', alt: '主要6港 前年同月比', make: portChart },
+  { section: '06', key: 'trade', alt: '主要相手国 輸出入額', make: tradeChart },
+];
+
+/** 節見出し。小見出し(## 02-1.)は数字のあとが '-' なので当たらない。 */
+const SECTION_HEAD = /^#{1,3}\s*(\d{2})\.\s/;
+
+/**
+ * 図を節の末尾(次の節見出しの直前)に置く。
+ * 節が無ければ入れない — 構成が変わったときに図だけ迷子で残るのを防ぐ。
+ */
 function injectCharts(markdown, charts) {
-  let out = markdown;
-  for (const { afterSection, svgFile, alt } of charts) {
-    const re = new RegExp(`(^#+\\s*${afterSection}\\.[\\s\\S]*?)(?=\\n---\\n|$)`, 'm');
-    if (!re.test(out)) continue;
-    out = out.replace(re, (m) => `${m}\n\n![${alt}](./${svgFile})\n`);
-  }
-  return out;
+  const lines = markdown.split('\n');
+  const heads = [];
+  lines.forEach((l, i) => {
+    const m = SECTION_HEAD.exec(l.trim());
+    if (m) heads.push({ no: m[1], line: i });
+  });
+
+  const inserts = [];
+  charts.forEach((c, idx) => {
+    const k = heads.findIndex((h) => h.no === c.afterSection);
+    if (k < 0) return;
+    const end = k + 1 < heads.length ? heads[k + 1].line : lines.length;
+    inserts.push({ at: end, idx, md: `\n![${c.alt}](./${c.svgFile})\n` });
+  });
+
+  // 뒤에서부터 넣어야 앞의 줄 번호가 밀리지 않는다.
+  // 같은 자리에 여러 장이면 뒤에 정의된 것부터 넣어야 정의 순서대로 쌓인다.
+  inserts.sort((a, b) => b.at - a.at || b.idx - a.idx);
+  for (const ins of inserts) lines.splice(ins.at, 0, ins.md);
+  return lines.join('\n');
 }
 
 function buildHtml({ title, description, jsonLd, bodyHtml, period }) {
@@ -50,6 +84,12 @@ p{margin:0 0 16px}
 img{max-width:100%;height:auto;margin:20px 0}
 hr{display:none}
 .meta{font-size:12px;color:#828d9d;margin-bottom:28px}
+table{width:100%;border-collapse:collapse;margin:18px 0;font-size:13px;line-height:1.5}
+th,td{padding:7px 10px;border-bottom:1px solid #eef1f6;text-align:right}
+th{background:#f7f9fc;font-weight:600;color:#4a5566;border-bottom:2px solid #cbd3de}
+th:first-child,td:first-child{text-align:left}
+/* 표 바로 뒤 단락은 출처·단위 주석(※)이다. 본문과 구분한다. */
+table+p{font-size:12px;color:#828d9d;line-height:1.6;margin-top:-8px}
 </style>
 </head>
 <body>
@@ -66,10 +106,14 @@ function assemble({ markdown, period, factsheet, publishedAt }) {
   const url = `${SITE_URL}/reports/${period}`;
   const jsonLd = buildJsonLd({ title, description, period, url, publishedAt });
 
-  const charts = [
-    { afterSection: '02', svgFile: `jp-chart-sppi-${period}.svg`, alt: '運賃指数 円ベースと契約通貨ベース', svg: sppiChart(factsheet) },
-    { afterSection: '03', svgFile: `jp-chart-port-${period}.svg`, alt: '主要6港 前年同月比', svg: portChart(factsheet) },
-  ];
+  const charts = CHART_PLAN
+    .map((c) => ({
+      afterSection: c.section,
+      svgFile: `jp-chart-${c.key}-${period}.svg`,
+      alt: c.alt,
+      svg: c.make(factsheet),
+    }))
+    .filter((c) => c.svg);
   const withCharts = injectCharts(markdown, charts);
   // 첫 h2가 제목과 중복되지 않도록 총론 제목은 본문에서 h2로 남긴다(h1은 SEO 제목).
   const bodyHtml = marked.parse(withCharts);

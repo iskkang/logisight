@@ -93,3 +93,76 @@ test('narrate: 지속 실패 → 산문 없는 draft(에디터)', async () => {
   assert.equal(r.needs_editor, true);
   assert.equal(r.statement, null);
 });
+
+// ── 언어 축 ─────────────────────────────────────────────────────────────
+// 검증 어휘가 한국어뿐이면 일본어 산문은 무조건 통과한다. 가드가 있으나 마나다.
+const JA_V = { ...verdict, data_quality_flags: [] };
+const jaBody = (over = {}) => ({
+  statement: 'SCFI 総合は7月基準で 2,300 ポイントと前月比 4% 上昇した。供給の引き締まりが上昇要因として働いたとみられる。'
+    + '今後2〜4週は +1〜4% の範囲を基本シナリオとする。欠航率が下がれば横ばいシナリオに転じる。',
+  impact_note: '調達コストの上振れに備え、契約更改の時期を前倒しで検討する。',
+  direction_echo: 'up',
+  ...over,
+});
+
+test('validateProse(ja): 정상 본문은 통과', () => {
+  assert.equal(validateProse(jaBody(), JA_V, { lang: 'ja', isRate: false }).ok, true);
+});
+
+test('validateProse(ja): 일본어 단정 표현을 잡는다', () => {
+  const v = validateProse(jaBody({ statement: '必ず上昇する。' }), JA_V, { lang: 'ja', isRate: false });
+  assert.ok(v.issues.includes('단정 표현 포함'), `잡히지 않음: ${v.issues}`);
+});
+
+// 이 대비가 회귀를 막는다 — 언어를 안 넘기면 한국어 목록으로 검사해 그냥 통과한다.
+test('validateProse: 언어를 안 넘기면 일본어 단정을 놓친다', () => {
+  const v = validateProse(jaBody({ statement: '必ず上昇する。' }), JA_V, { isRate: false });
+  assert.ok(!v.issues.includes('단정 표현 포함'));
+});
+
+test('validateProse(ja): 통화 단위는 ドル로 검사한다', () => {
+  const noYen = validateProse(jaBody(), JA_V, { lang: 'ja', isRate: true });
+  assert.ok(noYen.issues.some((i) => i.includes('ドル')), `잡히지 않음: ${noYen.issues}`);
+  const withYen = validateProse(jaBody({ statement: 'FEU あたり 2,300 ドルとなった。' }), JA_V, { lang: 'ja', isRate: true });
+  assert.ok(!withYen.issues.some((i) => i.includes('ドル')));
+});
+
+test('buildNarratePrompt: lang에 따라 출력 언어 지시가 바뀐다', () => {
+  const ko = buildNarratePrompt(input, verdict, { lang: 'ko' });
+  const ja = buildNarratePrompt(input, verdict, { lang: 'ja' });
+  assert.ok(ja.system.includes('日本語'));
+  assert.ok(!ko.system.includes('日本語'));
+  assert.ok(ja.system.includes('横ばい'), 'enum 일본어화 지시 누락');
+});
+
+// 한국발 특례(H11~H13)는 부산 기점 항로에만 성립한다. 일본판 타깃에 붙으면 사실과 다르다.
+test('buildNarratePrompt: 한국발 지침은 일본판에 넣지 않는다', () => {
+  const withChina = { ...input, china_factor: { scfi_mom_pct: 3 } };
+  assert.ok(buildNarratePrompt(withChina, verdict, { lang: 'ko' }).system.includes('부산'));
+  assert.ok(!buildNarratePrompt(withChina, verdict, { lang: 'ja' }).system.includes('부산'));
+});
+
+// 프롬프트의 사실 키가 한국어라 모델이 음차했다 — '결항'→「結航率」, '결측'→「結測」.
+// 둘 다 일본어에 없는 말이고, 실제로 발행된 4건에 들어갔다. 키를 일본어로 바꿔
+// 원인은 없앴지만, 다시 새면 화면에 그대로 나가므로 가드로도 막는다.
+test('validateProse(ja): 음차 비단어를 잡는다', () => {
+  const v = validateProse(jaBody({ statement: '結航率は8%で拡大している。' }), JA_V, { lang: 'ja', isRate: false });
+  assert.ok(v.issues.some((i) => i.includes('비단어')), `잡히지 않음: ${v.issues}`);
+});
+
+test('validateProse(ja): 올바른 표기는 통과', () => {
+  const v = validateProse(jaBody({ statement: '欠航率は8%で拡大しているとみられる。' }), JA_V, { lang: 'ja', isRate: false });
+  assert.ok(!v.issues.some((i) => i.includes('비단어')));
+});
+
+test('buildNarratePrompt(ja): 사실의 키가 일본어다', () => {
+  const inp = { ...input, supply: { blank_sailing: { source_type: 'tracker_quoted', ratio_pct: 8, direction: 'expanding' } } };
+  const ja = buildNarratePrompt(inp, verdict, { lang: 'ja' });
+  assert.ok(ja.user.includes('"供給_欠航"'), '欠航 키 누락');
+  // 값은 한국어일 수 있다(부산발 항로 등). 키만 본다.
+  for (const k of ['"공급_결항"', '"운임"', '"수요"', '"결측·플래그"']) {
+    assert.ok(!ja.user.includes(k), `프롬프트에 한국어 키: ${k}`);
+  }
+  // 한국어 쪽은 그대로여야 한다.
+  assert.ok(buildNarratePrompt(inp, verdict, { lang: 'ko' }).user.includes('"공급_결항"'));
+});

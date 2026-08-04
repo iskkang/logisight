@@ -46,6 +46,13 @@ test('extractNumbers: 조수사가 붙은 개수는 제외', () => {
   assert.deepEqual(vals, []);
 });
 
+// 실제 실행에서 「1カ月のずれ」「2軸との関係」이 위반으로 잡혀 발행이 막혔다.
+// 기간·개수를 세는 말이지 데이터 주장이 아니다.
+test('extractNumbers: 기간·축을 세는 조수사도 제외', () => {
+  const vals = extractNumbers('1カ月のずれがある。この2軸の関係は3年間で2回みられる').map((g) => g.value);
+  assert.deepEqual(vals, []);
+});
+
 test('extractNumbers: 조수사를 걸러도 실제 수치는 남는다', () => {
   const vals = extractNumbers('主要6港の合計は117万7,717TEU').map((g) => g.value);
   assert.deepEqual(vals, [1177717]);
@@ -62,6 +69,24 @@ test('extractNumbers: 마크다운 제목의 섹션 번호는 제외', () => {
 test('extractNumbers: 목록 번호도 제외', () => {
   const vals = extractNumbers('1. 最初の項目\n2. 次の項目').map((g) => g.value);
   assert.deepEqual(vals, []);
+});
+
+// 참조 리포트를 따라 소섹션을 '## 03-1.' 형식으로 바꾼 뒤, 03과 -1이
+// 매 회차 위반으로 잡혔다(port 2건·trade 4건이 재시도 내내 같은 수로 남았다).
+test('extractNumbers: 하이픈이 든 소섹션 번호도 제외', () => {
+  const text = '## 03-1. 主要6港 総括\n合計は117万7,717TEUだった。';
+  assert.deepEqual(extractNumbers(text).map((g) => g.value), [1177717]);
+});
+
+// 번호 매김 구간 밖의 숫자는 제목 안이라도 검증한다 — 헤드라인에 수치를 쓰기 때문이다.
+test('extractNumbers: 제목 헤드라인의 수치는 남긴다', () => {
+  const text = '## 02-1. 外航海上 — 円ベースは233.8';
+  assert.deepEqual(extractNumbers(text).map((g) => g.value), [233.8]);
+});
+
+test('extractNumbers: 숫자로 시작하는 본문을 번호로 오인하지 않는다', () => {
+  assert.deepEqual(extractNumbers('233.8ポイントである').map((g) => g.value), [233.8]);
+  assert.deepEqual(extractNumbers('1.5%の伸びだった').map((g) => g.value), [1.5]);
 });
 
 test('extractNumbers: 문맥을 함께 담는다 — REVISE 지시가 구체적이어야 한다', () => {
