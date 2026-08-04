@@ -1,6 +1,8 @@
 'use strict';
 // verdict + prose + input → forecasts 행. 순수 함수.
 
+const { flagsFor } = require('./flags');
+
 const EDITOR_PLACEHOLDER = '[AI 초안 · 에디터 검수 필요 — 본문 작성]';
 
 // basis는 근거 목록으로 화면에 그대로 나온다. 산문만 일본어로 바꾸고 여기를 두면
@@ -43,7 +45,8 @@ function mapVerdictToRow(input, verdict, prose, asof = new Date(), lang = 'ko') 
     expected_range_pct: verdict.expected_range_pct,
     confidence: verdict.confidence,
     factor_scores: verdict.factor_scores,
-    data_quality_flags: verdict.data_quality_flags,
+    // 플래그는 화면에도 나온다. 옮기지 않으면 일본판 카드에 '결측 — 가중치 재분배'가 남는다.
+    data_quality_flags: flagsFor(verdict.data_quality_flags, lang),
     model_version: verdict.model_version,
     metric_value_at_publish: input.rate_series ? input.rate_series.latest : null,
     basis: buildBasis(input, lang),
