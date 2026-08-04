@@ -12,9 +12,40 @@ const { callDeepSeekJson } = require('../generators/lib/deepseek.js') as {
 
 const SOURCE = 'index1520';
 const SOURCE_URL = 'https://index1520.com/en/analytics/?type[]=2';
-const SYSTEM =
-  '당신은 유라시아 철도 물류 시장 애널리스트입니다. index1520(ERAI)의 격주 시장 리포트를 읽고, 한국 화주·포워더가 한눈에 이해할 핵심을 뽑습니다. ' +
-  '평이한 한국어로 쓰고 어려운 한자어는 쓰지 않습니다. 중국-유럽 철도 운임·물동량·운송기간과 그 동인에 집중합니다. JSON만 출력합니다.';
+// 언어별로 따로 생성한다. 같은 근거(리포트 본문)에서 각 언어로 쓰게 하고,
+// eurasia_charts는 key-value 테이블이라 키를 나눈다(ai_insight / ai_insight_ja).
+//
+// 출력 언어 지시는 system과 사용자 메시지 양쪽에 둔다. system만 바꾸고 JSON
+// 스키마 설명을 한국어로 두면 모델이 그쪽을 따라 한국어로 쓴다(rail-brief에서 실제로 그랬다).
+const LANGS = [
+  {
+    lang: 'ko',
+    key: 'ai_insight',
+    system:
+      '당신은 유라시아 철도 물류 시장 애널리스트입니다. index1520(ERAI)의 격주 시장 리포트를 읽고, 한국 화주·포워더가 한눈에 이해할 핵심을 뽑습니다. '
+      + '평이한 한국어로 쓰고 어려운 한자어는 쓰지 않습니다. 중국-유럽 철도 운임·물동량·운송기간과 그 동인에 집중합니다. JSON만 출력합니다.',
+    ask:
+      '위 내용을 근거로 아래 JSON만 출력하세요.\n'
+      + '{\n'
+      + '  "headline": "가장 강한 핵심 인사이트 한 줄(28자 내외, 한국어, 명사형 마무리)",\n'
+      + '  "analysis": "2~3문장 분석. 구체 수치(운임·물동량·운송기간 변화)와 핵심 동인을 포함. 한국어."\n'
+      + '}',
+  },
+  {
+    lang: 'ja',
+    key: 'ai_insight_ja',
+    system:
+      'あなたはユーラシア鉄道物流の市場アナリストである。index1520(ERAI)の隔週マーケットレポートを読み、'
+      + '日本の荷主・フォワーダーが一目で理解できる要点を抜き出す。常体(だ・である)で平易に書く。'
+      + '中国–欧州鉄道の運賃・輸送量・輸送日数とその要因に集中する。JSON のみを出力する。',
+    ask:
+      '上記を根拠に、以下の JSON だけを出力すること。\n'
+      + '{\n'
+      + '  "headline": "最も強い要点を一行(全角28字程度、日本語、名詞止め)",\n'
+      + '  "analysis": "2〜3文の分析。具体的な数値(運賃・輸送量・輸送日数の変化)と主要因を含める。日本語(常体)。"\n'
+      + '}',
+  },
+] as const;
 
 type Insight = { headline: string; analysis: string };
 
@@ -43,38 +74,36 @@ async function main() {
     return;
   }
 
-  const user =
-    `다음은 최근 index1520 유라시아 철도 시장 리포트 본문입니다.\n\n${blocks.join('\n\n')}\n\n` +
-    '위 내용을 근거로 아래 JSON만 출력하세요.\n' +
-    '{\n' +
-    '  "headline": "가장 강한 핵심 인사이트 한 줄(28자 내외, 한국어, 명사형 마무리)",\n' +
-    '  "analysis": "2~3문장 분석. 구체 수치(운임·물동량·운송기간 변화)와 핵심 동인을 포함. 한국어."\n' +
-    '}';
+  const evidence = `다음은 최근 index1520 유라시아 철도 시장 리포트 본문입니다.\n\n${blocks.join('\n\n')}\n\n`;
 
-  let insight: Insight;
-  try {
-    const obj = (await callDeepSeekJson({ system: SYSTEM, messages: [{ role: 'user', content: user }], max_tokens: 1200, debugPrefix: 'index1520-insight' })) as Insight;
-    if (!obj?.headline || !obj?.analysis) throw new Error('빈 응답');
-    insight = { headline: String(obj.headline).trim(), analysis: String(obj.analysis).trim() };
-  } catch (e) {
-    console.error('[index1520-insight] 생성 실패:', (e as Error).message);
-    return;
+  // 한 언어가 실패해도 다른 언어는 살린다.
+  for (const L of LANGS) {
+    let insight: Insight;
+    try {
+      const obj = (await callDeepSeekJson({ system: L.system, messages: [{ role: 'user', content: evidence + L.ask }], max_tokens: 1200, debugPrefix: `index1520-insight-${L.lang}` })) as Insight;
+      if (!obj?.headline || !obj?.analysis) throw new Error('빈 응답');
+      insight = { headline: String(obj.headline).trim(), analysis: String(obj.analysis).trim() };
+    } catch (e) {
+      console.error(`[index1520-insight:${L.lang}] 생성 실패:`, (e as Error).message);
+      continue;
+    }
+
+    const payload = {
+      headline: insight.headline,
+      analysis: insight.analysis,
+      lang: L.lang,
+      basedOn: picks.map((r) => r.title),
+      sourceUrl: picks[0].url,
+      generatedAt: new Date().toISOString(),
+    };
+
+    await dbUpsert(
+      'eurasia_charts',
+      [{ key: L.key, payload, source: SOURCE, source_url: SOURCE_URL, updated_at: new Date().toISOString() }],
+      'key',
+    );
+    console.log(`✅ index1520-insight[${L.lang}]: "${insight.headline}" (기반 ${picks.length}건) → eurasia_charts.${L.key}`);
   }
-
-  const payload = {
-    headline: insight.headline,
-    analysis: insight.analysis,
-    basedOn: picks.map((r) => r.title),
-    sourceUrl: picks[0].url,
-    generatedAt: new Date().toISOString(),
-  };
-
-  await dbUpsert(
-    'eurasia_charts',
-    [{ key: 'ai_insight', payload, source: SOURCE, source_url: SOURCE_URL, updated_at: new Date().toISOString() }],
-    'key',
-  );
-  console.log(`✅ index1520-insight: "${insight.headline}" (기반 ${picks.length}건) → eurasia_charts.ai_insight`);
 }
 
 main().catch((e) => {
