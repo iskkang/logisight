@@ -70,7 +70,7 @@ function forecastsBuilder(store, captured) {
     },
     insert(row) {
       store.push({ ...row, id: 'fc-' + (store.length + 1) });
-      captured.push({ op: 'insert', metric_ref: row.metric_ref });
+      captured.push({ op: 'insert', metric_ref: row.metric_ref, lang: row.lang, statement: row.statement });
       return Promise.resolve({ error: null });
     },
     update(row) {
@@ -78,7 +78,7 @@ function forecastsBuilder(store, captured) {
         eq(c, v) {
           const i = store.findIndex((r) => r[c] === v);
           if (i >= 0) store[i] = { ...store[i], ...row };
-          captured.push({ op: 'update', metric_ref: row.metric_ref });
+          captured.push({ op: 'update', metric_ref: row.metric_ref, lang: row.lang });
           return Promise.resolve({ error: null });
         },
       };
@@ -122,19 +122,30 @@ function fakeSupabase({ events, assets = ASSETS, routes = ROUTES, risk = [], exi
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
-test('generateEventDrafts: severity-r 이벤트가 자산 위 → forecasts에 1건 insert, metric_ref=climate:event:<id>, status=published', async () => {
+test('generateEventDrafts: 한 이벤트에서 언어별로 1건씩 insert된다', async () => {
   const captured = [];
   const res = await generateEventDrafts(
     fakeSupabase({ events: [EVENT_ON_ASSET], captured }),
     GOOD_LLM,
     { asof: new Date('2026-06-30') },
   );
-  assert.equal(res.inserted, 1, 'insert 1건이어야 함');
   assert.equal(res.linked, 1, 'linked 1건이어야 함');
-  assert.ok(captured.some((c) => c.op === 'insert' && c.metric_ref === 'climate:event:ev-001'), 'metric_ref 일치 확인');
-  // status is published because gate passes + guards pass
-  const row = captured.find((c) => c.op === 'insert');
-  assert.ok(row, 'insert 캡처 존재');
+  assert.equal(res.inserted, 2, 'ko·ja 각 1건');
+  const inserts = captured.filter((c) => c.op === 'insert');
+  assert.deepEqual(inserts.map((c) => c.lang).sort(), ['ja', 'ko']);
+  assert.ok(inserts.every((c) => c.metric_ref === 'climate:event:ev-001'), 'metric_ref 일치 확인');
+});
+
+// langs를 좁히면 그 언어만 나와야 한다. 한국 파이프라인만 돌릴 때 쓰는 경로다.
+test('generateEventDrafts: langs로 생성 언어를 좁힐 수 있다', async () => {
+  const captured = [];
+  const res = await generateEventDrafts(
+    fakeSupabase({ events: [EVENT_ON_ASSET], captured }),
+    GOOD_LLM,
+    { asof: new Date('2026-06-30'), langs: ['ko'] },
+  );
+  assert.equal(res.inserted, 1);
+  assert.equal(captured.find((c) => c.op === 'insert').lang, 'ko');
 });
 
 test('generateEventDrafts: 자산에서 먼 LIMITED 이벤트 → forecasts 미생성', async () => {
@@ -178,16 +189,35 @@ test('generateEventDrafts: purge는 climate:event:% 스코프만 삭제, 다른 
   assert.ok(!captured.some((c) => c.op === 'delete' && c.metric_ref === 'climate:r3:hko-2611:miyako_strait'), 'route draft 보존');
 });
 
-test('generateEventDrafts: 기존 draft 존재 → update, published → skip', async () => {
+// 기존 행은 마이그레이션 기본값으로 lang='ko'가 된다. 이 상태에서 돌리면
+// 한국어는 갱신되고 일본어는 새로 들어와야 한다 — 마이그레이션 직후의 실제 모습이다.
+test('generateEventDrafts: 기존 ko draft는 update, 없는 ja는 insert', async () => {
   const captured = [];
   const existingForecasts = [
-    { id: 'fc-draft', metric_ref: 'climate:event:ev-001', model_version: 'climate-event-v1', module: 'climate', status: 'draft' },
+    { id: 'fc-draft', metric_ref: 'climate:event:ev-001', model_version: 'climate-event-v1', module: 'climate', status: 'draft', lang: 'ko' },
   ];
   const res = await generateEventDrafts(
     fakeSupabase({ events: [EVENT_ON_ASSET], existingForecasts, captured }),
     GOOD_LLM,
     { asof: new Date('2026-06-30') },
   );
-  assert.equal(res.updated, 1, 'draft는 update');
-  assert.equal(res.inserted, 0);
+  assert.equal(res.updated, 1, 'ko draft는 update');
+  assert.equal(res.inserted, 1, 'ja는 신규 insert');
+  assert.equal(captured.find((c) => c.op === 'insert').lang, 'ja');
+});
+
+// 발행된 행은 불변이다(트리거). 언어별로 판단하지 않으면 한쪽 언어 때문에 다른 쪽이 막힌다.
+test('generateEventDrafts: 발행된 ko는 건너뛰고 ja만 새로 넣는다', async () => {
+  const captured = [];
+  const existingForecasts = [
+    { id: 'fc-pub', metric_ref: 'climate:event:ev-001', model_version: 'climate-event-v1', module: 'climate', status: 'published', lang: 'ko' },
+  ];
+  const res = await generateEventDrafts(
+    fakeSupabase({ events: [EVENT_ON_ASSET], existingForecasts, captured }),
+    GOOD_LLM,
+    { asof: new Date('2026-06-30') },
+  );
+  assert.equal(res.skippedExisting, 1);
+  assert.equal(res.inserted, 1);
+  assert.equal(captured.find((c) => c.op === 'insert').lang, 'ja');
 });

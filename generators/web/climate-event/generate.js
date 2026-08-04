@@ -8,16 +8,18 @@ const { mapEventRow, MODEL_VERSION } = require('./row');
 
 function eventName(title) { return String(title || '').replace(/\s*\(.*\)\s*$/, '').trim() || '이벤트'; }
 
-async function generateEventDrafts(supabase, callLLM, { asof = new Date(), dryRun = false } = {}) {
+async function generateEventDrafts(supabase, callLLM, { asof = new Date(), dryRun = false, langs = ['ko', 'ja'] } = {}) {
   const [{ data: events }, { data: assets }, { data: routes }, { data: risk }] = await Promise.all([
     supabase.from('events').select('id,source,kind,title,severity,lon,lat,area,track'),
-    supabase.from('assets').select('id,name,type,lon,lat'),
-    supabase.from('routes').select('id,name,waypoints'),
+    supabase.from('assets').select('id,name,name_ja,type,lon,lat'),
+    supabase.from('routes').select('id,name,name_ja,waypoints'),
     supabase.from('asset_risk').select('asset_id,horizon_days,score,level,driver'),
   ]);
   const nodes = {}; (assets || []).forEach((a) => { nodes[a.id] = a; });
   const riskH0 = {}; (risk || []).forEach((r) => { if (r.horizon_days === 0) riskH0[r.asset_id] = r; });
-  const gazetteer = (assets || []).map((a) => a.name).filter(Boolean);
+  // 환각 검사용 지명 사전. 두 언어 이름을 모두 넣지 않으면 일본어 본문의 '東京港'이
+  // 입력 밖 지명으로 걸려 전부 보류된다.
+  const gazetteer = (assets || []).flatMap((a) => [a.name, a.name_ja]).filter(Boolean);
 
   const res = { events: (events || []).length, linked: 0, inserted: 0, updated: 0, skippedExisting: 0, needsEditor: 0, errors: 0, purged: 0 };
   const currentKeys = new Set();
@@ -27,30 +29,36 @@ async function generateEventDrafts(supabase, callLLM, { asof = new Date(), dryRu
     if (v.tier === 'LIMITED') continue;
     res.linked++;
     const linkedAssets = v.linkedAssets.map((a) => ({ ...a, risk: riskH0[a.id] || null }));
-    const allowedPlaces = new Set([e.area, ...linkedAssets.map((a) => a.name)].filter(Boolean));
+    const allowedPlaces = new Set([e.area, ...linkedAssets.flatMap((a) => [a.name, a.name_ja])].filter(Boolean));
     const ctx = { asof, event: { ...e, name: eventName(e.title) }, linkedAssets, linkedRoutes: v.linkedRoutes, gazetteer, allowedPlaces };
-    const prose = await narrateEventImpact(callLLM, ctx);
-    if (prose.needs_editor) res.needsEditor++;
-    const row = mapEventRow(ctx, prose, asof);
-    currentKeys.add(row.metric_ref);
-    if (dryRun) { console.log(`· [dry:${row.status}] ${row.metric_ref} (${ctx.event.name})`); continue; }
-    const { data: existing } = await supabase.from('forecasts').select('id,status').eq('metric_ref', row.metric_ref).eq('model_version', MODEL_VERSION).limit(1);
-    let error = null, action = 'insert';
-    if (existing && existing.length) {
-      if (existing[0].status !== 'draft') { res.skippedExisting++; continue; }
-      action = 'update';
-      ({ error } = await supabase.from('forecasts').update(row).eq('id', existing[0].id));
-    } else {
-      ({ error } = await supabase.from('forecasts').insert(row));
+    // 언어마다 따로 생성한다. 번역이 아니라 각 언어로 쓰게 해야 가드가 제 언어로 작동한다.
+    // 같은 이벤트라도 한쪽 언어만 가드를 통과할 수 있다 — 통과한 쪽만 발행된다.
+    for (const lang of langs) {
+      const prose = await narrateEventImpact(callLLM, ctx, { lang });
+      if (prose.needs_editor) res.needsEditor++;
+      const row = mapEventRow(ctx, prose, asof, lang);
+      currentKeys.add(`${row.metric_ref}|${lang}`);
+      if (dryRun) { console.log(`· [dry:${row.status}:${lang}] ${row.metric_ref} (${ctx.event.name})`); continue; }
+      const { data: existing } = await supabase.from('forecasts').select('id,status')
+        .eq('metric_ref', row.metric_ref).eq('model_version', MODEL_VERSION).eq('lang', lang).limit(1);
+      let error = null, action = 'insert';
+      if (existing && existing.length) {
+        if (existing[0].status !== 'draft') { res.skippedExisting++; continue; }
+        action = 'update';
+        ({ error } = await supabase.from('forecasts').update(row).eq('id', existing[0].id));
+      } else {
+        ({ error } = await supabase.from('forecasts').insert(row));
+      }
+      if (error) { res.errors++; console.error(`❌ ${action} [${row.metric_ref}:${lang}]: ${error.message}`); }
+      else { action === 'update' ? res.updated++ : res.inserted++; console.log(`✅ ${row.status} [${row.metric_ref}:${lang}] ${ctx.event.name}`); }
     }
-    if (error) { res.errors++; console.error(`❌ ${action} [${row.metric_ref}]: ${error.message}`); }
-    else { action === 'update' ? res.updated++ : res.inserted++; console.log(`✅ ${row.status} [${row.metric_ref}] ${ctx.event.name}`); }
   }
 
   // purge: 이번에 재생성 안 된 climate:event draft만 삭제(다른 climate 키 불간섭).
   if (!dryRun) {
-    const { data: old } = await supabase.from('forecasts').select('id,metric_ref').eq('module', 'climate').eq('status', 'draft').like('metric_ref', 'climate:event:%');
-    for (const d of (old || []).filter((x) => !currentKeys.has(x.metric_ref))) {
+    const { data: old } = await supabase.from('forecasts').select('id,metric_ref,lang').eq('module', 'climate').eq('status', 'draft').like('metric_ref', 'climate:event:%');
+    // 언어별로 판단한다. metric_ref만 보면 한쪽 언어만 재생성돼도 다른 쪽이 살아남는다.
+    for (const d of (old || []).filter((x) => !currentKeys.has(`${x.metric_ref}|${x.lang || 'ko'}`))) {
       const { error } = await supabase.from('forecasts').delete().eq('id', d.id);
       if (!error) res.purged++;
     }
