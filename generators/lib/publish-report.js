@@ -80,6 +80,9 @@ async function publishReport(inp) {
     web_url: inp.webUrl ?? null,
     cover_url: coverUrl,
     published_at: new Date().toISOString(),
+    // reports 테이블은 한국판·일본판이 공유한다. 언어를 안 박으면 기본값 'ko'가 되어
+    // 일본 리포트가 한국 사이트 목록에 뜬다(migration 20260804000002).
+    lang: inp.lang ?? 'ko',
   };
   const { error } = await sb.from('reports').upsert(row, { onConflict: 'id' });
   if (error) throw new Error(`reports upsert 실패: ${error.message}`);
