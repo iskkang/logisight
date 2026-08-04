@@ -110,17 +110,28 @@ async function existingJaSlugs() {
   return slugs;
 }
 
-async function fetchSourceRows(limit) {
-  // 自社記事のみ。外部リンク行は本文を持たない。
-  const { data, error } = await supabase
-    .from('maritime_news')
-    .select('id,slug,title,summary,content,category,source,published_at,image_url,image_source,image_credit,is_hero,agent_type')
-    .eq('lang', 'ko')
-    .not('slug', 'is', null)
-    .order('published_at', { ascending: false })
-    .limit(limit * 4); // 翻訳済みを除くので多めに取る
-  if (error) throw new Error(error.message);
-  return data ?? [];
+/**
+ * 翻訳元の自社記事をすべて取る。外部リンク行(slug なし)は本文を持たないので除く。
+ *
+ * 以前は limit*4 だけ取っていた。新しい順に並ぶため、翻訳が進むとその範囲が
+ * すべて翻訳済みになり、残り(369件中169件)に到達できないまま止まっていた。
+ */
+async function fetchSourceRows() {
+  const PAGE = 1000;
+  const out = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await supabase
+      .from('maritime_news')
+      .select('id,slug,title,summary,content,category,source,published_at,image_url,image_source,image_credit,is_hero,agent_type')
+      .eq('lang', 'ko')
+      .not('slug', 'is', null)
+      .order('published_at', { ascending: false })
+      .range(from, from + PAGE - 1);
+    if (error) throw new Error(error.message);
+    out.push(...(data ?? []));
+    if (!data || data.length < PAGE) break;
+  }
+  return out;
 }
 
 async function main() {
@@ -133,7 +144,7 @@ async function main() {
 
   console.log(`📰 日本語ニュース翻訳 (最大${limit}件${dry ? ' · dry-run' : ''})`);
 
-  const [done, source] = await Promise.all([existingJaSlugs(), fetchSourceRows(limit)]);
+  const [done, source] = await Promise.all([existingJaSlugs(), fetchSourceRows()]);
   const targets = source.filter((r) => needsTranslation(r, done)).slice(0, limit);
 
   console.log(`   対象 ${targets.length}件 (翻訳済み ${done.size}件 / 候補 ${source.length}件)`);
