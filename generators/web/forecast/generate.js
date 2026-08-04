@@ -9,7 +9,7 @@ require('dotenv').config({ path: path.resolve(__dirname, '../../../.env.local') 
 // Node < 22: supabase-js RealtimeClient가 네이티브 WebSocket을 요구 → ws 폴리필(저장소 공통 패턴).
 if (typeof globalThis.WebSocket === 'undefined') { try { globalThis.WebSocket = require('ws'); } catch (_) {} }
 
-const { WEEKLY_TARGETS, fetchMonthlyTargets } = require('./targets');
+const { WEEKLY_TARGETS, WEEKLY_BY_LANG, fetchMonthlyTargets } = require('./targets');
 const { assembleInput, buildShared } = require('./assemble');
 const { scoreForecast } = require('./score');
 const { narrate } = require('./narrate');
@@ -30,19 +30,21 @@ async function fetchRecentNews(supabase, asof = new Date()) {
 }
 
 // 핵심 루프 — supabase/callLLM 주입(테스트 가능).
-async function generateDrafts(supabase, callLLM, { asof = new Date() } = {}) {
+async function generateDrafts(supabase, callLLM, { asof = new Date(), lang = 'ko' } = {}) {
   const shared = await buildShared(supabase, asof);
   const news = await fetchRecentNews(supabase, asof);
-  const monthly = await fetchMonthlyTargets(supabase);
-  const targets = [...WEEKLY_TARGETS, ...monthly];
+  // 월간 KITA 항로는 전부 부산발이다. 일본 화주에게 '부산→뉴욕' 전망은 읽을 이유가
+  // 없으므로 번역 대상이 아니라 아예 대상이 아니다. 일본판은 주간 글로벌 지수만 본다.
+  const monthly = lang === 'ko' ? await fetchMonthlyTargets(supabase) : [];
+  const targets = [...(WEEKLY_BY_LANG[lang] || WEEKLY_TARGETS), ...monthly];
   const res = { total: targets.length, inserted: 0, updated: 0, published: 0, skipped: 0, abstained: 0, needsEditor: 0, errors: 0 };
   for (const t of targets) {
     const input = await assembleInput(supabase, t, { asof, shared });
     const verdict = scoreForecast(input);
     if (verdict.abstain) { res.abstained++; continue; }
-    const prose = await narrate(callLLM, input, verdict, { news });
+    const prose = await narrate(callLLM, input, verdict, { news, lang });
     if (prose.needs_editor) res.needsEditor++;
-    const row = mapVerdictToRow(input, verdict, prose, asof);
+    const row = mapVerdictToRow(input, verdict, prose, asof, lang);
 
     // (metric_ref, horizon_date, model_version) 기준 dedup — DB onConflict 인덱스에 의존하지 않고,
     // 이미 발행/판정된 행은 절대 덮어쓰지 않는다(불변성). 같은 키의 draft만 갱신.
@@ -52,6 +54,7 @@ async function generateDrafts(supabase, callLLM, { asof = new Date() } = {}) {
       .eq('metric_ref', row.metric_ref)
       .eq('horizon_date', row.horizon_date)
       .eq('model_version', row.model_version)
+      .eq('lang', lang)
       .limit(1);
     let error = null;
     let action = 'insert';
@@ -71,7 +74,7 @@ async function generateDrafts(supabase, callLLM, { asof = new Date() } = {}) {
       if (action === 'update') res.updated++; else res.inserted++;
       if (row.status === 'published') res.published++;
       const tag = row.status === 'published' ? '발행' : 'draft';
-      console.log(`✅ ${tag} [${t.metric_ref}] ${verdict.direction} ${verdict.expected_range_pct ?? ''}${prose.needs_editor ? ' (에디터 작성 필요)' : ''}`);
+      console.log(`✅ ${tag} [${t.metric_ref}:${lang}] ${verdict.direction} ${verdict.expected_range_pct ?? ''}${prose.needs_editor ? ' (에디터 작성 필요)' : ''}`);
     }
   }
   return res;
@@ -83,8 +86,12 @@ async function main() {
     auth: { persistSession: false }, realtime: { enabled: false },
   });
   await assertSchema(supabase); // 마이그레이션 가드 — 누락 시 여기서 명시적 실패.
-  const res = await generateDrafts(supabase, callClaude);
-  console.log(`📊 신규 ${res.inserted} · 갱신 ${res.updated} · 발행 ${res.published} · 보존 ${res.skipped} / ${res.total} 타깃 · abstain ${res.abstained} · 에디터필요 ${res.needsEditor} · 오류 ${res.errors}`);
+  // --lang=ja 로 한쪽만 돌린다. 언어마다 타깃이 다르므로 한 번에 묶지 않는다.
+  const langArg = process.argv.find((a) => a.startsWith('--lang='));
+  for (const lang of langArg ? langArg.split('=')[1].split(',').filter(Boolean) : ['ko']) {
+    const res = await generateDrafts(supabase, callClaude, { lang });
+    console.log(`📊 [${lang}] 신규 ${res.inserted} · 갱신 ${res.updated} · 발행 ${res.published} · 보존 ${res.skipped} / ${res.total} 타깃 · abstain ${res.abstained} · 에디터필요 ${res.needsEditor} · 오류 ${res.errors}`);
+  }
 }
 
 if (require.main === module) {

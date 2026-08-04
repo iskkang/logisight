@@ -10,6 +10,25 @@ const WEEKLY_TARGETS = [
   { metric_ref: 'WCI_SHA_RTM', source: 'freight_indices', mode: 'ocean', cadence: 'weekly', horizon_weeks: 4, label: 'WCI 상하이→로테르담' },
 ];
 
+/**
+ * 일본판 주간 타깃.
+ *
+ * KCCI는 한국발 지수이고 KITA 월간 항로는 전부 부산발이다. 일본 화주에게
+ * '부산→뉴욕' 전망은 읽을 이유가 없다 — 번역해서 낼 대상이 아니라 아예
+ * 대상이 아니다. 발표 기관이 세계 공통인 지수만 남긴다.
+ *
+ * SCFI·WCI는 상하이발이지만 아시아–구주/미주 기간항로의 기준이라 일본 화주도
+ * 그대로 쓴다. 일본판 월간 리포트가 세계 스팟 축으로 쓰는 계열과 같다.
+ */
+const WEEKLY_TARGETS_JA = [
+  { metric_ref: 'SCFI', source: 'freight_indices', mode: 'ocean', cadence: 'weekly', horizon_weeks: 4, label: 'SCFI 総合' },
+  { metric_ref: 'WCI', source: 'freight_indices', mode: 'ocean', cadence: 'weekly', horizon_weeks: 4, label: 'WCI 総合' },
+  { metric_ref: 'WCI_SHA_LAX', source: 'freight_indices', mode: 'ocean', cadence: 'weekly', horizon_weeks: 4, label: 'WCI 上海→ロサンゼルス' },
+  { metric_ref: 'WCI_SHA_RTM', source: 'freight_indices', mode: 'ocean', cadence: 'weekly', horizon_weeks: 4, label: 'WCI 上海→ロッテルダム' },
+];
+
+const WEEKLY_BY_LANG = { ko: WEEKLY_TARGETS, ja: WEEKLY_TARGETS_JA };
+
 // 월간 KITA 항로는 데이터에서 발견(아래 fetchMonthlyTargets). 주요 도착지 키워드(부분일치)로 한정.
 const MAJOR_DEST_KEYWORDS = ['로스앤젤레스', 'LA', '뉴욕', 'New York', '로테르담', 'Rotterdam', '함부르크', 'Hamburg'];
 
@@ -45,4 +64,7 @@ async function fetchMonthlyTargets(supabase) {
   return targets;
 }
 
-module.exports = { WEEKLY_TARGETS, MAJOR_DEST_KEYWORDS, horizonDate, fetchMonthlyTargets };
+module.exports = {
+  WEEKLY_TARGETS, WEEKLY_TARGETS_JA, WEEKLY_BY_LANG,
+  MAJOR_DEST_KEYWORDS, horizonDate, fetchMonthlyTargets,
+};
