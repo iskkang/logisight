@@ -17,6 +17,41 @@ const PORT_NAMES = {
   JPUKB: '神戸港',
 };
 
+/**
+ * 재무성 무역통계의 국가명은 영문 약어다('HG KONG' 'SNGAPOR' 'AUSTRAL').
+ * 그대로 두면 표만 영문이 되고, 본문 번역을 모델에 맡기게 되어 오역 위험이 남는다.
+ * 매핑에 없는 이름은 원문을 그대로 쓴다 — 새 상대국이 들어와도 표가 비지 않는다.
+ */
+const COUNTRY_NAMES_JA = {
+  USA: '米国',
+  CHINA: '中国',
+  TAIWAN: '台湾',
+  'R KOREA': '韓国',
+  'HG KONG': '香港',
+  THAILND: 'タイ',
+  SNGAPOR: 'シンガポール',
+  VIETNAM: 'ベトナム',
+  INDIA: 'インド',
+  AUSTRAL: 'オーストラリア',
+  MALYSIA: 'マレーシア',
+  GERMANY: 'ドイツ',
+  CANADA: 'カナダ',
+  MEXICO: 'メキシコ',
+  'U KING': '英国',
+  INDNSIA: 'インドネシア',
+  PHILPIN: 'フィリピン',
+  FRANCE: 'フランス',
+  ITALY: 'イタリア',
+  NETHRLD: 'オランダ',
+  BRAZIL: 'ブラジル',
+  RUSSIA: 'ロシア',
+  'SAUDI A': 'サウジアラビア',
+  UAE: 'アラブ首長国連邦',
+  'S AFRICA': '南アフリカ',
+};
+
+const countryJa = (name) => COUNTRY_NAMES_JA[name] || name;
+
 /** 지수의 기준연도 값. 계약통화 기준이 이보다 낮으면 실질 운임이 기준연도 이하라는 뜻이다. */
 const INDEX_BASE = 100;
 
@@ -117,7 +152,7 @@ function buildTradeFacts(rows, at) {
   const countries = rows
     .filter((r) => !r.is_aggregate)
     .map((r) => ({
-      name: r.country_name,
+      name: countryJa(r.country_name),
       exportJpy: r.export_jpy === null ? null : Number(r.export_jpy),
       importJpy: r.import_jpy === null ? null : Number(r.import_jpy),
       balanceJpy:
@@ -192,6 +227,7 @@ function buildFactsheet({ sppi, port, trade, commodity }) {
 
 module.exports = {
   PORT_NAMES,
+  countryJa,
   buildSppiFacts,
   buildPortFacts,
   buildTradeFacts,

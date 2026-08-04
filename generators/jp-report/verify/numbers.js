@@ -49,6 +49,16 @@ const NUM_RE = /[▲△+-]?\d[\d,]*(?:\.\d+)?(?:[万億兆]\d[\d,]*(?:\.\d+)?)*(
  */
 const SKIP_SUFFIX = /^(?:カ月|ヶ月|か月|カ国|ヶ国|か国|年間|年|月|日|港|件|社|品目|位|週|期|番|回|軸|つ|種)/;
 
+/**
+ * 줄 앞머리의 번호 매김 구간 길이. '## 02.' '## 03-1.' '1.' 를 모두 잡는다.
+ * 소섹션을 '## 03-1.' 형식으로 바꾼 뒤 03과 -1이 매 회차 위반으로 잡혔다.
+ * 번호 뒤 공백을 요구하므로 '233.8ポイント' 같은 본문 첫 수치는 걸리지 않는다.
+ */
+function numberingPrefixEnd(line) {
+  const m = /^#{0,6}\s*\d[\d-]*\.(?=\s)/.exec(line);
+  return m ? m[0].length : 0;
+}
+
 /** 본문에서 숫자를 뽑는다. 날짜·조수사는 제외한다. */
 function extractNumbers(text) {
   const out = [];
@@ -57,10 +67,11 @@ function extractNumbers(text) {
     const raw = m[0];
     const after = src.slice(m.index + raw.length, m.index + raw.length + 3);
     if (SKIP_SUFFIX.test(after)) continue;
-    // '## 02. 海上運賃' / '1. 項目' — 섹션·목록 번호는 데이터가 아니라 문서 구조다.
+    // '## 02.' / '## 03-1.' / '1.' — 제목·목록의 번호 매김은 데이터가 아니라 문서 구조다.
     const lineStart = src.lastIndexOf('\n', m.index) + 1;
-    const before = src.slice(lineStart, m.index);
-    if (/^#{0,6}\s*$/.test(before) && /^\.\s/.test(after)) continue;
+    const lineEnd = src.indexOf('\n', m.index);
+    const line = src.slice(lineStart, lineEnd < 0 ? src.length : lineEnd);
+    if (m.index - lineStart < numberingPrefixEnd(line)) continue;
     const value = parseJpNumber(raw);
     if (!Number.isFinite(value)) continue;
     out.push({

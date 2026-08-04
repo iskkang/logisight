@@ -5,6 +5,7 @@ const {
   buildSppiFacts,
   buildPortFacts,
   buildTradeFacts,
+  countryJa,
   buildCommodityFacts,
   buildFactsheet,
 } = require('./facts');
@@ -111,8 +112,20 @@ test('buildTradeFacts: 총계와 국가를 분리한다', () => {
 
 test('buildTradeFacts: 수출 내림차순, 무역수지 포함', () => {
   const f = buildTradeFacts(tradeRows, { year: 2026, month: 6 });
-  assert.equal(f.countries[0].name, 'USA');
-  assert.equal(f.countries.find((c) => c.name === 'CHINA').balanceJpy, 1824000000 - 2645000000);
+  assert.equal(f.countries[0].name, '米国');
+  assert.equal(f.countries.find((c) => c.name === '中国').balanceJpy, 1824000000 - 2645000000);
+});
+
+// 재무성 원본은 'HG KONG' 'SNGAPOR' 같은 영문 약어다. 표만 영문으로 남으면
+// 일본어 리포트로서 어색하고, 본문 번역을 모델에 맡기면 오역 위험이 남는다.
+test('countryJa: 영문 약어를 일본어명으로 바꾼다', () => {
+  assert.equal(countryJa('HG KONG'), '香港');
+  assert.equal(countryJa('SNGAPOR'), 'シンガポール');
+  assert.equal(countryJa('AUSTRAL'), 'オーストラリア');
+});
+
+test('countryJa: 매핑에 없으면 원문을 그대로 쓴다', () => {
+  assert.equal(countryJa('NEWLAND'), 'NEWLAND');
 });
 
 // ── 品目 ────────────────────────────────────────────────────────────────

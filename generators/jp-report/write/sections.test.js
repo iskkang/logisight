@@ -3,21 +3,32 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { SECTIONS, generationOrder, outputOrder, slimFactsheet } = require('./sections');
 
-test('SECTIONS: 4섹션, 데이터 축과 1:1', () => {
-  assert.equal(SECTIONS.length, 4);
-  assert.deepEqual(SECTIONS.map((s) => s.id), ['overview', 'freight', 'port', 'trade']);
+test('SECTIONS: 총론·데이터 3축·맺음말', () => {
+  assert.equal(SECTIONS.length, 5);
+  assert.deepEqual(SECTIONS.map((s) => s.id), ['overview', 'freight', 'port', 'trade', 'closing']);
 });
 
-// 총론은 다른 섹션이 확정한 사실을 종합해야 하므로 마지막에 쓴다.
-// 하지만 독자는 맨 앞에서 읽는다. 생성 순서와 출력 순서를 분리한다.
-test('generationOrder: 총론이 마지막', () => {
-  assert.equal(generationOrder().at(-1).id, 'overview');
-  assert.equal(generationOrder().length, 4);
+// 참조 리포트(한국 월간)가 02-1·02-2처럼 번호 붙은 소섹션을 갖는다.
+// 소섹션마다 호출하면 실행이 배로 길어지므로 한 번의 생성 안에서 만든다.
+test('SECTIONS: 데이터 섹션은 소섹션 구성을 갖는다', () => {
+  for (const id of ['freight', 'port', 'trade']) {
+    const s = SECTIONS.find((x) => x.id === id);
+    assert.ok(Array.isArray(s.subsections) && s.subsections.length >= 2, `${id}: 소섹션 없음`);
+    assert.ok(s.subsections.every((t) => t.startsWith(`${s.no}-`)), `${id}: 소섹션 번호 불일치`);
+  }
 });
 
-test('outputOrder: 총론이 처음', () => {
-  assert.equal(outputOrder()[0].id, 'overview');
-  assert.deepEqual(outputOrder().map((s) => s.no), ['01', '02', '03', '04']);
+// 총론·맺음말은 다른 섹션이 확정한 사실을 종합해야 하므로 마지막에 쓴다.
+// 하지만 출력은 번호대로다.
+test('generationOrder: 총론·맺음말이 마지막', () => {
+  const order = generationOrder();
+  assert.equal(order.length, 5);
+  const lastTwo = order.slice(-2).map((s) => s.id).sort();
+  assert.deepEqual(lastTwo, ['closing', 'overview']);
+});
+
+test('outputOrder: 번호대로', () => {
+  assert.deepEqual(outputOrder().map((s) => s.no), ['01', '02', '03', '04', '05']);
 });
 
 // 목업에서 팩트시트 전량(6.9KB)을 넣었더니 thinking이 예산을 다 먹어 본문이 비었다.

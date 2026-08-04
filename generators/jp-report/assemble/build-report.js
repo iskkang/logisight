@@ -50,6 +50,12 @@ p{margin:0 0 16px}
 img{max-width:100%;height:auto;margin:20px 0}
 hr{display:none}
 .meta{font-size:12px;color:#828d9d;margin-bottom:28px}
+table{width:100%;border-collapse:collapse;margin:18px 0;font-size:13px;line-height:1.5}
+th,td{padding:7px 10px;border-bottom:1px solid #eef1f6;text-align:right}
+th{background:#f7f9fc;font-weight:600;color:#4a5566;border-bottom:2px solid #cbd3de}
+th:first-child,td:first-child{text-align:left}
+/* 표 바로 뒤 단락은 출처·단위 주석(※)이다. 본문과 구분한다. */
+table+p{font-size:12px;color:#828d9d;line-height:1.6;margin-top:-8px}
 </style>
 </head>
 <body>

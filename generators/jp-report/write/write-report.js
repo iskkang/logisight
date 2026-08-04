@@ -15,7 +15,8 @@ const { callClaude, callClaudeJson } = require('../../lib/claude');
 const { verifyNumbers } = require('../verify/numbers');
 const { reviewSection, needsRewrite, buildIssueFeedback, splitBySeverity } = require('../verify/editorial');
 const { generationOrder, outputOrder, slimFactsheet } = require('./sections');
-const { normalizeHeading } = require('./heading');
+const { composeSection } = require('./heading');
+const { tablesFor } = require('./tables');
 
 const STYLE = fs.readFileSync(path.join(__dirname, 'STYLE.ja.md'), 'utf8');
 const SEO = fs.readFileSync(path.join(__dirname, 'SEO.ja.md'), 'utf8');
@@ -41,9 +42,22 @@ function userPrompt(section, slim, digests, violations, issues) {
     '【このセクションの狙い】',
     section.focus,
     '',
+  ];
+  if (section.subsections && section.subsections.length > 0) {
+    parts.push('【小見出し構成】次の小見出しを「## 」で立て、それぞれに本文を書く。順序は変えない。',
+      '小見出しには内容を表すヘッドラインを付け足してよい(例: 「## 02-1. 外航海上 — 円ベースが突出」)。',
+      section.subsections.map((t) => `- ${t}`).join('\n'),
+      // 섹션 제목은 코드가 찍는다. 모델이 같이 쓰면 소섹션 번호가 한 칸씩 밀린다.
+      `セクション見出し「${section.no}. ${section.title}」は書かない。小見出しから始める。`, '');
+  }
+  parts.push(
+    // 표를 LLM이 그리면 반드시 수치 오류가 섞인다. 코드가 그린 표를 나중에 끼워 넣는다.
+    '【重要】数値の表(マークダウンテーブル)は書かない。表はシステムが自動で挿入する。',
+    '本文では表の数値を必要な分だけ引用し、解釈に集中する。',
+    '',
     '【ファクトシート】単位: 金額=千円, 運賃=指数(2020年=100), 港湾=TEU',
     JSON.stringify(slim),
-  ];
+  );
   if (digests.length > 0) {
     parts.push('', '【他セクションの要旨】これらが確定した事実である。新たな数値を持ち込まない。',
       digests.map((d) => `- ${d.title}: ${d.digest}`).join('\n'));
@@ -129,8 +143,9 @@ async function writeReport(factsheet) {
   for (const section of generationOrder()) {
     console.log(`  ▸ ${section.no}. ${section.title}`);
     const { body, violations, issues } = await writeSection(section, factsheet, digests);
-    // 재생성된 섹션이 제목 번호를 잃는 일이 있다. 출력 순서·목차가 번호에 의존한다.
-    bodies.set(section.id, normalizeHeading(body, section));
+    // 섹션 제목과 표는 코드가 찍는다 — 모델은 소섹션 번호를 빠뜨리고,
+    // 표를 그리게 하면 수치 오류가 섞인다. 목차·앵커가 번호에 의존한다.
+    bodies.set(section.id, composeSection(body, section, tablesFor(section.id, factsheet)));
     if (violations.length > 0 || issues.length > 0) {
       allViolations.push({ section: section.id, violations, issues });
     }
@@ -176,4 +191,4 @@ if (require.main === module) {
   main().catch((e) => { console.error('❌ 리포트 생성 실패:', e.message); process.exit(1); });
 }
 
-module.exports = { writeReport, writeSection, digestOf };
+module.exports = { writeReport, writeSection, digestOf, userPrompt };
