@@ -24,7 +24,8 @@ function gateEvent(event, assets, routes, nodes) {
   let nearest = null, nearestRaw = Infinity;
   for (const a of assets) {
     const raw = haversineKm(e, [a.lon, a.lat]);
-    const la = { id: a.id, name: a.name, type: a.type, km: Math.round(raw) };
+    // name_ja도 함께 넘긴다. 여기서 떨어뜨리면 일본판 근거에 한국어 자산명이 남는다.
+    const la = { id: a.id, name: a.name, name_ja: a.name_ja, type: a.type, km: Math.round(raw) };
     if (raw < nearestRaw) { nearest = la; nearestRaw = raw; }
     if (raw <= ASSET_RADIUS_KM) linkedAssets.push(la);
   }
@@ -33,7 +34,7 @@ function gateEvent(event, assets, routes, nodes) {
   for (const r of routes || []) {
     let min = Infinity;
     for (const c of routeCoords(r, nodes)) { const d = haversineKm(e, c); if (d < min) min = d; }
-    if (min <= ROUTE_RADIUS_KM) linkedRoutes.push({ id: r.id, name: r.name });
+    if (min <= ROUTE_RADIUS_KM) linkedRoutes.push({ id: r.id, name: r.name, name_ja: r.name_ja });
   }
   const linked = linkedAssets.length > 0 || linkedRoutes.length > 0;
   const sev = event.severity;
