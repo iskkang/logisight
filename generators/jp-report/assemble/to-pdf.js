@@ -13,37 +13,49 @@ require('dotenv').config({ path: path.resolve(__dirname, '../../../.env.local') 
 
 const { assemble } = require('./build-report');
 const { periodJa, SITE_NAME } = require('./seo');
+const { buildMagazineHtml, dividerHtml } = require('./magazine');
+const { outputOrder } = require('../write/sections');
 
 const DRAFTS = path.resolve(__dirname, '../../../content/drafts');
 
 const CHROME = process.env.PUPPETEER_EXECUTABLE_PATH
   || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 
-/** 마크다운 이미지 참조를 SVG 본문으로 치환한다. */
+/**
+ * 마크다운 이미지 참조를 SVG 본문으로 치환한다.
+ * 캡션은 붙이지 않는다 — SVG가 제목と副題(基準日・単位)を持っており、alt を重ねると
+ * ほぼ同じ文が二度出る。alt はウェブ版の <img> 用に残す。
+ */
 function inlineCharts(html, charts) {
   let out = html;
   for (const c of charts) {
     const re = new RegExp(`<img[^>]*src="\\./${c.svgFile.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"[^>]*>`, 'g');
-    out = out.replace(re, `<figure>${c.svg}<figcaption>${c.alt}</figcaption></figure>`);
+    out = out.replace(re, `<figure>${c.svg}</figure>`);
   }
   return out;
 }
 
-function printCss() {
-  return `
-@page { size: A4; margin: 18mm 16mm 20mm; }
-body { font-family:"Hiragino Sans","Yu Gothic",Meiryo,sans-serif; font-size:10.5pt; line-height:1.9;
-       color:#1a2433; max-width:none; margin:0; padding:0 }
-h1 { font-size:19pt; line-height:1.45; margin:0 0 10mm; border-bottom:2px solid #1B4D8C; padding-bottom:5mm }
-h2 { font-size:12.5pt; margin:9mm 0 4mm; padding-top:4mm; border-top:1px solid #e5e9f0;
-     break-after:avoid; page-break-after:avoid }
-p { margin:0 0 4mm; text-align:justify }
-figure { margin:6mm 0; break-inside:avoid; page-break-inside:avoid; text-align:center }
-figure svg { max-width:100%; height:auto }
-figcaption { font-size:8.5pt; color:#828d9d; margin-top:2mm }
-.meta { font-size:9pt; color:#828d9d; margin-bottom:8mm }
-hr { display:none }
-`;
+/**
+ * ウェブ用の見出しを落とす。
+ * 表紙が題名と発行日を持つため、本文先頭の <h1> と .meta は重複でしかない。
+ * 残すと、その2行だけで丸ごと1ページを使う。
+ */
+function stripWebHeader(html) {
+  return html
+    .replace(/<h1[^>]*>[\s\S]*?<\/h1>\s*/i, '')
+    .replace(/<div class="meta">[\s\S]*?<\/div>\s*/i, '');
+}
+
+/** 各セクション見出し(<h2>01. …)の直前に扉ページを挟む。 */
+function insertDividers(html) {
+  let out = html;
+  for (const s of outputOrder()) {
+    const re = new RegExp(`<h2[^>]*>\s*${s.no}\.[^<]*</h2>`);
+    const hit = re.exec(out);
+    if (!hit) continue;
+    out = out.slice(0, hit.index) + dividerHtml(s) + out.slice(hit.index);
+  }
+  return out;
 }
 
 async function main() {
@@ -59,8 +71,19 @@ async function main() {
   const markdown = fs.readFileSync(mdPath, 'utf8');
   const built = assemble({ markdown, period, factsheet, publishedAt: new Date().toISOString() });
 
-  const body = inlineCharts(built.html, built.charts)
-    .replace('</style>', `${printCss()}</style>`);
+  // 韓国版と同じ雑誌組版にする — 表紙・Executive Summary・セクション扉・裏表紙。
+  // built.html は <html> 一式なので、本文(<body>内)だけを取り出して差し込む。
+  const inner = inlineCharts(built.html, built.charts);
+  const m = /<body[^>]*>([\s\S]*?)<\/body>/i.exec(inner);
+  const bodyOnly = m ? m[1] : inner;
+  // セクション扉を各セクションの直前に挟む。見出し番号で位置を決める。
+  const withDividers = insertDividers(stripWebHeader(bodyOnly));
+  const body = buildMagazineHtml({
+    bodyHtml: withDividers,
+    facts: factsheet,
+    period,
+    publishedAt: new Date().toISOString().slice(0, 10),
+  });
 
   const outPath = path.join(DRAFTS, `jp-report-${period}.pdf`);
   const browser = await puppeteer.launch({
@@ -82,7 +105,8 @@ async function main() {
         `<div style="width:100%;font-size:8pt;color:#828d9d;padding:0 16mm;display:flex;justify-content:space-between">
            <span>${SITE_NAME} · ${periodJa(period)} 物流市況レポート</span>
            <span class="pageNumber"></span></div>`,
-      margin: { top: '18mm', bottom: '20mm', left: '16mm', right: '16mm' },
+      // 表紙・扉は全面塗りなので余白ゼロ。本文の余白は CSS の @page で持たせる。
+      margin: { top: '0', bottom: '0', left: '0', right: '0' },
     });
   } finally {
     await browser.close();
@@ -97,4 +121,4 @@ if (require.main === module) {
   main().catch((e) => { console.error('❌ PDF 생성 실패:', e.message); process.exit(1); });
 }
 
-module.exports = { inlineCharts };
+module.exports = { inlineCharts, insertDividers, stripWebHeader };

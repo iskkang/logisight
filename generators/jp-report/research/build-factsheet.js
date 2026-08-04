@@ -11,7 +11,9 @@ const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../../../.env.local') });
 
 const {
-  buildSppiFacts, buildPortFacts, buildTradeFacts, buildCommodityFacts, buildFactsheet,
+  buildSppiFacts, buildPortFacts, buildTradeFacts, buildCommodityFacts, buildGlobalFacts, buildRailFacts,
+  buildGlobalHistory, buildSppiHistory,
+  buildFactsheet, GLOBAL_CODES, SPPI_TREND_SERIES,
 } = require('./facts');
 
 const URL = process.env.SUPABASE_URL;
@@ -50,6 +52,12 @@ async function collectFacts() {
   const sppiSel = 'select=series_name,category,basis,value';
   const sppiRows = await query(`jp_price_indices?${sppiSel}&year=eq.${sppiAt.year}&month=eq.${sppiAt.month}`);
   const sppiPrev = await query(`jp_price_indices?${sppiSel}&year=eq.${sppiAt.year - 1}&month=eq.${sppiAt.month}`);
+  // 추이 차트용 시계열. 2계열만 받는다 — 13계열 전부는 차트로 읽히지 않는다.
+  const sppiHist = await query(
+    'jp_price_indices?select=year,month,series_name,basis,value'
+    + `&series_name=in.(${SPPI_TREND_SERIES.map((n) => `"${encodeURIComponent(n)}"`).join(',')})`
+    + '&order=year.desc,month.desc&limit=300',
+  );
 
   // ── 항만 ──
   const portAt = await latestPeriod('port_throughput', '&country=eq.JP');
@@ -75,11 +83,21 @@ async function collectFacts() {
     `jp_trade_by_commodity?select=direction,commodity_name,value_jpy&year=eq.${cmAt.year}&month=eq.${cmAt.month}`,
   );
 
+  // 世界のスポット指数。週次で最新まで出るので、月次の日本統計より先の情報を持つ。
+  // 系列ごとに公表日が違うため多めに取り、系列ごとの最新行を facts 側で拾う。
+  const globalRows = await query(
+    `freight_indices?select=index_code,value,change_pct,week_date&index_code=in.(${GLOBAL_CODES.join(',')})`
+    + '&order=week_date.desc&limit=600',
+  );
+
   return buildFactsheet({
-    sppi: buildSppiFacts(sppiRows, sppiPrev, sppiAt),
+    // history는 차트 전용 축이다. 본문 프롬프트에는 slimFactsheet가 잘라내고 넣지 않는다.
+    sppi: { ...buildSppiFacts(sppiRows, sppiPrev, sppiAt), history: buildSppiHistory(sppiHist) },
     port: buildPortFacts(portRows, portAt),
     trade: buildTradeFacts([...tradeTotal, ...tradeTop], tradeAt),
     commodity: buildCommodityFacts(cmRows, cmAt),
+    global: { ...buildGlobalFacts(globalRows), history: buildGlobalHistory(globalRows) },
+    rail: buildRailFacts(globalRows),
   });
 }
 
@@ -119,6 +137,7 @@ async function main() {
   console.log(`   기준월 — 무역 ${factsheet.periods.trade} / 항만 ${factsheet.periods.port} / 운임 ${factsheet.periods.sppi}`);
   if (factsheet.periodMismatch) console.log('   ⚠️ 축별 기준월 불일치 — 본문에 명시 필요');
   console.log(`   운임 계열 ${factsheet.sppi.series.length}개, 신호 ${factsheet.sppi.signals.length}건`);
+  console.log(`   추이(차트용) — 세계 ${factsheet.global?.history?.weeks.length ?? 0}주 / SPPI ${factsheet.sppi.history?.months.length ?? 0}개월`);
   console.log(`   항만 ${factsheet.port.ports.length}개항 (${factsheet.port.isPreliminary ? '속보' : '확보'})`);
   console.log(`   무역 상위 ${factsheet.trade.countries.length}개국, 품목 수출 ${factsheet.commodity.export.length}개`);
   if (check.checked) {

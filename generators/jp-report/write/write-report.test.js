@@ -16,26 +16,26 @@ const build = (id, opts = {}) => userPrompt(
 
 test('userPrompt: 섹션 번호·제목·의도를 담는다', () => {
   const p = build('port');
-  assert.ok(p.includes('03. 港湾'));
+  assert.ok(p.includes('05. 港湾'));
   assert.ok(p.includes('速報値であることを必ず明示する'));
 });
 
 // 표를 LLM이 그리면 반드시 수치 오류가 섞인다. 코드가 그린 표를 나중에 끼운다.
 test('userPrompt: 표 금지 지시가 모든 섹션에 들어간다', () => {
-  for (const id of ['overview', 'freight', 'port', 'trade', 'closing']) {
+  for (const id of ['overview', 'ocean', 'air', 'rail', 'port', 'trade', 'closing']) {
     assert.ok(build(id).includes('数値の表(マークダウンテーブル)は書かない'), `${id}: 표 금지 누락`);
   }
 });
 
 test('userPrompt: 팩트시트가 JSON으로 들어간다', () => {
-  assert.ok(build('freight').includes(JSON.stringify(SLIM)));
+  assert.ok(build('ocean').includes(JSON.stringify(SLIM)));
 });
 
 // 참조 리포트가 02-1·02-2처럼 번호 붙은 소섹션을 갖는다. 지시가 빠지면 평범한 ###가 나온다.
 test('userPrompt: 소섹션이 있는 섹션은 번호까지 지시한다', () => {
-  const p = build('freight');
+  const p = build('ocean');
   assert.ok(p.includes('【小見出し構成】'));
-  for (const t of byId('freight').subsections) assert.ok(p.includes(t), `소섹션 누락: ${t}`);
+  for (const t of byId('ocean').subsections) assert.ok(p.includes(t), `소섹션 누락: ${t}`);
 });
 
 test('userPrompt: 소섹션이 없는 섹션에는 그 블록을 넣지 않는다', () => {
@@ -53,7 +53,7 @@ test('userPrompt: 다른 섹션 요지는 있을 때만 넣는다', () => {
 
 // 재생성 때 지적을 실어 보내지 않으면 같은 위반이 반복된다.
 test('userPrompt: 수치 위반을 원문·문맥과 함께 되돌려준다', () => {
-  const p = build('freight', { violations: [{ raw: '73ポイント', context: '73ポイントの開き' }] });
+  const p = build('ocean', { violations: [{ raw: '73ポイント', context: '73ポイントの開き' }] });
   assert.ok(p.includes('【前回の指摘・数値】'));
   assert.ok(p.includes('73ポイント'));
   assert.ok(p.includes('73ポイントの開き'));

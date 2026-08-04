@@ -107,9 +107,30 @@ function commodityTable(facts) {
   return `${body}\n\n※ ${c.period || ''} 分。概況品目の大分類10品目。出典: ${c.source || ''}。`;
 }
 
+/**
+ * 世界のスポット運賃指数。
+ * 変化率は発表元の前回比であり、日本の前年同月比とは別物 — 列名で区別する。
+ */
+function globalTable(facts) {
+  const g = facts.global || {};
+  const rows = (g.indices || []).map((i) => [
+    i.label,
+    i.value === null || i.value === undefined ? '—' : fmtNum(i.value, 1),
+    i.changePct === null || i.changePct === undefined ? '—' : fmtPct(i.changePct),
+    i.asOf || '—',
+  ]);
+  const body = table(['指数', '直近値', '前回比', '基準日'], rows);
+  const note = `※ 週次で公表され、日本の月次統計とは基準日が揃わない。前回比は発表元の公表値。`
+    + `韓国発を基準とする指数(KCCI 等)は扱わない。出典: ${g.source || ''}。`;
+  return `${body}
+
+${note}`;
+}
+
 /** 섹션별로 주입할 표. 없으면 빈 문자열. */
 function tablesFor(sectionId, facts) {
   switch (sectionId) {
+    case 'global': return globalTable(facts);
     case 'freight': return sppiTable(facts);
     case 'port': return portTable(facts);
     case 'trade': return `${tradeTable(facts)}\n\n${commodityTable(facts)}`;
@@ -119,5 +140,5 @@ function tablesFor(sectionId, facts) {
 
 module.exports = {
   fmtPct, fmtInt, fmtNum, toOku, table,
-  sppiTable, portTable, tradeTable, commodityTable, tablesFor,
+  globalTable, sppiTable, portTable, tradeTable, commodityTable, tablesFor,
 };
