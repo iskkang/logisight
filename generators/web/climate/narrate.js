@@ -150,11 +150,18 @@ function validateClimate(parsed, ctx) {
   // 2b) 입력(allowed) 밖 지명 등장 차단(환각). gazetteer 제공 시에만.
   if (Array.isArray(ctx.gazetteer) && ctx.gazetteer.length) {
     const src = ctx.allowedPlaces instanceof Set ? [...ctx.allowedPlaces] : (ctx.allowedPlaces || []);
-    const allowed = new Set(src.map((s) => String(s).replace(/\s/g, ''))); // 공백 정규화(자산명 '대만 해협' vs 관문 '대만해협')
+    const allowed = src.map((s) => String(s).replace(/\s/g, '')); // 공백 정규화(자산명 '대만 해협' vs 관문 '대만해협')
+    const allowedSet = new Set(allowed);
     const bodyNorm = `${weather}\n${impact}\n${action}`.replace(/\s/g, '');
     for (const place of ctx.gazetteer) {
       const p = String(place).replace(/\s/g, '');
-      if (p && bodyNorm.includes(p) && !allowed.has(p)) { issues.push(`환각: 입력 외 지명(${place})`); break; }
+      if (!p || !bodyNorm.includes(p)) continue;
+      // 입력으로 준 이름의 일부인 지명은 환각이 아니다.
+      // 노선명이 자산명을 품는다: '아시아–유럽 (희망봉 우회)' ⊃ '희망봉'.
+      // 이걸 빼면 그 노선을 부르는 것만으로 초안 전체가 보류된다.
+      if (allowedSet.has(p) || allowed.some((a) => a.includes(p))) continue;
+      issues.push(`환각: 입력 외 지명(${place})`);
+      break;
     }
   }
 

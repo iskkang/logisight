@@ -29,7 +29,14 @@ async function generateEventDrafts(supabase, callLLM, { asof = new Date(), dryRu
     if (v.tier === 'LIMITED') continue;
     res.linked++;
     const linkedAssets = v.linkedAssets.map((a) => ({ ...a, risk: riskH0[a.id] || null }));
-    const allowedPlaces = new Set([e.area, ...linkedAssets.flatMap((a) => [a.name, a.name_ja])].filter(Boolean));
+    // 노선명도 허용 지명에 넣는다. 프롬프트로 준 노선을 본문이 부르는 것은 환각이 아닌데,
+    // 노선명이 자산명을 품고 있어서('아시아–유럽 (희망봉 우회)' ⊃ '희망봉') 환각으로 걸렸다.
+    // 연관 자산이 비고 노선만 걸린 이벤트에서 특히 자주 터진다.
+    const allowedPlaces = new Set([
+      e.area,
+      ...linkedAssets.flatMap((a) => [a.name, a.name_ja]),
+      ...v.linkedRoutes.flatMap((r) => [r.name, r.name_ja]),
+    ].filter(Boolean));
     const ctx = { asof, event: { ...e, name: eventName(e.title) }, linkedAssets, linkedRoutes: v.linkedRoutes, gazetteer, allowedPlaces };
     // 언어마다 따로 생성한다. 번역이 아니라 각 언어로 쓰게 해야 가드가 제 언어로 작동한다.
     // 같은 이벤트라도 한쪽 언어만 가드를 통과할 수 있다 — 통과한 쪽만 발행된다.
@@ -70,13 +77,17 @@ async function main() {
   require('dotenv').config({ path: path.resolve(__dirname, '../../../.env.local') });
   if (typeof globalThis.WebSocket === 'undefined') { try { globalThis.WebSocket = require('ws'); } catch (_) {} }
   const dryRun = process.argv.includes('--dry-run');
+  // --lang=ja 로 한쪽만 돌릴 수 있다. 한국어가 이미 발행돼 있는데 두 언어를 다
+  // 돌리면 LLM 호출만 두 배로 쓰고 한국어는 skippedExisting으로 버려진다.
+  const langArg = process.argv.find((a) => a.startsWith('--lang='));
+  const langs = langArg ? langArg.split('=')[1].split(',').filter(Boolean) : ['ko', 'ja'];
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) throw new Error('SUPABASE 환경변수 없음');
   if (!process.env.ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY 미설정');
   const { createClient } = require('@supabase/supabase-js');
   const { callClaude } = require('../forecast/llm');
   const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false }, realtime: { enabled: false } });
-  const res = await generateEventDrafts(supabase, callClaude, { dryRun });
-  console.log(`📊 events ${res.events} · linked ${res.linked} · 신규 ${res.inserted} · 갱신 ${res.updated} · 보존 ${res.skippedExisting} · 폐기 ${res.purged} · 에디터필요 ${res.needsEditor} · 오류 ${res.errors}${dryRun ? ' (DRY RUN)' : ''}`);
+  const res = await generateEventDrafts(supabase, callClaude, { dryRun, langs });
+  console.log(`📊 lang ${langs.join(',')} · events ${res.events} · linked ${res.linked} · 신규 ${res.inserted} · 갱신 ${res.updated} · 보존 ${res.skippedExisting} · 폐기 ${res.purged} · 에디터필요 ${res.needsEditor} · 오류 ${res.errors}${dryRun ? ' (DRY RUN)' : ''}`);
 }
 if (require.main === module) main().catch((e) => { console.error('climate-event generate 실패:', e.message); process.exit(1); });
 module.exports = { generateEventDrafts };

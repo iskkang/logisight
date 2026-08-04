@@ -183,3 +183,37 @@ test('buildClimatePrompt: lang에 따라 출력 언어 지시가 바뀐다', () 
   assert.ok(ja.user.includes('宮古海峡') && !ja.user.includes('미야코해협'));
   assert.ok(ko.user.includes('미야코해협'));
 });
+
+// 노선명이 자산명을 품는다: '아시아–유럽 (희망봉 우회)' ⊃ '희망봉'.
+// 이 대비가 없으면 그 노선을 부르는 것만으로 초안 전체가 환각으로 보류된다.
+// 연관 자산이 비고 노선만 걸린 이벤트에서 특히 자주 터졌다(일본어 10건 중 4건).
+test('validateClimate: 허용된 이름의 일부인 지명은 환각이 아니다', () => {
+  const ctx = {
+    event: { name: 'MAWAR', kind: 'cyclone' },
+    gazetteer: ['희망봉', '싱가포르'],
+    allowedPlaces: new Set(['아시아–유럽 (희망봉 우회)']),
+  };
+  const body = {
+    weather: '이벤트가 관측되었다.',
+    impact: '아시아–유럽 (희망봉 우회) 노선에 영향 가능성이 있다.',
+    action: '모니터링을 강화한다.',
+    event_echo: 'MAWAR',
+  };
+  assert.equal(validateClimate(body, ctx).ok, true);
+});
+
+// 그렇다고 아무 지명이나 통과시키면 환각 가드가 죽는다.
+test('validateClimate: 입력과 무관한 지명은 여전히 잡는다', () => {
+  const ctx = {
+    event: { name: 'MAWAR', kind: 'cyclone' },
+    gazetteer: ['희망봉', '싱가포르'],
+    allowedPlaces: new Set(['아시아–유럽 (희망봉 우회)']),
+  };
+  const body = {
+    weather: '이벤트가 관측되었다.',
+    impact: '싱가포르 항만이 영향을 받을 가능성이 있다.',
+    action: '모니터링을 강화한다.',
+    event_echo: 'MAWAR',
+  };
+  assert.ok(validateClimate(body, ctx).issues.some((i) => i.includes('환각')));
+});
