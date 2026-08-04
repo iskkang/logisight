@@ -141,3 +141,28 @@ test('buildNarratePrompt: 한국발 지침은 일본판에 넣지 않는다', ()
   assert.ok(buildNarratePrompt(withChina, verdict, { lang: 'ko' }).system.includes('부산'));
   assert.ok(!buildNarratePrompt(withChina, verdict, { lang: 'ja' }).system.includes('부산'));
 });
+
+// 프롬프트의 사실 키가 한국어라 모델이 음차했다 — '결항'→「結航率」, '결측'→「結測」.
+// 둘 다 일본어에 없는 말이고, 실제로 발행된 4건에 들어갔다. 키를 일본어로 바꿔
+// 원인은 없앴지만, 다시 새면 화면에 그대로 나가므로 가드로도 막는다.
+test('validateProse(ja): 음차 비단어를 잡는다', () => {
+  const v = validateProse(jaBody({ statement: '結航率は8%で拡大している。' }), JA_V, { lang: 'ja', isRate: false });
+  assert.ok(v.issues.some((i) => i.includes('비단어')), `잡히지 않음: ${v.issues}`);
+});
+
+test('validateProse(ja): 올바른 표기는 통과', () => {
+  const v = validateProse(jaBody({ statement: '欠航率は8%で拡大しているとみられる。' }), JA_V, { lang: 'ja', isRate: false });
+  assert.ok(!v.issues.some((i) => i.includes('비단어')));
+});
+
+test('buildNarratePrompt(ja): 사실의 키가 일본어다', () => {
+  const inp = { ...input, supply: { blank_sailing: { source_type: 'tracker_quoted', ratio_pct: 8, direction: 'expanding' } } };
+  const ja = buildNarratePrompt(inp, verdict, { lang: 'ja' });
+  assert.ok(ja.user.includes('"供給_欠航"'), '欠航 키 누락');
+  // 값은 한국어일 수 있다(부산발 항로 등). 키만 본다.
+  for (const k of ['"공급_결항"', '"운임"', '"수요"', '"결측·플래그"']) {
+    assert.ok(!ja.user.includes(k), `프롬프트에 한국어 키: ${k}`);
+  }
+  // 한국어 쪽은 그대로여야 한다.
+  assert.ok(buildNarratePrompt(inp, verdict, { lang: 'ko' }).user.includes('"공급_결항"'));
+});

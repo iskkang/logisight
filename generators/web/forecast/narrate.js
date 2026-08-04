@@ -37,6 +37,9 @@ const GUARD = {
     currency: 'ドル',
     vaguePeriod: /直近の?月/,
     oneObsTrend: /欠航.{0,40}(維持|継続|続いて)/,
+    // 한국어 낱말을 음차한 비단어. 프롬프트 키를 일본어로 바꿔 원인은 없앴지만,
+    // 다시 새면 화면에 그대로 나가므로 가드로 막는다. 「結航率」「結測」은 일본어에 없다.
+    nonWords: ['結航', '結測', '欠測率', '船腹量'],
   },
 };
 
@@ -92,7 +95,21 @@ function buildNarratePrompt(input, verdict, { news = [], lang = 'ko' } = {}) {
   ].filter(Boolean).join('\n');
 
   const bs = input.supply && input.supply.blank_sailing;
-  const facts = {
+  // 사실의 키 이름도 출력 언어로 맞춘다. 한국어 키를 그대로 주면 모델이 음차한다 —
+  // '결항'을 받은 모델이 「結航率」(일본어에 없는 말)을 쓰고, '결측'은 「結測」이 됐다.
+  // 올바른 일본어는 欠航·欠測이다.
+  const facts = lang === 'ja' ? {
+    指標: input.metric_ref, ラベル: input.label, 頻度: input.cadence, horizon: input.horizon_date,
+    判定: { 方向: verdict.direction, 強さ: verdict.strength, 想定レンジ: verdict.expected_range_pct, 信頼度: verdict.confidence },
+    運賃: input.rate_series && { 基準月: input.rate_series.period_label, 直近: input.rate_series.latest, 単位: input.rate_series.unit, 前月比: input.rate_series.mom_pct, 傾向: input.rate_series.trend_3p },
+    供給_欠航: bs && { 出典: bs.source_type, 欠航率: bs.ratio_pct, 方向: bs.direction, 実効船腹: bs.effective_capacity_chg_pct },
+    china_factor: input.china_factor || null,
+    需要: input.demand && { 輸出モメンタムYoY: input.demand.export_momentum_yoy_pct, 傾向: input.demand.momentum_trend, 季節性: input.demand.seasonality_flag, 地域: input.demand.region },
+    コスト_燃料油MoM: input.cost && input.cost.fuel_mom_pct,
+    価格動向: input.pricing_actions,
+    context_events: input.context_events || [],
+    欠測・フラグ: verdict.data_quality_flags || [],
+  } : {
     지표: input.metric_ref, 라벨: input.label, 케이던스: input.cadence, horizon: input.horizon_date,
     판정: { 방향: verdict.direction, 강도: verdict.strength, 예상범위: verdict.expected_range_pct, 신뢰도: verdict.confidence },
     운임: input.rate_series && { 기준월: input.rate_series.period_label, 최신: input.rate_series.latest, 단위: input.rate_series.unit, 전월대비: input.rate_series.mom_pct, 추세: input.rate_series.trend_3p },
@@ -135,6 +152,8 @@ function validateProse(parsed, verdict, opts = {}) {
   if (s && ENUM_LEAK.test(s)) issues.push('enum 원문 누설');
   // 단정 금지
   if (s && g.forbidden.some((w) => s.includes(w))) issues.push('단정 표현 포함');
+  const bad = (g.nonWords || []).find((w) => `${s}\n${note}`.includes(w));
+  if (bad) issues.push(`비단어 사용(${bad})`);
   // 2. 결측 팩터 단정 서술(가설 표지 없을 때)
   const hasHyp = g.hypothesis.some((h) => s.includes(h));
   for (const f of opts.missingFactors || []) {
