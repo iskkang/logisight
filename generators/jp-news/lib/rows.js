@@ -5,6 +5,23 @@
 /** 日本語行の slug 接尾辞。韓国語行と slug を分けないと記事ページが言語を取り違える。 */
 const JA_SLUG_SUFFIX = '-ja';
 
+/**
+ * 日本語記事の slug。「掲載日-元記事ID」。
+ *
+ * 最初は韓国語 slug に -ja を足しただけだった。その結果 URL が
+ *   /article/2026-08-03-중국-장쑤-국제-철도-...-ja
+ * となり、日本語サイトのアドレスにハングルがそのまま残った(実際に本番でそうなった)。
+ * パーセントエンコードされて検索結果にも出る。
+ *
+ * 日本の業界紙(日本海事新聞・LOGISTICS TODAY)は日付+番号の URL を使う。
+ * 日本語のタイトルをそのまま slug にしても非 ASCII で同じ問題が起きるため、
+ * 日付と元記事 ID で組む。短く、安定し、言語に依存しない。
+ */
+function jaSlug(src) {
+  const date = String(src.published_at ?? '').slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(date) ? `${date}-${src.id}` : `n${src.id}`;
+}
+
 /** 日本版のサイト。url を分けることで maritime_news の一意キー(url)と衝突しない。 */
 const JP_SITE = 'https://jpn.logisight.net';
 
@@ -27,7 +44,7 @@ const categoryJa = (ko) => CATEGORY_JA[ko] ?? '物流';
 /** すでに日本語行がある記事は飛ばす。再実行で未処理分だけを拾えるようにする。 */
 function needsTranslation(row, doneSlugs) {
   if (!row.slug) return false;
-  return !doneSlugs.has(`${row.slug}${JA_SLUG_SUFFIX}`);
+  return !doneSlugs.has(jaSlug(row));
 }
 
 /**
@@ -36,7 +53,7 @@ function needsTranslation(row, doneSlugs) {
  * 翻訳で変えるのは言語に属する列(title/summary/content/category/tags)だけである。
  */
 function buildJaRow(src, ja) {
-  const slug = `${src.slug}${JA_SLUG_SUFFIX}`;
+  const slug = jaSlug(src);
   return {
     url: `${JP_SITE}/article/${slug}`,
     slug,
@@ -56,4 +73,4 @@ function buildJaRow(src, ja) {
   };
 }
 
-module.exports = { JA_SLUG_SUFFIX, JP_SITE, CATEGORY_JA, categoryJa, needsTranslation, buildJaRow };
+module.exports = { JA_SLUG_SUFFIX, JP_SITE, CATEGORY_JA, categoryJa, jaSlug, needsTranslation, buildJaRow };

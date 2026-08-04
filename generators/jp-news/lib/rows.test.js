@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { JA_SLUG_SUFFIX, categoryJa, needsTranslation, buildJaRow } = require('./rows');
+const { JA_SLUG_SUFFIX, categoryJa, jaSlug, needsTranslation, buildJaRow } = require('./rows');
 
 const SRC = {
   id: 7786,
@@ -19,12 +19,30 @@ const SRC = {
 };
 const JA = { title: '日本語見出し', summary: '日本語リード', content: '## 本文', tags: ['海上', '運賃'] };
 
+// 처음엔 한국어 slug에 -ja만 붙였다. 그 결과 일본 사이트 URL에 한글이 그대로 남았다:
+//   /article/2026-08-03-중국-장쑤-국제-철도-...-ja
+// 퍼센트 인코딩돼 검색 결과에도 노출됐다. 날짜+번호로 바꾼다.
+test('jaSlug: 날짜-원문ID. 비ASCII를 URL에 넣지 않는다', () => {
+  assert.equal(jaSlug(SRC), '2026-07-01-7786');
+  assert.ok(/^[ -~]+$/.test(jaSlug(SRC)), 'ASCII만 있어야 한다');
+});
+
+test('jaSlug: 발행일이 없으면 번호만', () => {
+  assert.equal(jaSlug({ id: 42, published_at: null }), 'n42');
+});
+
 // maritime_news の一意キーは url。韓国語行と同じ url を使うと上書きしてしまう。
 test('buildJaRow: url·slug를 한국어 행과 분리한다', () => {
   const r = buildJaRow(SRC, JA);
-  assert.equal(r.slug, `2026-07-01-brief${JA_SLUG_SUFFIX}`);
-  assert.equal(r.url, 'https://jpn.logisight.net/article/2026-07-01-brief-ja');
+  assert.equal(r.slug, '2026-07-01-7786');
+  assert.equal(r.url, 'https://jpn.logisight.net/article/2026-07-01-7786');
   assert.notEqual(r.url, 'https://logisight.mtlship.com/article/2026-07-01-brief');
+});
+
+test('buildJaRow: slug에 한글이 남지 않는다', () => {
+  const src = { ...SRC, slug: '2026-08-03-중국-장쑤-철도' };
+  assert.ok(!/[가-힣]/.test(buildJaRow(src, JA).slug));
+  assert.ok(!/[가-힣]/.test(buildJaRow(src, JA).url));
 });
 
 test('buildJaRow: lang=ja', () => {
@@ -69,9 +87,9 @@ test('buildJaRow: 태그가 비면 null — 빈 배열을 넣지 않는다', () 
 
 // 재실행이 미처리분만 처리해야 한다. 매번 전량 번역하면 비용이 계속 든다.
 test('needsTranslation: 이미 번역된 건 건너뛴다', () => {
-  const done = new Set(['2026-07-01-brief-ja']);
+  const done = new Set(['2026-07-01-7786']);
   assert.equal(needsTranslation(SRC, done), false);
-  assert.equal(needsTranslation({ ...SRC, slug: '2026-07-02-brief' }, done), true);
+  assert.equal(needsTranslation({ ...SRC, id: 9999 }, done), true);
 });
 
 test('needsTranslation: slug가 없으면 대상이 아니다', () => {
