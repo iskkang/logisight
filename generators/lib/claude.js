@@ -28,9 +28,13 @@ function client() {
   return _client;
 }
 
-async function callClaude({ system, messages, max_tokens = 8192 }) {
+/**
+ * @param {string} [model] 호출부별 모델. 안 주면 CLAUDE_MODEL 또는 sonnet.
+ *   일본 월간 리포트 본문은 opus를 쓴다 — 아래 WRITER_MODEL 주석 참고.
+ */
+async function callClaude({ system, messages, max_tokens = 8192, model }) {
   const res = await client().messages.create({
-    model: MODEL(),
+    model: model || MODEL(),
     max_tokens,
     ...(system ? { system } : {}),
     messages,
@@ -40,11 +44,11 @@ async function callClaude({ system, messages, max_tokens = 8192 }) {
 }
 
 // JSON 전용 래퍼: 호출 → extractJson → 실패 시 1회 재시도 → 최종 실패 시 전체 덤프 (deepseek.js와 동일 계약)
-async function callClaudeJson({ system, messages, max_tokens = 8192, debugPrefix = 'claude' }) {
+async function callClaudeJson({ system, messages, max_tokens = 8192, debugPrefix = 'claude', model }) {
   const { extractJson } = require('./parse-json');
 
   async function attempt(msgs) {
-    const msg = await callClaude({ system, messages: msgs, max_tokens });
+    const msg = await callClaude({ system, messages: msgs, max_tokens, model });
     return msg.content[0].text.trim();
   }
 

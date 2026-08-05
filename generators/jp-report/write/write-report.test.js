@@ -82,3 +82,14 @@ test('digestOf: 제목을 빼고 앞 2문장만 넘긴다', () => {
 test('digestOf: 180자를 넘기지 않는다', () => {
   assert.ok(digestOf(`${'あ'.repeat(400)}。`).length <= 180);
 });
+
+// phraseNote가 정의에는 있는데 호출부에 빠져 있었다. 지속 표현 검사가 걸려
+// 재생성은 하는데 모델에게 이유를 안 알려주니, 같은 글을 다시 써서 또 걸렸다.
+// 인자를 늘릴 때 한쪽만 고치면 조용히 이렇게 된다.
+test('userPrompt 호출부가 정의와 인자 수가 같다', () => {
+  const src = require('fs').readFileSync(require('path').join(__dirname, 'write-report.js'), 'utf8');
+  const def = /function userPrompt\(([^)]*)\)/.exec(src)[1].split(',').length;
+  const body = src.slice(src.indexOf('async function writeSection'));
+  const call = /userPrompt\(section,([^)]*)\)/.exec(body)[1].split(',').length + 1;
+  assert.equal(call, def, 'userPrompt 호출부가 정의보다 인자가 적다 — 되먹임이 전달되지 않는다');
+});

@@ -25,6 +25,20 @@ const SEO = fs.readFileSync(path.join(__dirname, 'SEO.ja.md'), 'utf8');
 
 /** thinking이 예산을 잠식해 본문이 비는 일이 있어 넉넉히 잡는다. */
 const MAX_TOKENS = 16000;
+/**
+ * 본문은 opus로 쓴다. 검수는 sonnet 그대로다.
+ *
+ * 구조적인 막힘(지시와 데이터의 어긋남)을 다 고친 뒤에도 재시도가 3~5회씩 돌았다.
+ * 남은 지적이 전부 글의 품질 문제였다:
+ *   「為替の寄与(+11.2%)は…約2割程度であり「半分弱」という特徴づけは誇張」
+ *   「「ここ数週の動きを均した」を裏付ける週次推移が本文に無い」
+ * 비율 오독과 없는 추세 주장은 추론력 차이가 그대로 나오는 자리다.
+ *
+ * 월 1회 발행이라 절대 비용이 작고, 재시도가 줄면 호출 수가 줄어 오히려 싸질 수 있다.
+ * 검수까지 같은 모델로 올리면 자기 글을 자기가 보는 셈이라 sonnet으로 남긴다.
+ */
+const WRITER_MODEL = process.env.JP_WRITER_MODEL || 'claude-opus-5';
+
 // 모델이 합산·차분을 반복해서 시도한다. 실측상 재시도마다 위반이 줄어든다.
 //
 // 2회로는 부족해졌다. 검사가 넷(수치·유보·지속·편집)이고 각 차단이 재시도를 한 번씩
@@ -110,9 +124,10 @@ async function writeSection(section, factsheet, digests) {
 
   for (let attempt = 0; attempt <= MAX_RETRY; attempt += 1) {
     const res = await callClaude({
+      model: WRITER_MODEL,
       max_tokens: MAX_TOKENS,
       system: systemPrompt(),
-      messages: [{ role: 'user', content: userPrompt(section, slim, digests, violations, issues, hedgeNote) }],
+      messages: [{ role: 'user', content: userPrompt(section, slim, digests, violations, issues, hedgeNote, phraseNote) }],
     });
     body = textOf(res);
     if (!body) throw new Error(`${section.id}: 본문이 비었다 (thinking이 예산을 소진했을 수 있다)`);
