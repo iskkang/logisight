@@ -123,7 +123,13 @@ function buildRailFacts(rows) {
     source: 'ERAI (Eurasian Rail Alliance Index)',
     asOf: indices.map((i) => i.asOf).filter(Boolean).sort().pop() ?? null,
     indices,
-    note: '中国–欧州の鉄道運賃と輸送日数。日本発着ではないが、アジア–欧州の代替ルートとして参照する。',
+    // changePct の基準を明記する。collectors/erai.ts が index1520 の「最新月の変化」列を
+    // そのまま入れており、前月比である。ラベルが無いと本文が基準を推測する —
+    // 2026-05号が「前年同月比+0.2%」と書いて誤り、2026-06号は基準を書けず
+    // 「変化率+0.19%」とだけ書いて読者が解釈できなくなった。
+    changeBasis: '前月比',
+    note: '中国–欧州の鉄道運賃と輸送日数。日本発着ではないが、アジア–欧州の代替ルートとして参照する。'
+      + 'changePct は前月比である。前年同月比ではない。',
   };
 }
 
@@ -310,8 +316,32 @@ function buildSppiFacts(rows, prevRows, at) {
     };
   });
 
+  // 이 리포트에서 가장 큰 이야기다.
+  //
+  // 外航 +52.8% / 国際航空 +48.0% 에 대해 陸上 +3.6% / 港湾運送 +0.8% — 15배 차이다.
+  // 이유가 데이터 안에 있다. 국제 계열은 외화로 계약해 엔저가 그대로 얹히고,
+  // 국내 계열은 엔화로 계약해 안 얹힌다(그래서 계약통화 베이스가 아예 공표되지 않는다).
+  //
+  // 일본 화주가 알고 싶은 것이 바로 "왜 국제 운임만 이렇게 오르나"인데,
+  // 2026-06호는 이 조각을 02·03·04·05에 흩어놓고 한 번도 잇지 않았다.
+  // 새 데이터가 필요 없다 — 이미 가진 값을 묶기만 하면 된다.
+  //
+  // signals에 넣는 이유: 검수(editorial.js 검사항목 3)가 signals를 본문에서
+  // 다뤘는지 확인한다. 여기 넣어야 빠뜨리지 않는다.
+  const intl = series.filter((x) => Number.isFinite(x.fxYoyPct) && Number.isFinite(x.yoyYenPct));
+  const domestic = series.filter((x) => x.contract === null && Number.isFinite(x.yoyYenPct));
+  const fxGap = (intl.length > 0 && domestic.length > 0) ? [{
+    kind: 'fx_exposure_gap',
+    intlTop: intl.slice().sort((a, b) => b.yoyYenPct - a.yoyYenPct)[0],
+    domesticLow: domestic.slice().sort((a, b) => a.yoyYenPct - b.yoyYenPct)[0],
+    note: '外貨建て契約の系列(契約通貨ベースが公表される)と円建て契約の系列'
+      + '(契約通貨ベースが公表されない)で伸びが大きく分かれている。'
+      + '国際の系列は円安がそのまま上乗せされ、国内の系列は上乗せされない。'
+      + 'これが両者の差の主要因である。両者を必ず並べて述べ、契約通貨の違いで説明する。',
+  }] : [];
+
   // 계약통화 기준이 100 미만인 계열은 반드시 다뤄야 하는 앵글이다.
-  const signals = series
+  const belowBase = series
     .filter((s) => Number.isFinite(s.contract) && s.contract < INDEX_BASE)
     .map((s) => ({
       kind: 'contract_below_base',
@@ -320,6 +350,7 @@ function buildSppiFacts(rows, prevRows, at) {
       yen: s.yen,
       note: `契約通貨ベース ${s.contract} — 基準年(2020年)を下回る。円ベース ${s.yen} との差は為替要因。`,
     }));
+  const signals = [...fxGap, ...belowBase];
 
   return {
     period: period(at),
@@ -445,6 +476,15 @@ const KNOWN_GAPS = [
  * 自社航路そのものではないが、アジア〜欧州・太平洋の供給が絞られたかどうかは
  * スポット運賃の背景として読む値打ちがある。範囲を明示した上で載せる。
  */
+/** 늘어놓은 시점이 실제로 몇 주에 걸치는지. 연속으로 오해받지 않도록 함께 넘긴다. */
+function spanWeeks(rows) {
+  if (!rows || rows.length < 2) return rows ? rows.length : 0;
+  const first = Date.parse(rows[rows.length - 1].week_start);
+  const last = Date.parse(rows[0].week_start);
+  if (!Number.isFinite(first) || !Number.isFinite(last)) return rows.length;
+  return Math.round((last - first) / (7 * 24 * 3600 * 1000)) + 1;
+}
+
 function buildSupplyFacts(rows) {
   const sorted = [...(rows || [])]
     .filter((r) => r && r.week_start)
@@ -453,6 +493,7 @@ function buildSupplyFacts(rows) {
 
   const num = (v) => (v === null || v === undefined ? null : Number(v));
   const latest = sorted[0];
+  const recent = sorted.slice(0, 6);
   return {
     source: 'Drewry Cancelled Sailings Tracker',
     unit: 'sailings', // 便数。TEU ではない
@@ -461,12 +502,20 @@ function buildSupplyFacts(rows) {
     blankedSailings: num(latest.blanked_teu),
     plannedSailings: num(latest.planned_teu),
     blankPct: num(latest.blank_pct),
-    // 単月の断面だけでは絞られたのか緩んだのかが読めない。直近数週を並べる。
-    recent: sorted.slice(0, 6).map((r) => ({
+    // 単月の断面だけでは絞られたのか緩んだのかが読めない。直近の公表を並べる。
+    //
+    // 公表週は連続していない。Drewry が毎週出すとは限らず、こちらの取得が飛ぶ週もある。
+    // これを断らないと本文が「直近5週」と書く(2026-06号が実際にそうなった。
+    // 6/5・7/3・7/10・7/17・7/31 の5点で、間の4週が欠けている)。
+    recentNote: '公表週は連続していない。欠けている週がある。'
+      + '「直近N週」とは書かず、日付を挙げて「公表された直近N回」として述べる。',
+    recent: recent.map((r) => ({
       week: r.week_start,
       blankedSailings: num(r.blanked_teu),
       blankPct: num(r.blank_pct),
     })),
+    // 並べた点が実際に何週にまたがるか。連続と誤読されないように数で示す。
+    recentSpanWeeks: spanWeeks(recent),
   };
 }
 

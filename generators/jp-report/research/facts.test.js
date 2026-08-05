@@ -9,6 +9,7 @@ const {
   buildCommodityFacts,
   buildFactsheet,
   buildSupplyFacts,
+  buildRailFacts,
   fxContribution,
   fxContributionYoy,
   buildGlobalHistory,
@@ -371,4 +372,61 @@ test('KNOWN_GAPS: 為替は結損ではなくなった', () => {
   });
   assert.ok(!fs.gaps.some((g) => /為替/.test(g)), '為替を結損に残さない');
   assert.ok(fs.gaps.some((g) => /JPMAC/.test(g)), '航路別荷動きは本当に無い');
+});
+
+// 2026-06호가 「直近5週」이라고 썼는데 6/5·7/3·7/10·7/17·7/31 다섯 점이고
+// 사이 네 주가 비어 있었다. 공표 주차가 연속이 아님을 데이터가 말해줘야 한다.
+test('buildSupplyFacts: 공표 주차가 연속이 아님을 알린다', () => {
+  const fs = buildSupplyFacts([
+    { week_start: '2026-07-31', blanked_teu: 58, planned_teu: 723, blank_pct: 8 },
+    { week_start: '2026-07-17', blanked_teu: 39, blank_pct: 5 },
+    { week_start: '2026-07-10', blanked_teu: 46, blank_pct: 6 },
+    { week_start: '2026-07-03', blanked_teu: 48, blank_pct: 7 },
+    { week_start: '2026-06-05', blanked_teu: 39, blank_pct: 5.5 },
+  ]);
+  assert.equal(fs.recent.length, 5);
+  // 5개 점이지만 실제로는 9주에 걸친다. 「直近5週」이라고 쓰면 안 된다.
+  assert.equal(fs.recentSpanWeeks, 9);
+  assert.match(fs.recentNote, /連続していない/);
+  assert.match(fs.recentNote, /直近N週」とは書かず/);
+});
+
+// collectors/erai.ts가 index1520의 「최신월 변화」 열을 그대로 넣는다 — 前月比다.
+// 라벨이 없어 2026-05호가 「前年同月比」라고 틀리게 썼다.
+test('buildRailFacts: ERAI 변화율의 기준을 밝힌다', () => {
+  const r = buildRailFacts([
+    { index_code: 'ERAI', value: 3704, change_pct: 0.19, week_date: '2026-06-01' },
+  ]);
+  assert.equal(r.changeBasis, '前月比');
+  assert.match(r.note, /前年同月比ではない/);
+});
+
+// 이 리포트에서 가장 큰 이야기다. 外航 +52.8% 대 国内航空 ▲3.2% — 이유는 계약통화다.
+// signals에 넣어야 검수가 본문에서 다뤘는지 확인한다.
+test('buildSppiFacts: 환율 노출 격차를 신호로 낸다', () => {
+  const rows = [
+    { series_name: '外航貨物輸送', basis: 'yen', value: 233.8, category: 'ocean' },
+    { series_name: '外航貨物輸送', basis: 'contract', value: 160.8, category: 'ocean' },
+    { series_name: '陸上貨物輸送', basis: 'yen', value: 111.6, category: 'land' },
+  ];
+  const prev = [
+    { series_name: '外航貨物輸送', basis: 'yen', value: 153.0 },
+    { series_name: '外航貨物輸送', basis: 'contract', value: 117.0 },
+    { series_name: '陸上貨物輸送', basis: 'yen', value: 107.7 },
+  ];
+  const f = buildSppiFacts(rows, prev, { year: 2026, month: 6 });
+  const gap = f.signals.find((s) => s.kind === 'fx_exposure_gap');
+  assert.ok(gap, '환율 노출 격차 신호가 있어야 한다');
+  assert.equal(gap.intlTop.name, '外航貨物輸送');
+  assert.equal(gap.domesticLow.name, '陸上貨物輸送');
+  assert.match(gap.note, /契約通貨/);
+});
+
+// 국제 계열이 없거나 국내 계열이 없으면 격차를 말할 수 없다. 신호를 만들지 않는다.
+test('buildSppiFacts: 한쪽만 있으면 격차 신호를 만들지 않는다', () => {
+  const f = buildSppiFacts(
+    [{ series_name: '陸上貨物輸送', basis: 'yen', value: 111.6, category: 'land' }],
+    [{ series_name: '陸上貨物輸送', basis: 'yen', value: 107.7 }], { year: 2026, month: 6 },
+  );
+  assert.equal(f.signals.find((s) => s.kind === 'fx_exposure_gap'), undefined);
 });
