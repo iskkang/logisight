@@ -82,7 +82,10 @@ function buildReviewPrompt(section, body, slim) {
     '     - 「〜と考えられる。ただし〜は特定できない」の形で限界を添えた記述',
     '   逆に、次は指摘する: 数値の予測(「来月は240に達する」)、時差の長さの断定',
     '   (「3週後に波及する」)、根拠を示さない「〜とみられる」。',
-    '2. ファクトシートにない事実を書いていないか',
+    '     - 為替寄与(fxSinceBasePct / fxYoyPct)を用いた記述。これは factsheet が算出済みの値である。'
+    ,'       円ベース = 契約通貨ベース × 為替 という積の関係から比で求めており、引き算では合わない。'
+    ,'       「円ベース+52.8%のうち為替が+11.2%、運賃そのものが+37.4%」は正しい(52.8-37.4=15.4 ではない)。'
+    ,'2. ファクトシートにない事実を書いていないか',
     '3. signals にある項目を本文で扱っているか(扱っていなければ missing_signal)',
     '4. periodMismatch が true なら基準月が異なることを明示しているか',
     '5. gaps にある項目(データがないもの)を根拠のように書いていないか',
@@ -113,7 +116,10 @@ function buildReviewPrompt(section, body, slim) {
  */
 async function reviewSection(callJson, section, body, factsheet) {
   const raw = await callJson({
-    max_tokens: 8000,
+    // claude-sonnet-5는 thinking과 본문이 max_tokens를 함께 쓴다(lib/claude.js 주석).
+    // 8000으로는 가장 무거운 02. 海運에서 사고 과정이 예산을 다 써 응답이 비었고,
+    // 전체 실행이 죽었다(2026-06호 재생성에서 두 번). writer와 같은 예산으로 맞춘다.
+    max_tokens: 16000,
     system: 'あなたは日本の物流専門メディアの編集デスクだ。原稿を検査し、指摘を JSON で返す。',
     messages: [{ role: 'user', content: buildReviewPrompt(section, body, factsheet) }],
     debugPrefix: `jp-editorial-${section.id}`,

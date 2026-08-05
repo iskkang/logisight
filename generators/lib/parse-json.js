@@ -48,7 +48,7 @@ function repairTruncatedJson(s) {
 
 // throw 방식 추출 (truncation 복구 포함) — callDeepSeekJson에서 사용
 function extractJson(raw) {
-  if (!raw || typeof raw !== 'string') throw new Error('DeepSeek 응답이 비어 있음');
+  if (!raw || typeof raw !== 'string') throw new Error('LLM 응답이 비어 있음(빈 문자열) — max_tokens가 사고 과정에 잠식됐을 수 있다');
 
   // 1) 코드펜스 제거 (멀티라인 펜스 처리)
   let text = raw.trim();
