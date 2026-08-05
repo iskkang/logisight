@@ -12,6 +12,7 @@ require('dotenv').config({ path: path.resolve(__dirname, '../../../.env.local') 
 
 const {
   buildSppiFacts, buildPortFacts, buildTradeFacts, buildCommodityFacts, buildGlobalFacts, buildRailFacts,
+  buildSupplyFacts,
   buildGlobalHistory, buildSppiHistory,
   buildFactsheet, GLOBAL_CODES, SPPI_TREND_SERIES,
 } = require('./facts');
@@ -90,6 +91,13 @@ async function collectFacts() {
     + '&order=week_date.desc&limit=600',
   );
 
+  // 供給側 — Drewry の欠航便数(主要East-West航路)。日本発着ではないが、
+  // スポット運賃の背景を供給から語れる唯一の系列である。
+  const supplyRows = await query(
+    'blank_sailings?select=week_start,blanked_teu,planned_teu,blank_pct'
+    + '&region=eq.Drewry%20East-West&order=week_start.desc&limit=12',
+  );
+
   return buildFactsheet({
     // history는 차트 전용 축이다. 본문 프롬프트에는 slimFactsheet가 잘라내고 넣지 않는다.
     sppi: { ...buildSppiFacts(sppiRows, sppiPrev, sppiAt), history: buildSppiHistory(sppiHist) },
@@ -98,6 +106,7 @@ async function collectFacts() {
     commodity: buildCommodityFacts(cmRows, cmAt),
     global: { ...buildGlobalFacts(globalRows), history: buildGlobalHistory(globalRows) },
     rail: buildRailFacts(globalRows),
+    supply: buildSupplyFacts(supplyRows),
   });
 }
 

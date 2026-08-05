@@ -15,6 +15,7 @@ const { callClaude, callClaudeJson } = require('../../lib/claude');
 const { verifyNumbers } = require('../verify/numbers');
 const { reviewSection, needsRewrite, buildIssueFeedback, splitBySeverity } = require('../verify/editorial');
 const { generationOrder, outputOrder, slimFactsheet } = require('./sections');
+const { checkHedges, hedgeFeedback } = require('../verify/hedges');
 const { composeSection } = require('./heading');
 const { tablesFor } = require('./tables');
 
@@ -35,7 +36,7 @@ function systemPrompt() {
   ].join('\n');
 }
 
-function userPrompt(section, slim, digests, violations, issues) {
+function userPrompt(section, slim, digests, violations, issues, hedgeNote) {
   const parts = [
     `セクション「${section.no}. ${section.title}」の本文を書け。`,
     '',
@@ -55,7 +56,10 @@ function userPrompt(section, slim, digests, violations, issues) {
     '【重要】数値の表(マークダウンテーブル)は書かない。表はシステムが自動で挿入する。',
     '本文では表の数値を必要な分だけ引用し、解釈に集中する。',
     '',
-    '【ファクトシート】単位: 金額=千円, 運賃=指数(2020年=100), 港湾=TEU',
+    // 金額は既に億円に換算して渡す。モデルに割り算をさせると表と1億円ずれた。
+    '【ファクトシート】単位: 金額=億円(換算済み), 運賃=指数(2020年=100), 港湾=TEU',
+    '金額は自分で計算しない。exportOku などの値をそのまま使う。'
+    + '1万億円以上は「10兆9265億円」のように兆で区切ってよいが、下4桁は変えない。',
     JSON.stringify(slim),
   );
   if (digests.length > 0) {
@@ -66,6 +70,7 @@ function userPrompt(section, slim, digests, violations, issues) {
     parts.push('', '【前回の指摘・数値】以下の数値はファクトシートに存在しない。書き直せ。',
       violations.map((v) => `- 「${v.raw}」 … ${v.context}`).join('\n'));
   }
+  if (hedgeNote) parts.push('', hedgeNote);
   if (issues && issues.length > 0) {
     parts.push('', '【前回の指摘・編集】編集デスクの指摘である。すべて反映して書き直せ。',
       buildIssueFeedback(issues));
@@ -93,13 +98,14 @@ async function writeSection(section, factsheet, digests) {
   const slim = slimFactsheet(factsheet, section.id);
   let violations = null;
   let issues = null;
+  let hedgeNote = null;
   let body = '';
 
   for (let attempt = 0; attempt <= MAX_RETRY; attempt += 1) {
     const res = await callClaude({
       max_tokens: MAX_TOKENS,
       system: systemPrompt(),
-      messages: [{ role: 'user', content: userPrompt(section, slim, digests, violations, issues) }],
+      messages: [{ role: 'user', content: userPrompt(section, slim, digests, violations, issues, hedgeNote) }],
     });
     body = textOf(res);
     if (!body) throw new Error(`${section.id}: 본문이 비었다 (thinking이 예산을 소진했을 수 있다)`);
@@ -114,6 +120,16 @@ async function writeSection(section, factsheet, digests) {
       continue;
     }
     violations = null;
+
+    // 유보 문구도 코드로 센다. LLM 검수에 맡기면 회차마다 흔들린다.
+    const hedges = checkHedges(body);
+    if (!hedges.ok && !last) {
+      issues = null;
+      hedgeNote = hedgeFeedback(hedges);
+      console.warn(`  ⚠️ ${section.id}: 유보 문구 ${hedges.sentences.length}건(상한 ${hedges.cap}) — 재생성`);
+      continue;
+    }
+    hedgeNote = null;
 
     // 검수자에게는 전체 팩트시트를 준다. 슬림본을 주면 총론이 인용한 수치를
     // 출처 불명으로 오판한다(실제로 그렇게 오탐이 났다).

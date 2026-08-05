@@ -196,6 +196,9 @@ function buildGlobalHistory(rows, { weeks = 26 } = {}) {
 const pct = (cur, prev) =>
   (Number.isFinite(cur) && Number.isFinite(prev) && prev !== 0 ? (cur / prev - 1) * 100 : null);
 
+/** 小数1桁。プロンプトに 45.39800995024875 が入ると本文が過剰な桁で書き始める。 */
+const round1 = (v) => (Number.isFinite(v) ? Math.round(v * 10) / 10 : null);
+
 const period = ({ year, month }) => `${year}-${String(month).padStart(2, '0')}`;
 
 /** SPPI の月次推移。円ベースと契約通貨ベースの開きが広がったのかを図で示す。 */
@@ -226,6 +229,60 @@ function buildSppiHistory(rows, { months = 24 } = {}) {
   return series.length ? { months: window, series } : null;
 }
 
+/**
+ * SPPI 系列の親子関係。日本銀行の品目分類(運輸・郵便の内訳)にもとづく。
+ *
+ * これを渡さないと本文が「両者の系列間に親子関係があるかどうかは、このデータからは
+ * 判断できない」と書く(2026-06号 04-2 が実際にそうなった)。日本銀行が公表している
+ * 分類であり、業界の読者は知っている。知っていることを「分からない」と書けば信頼が減る。
+ *
+ * 値とも整合する — 陸上111.6 は 鉄道107.0 と 道路111.6 の間にあり、道路が大半を占める
+ * ことを示す。海上160.0 は 内航135.0 と 外航233.8 の間にある。
+ *
+ * モデルに推測させない。ここに無い系列は親を持たないものとして扱う。
+ */
+const SERIES_PARENT = {
+  陸上貨物輸送: '運輸・郵便',
+  海上貨物輸送: '運輸・郵便',
+  航空貨物輸送: '運輸・郵便',
+  港湾運送: '運輸・郵便',
+  倉庫: '運輸・郵便',
+  鉄道貨物輸送: '陸上貨物輸送',
+  道路貨物輸送: '陸上貨物輸送',
+  外航貨物輸送: '海上貨物輸送',
+  内航貨物輸送: '海上貨物輸送',
+  '外航貨物輸送（除外航タンカー）': '外航貨物輸送',
+  国際航空貨物輸送: '航空貨物輸送',
+  国内航空貨物輸送: '航空貨物輸送',
+};
+
+/**
+ * 為替寄与。円ベース ÷ 契約通貨ベース から出す。
+ *
+ * 日本銀行の定義で 円ベース = 契約通貨ベース × 為替 なので、比がそのまま為替の動きになる。
+ * 外部の為替系列は要らない — 出典が日本銀行ひとつで完結する。
+ *
+ * 差ではなく比で出す。積の関係なので引き算では合わない
+ * (運賃+37.4%・為替+11.2% のとき円ベースは +48.6% ではなく +52.8%)。
+ *
+ * 実データで裏が取れる。ほぼ全量が外貨建ての外航貨物輸送(+45.4%)と国際航空貨物輸送
+ * (+45.2%)は、ドル円の 2020年平均106.8 → 2026年6月155 の +45.1% をそれぞれ独立に
+ * 再現する。一方 海上貨物輸送は +20.2% にとどまる — 円建ての内航が混ざるからで、
+ * これは「その系列の契約構成に対する為替の効き」を表す。ドル円そのものではない。
+ */
+function fxContribution(yenValue, contractValue) {
+  if (!Number.isFinite(yenValue) || !Number.isFinite(contractValue) || contractValue === 0) return null;
+  return round1((yenValue / contractValue - 1) * 100);
+}
+
+/** 前年同月比における為替寄与。伸び率どうしも比で合成される。 */
+function fxContributionYoy(yoyYenPct, yoyContractPct) {
+  if (!Number.isFinite(yoyYenPct) || !Number.isFinite(yoyContractPct)) return null;
+  const denom = 1 + yoyContractPct / 100;
+  if (denom === 0) return null;
+  return round1(((1 + yoyYenPct / 100) / denom - 1) * 100);
+}
+
 function buildSppiFacts(rows, prevRows, at) {
   const byName = new Map();
   for (const r of rows) {
@@ -238,11 +295,20 @@ function buildSppiFacts(rows, prevRows, at) {
   const prev = new Map();
   for (const r of prevRows) prev.set(`${r.series_name}_${r.basis}`, Number(r.value));
 
-  const series = [...byName.values()].map((s) => ({
-    ...s,
-    yoyYenPct: pct(s.yen, prev.get(`${s.name}_yen`)),
-    yoyContractPct: pct(s.contract, prev.get(`${s.name}_contract`)),
-  }));
+  const series = [...byName.values()].map((s) => {
+    const yoyYenPct = pct(s.yen, prev.get(`${s.name}_yen`));
+    const yoyContractPct = pct(s.contract, prev.get(`${s.name}_contract`));
+    return {
+      ...s,
+      // 親系列。無い系列は null で、その場合は本文でも階層に触れない。
+      parent: SERIES_PARENT[s.name] ?? null,
+      yoyYenPct,
+      yoyContractPct,
+      // 契約通貨ベースを公表しない国内系列は null。円建て契約なので為替要因が無い。
+      fxSinceBasePct: fxContribution(s.yen, s.contract),
+      fxYoyPct: fxContributionYoy(yoyYenPct, yoyContractPct),
+    };
+  });
 
   // 계약통화 기준이 100 미만인 계열은 반드시 다뤄야 하는 앵글이다.
   const signals = series
@@ -263,7 +329,14 @@ function buildSppiFacts(rows, prevRows, at) {
     // 두 기준의 차이가 환율이라는 것은 지수の定義であって特定系列の特性ではない。
     // これを書いておかないと、検査側が系列ごとに根拠を求めて差し戻す。
     basisNote: '円ベースは契約通貨ベースに為替変動を加えたもの。両者の差は定義上すべて為替要因であり、'
-      + '個別系列ごとの根拠を要しない。契約通貨ベースが運賃そのものの動きに近い。',
+      + '個別系列ごとの根拠を要しない。契約通貨ベースが運賃そのものの動きに近い。'
+      + 'fxSinceBasePct は基準年(2020年)からの為替寄与、fxYoyPct は前年同月比における為替寄与で、'
+      + 'いずれも円ベース÷契約通貨ベースから算出済みである。自分で計算しない。'
+      + 'これは系列ごとの契約構成に対する為替の効きであって、ドル円の変動率そのものではない。',
+    // 階層は日本銀行の品目分類である。series[].parent を見て書く。
+    hierarchyNote: '各系列の parent は日本銀行の品目分類にもとづく親系列である。'
+      + 'parent がある系列は「陸上貨物輸送のうち道路貨物輸送」のように内訳として書いてよい。'
+      + 'parent が null の系列については階層に触れない。',
     series,
     signals,
   };
@@ -354,12 +427,50 @@ function buildCommodityFacts(rows, at) {
 
 /** 현재 수집 범위에 없는 것. 없는 줄 모르고 쓰면 근거 없는 서술이 나온다. */
 const KNOWN_GAPS = [
-  '為替(円ドルレート)の時系列 — 円安要因を数値で裏付けられない',
+  // 為替は SPPI の円ベース÷契約通貨ベースで数値化できる(fxSinceBasePct)。結損ではない。
   '航路別荷動き(JPMAC) — 船腹・消化率に触れられない',
-  '日本発着ブランクセーリング — 供給side の説明ができない',
+  // 欠航便数は主要East-West航路ぶんを持つ(supply軸)。日本発着に限った系列は無い。
+  '日本発着に限定した欠航便数 — 日本の航路そのものの供給は示せない',
 ];
 
-function buildFactsheet({ sppi, port, trade, commodity, global, rail }) {
+/**
+ * 供給側 — Drewry の欠航便数。
+ *
+ * 単位は TEU ではなく「便数」である。テーブルの列名が blanked_teu / planned_teu だが、
+ * 中身は Drewry の "M blank sailings out of N planned sailings" の M と N で、
+ * 実体は便数だ(collectors 側の列名が実態と合っていない)。TEU として書くと
+ * 「58TEU が欠航」という有り得ない文になるので、ここで単位を言い直しておく。
+ *
+ * 対象は主要 East-West 航路であって日本発着ではない。日本の荷主にとっては
+ * 自社航路そのものではないが、アジア〜欧州・太平洋の供給が絞られたかどうかは
+ * スポット運賃の背景として読む値打ちがある。範囲を明示した上で載せる。
+ */
+function buildSupplyFacts(rows) {
+  const sorted = [...(rows || [])]
+    .filter((r) => r && r.week_start)
+    .sort((a, b) => String(b.week_start).localeCompare(String(a.week_start)));
+  if (sorted.length === 0) return null;
+
+  const num = (v) => (v === null || v === undefined ? null : Number(v));
+  const latest = sorted[0];
+  return {
+    source: 'Drewry Cancelled Sailings Tracker',
+    unit: 'sailings', // 便数。TEU ではない
+    scope: '主要East-West航路(アジア〜欧州・太平洋・大西洋)。日本発着に限った数字ではない。',
+    asOf: latest.week_start,
+    blankedSailings: num(latest.blanked_teu),
+    plannedSailings: num(latest.planned_teu),
+    blankPct: num(latest.blank_pct),
+    // 単月の断面だけでは絞られたのか緩んだのかが読めない。直近数週を並べる。
+    recent: sorted.slice(0, 6).map((r) => ({
+      week: r.week_start,
+      blankedSailings: num(r.blanked_teu),
+      blankPct: num(r.blank_pct),
+    })),
+  };
+}
+
+function buildFactsheet({ sppi, port, trade, commodity, global, rail, supply }) {
   const periods = {
     sppi: sppi.period,
     port: port.period,
@@ -386,6 +497,7 @@ function buildFactsheet({ sppi, port, trade, commodity, global, rail }) {
     commodity,
     global: global ?? null,
     rail: rail ?? null,
+    supply: supply ?? null,
   };
 }
 
@@ -395,6 +507,10 @@ module.exports = {
   SPPI_TREND_SERIES,
   countryJa,
   buildGlobalFacts,
+  buildSupplyFacts,
+  SERIES_PARENT,
+  fxContribution,
+  fxContributionYoy,
   buildGlobalHistory,
   buildSppiHistory,
   buildRailFacts,

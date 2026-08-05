@@ -8,6 +8,9 @@ const {
   countryJa,
   buildCommodityFacts,
   buildFactsheet,
+  buildSupplyFacts,
+  fxContribution,
+  fxContributionYoy,
   buildGlobalHistory,
   buildSppiHistory,
 } = require('./facts');
@@ -170,6 +173,10 @@ test('buildFactsheet: 기준월이 같으면 불일치 아님', () => {
 });
 
 // 없는 데이터를 아는 상태로 써야 한다. 샘플 리포트가 환율 데이터 없이 "円安"를 논했다.
+//
+// 다만 환율은 더 이상 결손이 아니다 — SPPI의 円ベース÷契約通貨ベース로 수치화한다.
+// 결손 목록은 "정말 없는 것"만 담아야 한다. 메울 수 있는 것을 결손으로 남기면
+// 본문이 쓸 수 있는 데이터를 두고 "말할 수 없다"를 쓴다.
 test('buildFactsheet: 결측 데이터를 명시한다', () => {
   const fs = buildFactsheet({
     sppi: buildSppiFacts(sppiRows, sppiPrev, { year: 2026, month: 6 }),
@@ -178,7 +185,8 @@ test('buildFactsheet: 결측 데이터를 명시한다', () => {
     commodity: buildCommodityFacts(commodityRows, { year: 2026, month: 6 }),
   });
   assert.ok(fs.gaps.length > 0);
-  assert.ok(fs.gaps.some((g) => /為替|환율/.test(g)));
+  assert.ok(fs.gaps.some((g) => /JPMAC/.test(g)), '航路別荷動きは本当に無い');
+  assert.ok(!fs.gaps.some((g) => /為替/.test(g)), '為替は fxSinceBasePct で数値化できる');
 });
 
 // ── 추이(차트 전용) ──────────────────────────────────────────────────────
@@ -255,4 +263,112 @@ test('buildGlobalHistory: 한 계열만 요일이 어긋난 날은 축에 넣지
   ]);
   assert.ok(!h.weeks.includes('2026-05-19'));
   assert.deepEqual(h.series.find((s) => s.code === 'SCFI').values, [2140, 2218, 2571]);
+});
+
+// 欠航便数는 TEU가 아니라 便数다. 컬럼명이 blanked_teu / planned_teu지만
+// Drewry의 "M blank sailings out of N planned sailings"의 M과 N이고 실체는 편수다.
+// TEU로 쓰면 "58TEU가 결항"이라는 있을 수 없는 문장이 나간다.
+test('buildSupplyFacts: 단위는 便数이고 범위는 East-West라고 밝힌다', () => {
+  const fs = buildSupplyFacts([
+    { week_start: '2026-07-17', blanked_teu: 39, planned_teu: null, blank_pct: 5 },
+    { week_start: '2026-07-31', blanked_teu: 58, planned_teu: 723, blank_pct: 8 },
+  ]);
+  assert.equal(fs.unit, 'sailings');
+  assert.match(fs.scope, /East-West/);
+  assert.match(fs.scope, /日本発着に限った数字ではない/);
+
+  // 가장 최근 주가 앞에 온다 — 입력 순서와 무관해야 한다.
+  assert.equal(fs.asOf, '2026-07-31');
+  assert.equal(fs.blankedSailings, 58);
+  assert.equal(fs.plannedSailings, 723);
+  assert.equal(fs.recent[0].week, '2026-07-31');
+  assert.equal(fs.recent.length, 2);
+});
+
+test('buildSupplyFacts: 행이 없으면 null — 없는 축을 만들지 않는다', () => {
+  assert.equal(buildSupplyFacts([]), null);
+  assert.equal(buildSupplyFacts(null), null);
+});
+
+// 欠航便数는 East-West분을 갖게 됐지만 일본 발착은 여전히 없다. 갭은 그 차이만 남긴다.
+test('KNOWN_GAPS: East-West를 가진 뒤에도 일본 발착 결손은 남는다', () => {
+  const fs = buildFactsheet({
+    sppi: { period: '2026-06' }, port: { period: '2026-05' },
+    trade: { period: '2026-06' }, commodity: { period: '2026-06' },
+  });
+  assert.ok(fs.gaps.some((g) => /日本発着/.test(g)), '일본 발착 결손은 남아 있어야 한다');
+  assert.ok(!fs.gaps.some((g) => /^日本発着ブランクセーリング/.test(g)),
+    'East-West를 가졌으므로 "블랭크세일링 자체가 없다"는 문구는 지운다');
+});
+
+// 2026-06호 04-2가 「両者の系列間に親子関係があるかどうかは、このデータからは判断できない」이라고
+// 썼다. 日銀이 공표하는 품목분류다. 아는 것을 모른다고 쓰면 신뢰가 깎인다.
+// 모델에게 추론시키지 않고 계층을 데이터로 준다.
+test('buildSppiFacts: 계열에 日銀 품목분류상의 부모를 붙인다', () => {
+  const rows = [
+    { series_name: '陸上貨物輸送', basis: 'yen', value: 111.6, category: 'land' },
+    { series_name: '道路貨物輸送', basis: 'yen', value: 111.6, category: 'land' },
+    { series_name: '鉄道貨物輸送', basis: 'yen', value: 107.0, category: 'land' },
+    { series_name: '外航貨物輸送', basis: 'yen', value: 233.8, category: 'ocean' },
+    { series_name: '運輸・郵便', basis: 'yen', value: 117.6, category: 'total' },
+  ];
+  const f = buildSppiFacts(rows, [], { year: 2026, month: 6 });
+  const parentOf = (n) => f.series.find((s) => s.name === n).parent;
+
+  assert.equal(parentOf('道路貨物輸送'), '陸上貨物輸送');
+  assert.equal(parentOf('鉄道貨物輸送'), '陸上貨物輸送');
+  assert.equal(parentOf('陸上貨物輸送'), '運輸・郵便');
+  assert.equal(parentOf('外航貨物輸送'), '海上貨物輸送');
+  // 최상위는 부모가 없다. null이면 본문에서 계층에 손대지 않는다.
+  assert.equal(parentOf('運輸・郵便'), null);
+  assert.match(f.hierarchyNote, /日本銀行の品目分類/);
+});
+
+// 값이 같다고 부모로 삼으면 안 된다. 표에 없는 계열은 null이어야 한다.
+test('buildSppiFacts: 표에 없는 계열은 부모를 만들지 않는다', () => {
+  const f = buildSppiFacts(
+    [{ series_name: '未知の系列', basis: 'yen', value: 111.6, category: 'land' }],
+    [], { year: 2026, month: 6 },
+  );
+  assert.equal(f.series[0].parent, null);
+});
+
+// 為替は外部の系列を足さずに出せる。日銀の定義で 円ベース = 契約通貨ベース × 為替 なので、
+// 比がそのまま為替の動きになる。出典が日銀ひとつで完結し、壊れる依存が増えない。
+test('fxContribution: 円ベース÷契約通貨ベースで為替寄与を出す', () => {
+  // 外航貨物輸送 2026-06 실측. 233.8/160.8 = 1.454
+  assert.equal(fxContribution(233.8, 160.8), 45.4);
+  // ドル円 2020年平均106.8 → 2026-06 約155 が +45.1%. 独立に一致する。
+  assert.ok(Math.abs(fxContribution(142.4, 98.1) - 45.2) < 0.1, '国際航空も同じ水準になる');
+  assert.equal(fxContribution(233.8, null), null);
+  assert.equal(fxContribution(233.8, 0), null);
+});
+
+// 積の関係なので引き算では合わない。ここがずれると交渉の数字が狂う。
+test('fxContributionYoy: 差ではなく比で合成する', () => {
+  // 円+52.8% / 契約+37.4% → 1.528/1.374 = 1.112
+  assert.equal(fxContributionYoy(52.8, 37.4), 11.2);
+  // 引き算なら 15.4 になってしまう
+  assert.notEqual(fxContributionYoy(52.8, 37.4), 15.4);
+  assert.equal(fxContributionYoy(52.8, null), null);
+});
+
+// 国内系列は円建て契約なので為替要因が無い。null のまま渡す。
+test('buildSppiFacts: 契約通貨ベースが無い系列は為替寄与も null', () => {
+  const f = buildSppiFacts(
+    [{ series_name: '内航貨物輸送', basis: 'yen', value: 135, category: 'ocean' }],
+    [], { year: 2026, month: 6 },
+  );
+  assert.equal(f.series[0].fxSinceBasePct, null);
+  assert.equal(f.series[0].fxYoyPct, null);
+});
+
+// 為替は自前で数値化できるようになった。結損として並べ続けると本文が要らぬ留保を書く。
+test('KNOWN_GAPS: 為替は結損ではなくなった', () => {
+  const fs = buildFactsheet({
+    sppi: { period: '2026-06' }, port: { period: '2026-05' },
+    trade: { period: '2026-06' }, commodity: { period: '2026-06' },
+  });
+  assert.ok(!fs.gaps.some((g) => /為替/.test(g)), '為替を結損に残さない');
+  assert.ok(fs.gaps.some((g) => /JPMAC/.test(g)), '航路別荷動きは本当に無い');
 });

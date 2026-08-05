@@ -27,6 +27,18 @@ const toOku = (thousandYen) => (thousandYen === null || thousandYen === undefine
   ? null
   : Number(thousandYen) / 1e5);
 
+/**
+ * 千円 → 億円(정수). 표기에 쓰는 값은 반드시 이 함수를 거친다.
+ *
+ * 표는 반올림하고 본문은 버림해서 같은 금액이 1억엔 어긋난 적이 있다
+ * (総輸入 113,365 vs 11兆3364억). 본문은 모델이 千円에서 직접 환산했기 때문이다.
+ * 지금은 모델에게 환산된 값만 주고, 표와 본문이 같은 이 함수를 쓴다.
+ */
+const okuInt = (thousandYen) => {
+  const v = toOku(thousandYen);
+  return v === null || !Number.isFinite(v) ? null : Math.round(v);
+};
+
 function table(header, rows) {
   const head = `| ${header.join(' | ')} |`;
   const sep = `|${header.map(() => '---').join('|')}|`;
@@ -70,18 +82,18 @@ function tradeTable(facts) {
   const t = facts.trade || {};
   const rows = [];
   if (t.total) {
-    rows.push(['**総額**', `**${fmtInt(Math.round(toOku(t.total.exportJpy)))}**`,
+    rows.push(['**総額**', `**${fmtInt(okuInt(t.total.exportJpy))}**`,
       fmtPct(t.total.yoyExportPct),
-      fmtInt(Math.round(toOku(t.total.importJpy))),
+      fmtInt(okuInt(t.total.importJpy)),
       fmtPct(t.total.yoyImportPct),
-      fmtInt(Math.round(toOku(t.total.balanceJpy)))]);
+      fmtInt(okuInt(t.total.balanceJpy))]);
   }
   for (const c of (t.countries || []).slice(0, 10)) {
-    rows.push([c.name, fmtInt(Math.round(toOku(c.exportJpy))),
+    rows.push([c.name, fmtInt(okuInt(c.exportJpy)),
       fmtPct(c.yoyExportPct),
-      fmtInt(Math.round(toOku(c.importJpy))),
+      fmtInt(okuInt(c.importJpy)),
       fmtPct(c.yoyImportPct),
-      fmtInt(Math.round(toOku(c.balanceJpy)))]);
+      fmtInt(okuInt(c.balanceJpy))]);
   }
   const body = table(['相手国', '輸出 (億円)', '前年同月比', '輸入 (億円)', '前年同月比', '収支 (億円)'], rows);
   return `${body}\n\n※ ${t.period || ''} 分。輸出上位10か国。地域集計は除く。出典: ${t.source || ''}。`;
@@ -96,10 +108,10 @@ function commodityTable(facts) {
   for (let i = 0; i < n; i += 1) {
     rows.push([
       ex[i] ? ex[i].name : '—',
-      ex[i] ? fmtInt(Math.round(toOku(ex[i].valueJpy))) : '—',
+      ex[i] ? fmtInt(okuInt(ex[i].valueJpy)) : '—',
       ex[i] ? `${fmtNum(ex[i].sharePct)}%` : '—',
       im[i] ? im[i].name : '—',
-      im[i] ? fmtInt(Math.round(toOku(im[i].valueJpy))) : '—',
+      im[i] ? fmtInt(okuInt(im[i].valueJpy)) : '—',
       im[i] ? `${fmtNum(im[i].sharePct)}%` : '—',
     ]);
   }
@@ -139,6 +151,7 @@ function tablesFor(sectionId, facts) {
 }
 
 module.exports = {
+  okuInt,
   fmtPct, fmtInt, fmtNum, toOku, table,
   globalTable, sppiTable, portTable, tradeTable, commodityTable, tablesFor,
 };

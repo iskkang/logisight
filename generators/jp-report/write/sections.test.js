@@ -13,7 +13,8 @@ test('SECTIONS: 모드별 구성 — 총론·해운·항공·철도·항만·무
 
 // 리포트의 핵심은 세계와 일본을 맞대는 것이다. 해운 섹션이 두 축을 함께 받아야 성립한다.
 test('SECTIONS: 해운 섹션은 세계 스팟과 일본 SPPI를 함께 받는다', () => {
-  assert.deepEqual(SECTIONS.find((s) => s.id === 'ocean').axes, ['global', 'sppi']);
+  // supply — Drewry 欠航便数. 스팟 운임의 배경을 공급 쪽에서 말할 수 있는 유일한 계열이다.
+  assert.deepEqual(SECTIONS.find((s) => s.id === 'ocean').axes, ['global', 'sppi', 'supply']);
 });
 
 // SPPI 13계열을 모든 섹션에 넣으면 본문이 계열 나열로 흐른다.
@@ -124,4 +125,31 @@ test('slimFactsheet: 크기가 원본보다 작다', () => {
   for (const id of ['ocean', 'port', 'trade', 'overview']) {
     assert.ok(JSON.stringify(slimFactsheet(FACTS, id)).length < full, `${id}: 슬림화 안 됨`);
   }
+});
+
+// 표와 본문이 같은 금액을 1억엔 다르게 적은 적이 있다(総輸入 표 113,365 vs 본문 11兆3364억).
+// 표는 반올림, 본문은 모델이 千円에서 직접 버림 환산했기 때문이다.
+// 이제 모델에게는 환산된 億円만 넘긴다 — 표와 같은 함수를 거친 값이어야 한다.
+test('슬림 팩트시트의 금액은 표와 같은 億円 값이다', () => {
+  const { okuInt } = require('./tables');
+  const facts = {
+    periods: {}, gaps: [],
+    trade: {
+      total: { exportJpy: 10926534582, importJpy: 11336461191, balanceJpy: -409926609 },
+      countries: [{ name: '米国', exportJpy: 1927863207, importJpy: 1588542604, balanceJpy: 339320603 }],
+    },
+    commodity: { export: [{ name: '機械類', valueJpy: 6156259844 }], import: [] },
+  };
+  const slim = slimFactsheet(facts, 'trade');
+
+  assert.equal(slim.trade.total.importOku, okuInt(11336461191));
+  assert.equal(slim.trade.total.importOku, 113365, '버림이면 113364가 된다');
+  assert.equal(slim.trade.total.balanceOku, -4099);
+  assert.equal(slim.trade.countries[0].exportOku, 19279, '버림이면 19278이 된다');
+  assert.equal(slim.commodity.export[0].valueOku, 61563);
+
+  // 千円 원자료는 넘기지 않는다. 남겨두면 모델이 그쪽으로 환산해버린다.
+  assert.equal(slim.trade.total.importJpy, undefined);
+  assert.equal(slim.trade.countries[0].exportJpy, undefined);
+  assert.equal(slim.commodity.export[0].valueJpy, undefined);
 });

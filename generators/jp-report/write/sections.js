@@ -13,6 +13,9 @@
  * sppiCategories — SPPI 계열을 모드로 나눈다. 13계열을 모든 섹션에 넣으면
  * 프롬프트가 커지고 본문이 계열 나열로 흐른다.
  */
+
+const { okuInt } = require('./tables');
+
 const SECTIONS = [
   {
     id: 'overview',
@@ -34,12 +37,12 @@ const SECTIONS = [
     id: 'ocean',
     no: '02',
     title: '海運',
-    axes: ['global', 'sppi'],
+    axes: ['global', 'sppi', 'supply'],
     sppiCategories: ['ocean'],
     subsections: [
       '02-1. 世界のスポット指数 ― SCFI・CCFI・WCI・FBX',
       '02-2. 日本の外航運賃 ― 円ベースと契約通貨ベース',
-      '02-3. 内航・バルク・燃料',
+      '02-3. 内航・バルク・燃料と供給',
     ],
     focus:
       '海上コンテナを中心に、世界のスポットと日本の価格を突き合わせる。本レポートの中心セクションである。'
@@ -47,11 +50,20 @@ const SECTIONS = [
       + '方向が割れている場合はその事実を書く。基準日(asOf)を必ず明示する。'
       + '(2) 日本の外航運賃: 円ベースと契約通貨ベースを必ず区別する。円ベースには為替要因が入っており、'
       + '契約通貨ベースが運賃そのものの動きに近い。混同すると解釈が逆になる。'
+      + '【為替の内訳】fxYoyPct が「前年同月比のうち為替の寄与」である。算出済みなので自分で計算しない。'
+      + '「円ベース+52.8%のうち為替が+11.2%、運賃そのものは+37.4%」の形で必ず分けて書く。'
+      + 'これが荷主にとって最も実用的な一行である — 為替ぶんは相手の原価が上がったわけではない。'
       + 'signals にある系列(契約通貨ベースが基準年を下回るもの)は必ず扱う。'
       + '(3) 両者の突き合わせ: 同時に観測された事実として並べ、差があるならその理由がデータ上'
       + '明らかな範囲で述べる(円ベースには為替が含まれる、など)。'
       + '週次と月次で基準日が揃わないことを断る。一方が他方を押し上げたとは書かない。'
-      + '内航・バルク(BDI)・バンカー(VLSFO/HSFO)は最後の小見出しでまとめる。',
+      + '内航・バルク(BDI)・バンカー(VLSFO/HSFO)は最後の小見出しでまとめる。'
+      + '(4) 供給: supply 軸に Drewry の欠航便数がある。最後の小見出しで必ず触れる。'
+      + '【単位】blankedSailings / plannedSailings は「便数」である。TEU ではない。'
+      + '「58便が欠航」と書く。「58TEU」は誤りである。'
+      + '【範囲】scope のとおり主要East-West航路であって日本発着ではない。その範囲を一度明示する。'
+      + '【使い方】recent に直近数週が入っている。欠航が増えたか減ったかを言い、'
+      + 'スポット運賃の方向と並べて述べる。ただし欠航が運賃を動かしたとは書かない — 因果は主張しない。',
   },
   {
     id: 'air',
@@ -64,8 +76,10 @@ const SECTIONS = [
       '航空貨物の価格指数。国際線と国内線で方向が分かれることがあるため、必ず分けて述べる。'
       + '契約通貨ベースが基準年(2020年=100)を下回る系列は、その事実を明記する — '
       + '円ベースが100を上回っていても、運賃そのものは基準年以下ということになる。'
-      + '航空のスポット指数(IATA・TAC など)は本レポートのデータに無い。無いものは無いと断り、'
-      + '海運のように世界と日本を突き合わせることはできない旨を一文添える。',
+      + '【為替の内訳】fxYoyPct が「前年同月比のうち為替の寄与」である。算出済みで、自分で計算しない。'
+      + '国際航空は円ベースの伸びが大きく見えるが、そのうち為替がいくらかを必ず示す。'
+      + '航空のスポット指数(IATA・TAC など)は本レポートのデータに無い。断るのは一文だけにする — '
+      + '「無い」を三文続けた回があった。無いものを繰り返し断るより、有る数字で言えることを増やす。',
   },
   {
     id: 'rail',
@@ -104,7 +118,7 @@ const SECTIONS = [
     axes: ['trade', 'commodity'],
     subsections: ['06-1. 国別輸出入', '06-2. 品目別構成'],
     focus:
-      '国別の輸出入と品目別の構成。金額は兆・億円で表記する。'
+      '国別の輸出入と品目別の構成。金額はファクトシートの億円の値をそのまま使う。'
       + '輸出上位国と伸び率上位国は別物なので分けて述べる。'
       + '品目構成は上位品目の構成比を示すが、構成比から伸びの寄与を語らない — 別のデータである。',
   },
@@ -148,6 +162,38 @@ function outputOrder() {
  * 팩트시트 전량을 넣으면 thinking이 예산을 잠식해 본문이 비는 일이 실제로 있었다.
  * periods·periodMismatch·gaps·publicationLag는 어느 섹션이든 지켜야 하는 제약이라 항상 포함한다.
  */
+/** 千円 필드를 億円 정수로 바꾼다. 표와 같은 okuInt를 쓴다. */
+function okuizeAmounts(obj, keys) {
+  const out = { ...obj };
+  for (const k of keys) {
+    if (!(k in out)) continue;
+    out[k.replace(/Jpy$/, 'Oku')] = okuInt(out[k]);
+    delete out[k];
+  }
+  return out;
+}
+
+const MONEY_KEYS = ['exportJpy', 'importJpy', 'balanceJpy'];
+
+function okuizeTrade(trade) {
+  return {
+    ...trade,
+    unit: 'oku_jpy',
+    total: trade.total ? okuizeAmounts(trade.total, MONEY_KEYS) : trade.total,
+    countries: (trade.countries || []).map((c) => okuizeAmounts(c, MONEY_KEYS)),
+  };
+}
+
+function okuizeCommodity(commodity) {
+  const conv = (list) => (list || []).map((x) => okuizeAmounts(x, ['valueJpy']));
+  return {
+    ...commodity,
+    unit: 'oku_jpy',
+    export: conv(commodity.export),
+    import: conv(commodity.import),
+  };
+}
+
 function slimFactsheet(factsheet, sectionId) {
   const section = byId(sectionId);
   if (!section) throw new Error(`알 수 없는 섹션: ${sectionId}`);
@@ -176,6 +222,12 @@ function slimFactsheet(factsheet, sectionId) {
       out[axis] = rest;
     }
   }
+
+  // 금액은 億円으로 바꿔서 넘긴다. 千円 원자료를 주면 모델이 스스로 환산하는데,
+  // 표는 반올림하고 모델은 버림해서 같은 금액이 1억엔 어긋났다
+  // (総輸入 표 113,365 vs 본문 11兆3364억). 모델에게서 산수를 뺏는다.
+  if (out.trade) out.trade = okuizeTrade(out.trade);
+  if (out.commodity) out.commodity = okuizeCommodity(out.commodity);
 
   // SPPI는 모드별로 잘라 넣는다. 13계열을 모든 섹션에 넣으면 본문이 계열 나열로 흐른다.
   if (out.sppi && section.sppiCategories) {
