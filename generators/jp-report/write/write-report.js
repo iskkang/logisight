@@ -16,6 +16,7 @@ const { verifyNumbers } = require('../verify/numbers');
 const { reviewSection, needsRewrite, buildIssueFeedback, splitBySeverity } = require('../verify/editorial');
 const { generationOrder, outputOrder, slimFactsheet } = require('./sections');
 const { checkHedges, hedgeFeedback } = require('../verify/hedges');
+const { checkContinuity, continuityFeedback } = require('../verify/continuity');
 const { composeSection } = require('./heading');
 const { tablesFor } = require('./tables');
 
@@ -24,8 +25,12 @@ const SEO = fs.readFileSync(path.join(__dirname, 'SEO.ja.md'), 'utf8');
 
 /** thinking이 예산을 잠식해 본문이 비는 일이 있어 넉넉히 잡는다. */
 const MAX_TOKENS = 16000;
-// 모델이 합산·차분을 반복해서 시도한다. 실측상 재시도마다 위반이 줄어들어 2회까지 준다.
-const MAX_RETRY = 2;
+// 모델이 합산·차분을 반복해서 시도한다. 실측상 재시도마다 위반이 줄어든다.
+//
+// 2회로는 부족해졌다. 검사가 넷(수치·유보·지속·편집)이고 각 차단이 재시도를 한 번씩
+// 먹는다. 2026-06호 02. 海運이 편집→유보로 두 번 쓰고 세 번째가 마지막이 되어,
+// 남은 편집 지적을 반영할 기회 없이 발행이 막혔다. 검사 수에 맞춰 늘린다.
+const MAX_RETRY = 4;
 
 function systemPrompt() {
   return [
@@ -36,7 +41,7 @@ function systemPrompt() {
   ].join('\n');
 }
 
-function userPrompt(section, slim, digests, violations, issues, hedgeNote) {
+function userPrompt(section, slim, digests, violations, issues, hedgeNote, phraseNote) {
   const parts = [
     `セクション「${section.no}. ${section.title}」の本文を書け。`,
     '',
@@ -71,6 +76,7 @@ function userPrompt(section, slim, digests, violations, issues, hedgeNote) {
       violations.map((v) => `- 「${v.raw}」 … ${v.context}`).join('\n'));
   }
   if (hedgeNote) parts.push('', hedgeNote);
+  if (phraseNote) parts.push('', phraseNote);
   if (issues && issues.length > 0) {
     parts.push('', '【前回の指摘・編集】編集デスクの指摘である。すべて反映して書き直せ。',
       buildIssueFeedback(issues));
@@ -99,6 +105,7 @@ async function writeSection(section, factsheet, digests) {
   let violations = null;
   let issues = null;
   let hedgeNote = null;
+  let phraseNote = null;
   let body = '';
 
   for (let attempt = 0; attempt <= MAX_RETRY; attempt += 1) {
@@ -130,6 +137,16 @@ async function writeSection(section, factsheet, digests) {
       continue;
     }
     hedgeNote = null;
+
+    // 근거 없는 지속 부사도 코드로 잡는다. LLM 검수가 잡아도 2회 재시도로는 안 고쳐졌다.
+    const continuity = checkContinuity(body);
+    if (!continuity.ok && !last) {
+      issues = null;
+      phraseNote = continuityFeedback(continuity);
+      console.warn(`  ⚠️ ${section.id}: 지속 표현 ${continuity.hits.length}건 — 재생성`);
+      continue;
+    }
+    phraseNote = null;
 
     // 검수자에게는 전체 팩트시트를 준다. 슬림본을 주면 총론이 인용한 수치를
     // 출처 불명으로 오판한다(실제로 그렇게 오탐이 났다).
