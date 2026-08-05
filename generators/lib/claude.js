@@ -59,6 +59,9 @@ async function callClaudeJson({ system, messages, max_tokens = 8192, debugPrefix
       { role: 'user', content: '이전 응답이 잘리거나 형식이 맞지 않았습니다. 반드시 완결된 단일 JSON 객체로만, 더 간결하게 응답해 주세요.' },
     ];
     try {
+      // 간격 없이 다시 부르면 일시적 빈 응답이 그대로 또 빈 응답으로 온다.
+      // 2026-06 일본판 재생성이 그렇게 두 번 연속 비어 죽었고, 15분치 호출이 버려졌다.
+      await new Promise((r) => setTimeout(r, 2000));
       raw = await attempt(retryMessages);
       return extractJson(raw);
     } catch (finalErr) {
