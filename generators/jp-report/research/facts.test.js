@@ -9,6 +9,7 @@ const {
   buildCommodityFacts,
   buildFactsheet,
   buildSupplyFacts,
+  buildRouteFacts,
   buildRailFacts,
   fxContribution,
   fxContributionYoy,
@@ -186,7 +187,8 @@ test('buildFactsheet: 결측 데이터를 명시한다', () => {
     commodity: buildCommodityFacts(commodityRows, { year: 2026, month: 6 }),
   });
   assert.ok(fs.gaps.length > 0);
-  assert.ok(fs.gaps.some((g) => /JPMAC/.test(g)), '航路別荷動きは本当に無い');
+  // 航路別荷動き는 JPMAC에서 가져오게 됐다(route축). 남은 결손은 선복·소화율이다.
+  assert.ok(fs.gaps.some((g) => /船腹供給量/.test(g)), '선복·소화율은 여전히 없다');
   assert.ok(!fs.gaps.some((g) => /為替/.test(g)), '為替は fxSinceBasePct で数値化できる');
 });
 
@@ -371,7 +373,8 @@ test('KNOWN_GAPS: 為替は結損ではなくなった', () => {
     trade: { period: '2026-06' }, commodity: { period: '2026-06' },
   });
   assert.ok(!fs.gaps.some((g) => /為替/.test(g)), '為替を結損に残さない');
-  assert.ok(fs.gaps.some((g) => /JPMAC/.test(g)), '航路別荷動きは本当に無い');
+  // 航路別荷動き는 JPMAC에서 가져오게 됐다(route축). 남은 결손은 선복·소화율이다.
+  assert.ok(fs.gaps.some((g) => /船腹供給量/.test(g)), '선복·소화율은 여전히 없다');
 });
 
 // 2026-06호가 「直近5週」이라고 썼는데 6/5·7/3·7/10·7/17·7/31 다섯 점이고
@@ -429,4 +432,56 @@ test('buildSppiFacts: 한쪽만 있으면 격차 신호를 만들지 않는다',
     [{ series_name: '陸上貨物輸送', basis: 'yen', value: 107.7 }], { year: 2026, month: 6 },
   );
   assert.equal(f.signals.find((s) => s.kind === 'fx_exposure_gap'), undefined);
+});
+
+// 港湾統計은 일본 항구의 TEU를 주지만 목적지 항로를 모른다. 貿易統計은 금액이지 물량이 아니다.
+// JPMAC은 일본 화물이 어느 항로로 얼마나 갔는지를 주는 유일한 축이다.
+test('buildRouteFacts: 북미는 일본 단독 수치를 낸다', () => {
+  const rows = [
+    { trade: 'north_america', direction: '往航', year: 2026, month: 6, scope: 'total', name: '18ヶ国・地域 合計', teu: 1916307, yoy_pct: 14.0, share_pct: 100, cum_teu: 10784755, cum_yoy_pct: 0.3, source: 'JPMAC' },
+    { trade: 'north_america', direction: '往航', year: 2026, month: 6, scope: 'country', name: '日本', teu: 53701, yoy_pct: -3.2, share_pct: 2.8, cum_teu: 321930, cum_yoy_pct: -3.4, source: 'JPMAC' },
+    { trade: 'north_america', direction: '往航', year: 2026, month: 6, scope: 'country', name: '中国', teu: 954767, yoy_pct: 25.5, share_pct: 49.8, cum_teu: 5223968, cum_yoy_pct: -3.7, source: 'JPMAC' },
+  ];
+  const f = buildRouteFacts(rows);
+  assert.equal(f.northAmerica.period, '2026-06');
+  assert.equal(f.northAmerica.japan.teu, 53701);
+  assert.equal(f.northAmerica.japan.yoyPct, -3.2);
+  assert.equal(f.northAmerica.peers[0].name, '中国');
+  assert.equal(f.northAmerica.hasCountryDetail, true);
+});
+
+// 유럽은 CTS라 지역별까지다. 일본은 北東アジア에 묶인다 — 일본 수치로 쓰면 틀린다.
+test('buildRouteFacts: 유럽은 일본 단독 수치를 만들지 않는다', () => {
+  const rows = [
+    { trade: 'europe', direction: '往航', year: 2026, month: 5, scope: 'total', name: 'アジア 合計', teu: 1866984, yoy_pct: 3.1, share_pct: 100, cum_teu: 8884023, cum_yoy_pct: 11.7, source: 'JPMAC' },
+    { trade: 'europe', direction: '往航', year: 2026, month: 5, scope: 'region', name: '北東アジア 計', teu: 144086, yoy_pct: -9.8, share_pct: 7.7, cum_teu: 724251, cum_yoy_pct: -1.8, source: 'JPMAC' },
+  ];
+  const f = buildRouteFacts(rows);
+  assert.equal(f.europe.japan, null, '유럽에 일본 수치를 만들면 안 된다');
+  assert.equal(f.europe.hasCountryDetail, false);
+  assert.equal(f.europe.peers[0].name, '北東アジア 計');
+  assert.match(f.note, /日本は北東アジアに含まれる/);
+});
+
+// 두 항로의 최신월이 다르다(북미 6월, 유럽 5월). 섞으면 안 된다.
+test('buildRouteFacts: 여러 달이 섞이면 최신월만 쓴다', () => {
+  const mk = (m, teu) => ({ trade: 'north_america', direction: '往航', year: 2026, month: m, scope: 'total', name: '合計', teu, yoy_pct: 1, share_pct: 100, cum_teu: teu, cum_yoy_pct: 1, source: 'JPMAC' });
+  const f = buildRouteFacts([mk(5, 111), mk(6, 222), mk(4, 333)]);
+  assert.equal(f.northAmerica.period, '2026-06');
+  assert.equal(f.northAmerica.total.teu, 222);
+});
+
+test('buildRouteFacts: 행이 없으면 null', () => {
+  assert.equal(buildRouteFacts([]), null);
+  assert.equal(buildRouteFacts(null), null);
+});
+
+// 航路別荷動き는 이제 가졌다. 남은 결손은 船腹供給量·消化率이다.
+test('KNOWN_GAPS: JPMAC은 결손이 아니게 됐다', () => {
+  const fs = buildFactsheet({
+    sppi: { period: '2026-06' }, port: { period: '2026-05' },
+    trade: { period: '2026-06' }, commodity: { period: '2026-06' },
+  });
+  assert.ok(!fs.gaps.some((g) => /JPMAC/.test(g)), 'JPMAC을 결손에 남기지 않는다');
+  assert.ok(fs.gaps.some((g) => /船腹供給量/.test(g)), '선복·소화율은 여전히 없다');
 });

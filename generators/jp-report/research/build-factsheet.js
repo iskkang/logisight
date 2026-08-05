@@ -13,6 +13,7 @@ require('dotenv').config({ path: path.resolve(__dirname, '../../../.env.local') 
 const {
   buildSppiFacts, buildPortFacts, buildTradeFacts, buildCommodityFacts, buildGlobalFacts, buildRailFacts,
   buildSupplyFacts,
+  buildRouteFacts,
   buildGlobalHistory, buildSppiHistory,
   buildFactsheet, GLOBAL_CODES, SPPI_TREND_SERIES,
 } = require('./facts');
@@ -98,6 +99,13 @@ async function collectFacts() {
     + '&region=eq.Drewry%20East-West&order=week_start.desc&limit=12',
   );
 
+  // 航路別荷動き — JPMAC。日本発の荷動きを航路単位で持つ唯一の軸。
+  // 北米は国別(日本が出る)、欧州は地域別まで。
+  const routeRows = await query(
+    'jp_route_volume?select=trade,direction,year,month,scope,name,teu,yoy_pct,share_pct,cum_teu,cum_yoy_pct,source'
+    + '&order=year.desc,month.desc&limit=200',
+  );
+
   return buildFactsheet({
     // history는 차트 전용 축이다. 본문 프롬프트에는 slimFactsheet가 잘라내고 넣지 않는다.
     sppi: { ...buildSppiFacts(sppiRows, sppiPrev, sppiAt), history: buildSppiHistory(sppiHist) },
@@ -107,6 +115,7 @@ async function collectFacts() {
     global: { ...buildGlobalFacts(globalRows), history: buildGlobalHistory(globalRows) },
     rail: buildRailFacts(globalRows),
     supply: buildSupplyFacts(supplyRows),
+    route: buildRouteFacts(routeRows),
   });
 }
 

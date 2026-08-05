@@ -14,7 +14,8 @@ test('SECTIONS: 모드별 구성 — 총론·해운·항공·철도·항만·무
 // 리포트의 핵심은 세계와 일본을 맞대는 것이다. 해운 섹션이 두 축을 함께 받아야 성립한다.
 test('SECTIONS: 해운 섹션은 세계 스팟과 일본 SPPI를 함께 받는다', () => {
   // supply — Drewry 欠航便数. 스팟 운임의 배경을 공급 쪽에서 말할 수 있는 유일한 계열이다.
-  assert.deepEqual(SECTIONS.find((s) => s.id === 'ocean').axes, ['global', 'sppi', 'supply']);
+  // route — JPMAC 航路別荷動き. 일본 화물이 어느 항로로 얼마나 갔는지를 주는 유일한 축이다.
+  assert.deepEqual(SECTIONS.find((s) => s.id === 'ocean').axes, ['global', 'sppi', 'supply', 'route']);
 });
 
 // SPPI 13계열을 모든 섹션에 넣으면 본문이 계열 나열로 흐른다.

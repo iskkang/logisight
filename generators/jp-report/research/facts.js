@@ -463,7 +463,8 @@ function buildCommodityFacts(rows, at) {
 /** 현재 수집 범위에 없는 것. 없는 줄 모르고 쓰면 근거 없는 서술이 나온다. */
 const KNOWN_GAPS = [
   // 為替は SPPI の円ベース÷契約通貨ベースで数値化できる(fxSinceBasePct)。結損ではない。
-  '航路別荷動き(JPMAC) — 船腹・消化率に触れられない',
+  // 航路別荷動きは JPMAC から取れるようになった(route軸)。船腹・消化率は依然として無い。
+  '航路別の船腹供給量・消化率 — 需給のどちら側から動いたかは説明できない',
   // 欠航便数は主要East-West航路ぶんを持つ(supply軸)。日本発着に限った系列は無い。
   '日本発着に限定した欠航便数 — 日本の航路そのものの供給は示せない',
 ];
@@ -523,7 +524,75 @@ function buildSupplyFacts(rows) {
   };
 }
 
-function buildFactsheet({ sppi, port, trade, commodity, global, rail, supply }) {
+/**
+ * 航路別荷動き — 日本海事センター(JPMAC).
+ *
+ * 이 리포트에서 유일하게 "일본 화물이 얼마나 움직였나"를 항로 단위로 말해주는 축이다.
+ * 港湾統計은 일본 항구의 TEU를 주지만 목적지 항로를 모르고, 貿易統計은 금액이지 물량이 아니다.
+ *
+ * 2026년 6월 북미 왕항: 日本 53,701TEU(▲3.2%) / 中国 954,767TEU(+25.5%).
+ * 이 대비가 일본 화주에게 가장 실감나는 숫자다.
+ *
+ * 두 항로의 성격이 다르다:
+ *   north_america (PIERS) — 국가별. 일본 단독 수치가 나온다.
+ *   europe        (CTS)   — 지역별만. 일본은 北東アジア에 묶여 따로 안 나온다.
+ * 유럽에서 일본을 뽑아낼 수 없다. 그 한계를 scope와 note로 함께 넘긴다.
+ */
+function buildRouteFacts(rows) {
+  if (!rows || rows.length === 0) return null;
+
+  const byTrade = {};
+  for (const r of rows) {
+    const t = (byTrade[r.trade] ||= { rows: [] });
+    t.rows.push(r);
+  }
+
+  const build = (key, label, hasCountry) => {
+    const t = byTrade[key];
+    if (!t || t.rows.length === 0) return null;
+    // 같은 축 안에 여러 달이 섞일 수 있다. 최신 달만 쓴다.
+    const latest = t.rows.reduce((a, b) => (
+      (b.year * 12 + b.month) > (a.year * 12 + a.month) ? b : a), t.rows[0]);
+    const same = t.rows.filter((r) => r.year === latest.year && r.month === latest.month);
+    const total = same.find((r) => r.scope === 'total') || null;
+    const pick = (n) => same.find((r) => r.name === n) || null;
+    const num = (v) => (v === null || v === undefined ? null : Number(v));
+    const one = (r) => (r ? {
+      name: r.name, teu: num(r.teu), yoyPct: num(r.yoy_pct),
+      sharePct: num(r.share_pct), cumTeu: num(r.cum_teu), cumYoyPct: num(r.cum_yoy_pct),
+    } : null);
+
+    return {
+      label,
+      period: `${latest.year}-${String(latest.month).padStart(2, '0')}`,
+      direction: latest.direction,
+      source: latest.source,
+      total: one(total),
+      // 일본과, 비교 대상이 되는 상위 몇 개. 전부 넣으면 본문이 나열로 흐른다.
+      japan: hasCountry ? one(pick('日本')) : null,
+      peers: hasCountry
+        ? ['中国', '韓国', '台湾', 'ベトナム'].map(pick).filter(Boolean).map(one)
+        : same.filter((r) => r.scope === 'region').map(one),
+      hasCountryDetail: hasCountry,
+    };
+  };
+
+  const northAmerica = build('north_america', '北米往航(アジア→米国)', true);
+  const europe = build('europe', '欧州往航(アジア→欧州)', false);
+  if (!northAmerica && !europe) return null;
+
+  return {
+    unit: 'TEU',
+    northAmerica,
+    europe,
+    note: '北米は国別、欧州は地域別までの公表である。'
+      + '欧州航路に日本単独の数字は無く、日本は北東アジアに含まれる — 日本の数字として書かない。'
+      + '航路別の荷動き量であり、日本の港湾取扱量(港湾統計)とは母集団が異なる。'
+      + '両者を足したり、一方から他方を説明したりしない。',
+  };
+}
+
+function buildFactsheet({ sppi, port, trade, commodity, global, rail, supply, route }) {
   const periods = {
     sppi: sppi.period,
     port: port.period,
@@ -551,6 +620,7 @@ function buildFactsheet({ sppi, port, trade, commodity, global, rail, supply }) 
     global: global ?? null,
     rail: rail ?? null,
     supply: supply ?? null,
+    route: route ?? null,
   };
 }
 
@@ -561,6 +631,7 @@ module.exports = {
   countryJa,
   buildGlobalFacts,
   buildSupplyFacts,
+  buildRouteFacts,
   SERIES_PARENT,
   fxContribution,
   fxContributionYoy,
