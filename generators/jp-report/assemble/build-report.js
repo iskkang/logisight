@@ -100,21 +100,46 @@ ${bodyHtml}
 </html>`;
 }
 
+/**
+ * 도구 안내. 본문이 아니라 조립 단계에서 붙인다.
+ *
+ * 처음에는 맺음 섹션의 프롬프트에 넣었는데, 검수가 막았다 —
+ * 「ファクトシートに存在しない外部ツール・URLへの言及であり…宣伝的挿入である」.
+ * 검수 규칙이 "팩트시트에 없는 사실을 쓰지 말라"인 이상 옳은 판정이다.
+ *
+ * 매달 같은 한 문장이라 모델이 새로 쓸 이유가 없고, 데이터 주장이 아니므로
+ * 검수 대상이어서도 안 된다. 코드가 찍는다 — 표와 같은 취급이다.
+ */
+const TOOL_NOTE = [
+  '',
+  '---',
+  '',
+  '> **自社の契約で試算する** — 本レポートは市場全体の指数を扱う。'
+  + '自社の契約時点と現在を入れて、値上げのうち運賃要因と為替要因を分けて出す道具を'
+  + ' [物流費ベンチマーク](' + SITE_URL + '/benchmark) に用意している。',
+].join('\n');
+
 function assemble({ markdown, period, factsheet, publishedAt }) {
   const title = deriveTitle(markdown, period);
   const description = deriveDescription(markdown);
   const url = `${SITE_URL}/reports/${period}`;
   const jsonLd = buildJsonLd({ title, description, period, url, publishedAt });
 
+  // 図が作れなくても本文は出す。.filter(c => c.svg) は元からその意図だが、
+  // make が例外を投げると組み立て全体が死ぬ — 軸が一つ欠けただけで原稿ごと失う。
+  // 図は本文の補助であって、無くても読める。
   const charts = CHART_PLAN
-    .map((c) => ({
-      afterSection: c.section,
-      svgFile: `jp-chart-${c.key}-${period}.svg`,
-      alt: c.alt,
-      svg: c.make(factsheet),
-    }))
+    .map((c) => {
+      let svg = null;
+      try {
+        svg = c.make(factsheet);
+      } catch (e) {
+        console.warn(`  ⚠️ 図 ${c.key} を作れない — 省略: ${e.message}`);
+      }
+      return { afterSection: c.section, svgFile: `jp-chart-${c.key}-${period}.svg`, alt: c.alt, svg };
+    })
     .filter((c) => c.svg);
-  const withCharts = injectCharts(markdown, charts);
+  const withCharts = injectCharts(markdown, charts) + TOOL_NOTE;
   // 첫 h2가 제목과 중복되지 않도록 총론 제목은 본문에서 h2로 남긴다(h1은 SEO 제목).
   const bodyHtml = marked.parse(withCharts);
 

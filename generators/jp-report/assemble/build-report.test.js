@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { injectCharts } = require('./build-report');
+const { assemble, injectCharts } = require('./build-report');
 
 // 図の位置は節番号で決めていた。モード別構成に組み替えたとき、港湾の図が「03. 航空」に
 // ぶら下がったまま気づかなかった — 図と本文が別々に定義されていて対応の検査が無かった。
@@ -69,4 +69,28 @@ test('injectCharts: 같은 섹션의 여러 장은 정의 순서대로 쌓인다
 test('injectCharts: 마지막 섹션에도 넣는다', () => {
   const out = injectCharts(MD, [chart('05', 'last')]);
   assert.equal(sectionOf(out, 'last.svg'), '05');
+});
+
+// 도구 안내는 본문이 아니라 조립 단계에서 붙인다.
+// 맺음 섹션의 프롬프트에 넣었더니 검수가 「宣伝的挿入」으로 막았다 —
+// 팩트시트에 없는 URL이니 옳은 판정이다. 매달 같은 문장이라 코드가 찍는다.
+test('assemble: 벤치마크 도구 안내를 끝에 붙인다', () => {
+  const r = assemble({
+    markdown: '## 01. 総論\n\n本文。',
+    period: '2026-06',
+    // 図は空データなら作られない(.filter(c => c.svg))。ここで見るのは末尾の案内だけ。
+    factsheet: {
+      periods: { sppi: '2026-06', port: '2026-05', trade: '2026-06' },
+      sppi: { series: [], history: [], baseYear: '2020' },
+      global: { indices: [], history: [] },
+      port: { ports: [] },
+      trade: { countries: [] },
+      commodity: { export: [], import: [] },
+    },
+    publishedAt: '2026-08-05T00:00:00Z',
+  });
+  assert.match(r.markdown, /物流費ベンチマーク/);
+  assert.match(r.markdown, /\/benchmark/);
+  // 본문 뒤에 온다 — 앞에 끼면 첫 h2가 제목으로 잡히는 흐름이 깨진다.
+  assert.ok(r.markdown.indexOf('本文。') < r.markdown.indexOf('物流費ベンチマーク'));
 });
