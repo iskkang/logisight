@@ -25,11 +25,15 @@ import { rateLimited } from './utils/rate_limiter';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { categorize } = require('./utils/jp_category') as {
-  categorize: (i: { title?: string; tags?: string[] }) => string;
+  categorize: (i: { title?: string; tags?: string[] }, fallback?: string) => string;
 };
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { parseJpFeed } = require('./utils/jp_feed') as {
   parseJpFeed: (xml: string, source: string) => JpItem[];
+};
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { parseJmdList } = require('./utils/jmd_list') as {
+  parseJmdList: (html: string) => JpItem[];
 };
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { callDeepSeek } = require('../generators/lib/deepseek.js') as {
@@ -44,6 +48,13 @@ export const JP_FEEDS = [
   { source: 'LNEWS', url: 'https://www.lnews.jp/feed' },
 ];
 
+// RSS가 없어 목록 페이지를 읽는 곳. robots.txt의 * 블록에 제한이 없다.
+// 해사 전문지라 海上·港湾·航空이 여기서 나온다 — RSS 두 곳은 국내 물류에 쏠려
+// 9건 중 8건이 物流로 갔다.
+export const JP_PAGES = [
+  { source: '日本海事新聞', url: 'https://www.jmd.co.jp/news/', fallbackCategory: '海上' },
+];
+
 export type JpItem = {
   title: string;
   url: string;
@@ -56,7 +67,6 @@ export type JpItem = {
 
 const SYSTEM = [
   'あなたは日本の物流業界紙の記者である。渡された記事を読み、要旨を自分の言葉で書く。',
-  '[書き方] 常体(だ・である)。3〜4文。全角180〜260字。',
   '1文目に何が起きたのかを書く。2文目以降に数値・当事者・背景を足す。',
   '[禁止] 原文の文をそのまま写さない。言い換えて書く。',
   '入力に無い事実・数値を足さない。推測で補わない。',
@@ -65,11 +75,19 @@ const SYSTEM = [
   '出力は要旨の本文だけ。前置き・見出し・引用符は書かない。',
 ].join('\n');
 
-/** 원문을 읽고 우리 문장으로 요약. 본문은 저장하지 않는다. */
+/**
+ * 원문을 읽고 우리 문장으로 요약. 본문은 저장하지 않는다.
+ *
+ * 요구 분량을 입력 길이에 맞춘다. 日本海事新聞은 리드 문단까지만 공개하고 그
+ * 뒤는 구독제다. 짧은 입력에 긴 요약을 요구하면 모델이 없는 사실로 채운다.
+ */
 export async function summarize(item: JpItem, body: string): Promise<string | null> {
   const text = body.slice(0, 4000);
   if (text.length < 120) return null; // 본문을 못 읽었으면 억지 요약을 만들지 않는다
-  const user = `見出し: ${item.title}\n媒体: ${item.source}\n\n本文:\n${text}`;
+  const shape = text.length < 400
+    ? '[書き方] 常体(だ・である)。2〜3文。全角100〜160字。入力が短いので無理に長くしない。'
+    : '[書き方] 常体(だ・である)。3〜4文。全角180〜260字。';
+  const user = `${shape}\n\n見出し: ${item.title}\n媒体: ${item.source}\n\n本文:\n${text}`;
   // 요약은 건수가 많아 비용이 걸린다. 판단이 아니라 압축이라 DeepSeek으로 충분하다.
   const msg = await callDeepSeek({ system: SYSTEM, messages: [{ role: 'user', content: user }], max_tokens: 1200 });
   const s = (msg.content || []).filter((c) => c.type === 'text').map((c) => c.text || '').join('').trim();
@@ -93,7 +111,7 @@ async function main() {
   if (!process.env.DEEPSEEK_API_KEY) throw new Error('DEEPSEEK_API_KEY 미설정');
   const sb = createClient(url, key, { auth: { persistSession: false }, realtime: { transport: ws } });
 
-  const items: JpItem[] = [];
+  const items: (JpItem & { fallbackCategory?: string })[] = [];
   for (const f of JP_FEEDS) {
     try {
       const got = parseJpFeed(await rateLimited(f.url, () => fetchFeed(f.url)), f.source);
@@ -101,6 +119,18 @@ async function main() {
       console.log(`  ${f.source}: ${got.length}건`);
     } catch (e) {
       console.error(`❌ ${f.source} 피드 실패:`, (e as Error).message);
+    }
+  }
+  for (const p of JP_PAGES) {
+    try {
+      // 날짜가 없는 항목은 기사가 아니라 지수·섹션 링크다(예: '上海発コンテナ運賃(SCFI)').
+      const got = parseJmdList(await rateLimited(p.url, () => fetchFeed(p.url)))
+        .filter((x) => x.publishedAt)
+        .map((x) => ({ ...x, fallbackCategory: p.fallbackCategory }));
+      items.push(...got);
+      console.log(`  ${p.source}: ${got.length}건`);
+    } catch (e) {
+      console.error(`❌ ${p.source} 목록 실패:`, (e as Error).message);
     }
   }
   items.sort((a, b) => String(b.publishedAt).localeCompare(String(a.publishedAt)));
@@ -121,7 +151,10 @@ async function main() {
   const res = { ok: 0, noBody: 0, error: 0 };
   for (const it of fresh) {
     try {
-      const body = await rateLimited(it.url, () => fetchArticleBody(it.url));
+      // 목록에 리드가 있으면 그것으로 충분하다 — 기사 페이지를 또 열 이유가 없다.
+      const body = it.blurb && it.blurb.length >= 120
+        ? it.blurb
+        : await rateLimited(it.url, () => fetchArticleBody(it.url));
       const summary = await summarize(it, body || '');
       if (!summary) { res.noBody++; console.warn(`⚠️ 본문 부족 — 건너뜀: ${it.title.slice(0, 40)}`); continue; }
       const row = {
@@ -132,7 +165,7 @@ async function main() {
         summary,
         content: null,               // 본문은 저장하지 않는다
         lang: 'ja',
-        category: categorize(it),
+        category: categorize(it, it.fallbackCategory),
         agent_type: 'external', // 사이트의 기존 규약 — isInternalNewsItem이 이 값으로 외부 링크를 판단한다
         fetched_at: new Date().toISOString(),
       };
