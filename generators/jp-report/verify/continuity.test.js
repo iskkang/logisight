@@ -41,3 +41,20 @@ test('지적문에 걸린 말과 문장이 들어간다', () => {
   assert.match(fb, /引き続き/);
   assert.match(fb, /単月の断面/);
 });
+
+// 「続く」는 단어만으로 못 가른다. 상태어 뒤에 올 때만 추이 주장이다.
+test('상태어 + 続く는 잡는다', () => {
+  const r = checkContinuity('燃料油はVLSFOが861、HSFOが767で、高値が続く。');
+  assert.equal(r.ok, false);
+  assert.match(r.hits[0].word, /高値が続く/);
+});
+
+// 순위 서술은 정당하다. 막으면 쓸 수 있는 문장이 깎인다.
+test('순위의 「が続く」는 잡지 않는다', () => {
+  const body = '輸出額が最大の国は米国19279億円で、中国18244億円が続く。';
+  assert.deepEqual(findContinuity(body), []);
+});
+
+test('「増加が続いた」도 잡는다', () => {
+  assert.equal(checkContinuity('取扱量の増加が続いた。').ok, false);
+});

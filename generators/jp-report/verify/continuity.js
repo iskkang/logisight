@@ -33,6 +33,15 @@ const CONTINUITY = [
   '定着し',
 ];
 
+/**
+ * 「続く」는 단어만으로 못 가른다.
+ *   「中国18244億円が続く」 — 순위 서술. 정당하다.
+ *   「高値が続く」        — 추이 주장. 근거가 필요하다.
+ * 상태를 나타내는 말 뒤에 올 때만 잡는다. 2026-06호가 燃料価格に「続く」를 써서
+ * 막혔는데, 목록에 「続いている」만 있고 맨 「続く」가 없어 코드가 못 잡았다.
+ */
+const STATE_CONTINUES = /(高値|安値|高水準|低水準|上昇|下落|増加|減少|横ばい|堅調|軟調|好調|不調|高騰|急落)(が|は|も)?(続く|続き|続いて|続いた)/;
+
 function bodyLines(text) {
   return String(text || '')
     .split('\n')
@@ -47,7 +56,9 @@ function findContinuity(text) {
     const s = sentence.trim();
     if (!s) continue;
     const hit = CONTINUITY.find((w) => s.includes(w));
-    if (hit) out.push({ word: hit, sentence: s });
+    if (hit) { out.push({ word: hit, sentence: s }); continue; }
+    const m = STATE_CONTINUES.exec(s);
+    if (m) out.push({ word: m[0], sentence: s });
   }
   return out;
 }
@@ -68,4 +79,4 @@ function continuityFeedback({ hits }) {
   ].join('\n');
 }
 
-module.exports = { CONTINUITY, findContinuity, checkContinuity, continuityFeedback };
+module.exports = { CONTINUITY, STATE_CONTINUES, findContinuity, checkContinuity, continuityFeedback };
