@@ -103,16 +103,42 @@ function extractStats(text) {
   const s = {};
 
   // 편수 (列/趟)
-  const trainRe = [
-    /(?:累计|共|总计).*?(\d[\d,，]{0,9})\s*(?:列|趟)/,
-    /开行.*?(\d[\d,，]{0,9})\s*(?:列|趟)/,
-    /(\d[\d,，]{0,9})\s*(?:列|趟).*?(?:中欧|欧洲|国际)/,
+  //
+  // 万 을 먼저 본다. TEU 쪽은 万 을 처리하는데 편수 쪽만 빠져 있었다.
+  // 「新疆双口岸今年通行中欧班列超万列」(1만 편 초과)에서 숫자가 없어
+  // 아래 일반 패턴으로 흘러갔고, 본문 딴 곳의 "50列"을 집어 50편으로 실렸다.
+  // 하필 신장 두 통관구(阿拉山口·霍尔果斯) — 국경 통과량의 핵심 계열이다.
+  //
+  // 「超万列」처럼 숫자가 생략된 형태도 받는다. 중국어에서 万 앞의 一 는
+  // 흔히 생략되므로, 超万 = 超1万 = 10,000 이다.
+  const trainWanRe = [
+    /(?:累计|共|总计|开行|通行|突破|超过|超)\D{0,12}?(\d[\d,，.]{0,8})\s*万\s*(?:列|趟)/,
+    /(\d[\d,，.]{0,8})\s*万\s*(?:列|趟)/,
+    /(?:突破|超过|超|近)\s*万\s*(?:列|趟)/,   // 숫자 생략형 — 一万 의 一 가 빠진 것
   ];
-  for (const re of trainRe) {
-    const m = text.match(re);
-    if (m) {
-      const n = parseInt(m[1].replace(/[,，]/g, ''));
-      if (!isNaN(n) && n > 0 && n < 9999999) { s.trainCount = n; break; }
+  for (let i = 0; i < trainWanRe.length; i++) {
+    const m = text.match(trainWanRe[i]);
+    if (!m) continue;
+    const n = i === 2 ? 10000 : Math.round(parseFloat(m[1].replace(/[,，]/g, '')) * 10000);
+    if (!isNaN(n) && n > 0 && n < 99999999) { s.trainCount = n; break; }
+  }
+
+  if (s.trainCount === undefined) {
+    const trainRe = [
+      /(?:累计|共|总计).*?(\d[\d,，]{0,9})\s*(?:列|趟)/,
+      /开行.*?(\d[\d,，]{0,9})\s*(?:列|趟)/,
+      /(\d[\d,，]{0,9})\s*(?:列|趟).*?(?:中欧|欧洲|国际)/,
+      // 지수명이 숫자보다 앞에 오는 어순 — 「中欧班列2962列」.
+      // 위 세 패턴은 숫자 뒤에 中欧 가 와야 걸린다. 중국어 기사 제목은
+      // 이 순서가 더 흔한데 본문에 累计·开行 이 없으면 통째로 놓쳤다.
+      /(?:中欧|欧洲|国际)(?:班列)?\D{0,10}?(\d[\d,，]{0,9})\s*(?:列|趟)/,
+    ];
+    for (const re of trainRe) {
+      const m = text.match(re);
+      if (m) {
+        const n = parseInt(m[1].replace(/[,，]/g, ''));
+        if (!isNaN(n) && n > 0 && n < 9999999) { s.trainCount = n; break; }
+      }
     }
   }
 
@@ -349,4 +375,4 @@ async function buildRailIndices({ month, force = false } = {}) {
   return payload;
 }
 
-module.exports = { buildRailIndices, buildTable };
+module.exports = { buildRailIndices, buildTable, extractStats };
