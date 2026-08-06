@@ -1,0 +1,121 @@
+[
+  {
+    "section": "index",
+    "claim": "정량 예측의 연속 실패는 8월 전망에서 선사 측 가격결정력 약화 가능성을 시사하는 신호.",
+    "metric": null,
+    "direction": "down",
+    "horizon": "M+1"
+  },
+  {
+    "section": "index",
+    "claim": "결항률이 한 자릿수에 머문다는 것은 선사들이 공급을 조여 가격을 방어하기보다 물량 확보 경쟁을 우선하고 있다는 뜻이며, 이 국면에서는 계약 협상 테이블에서 화주 쪽 우위가 당분간 이어질 가능성.",
+    "metric": null,
+    "direction": "down",
+    "horizon": "M+1"
+  },
+  {
+    "section": "index",
+    "claim": "스팟이 이미 꺾인 지금은 이 전이 효과도 조만간 둔화될 개연성.",
+    "metric": null,
+    "direction": "down",
+    "horizon": "M+1"
+  },
+  {
+    "section": "ocean",
+    "claim": "미주서안은 전주대비 ▼4.2%로 조정돼 8월 초 성수기 물량 확인이 다음 관전 포인트.",
+    "metric": null,
+    "direction": null,
+    "horizon": "M+1"
+  },
+  {
+    "section": "ocean",
+    "claim": "The Loadstar에 따르면 아시아-북미·아시아-유럽 모두 선복이 상대적으로 타이트한데도 선사들의 할인 경쟁이 운임 약세의 직접 원인으로 지목되며, 8월 1일 예정된 요율 인상에 대한 시장 지지가 빠르게 식고 있는 것으로 관측.",
+    "metric": null,
+    "direction": "down",
+    "horizon": "M+1"
+  },
+  {
+    "section": "ocean",
+    "claim": "갭이 좁아지지 않고 벌어지는 흐름은 3분기 계약 갱신 협상에서 선사 우위 국면이 이어질 가능성.",
+    "metric": "CCFI",
+    "direction": "up",
+    "horizon": "M+1"
+  },
+  {
+    "section": "air",
+    "claim": "중동 역내 여객 재개와 함께 공급이 점진적으로 회복되면 CLF 개선 폭은 다소 둔화되겠으나, 아시아태평양·북미 중심의 수요 우위 구도는 3분기 성수기 진입과 맞물려 당분간 이어질 전망.",
+    "metric": null,
+    "direction": null,
+    "horizon": "M+1"
+  },
+  {
+    "section": "air",
+    "claim": "8월 이후 성수기 물동량이 본격화될 경우 프랑크푸르트·두바이 등 장거리·중동 노선에서 반등 압력이 다시 나타날 가능성.",
+    "metric": null,
+    "direction": "up",
+    "horizon": "M+1"
+  },
+  {
+    "section": "air",
+    "claim": "노선별 반등 시점은 성수기 부킹 동향에 좌우될 전망.",
+    "metric": null,
+    "direction": null,
+    "horizon": "M+1"
+  },
+  {
+    "section": "rail",
+    "claim": "통관 표준화, 신형 컨테이너 도입, 요율 정책 정비가 예고된 만큼 하반기에도 서부·동북 노선 중심의 물동량 확대가 이어질 가능성이 높으며, 다만 개별 통상구 간 성장률 편차는 지속될 전망.",
+    "metric": null,
+    "direction": null,
+    "horizon": "M+1"
+  },
+  {
+    "section": "rail",
+    "claim": "하반기에는 러시아 개별 지표의 견조함과 CIS 전체 통계의 부진이라는 이중 구도가 이어질 가능성이 크며, 우호국 중심 물류 재편이 심화될수록 유럽 방향 노선의 구조적 축소는 되돌리기 어려운 흐름으로 고착될 전망.",
+    "metric": null,
+    "direction": null,
+    "horizon": "M+1"
+  },
+  {
+    "section": "rail",
+    "claim": "터키-아르메니아 국경 정상화 속도와 바쿠-트빌리시-카르스 노선의 물동량 추이가 향후 미들 코리도어의 실질적 경쟁력을 가늠하는 선행 지표로 작용할 전망.",
+    "metric": null,
+    "direction": null,
+    "horizon": "M+1"
+  },
+  {
+    "section": "region",
+    "claim": "분쟁이 단기간에 해소될 조짐이 보이지 않는 만큼, 우회 항로 비용과 전쟁위험 보험료가 4분기까지 높은 수준으로 유지되며 벙커유 서차지(BAF) 인상 압박이 지속되고, 계약 갱신 협상에서 전쟁위험 할증 조항과 항공 대체 노선 비용이 핵심 쟁점으로 부각될 가능성이 높은 국면.",
+    "metric": null,
+    "direction": "up",
+    "horizon": "M+1"
+  },
+  {
+    "section": "region",
+    "claim": "SAF 혼합 비율이 매년 상향되는 ReFuelEU 일정을 고려하면, 프랑크푸르트·암스테르담 등 유럽 주요 허브를 경유하는 항공화물의 연료 할증료는 공급 확충 속도와 무관하게 중장기적으로 우상향할 전망.",
+    "metric": null,
+    "direction": "up",
+    "horizon": "M+1"
+  },
+  {
+    "section": "macro",
+    "claim": "단기적으로는 지수가 143선을 중심으로 완만한 상승을 이어갈 가능성이 높으나, 정제시설 피격에 따른 러시아·흑해 항로 리스크와 호르무즈 관련 긴장이 상존하는 만큼 처리량 회복이 항로별로 균질하게 나타나기보다는 부산·상하이발 원양 항로 중심의 선별적 회복에 머물 가능성이 커 보이는 국면.",
+    "metric": null,
+    "direction": null,
+    "horizon": "M+1"
+  },
+  {
+    "section": "closing",
+    "claim": "실물 수요와 공급측 가격결정력 사이 간극이 좁혀지지 않으면 8월의 강세 구도가 되돌려질 여지도 상존.",
+    "metric": null,
+    "direction": "down",
+    "horizon": "M+1"
+  },
+  {
+    "section": "closing",
+    "claim": "스팟이 재차 급등했을 때 전이 속도가 더 빨라지면 선사 확신이 굳어지는 신호이고, 반대로 시차가 다시 벌어지면 일시 반등 쪽으로 판정이 기울 가능성.",
+    "metric": "CCFI",
+    "direction": null,
+    "horizon": "M+1"
+  }
+]
