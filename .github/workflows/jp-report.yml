@@ -19,6 +19,11 @@ on:
     workflows: ['JP Sources (SPPI·貿易·港湾·航路)']
     types: [completed]
   workflow_dispatch:
+    inputs:
+      force:
+        description: '이미 발행한 회차라도 다시 생성'
+        type: boolean
+        default: false
 
 jobs:
   draft-jp:
@@ -49,10 +54,43 @@ jobs:
           [ -z "$BIN" ] && { echo "::error::Chrome 미설치 — 러너에서 google-chrome 을 찾지 못함"; exit 1; }
           echo "path=$BIN" >> "$GITHUB_OUTPUT"
 
+      # 수집은 매월 22·26·30일 세 번 돈다. 공표가 늦어져도 놓치지 않으려는 것인데,
+      # 그때마다 원고를 새로 쓰면 같은 회차를 한 달에 세 번 생성하게 된다.
+      # 팩트시트는 LLM을 부르지 않으므로 먼저 만들어 대상 월만 확인한다.
+      - name: 대상 월 확인 — 이미 발행한 회차면 생성하지 않는다
+        id: guard
+        env:
+          SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          FORCE:                     ${{ inputs.force }}
+        run: |
+          node generators/jp-report/research/build-factsheet.js
+          node -e "
+          const fs = require('fs');
+          const period = JSON.parse(fs.readFileSync('content/drafts/jp-factsheet.json','utf8')).generatedFor;
+          const out = (k, v) => fs.appendFileSync(process.env.GITHUB_OUTPUT, k + '=' + v + '\n');
+          out('period', period);
+          if (process.env.FORCE === 'true') { out('skip',''); console.log(period + ' — force 지정, 생성한다'); process.exit(0); }
+          const U = process.env.SUPABASE_URL, K = process.env.SUPABASE_SERVICE_ROLE_KEY;
+          fetch(U + '/rest/v1/reports?lang=eq.ja&select=id&id=like.ja-monthly-' + period + '*', { headers: { apikey: K, Authorization: 'Bearer ' + K } })
+            .then(r => r.json())
+            .then(d => {
+              const done = Array.isArray(d) && d.length > 0;
+              out('skip', done ? '1' : '');
+              console.log(period + (done ? ' — 이미 발행됨(' + d[0].id + '), 생성하지 않는다' : ' — 미발행, 생성한다'));
+            })
+            .catch(e => {
+              // 조회에 실패했다고 생성을 막으면 그 달을 통째로 놓친다. 생성하는 쪽으로 기운다.
+              out('skip','');
+              console.log('::warning::발행 여부 조회 실패(' + e.message + ') — 생성 진행');
+            });
+          "
+
       # 종료 코드 2 = 검수 미해결. 원고는 만들어졌고 발행만 막힌 상태다.
       # 여기서는 발행하지 않으므로 2는 실패가 아니다 — 초안을 남기고 경고만 띄운다.
       - name: Generate draft (research → write → assemble)
         id: gen
+        if: steps.guard.outputs.skip != '1'
         env:
           ANTHROPIC_API_KEY:         ${{ secrets.ANTHROPIC_API_KEY }}
           SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
@@ -74,7 +112,9 @@ jobs:
       # 한국판 2026-08 에서 커밋이 맨 끝에만 있어 타임아웃에 전부 날아갔다.
       # 그 실패를 여기서 되풀이하지 않는다.
       - name: 초안·섹션 캐시 커밋
-        if: always()
+        # always() 는 생성이 잘렸을 때 진행분을 남기기 위한 것이다.
+        # 건너뛴 회차까지 커밋하면 한 달에 세 번 빈 변경이 쌓인다.
+        if: always() && steps.guard.outputs.skip != '1'
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
@@ -94,6 +134,8 @@ jobs:
         env:
           JOB_STATUS:                ${{ job.status }}
           GEN_CODE:                  ${{ steps.gen.outputs.code }}
+          SKIPPED:                   ${{ steps.guard.outputs.skip }}
+          PERIOD:                    ${{ steps.guard.outputs.period }}
           SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
@@ -102,7 +144,8 @@ jobs:
           const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
           const code = process.env.GEN_CODE;
           const status = process.env.JOB_STATUS === 'success' ? 'ok' : 'error';
-          const notes = code === '2' ? 'jp-report draft — 검수 미해결' : 'jp-report draft';
+          const notes = process.env.SKIPPED === '1' ? 'jp-report ' + process.env.PERIOD + ' 이미 발행 — 생성 안 함'
+                      : code === '2' ? 'jp-report draft — 검수 미해결' : 'jp-report draft';
           sb.from('data_updates')
             .insert({ dataset: 'jp_monthly_report', status, notes })
             .then(r => { console.log('data_updates logged:', r.error ? r.error.message : 'ok'); process.exit(0); })
