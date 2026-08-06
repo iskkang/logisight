@@ -1,0 +1,70 @@
+name: JP Sources (SPPI·貿易·港湾·航路)
+
+# 일본판 데이터 수집. 지금까지 사람이 PC에서 돌렸다.
+#
+# 공표 일정이 축마다 다르다:
+#   BOJ SPPI        전월분을 익월 하순
+#   財務省 貿易統計  전월 확보분을 익월 하순
+#   港湾統計         두 달 뒤 (그래서 리포트의 港湾 축은 늘 한 달 더 늦다)
+#   JPMAC 航路別     전월분을 익월 중순
+#
+# 하순에 한 번만 돌리면 그날 공표가 늦어졌을 때 그 달을 통째로 놓친다.
+# 22·26·30일 세 번 시도한다. 수집기는 이미 있는 기간을 덮어쓰지 않으므로
+# 여러 번 돌아도 문제가 없다.
+
+on:
+  schedule:
+    - cron: '0 20 22,26,30 * *'   # 매월 22·26·30일 05:00 KST
+  workflow_dispatch:
+
+jobs:
+  collect-jp:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install deps
+        run: npm ci
+
+      # 축 하나가 실패해도 나머지는 받는다. && 로 이으면 앞이 죽을 때 뒤가 통째로 빠진다.
+      # 어느 축이 빠졌는지는 팩트시트가 KNOWN_GAPS 로 드러내므로 여기서 막지 않는다.
+      - name: Collect (축별 독립 — 하나 실패해도 나머지 진행)
+        env:
+          SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          fail=0
+          for s in collect:price:jp collect:trade:jp collect:trade:jp:commodity \
+                   collect:port:jp:prelim collect:port:jp collect:route:jp; do
+            echo "── $s ──"
+            npm run "$s" || { echo "::warning::$s 실패"; fail=$((fail+1)); }
+          done
+          echo "실패한 수집기: $fail"
+          # 전부 실패했다면 자격증명이나 네트워크 문제다. 조용히 넘기지 않는다.
+          [ "$fail" -lt 6 ] || { echo "::error::수집기 6개 전부 실패"; exit 1; }
+
+      - name: Log to data_updates
+        if: always()
+        env:
+          JOB_STATUS:                ${{ job.status }}
+          SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          node -e "
+          const { createClient } = require('@supabase/supabase-js');
+          const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+          const status = process.env.JOB_STATUS === 'success' ? 'ok' : 'error';
+          sb.from('data_updates')
+            .insert({ dataset: 'jp_sources', status, notes: 'jp-collect workflow' })
+            .then(r => { console.log('data_updates logged:', r.error ? r.error.message : 'ok'); process.exit(0); })
+            .catch(e => { console.error(e.message); process.exit(0); });
+          "

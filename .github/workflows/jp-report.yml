@@ -1,0 +1,110 @@
+name: JP Monthly Report (draft)
+
+# 일본 월간 리포트 초안 생성. 발행은 하지 않는다.
+#
+# ■ 왜 발행을 자동으로 하지 않나
+# run.js 는 --publish 로 완전 자동 발행이 가능하고, 검수를 통과하지 못하면
+# 멈추도록(fail-closed) 되어 있다. 그래도 여기서는 초안까지만 만든다.
+# 2026-08 한국호에서 사람이 원고를 읽고 잡아낸 것들 — 「공급측 확신」 같은
+# 내심 추정, 지수 종합값을 항로 값으로 쓴 수치 — 은 검수기가 잡지 못했다.
+# 발행은 `npm run jp:report -- --publish` 로 사람이 확인한 뒤 돌린다.
+#
+# ■ 언제 도는가
+# jp-collect 가 성공한 날 이어서 돈다. SPPI·貿易 공표가 늦어져 전월분이
+# 아직 없으면 팩트시트가 직전 확보월로 만들어지므로, 같은 달에 여러 번
+# 돌아도 최신 월이 들어오는 즉시 그 달로 갱신된다.
+
+on:
+  workflow_run:
+    workflows: ['JP Sources (SPPI·貿易·港湾·航路)']
+    types: [completed]
+  workflow_dispatch:
+
+jobs:
+  draft-jp:
+    runs-on: ubuntu-latest
+    # 수집이 실패한 회차에는 돌지 않는다. 옛 데이터로 원고만 새로 쓰게 된다.
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    # 6월호는 12차까지 갔다. 섹션 캐시가 있어 재실행이 이어붙지만,
+    # 한 회차 안에서 7섹션 × (생성 + LLM 검수 + REVISE) 는 넉넉히 잡는다.
+    timeout-minutes: 60
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Chrome 경로 확인 (차트·PDF 렌더링)
+        id: chrome
+        run: |
+          BIN=$(which google-chrome || which google-chrome-stable || which chromium-browser || true)
+          [ -z "$BIN" ] && { echo "::error::Chrome 미설치 — 러너에서 google-chrome 을 찾지 못함"; exit 1; }
+          echo "path=$BIN" >> "$GITHUB_OUTPUT"
+
+      # 종료 코드 2 = 검수 미해결. 원고는 만들어졌고 발행만 막힌 상태다.
+      # 여기서는 발행하지 않으므로 2는 실패가 아니다 — 초안을 남기고 경고만 띄운다.
+      - name: Generate draft (research → write → assemble)
+        id: gen
+        env:
+          ANTHROPIC_API_KEY:         ${{ secrets.ANTHROPIC_API_KEY }}
+          SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PUPPETEER_EXECUTABLE_PATH: ${{ steps.chrome.outputs.path }}
+        run: |
+          set +e
+          npm run jp:report
+          code=$?
+          set -e
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          case "$code" in
+            0) echo "초안 준비 완료 — 검수 통과" ;;
+            2) echo "::warning::검수 미해결 — 초안은 남겼다. 지적 내용은 로그 참조" ;;
+            *) echo "::error::초안 생성 실패 (exit $code)"; exit "$code" ;;
+          esac
+
+      # 섹션 캐시를 남긴다. 다음 실행이 통과한 섹션을 다시 쓰지 않는다.
+      # 한국판 2026-08 에서 커밋이 맨 끝에만 있어 타임아웃에 전부 날아갔다.
+      # 그 실패를 여기서 되풀이하지 않는다.
+      - name: 초안·섹션 캐시 커밋
+        if: always()
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add content/drafts/jp-report-*.md content/drafts/jp-report-*.html \
+                  content/drafts/jp-factsheet.json content/drafts/jp-chart-*.svg \
+                  outputs/cache/jp-report 2>/dev/null || true
+          git diff --cached --quiet && { echo "변경 없음"; exit 0; }
+          git commit -m "chore(jp-report): draft $(date -u +%Y-%m)"
+          for i in 1 2 3; do
+            if git pull --rebase --autostash origin main && git push; then exit 0; fi
+            echo "push attempt $i failed — retrying"; sleep 5
+          done
+          echo "::warning::초안 push 실패 — 다음 실행이 처음부터 쓰게 된다"
+
+      - name: Log to data_updates
+        if: always()
+        env:
+          JOB_STATUS:                ${{ job.status }}
+          GEN_CODE:                  ${{ steps.gen.outputs.code }}
+          SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          node -e "
+          const { createClient } = require('@supabase/supabase-js');
+          const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+          const code = process.env.GEN_CODE;
+          const status = process.env.JOB_STATUS === 'success' ? 'ok' : 'error';
+          const notes = code === '2' ? 'jp-report draft — 검수 미해결' : 'jp-report draft';
+          sb.from('data_updates')
+            .insert({ dataset: 'jp_monthly_report', status, notes })
+            .then(r => { console.log('data_updates logged:', r.error ? r.error.message : 'ok'); process.exit(0); })
+            .catch(e => { console.error(e.message); process.exit(0); });
+          "
