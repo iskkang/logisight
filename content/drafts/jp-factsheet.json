@@ -1,0 +1,1095 @@
+{
+  "generatedFor": "2026-06",
+  "periods": {
+    "sppi": "2026-06",
+    "port": "2026-05",
+    "trade": "2026-06",
+    "commodity": "2026-06"
+  },
+  "periodMismatch": true,
+  "gaps": [
+    "航路別の船腹供給量・消化率 — 需給のどちら側から動いたかは説明できない",
+    "日本発着に限定した欠航便数 — 日本の航路そのものの供給は示せない"
+  ],
+  "publicationLag": "世界のスポット指数は週次で直近まで公表される。日本の企業向けサービス価格指数は月次で、当月分の公表までに約2か月かかる。したがって、直近のスポットの動きは、まだ公表されていない日本の指数がどちらを向くかを考える材料になる。ただし転嫁の幅と時期は契約条件によって異なり、データからは特定できない。",
+  "sppi": {
+    "period": "2026-06",
+    "source": "日本銀行 企業向けサービス価格指数(SPPI)",
+    "baseYear": "2020",
+    "unit": "index",
+    "basisNote": "円ベースは契約通貨ベースに為替変動を加えたもの。両者の差は定義上すべて為替要因であり、個別系列ごとの根拠を要しない。契約通貨ベースが運賃そのものの動きに近い。為替換算による上乗せ分は、基準年からのぶんと前年同月比のぶんの両方を算出済みで渡している。いずれも円ベース÷契約通貨ベースで求めた値であり、自分で計算しない。これは系列ごとの契約構成に対する為替の効きであって、ドル円の変動率そのものではない。【用語の区別】次の四つは別の概念であり、まとめて「為替寄与」と呼んではならない。(1)単純差=円ベースの伸び率-契約通貨ベースの伸び率。単位はポイント。(2)為替換算による上乗せ率=(1+円ベース伸び)÷(1+契約通貨ベース伸び)-1。単位は%。積の関係で求める。(3)指数の比=円ベース指数÷契約通貨ベース指数-1。基準年からの累積。単位は%。(4)指数差が円ベース指数に占める割合。単位は%。【必須】(1)を述べるときは「ポイント」、(2)(3)(4)を述べるときは「%」と書き分ける。(2)を(1)から引き算で導けるように書かない — 積の関係なので合わない。",
+    "hierarchyNote": "各系列に付した親系列は日本銀行の品目分類にもとづく。親系列がある場合は「陸上貨物輸送のうち道路貨物輸送」のように内訳として書いてよい。親系列が示されていない系列については階層に触れない。【重要】親系列は品目分類上の親であって、子系列の合計ではない。SPPI は加重平均の指数であり、足し算では出ない。「航空貨物輸送は国際と国内の合計」のようには書かない。書けるのは「〜のうち」「〜の内訳」という分類関係までである。",
+    "series": [
+      {
+        "name": "航空貨物輸送",
+        "category": "air",
+        "yen": 129.2,
+        "contract": 96.1,
+        "parent": "運輸・郵便",
+        "yoyYenPct": 35.571878279118565,
+        "yoyContractPct": 24.48186528497409,
+        "fxSinceBasePct": 34.4,
+        "fxYoyPct": 8.9
+      },
+      {
+        "name": "国際航空貨物輸送",
+        "category": "air",
+        "yen": 142.4,
+        "contract": 98.1,
+        "parent": "航空貨物輸送",
+        "yoyYenPct": 48.02494802494803,
+        "yoyContractPct": 36.06102635228849,
+        "fxSinceBasePct": 45.2,
+        "fxYoyPct": 8.8
+      },
+      {
+        "name": "国内航空貨物輸送",
+        "category": "air",
+        "yen": 89.8,
+        "contract": null,
+        "parent": "航空貨物輸送",
+        "yoyYenPct": -3.2327586206896575,
+        "yoyContractPct": null,
+        "fxSinceBasePct": null,
+        "fxYoyPct": null
+      },
+      {
+        "name": "陸上貨物輸送",
+        "category": "land",
+        "yen": 111.6,
+        "contract": null,
+        "parent": "運輸・郵便",
+        "yoyYenPct": 3.62116991643453,
+        "yoyContractPct": null,
+        "fxSinceBasePct": null,
+        "fxYoyPct": null
+      },
+      {
+        "name": "鉄道貨物輸送",
+        "category": "land",
+        "yen": 107,
+        "contract": null,
+        "parent": "陸上貨物輸送",
+        "yoyYenPct": 0.9433962264151052,
+        "yoyContractPct": null,
+        "fxSinceBasePct": null,
+        "fxYoyPct": null
+      },
+      {
+        "name": "道路貨物輸送",
+        "category": "land",
+        "yen": 111.6,
+        "contract": null,
+        "parent": "陸上貨物輸送",
+        "yoyYenPct": 3.62116991643453,
+        "yoyContractPct": null,
+        "fxSinceBasePct": null,
+        "fxYoyPct": null
+      },
+      {
+        "name": "海上貨物輸送",
+        "category": "ocean",
+        "yen": 160,
+        "contract": 133.1,
+        "parent": "運輸・郵便",
+        "yoyYenPct": 24.513618677042803,
+        "yoyContractPct": 15.437987857762359,
+        "fxSinceBasePct": 20.2,
+        "fxYoyPct": 7.9
+      },
+      {
+        "name": "外航貨物輸送",
+        "category": "ocean",
+        "yen": 233.8,
+        "contract": 160.8,
+        "parent": "海上貨物輸送",
+        "yoyYenPct": 52.81045751633988,
+        "yoyContractPct": 37.43589743589744,
+        "fxSinceBasePct": 45.4,
+        "fxYoyPct": 11.2
+      },
+      {
+        "name": "外航貨物輸送（除外航タンカー）",
+        "category": "ocean",
+        "yen": 198.4,
+        "contract": 134,
+        "parent": "外航貨物輸送",
+        "yoyYenPct": 26.128417037507944,
+        "yoyContractPct": 13.752122241086596,
+        "fxSinceBasePct": 48.1,
+        "fxYoyPct": 10.9
+      },
+      {
+        "name": "内航貨物輸送",
+        "category": "ocean",
+        "yen": 135,
+        "contract": null,
+        "parent": "海上貨物輸送",
+        "yoyYenPct": 4.247104247104239,
+        "yoyContractPct": null,
+        "fxSinceBasePct": null,
+        "fxYoyPct": null
+      },
+      {
+        "name": "港湾運送",
+        "category": "port",
+        "yen": 105.1,
+        "contract": null,
+        "parent": "運輸・郵便",
+        "yoyYenPct": 0.7670182166826356,
+        "yoyContractPct": null,
+        "fxSinceBasePct": null,
+        "fxYoyPct": null
+      },
+      {
+        "name": "運輸・郵便",
+        "category": "total",
+        "yen": 117.6,
+        "contract": 114.9,
+        "parent": null,
+        "yoyYenPct": 5.2820053715308735,
+        "yoyContractPct": 4.0760869565217295,
+        "fxSinceBasePct": 2.3,
+        "fxYoyPct": 1.2
+      },
+      {
+        "name": "倉庫",
+        "category": "warehouse",
+        "yen": 105.1,
+        "contract": null,
+        "parent": "運輸・郵便",
+        "yoyYenPct": 1.6441005802707798,
+        "yoyContractPct": null,
+        "fxSinceBasePct": null,
+        "fxYoyPct": null
+      }
+    ],
+    "signals": [
+      {
+        "kind": "fx_exposure_gap",
+        "intlTop": {
+          "name": "外航貨物輸送",
+          "category": "ocean",
+          "yen": 233.8,
+          "contract": 160.8,
+          "parent": "海上貨物輸送",
+          "yoyYenPct": 52.81045751633988,
+          "yoyContractPct": 37.43589743589744,
+          "fxSinceBasePct": 45.4,
+          "fxYoyPct": 11.2
+        },
+        "domesticLow": {
+          "name": "国内航空貨物輸送",
+          "category": "air",
+          "yen": 89.8,
+          "contract": null,
+          "parent": "航空貨物輸送",
+          "yoyYenPct": -3.2327586206896575,
+          "yoyContractPct": null,
+          "fxSinceBasePct": null,
+          "fxYoyPct": null
+        },
+        "note": "外貨建て契約の系列(契約通貨ベースが公表される)と円建て契約の系列(契約通貨ベースが公表されない)で伸びが大きく分かれている。国際の系列は円安がそのまま上乗せされ、国内の系列は上乗せされない。これが両者の差の主要因である。両者を必ず並べて述べ、契約通貨の違いで説明する。"
+      },
+      {
+        "kind": "contract_below_base",
+        "series": "航空貨物輸送",
+        "contract": 96.1,
+        "yen": 129.2,
+        "note": "契約通貨ベース 96.1 — 基準年(2020年)を下回る。円ベース 129.2 との差は為替要因。"
+      },
+      {
+        "kind": "contract_below_base",
+        "series": "国際航空貨物輸送",
+        "contract": 98.1,
+        "yen": 142.4,
+        "note": "契約通貨ベース 98.1 — 基準年(2020年)を下回る。円ベース 142.4 との差は為替要因。"
+      }
+    ],
+    "history": {
+      "months": [
+        "2024-07",
+        "2024-08",
+        "2024-09",
+        "2024-10",
+        "2024-11",
+        "2024-12",
+        "2025-01",
+        "2025-02",
+        "2025-03",
+        "2025-04",
+        "2025-05",
+        "2025-06",
+        "2025-07",
+        "2025-08",
+        "2025-09",
+        "2025-10",
+        "2025-11",
+        "2025-12",
+        "2026-01",
+        "2026-02",
+        "2026-03",
+        "2026-04",
+        "2026-05",
+        "2026-06"
+      ],
+      "series": [
+        {
+          "name": "外航貨物輸送",
+          "yen": [
+            170.3,
+            157.8,
+            153.4,
+            164.6,
+            161.7,
+            157.6,
+            160.3,
+            156,
+            156.2,
+            147.2,
+            149.1,
+            153,
+            155,
+            156,
+            159.6,
+            157.8,
+            165.4,
+            166.1,
+            162.6,
+            172,
+            225.8,
+            234.2,
+            241.3,
+            233.8
+          ],
+          "contract": [
+            120.2,
+            119.3,
+            118.1,
+            122.2,
+            117.3,
+            114.5,
+            114.6,
+            114.5,
+            116.4,
+            112.8,
+            114,
+            117,
+            116.9,
+            116.9,
+            119.4,
+            115.9,
+            118.6,
+            118.6,
+            116.1,
+            123.7,
+            157.6,
+            162.2,
+            167.9,
+            160.8
+          ]
+        },
+        {
+          "name": "国際航空貨物輸送",
+          "yen": [
+            111.1,
+            103.2,
+            103.8,
+            105.9,
+            103.7,
+            103.9,
+            106.8,
+            108.4,
+            106.4,
+            96.5,
+            96.8,
+            96.2,
+            96.4,
+            93.4,
+            100.3,
+            105.5,
+            110.5,
+            112.2,
+            113.6,
+            116.1,
+            119.1,
+            135.7,
+            152.7,
+            142.4
+          ],
+          "contract": [
+            78.4,
+            77.8,
+            79.2,
+            77.8,
+            74.9,
+            75.6,
+            76.4,
+            79.6,
+            79.2,
+            73.5,
+            72.9,
+            72.1,
+            70.9,
+            68.5,
+            73.1,
+            75.5,
+            77.3,
+            77.8,
+            78.3,
+            80.4,
+            81.3,
+            92.9,
+            106.3,
+            98.1
+          ]
+        }
+      ]
+    }
+  },
+  "port": {
+    "period": "2026-05",
+    "source": "国土交通省 港湾統計",
+    "unit": "TEU",
+    "scope": "主要6港 外国貿易コンテナ",
+    "isPreliminary": true,
+    "total": {
+      "teu": 1177717,
+      "exportTeu": 562219,
+      "importTeu": 615498,
+      "yoyPct": 0.12803825164023408
+    },
+    "ports": [
+      {
+        "code": "JPTYO",
+        "name": "東京港",
+        "teu": 367332,
+        "exportTeu": 160049,
+        "importTeu": 207283,
+        "yoyPct": 0.0580193343302966
+      },
+      {
+        "code": "JPYOK",
+        "name": "横浜港",
+        "teu": 235939,
+        "exportTeu": 119510,
+        "importTeu": 116429,
+        "yoyPct": 3.049480906895184
+      },
+      {
+        "code": "JPNGO",
+        "name": "名古屋港",
+        "teu": 219152,
+        "exportTeu": 111697,
+        "importTeu": 107455,
+        "yoyPct": -0.7805284412973776
+      },
+      {
+        "code": "JPUKB",
+        "name": "神戸港",
+        "teu": 174728,
+        "exportTeu": 89454,
+        "importTeu": 85274,
+        "yoyPct": 0.7124247803933343
+      },
+      {
+        "code": "JPOSA",
+        "name": "大阪港",
+        "teu": 173631,
+        "exportTeu": 77754,
+        "importTeu": 95877,
+        "yoyPct": -2.6202587729875546
+      },
+      {
+        "code": "JPKWS",
+        "name": "川崎港",
+        "teu": 6935,
+        "exportTeu": 3755,
+        "importTeu": 3180,
+        "yoyPct": -7.087352625937839
+      }
+    ]
+  },
+  "trade": {
+    "period": "2026-06",
+    "source": "財務省貿易統計",
+    "unit": "thousand_jpy",
+    "total": {
+      "exportJpy": 10926534582,
+      "importJpy": 11336461191,
+      "balanceJpy": -409926609,
+      "yoyExportPct": 19.299999999999997,
+      "yoyImportPct": 25.400000000000006
+    },
+    "countries": [
+      {
+        "name": "米国",
+        "exportJpy": 1927863207,
+        "importJpy": 1588542604,
+        "balanceJpy": 339320603,
+        "yoyExportPct": 12.900000000000006,
+        "yoyImportPct": 52.69999999999999
+      },
+      {
+        "name": "中国",
+        "exportJpy": 1824448877,
+        "importJpy": 2645034356,
+        "balanceJpy": -820585479,
+        "yoyExportPct": 17.599999999999994,
+        "yoyImportPct": 27.900000000000006
+      },
+      {
+        "name": "台湾",
+        "exportJpy": 929454180,
+        "importJpy": 630106935,
+        "balanceJpy": 299347245,
+        "yoyExportPct": 46.400000000000006,
+        "yoyImportPct": 49.099999999999994
+      },
+      {
+        "name": "韓国",
+        "exportJpy": 682222530,
+        "importJpy": 507326037,
+        "balanceJpy": 174896493,
+        "yoyExportPct": 23.5,
+        "yoyImportPct": 32.099999999999994
+      },
+      {
+        "name": "香港",
+        "exportJpy": 613279275,
+        "importJpy": 55995737,
+        "balanceJpy": 557283538,
+        "yoyExportPct": 18.099999999999994,
+        "yoyImportPct": 21.299999999999997
+      },
+      {
+        "name": "タイ",
+        "exportJpy": 426806420,
+        "importJpy": 420703112,
+        "balanceJpy": 6103308,
+        "yoyExportPct": 21.099999999999994,
+        "yoyImportPct": 32.30000000000001
+      },
+      {
+        "name": "シンガポール",
+        "exportJpy": 339369653,
+        "importJpy": 126681318,
+        "balanceJpy": 212688335,
+        "yoyExportPct": 12.200000000000003,
+        "yoyImportPct": 33.099999999999994
+      },
+      {
+        "name": "ベトナム",
+        "exportJpy": 291561876,
+        "importJpy": 484958194,
+        "balanceJpy": -193396318,
+        "yoyExportPct": 32.599999999999994,
+        "yoyImportPct": 31.80000000000001
+      },
+      {
+        "name": "インド",
+        "exportJpy": 276898404,
+        "importJpy": 109845157,
+        "balanceJpy": 167053247,
+        "yoyExportPct": 20.700000000000003,
+        "yoyImportPct": 30.099999999999994
+      },
+      {
+        "name": "オーストラリア",
+        "exportJpy": 270234450,
+        "importJpy": 637751388,
+        "balanceJpy": -367516938,
+        "yoyExportPct": 45.900000000000006,
+        "yoyImportPct": 28.099999999999994
+      },
+      {
+        "name": "ドイツ",
+        "exportJpy": 268697205,
+        "importJpy": 301467374,
+        "balanceJpy": -32770169,
+        "yoyExportPct": 20.5,
+        "yoyImportPct": -9.700000000000003
+      },
+      {
+        "name": "マレーシア",
+        "exportJpy": 227777581,
+        "importJpy": 315851584,
+        "balanceJpy": -88074003,
+        "yoyExportPct": 27.5,
+        "yoyImportPct": 49.80000000000001
+      },
+      {
+        "name": "英国",
+        "exportJpy": 208552531,
+        "importJpy": 110056887,
+        "balanceJpy": 98495644,
+        "yoyExportPct": 14.299999999999997,
+        "yoyImportPct": 22.799999999999997
+      },
+      {
+        "name": "カナダ",
+        "exportJpy": 189450756,
+        "importJpy": 173242435,
+        "balanceJpy": 16208321,
+        "yoyExportPct": 46.5,
+        "yoyImportPct": 26.200000000000003
+      },
+      {
+        "name": "メキシコ",
+        "exportJpy": 187232853,
+        "importJpy": 104453775,
+        "balanceJpy": 82779078,
+        "yoyExportPct": 30.099999999999994,
+        "yoyImportPct": -19.900000000000006
+      }
+    ]
+  },
+  "commodity": {
+    "period": "2026-06",
+    "source": "財務省貿易統計 概況品別国別表",
+    "unit": "thousand_jpy",
+    "export": [
+      {
+        "name": "機械類及び輸送用機器",
+        "valueJpy": 6156259844,
+        "sharePct": 56.34229039224945
+      },
+      {
+        "name": "特殊取扱品",
+        "valueJpy": 1461424912,
+        "sharePct": 13.375008343519102
+      },
+      {
+        "name": "原料別製品",
+        "valueJpy": 1169468292,
+        "sharePct": 10.703011858183674
+      },
+      {
+        "name": "化学製品",
+        "valueJpy": 1088443002,
+        "sharePct": 9.961465767866272
+      },
+      {
+        "name": "雑製品",
+        "valueJpy": 595344973,
+        "sharePct": 5.448616563029518
+      },
+      {
+        "name": "原材料",
+        "valueJpy": 206004788,
+        "sharePct": 1.8853625223441406
+      },
+      {
+        "name": "鉱物性燃料",
+        "valueJpy": 121590836,
+        "sharePct": 1.1128032871492908
+      },
+      {
+        "name": "食料品及び動物",
+        "valueJpy": 99476190,
+        "sharePct": 0.9104093274355592
+      },
+      {
+        "name": "飲料及びたばこ",
+        "valueJpy": 24229327,
+        "sharePct": 0.22174758902895494
+      },
+      {
+        "name": "動植物性油脂",
+        "valueJpy": 4292418,
+        "sharePct": 0.03928434919403617
+      }
+    ],
+    "import": [
+      {
+        "name": "機械類及び輸送用機器",
+        "valueJpy": 3692853172,
+        "sharePct": 32.575008283288184
+      },
+      {
+        "name": "鉱物性燃料",
+        "valueJpy": 2101701390,
+        "sharePct": 18.53930741339756
+      },
+      {
+        "name": "化学製品",
+        "valueJpy": 1259663162,
+        "sharePct": 11.11160829448298
+      },
+      {
+        "name": "雑製品",
+        "valueJpy": 1238682449,
+        "sharePct": 10.926535434032871
+      },
+      {
+        "name": "原料別製品",
+        "valueJpy": 1011248203,
+        "sharePct": 8.920316366476237
+      },
+      {
+        "name": "食料品及び動物",
+        "valueJpy": 852338158,
+        "sharePct": 7.518555778911589
+      },
+      {
+        "name": "原材料",
+        "valueJpy": 767511276,
+        "sharePct": 6.770289802688392
+      },
+      {
+        "name": "特殊取扱品",
+        "valueJpy": 277768971,
+        "sharePct": 2.4502264535648957
+      },
+      {
+        "name": "飲料及びたばこ",
+        "valueJpy": 103129671,
+        "sharePct": 0.9097166149333665
+      },
+      {
+        "name": "動植物性油脂",
+        "valueJpy": 31564739,
+        "sharePct": 0.27843555822392974
+      }
+    ]
+  },
+  "global": {
+    "source": "各指数の公表機関(SSE・Drewry・Freightos・Baltic Exchange ほか)",
+    "unit": "index / USD",
+    "asOf": "2026-07-27",
+    "indices": [
+      {
+        "code": "SCFI",
+        "label": "SCFI 総合",
+        "unit": null,
+        "value": 3205.97,
+        "changePct": 4.67,
+        "asOf": "2026-07-27"
+      },
+      {
+        "code": "SCFI_EU",
+        "label": "SCFI 上海→欧州",
+        "unit": null,
+        "value": 3155,
+        "changePct": null,
+        "asOf": "2026-07-20"
+      },
+      {
+        "code": "SCFI_USWC",
+        "label": "SCFI 上海→米西岸",
+        "unit": null,
+        "value": 5535,
+        "changePct": null,
+        "asOf": "2026-07-20"
+      },
+      {
+        "code": "SCFI_USEC",
+        "label": "SCFI 上海→米東岸",
+        "unit": null,
+        "value": 8040,
+        "changePct": null,
+        "asOf": "2026-07-20"
+      },
+      {
+        "code": "CCFI",
+        "label": "CCFI 総合",
+        "unit": null,
+        "value": 1857.04,
+        "changePct": -2.33,
+        "asOf": "2026-07-27"
+      },
+      {
+        "code": "WCI",
+        "label": "WCI 総合",
+        "unit": null,
+        "value": 4255,
+        "changePct": -3,
+        "asOf": "2026-07-27"
+      },
+      {
+        "code": "FBX",
+        "label": "FBX 総合",
+        "unit": null,
+        "value": 3627.6,
+        "changePct": -1.01,
+        "asOf": "2026-07-27"
+      },
+      {
+        "code": "BDI",
+        "label": "BDI(バルク)",
+        "unit": null,
+        "value": 2705,
+        "changePct": null,
+        "asOf": "2026-07-20"
+      },
+      {
+        "code": "VLSFO",
+        "label": "VLSFO(低硫黄C重油)",
+        "unit": null,
+        "value": 861,
+        "changePct": null,
+        "asOf": "2026-07-20"
+      },
+      {
+        "code": "HSFO",
+        "label": "HSFO(高硫黄C重油)",
+        "unit": null,
+        "value": 767,
+        "changePct": null,
+        "asOf": "2026-07-20"
+      }
+    ],
+    "containerUp": 1,
+    "containerDown": 3,
+    "containerTotal": 4,
+    "asOfNote": "世界のスポット指数は週次、日本の統計は月次で基準日が揃わない。両者を同一時点の動きとして比較してはならない。同時期に観測された事実として並べるまでである。",
+    "history": {
+      "weeks": [
+        "2026-01-26",
+        "2026-02-02",
+        "2026-02-09",
+        "2026-02-23",
+        "2026-03-02",
+        "2026-03-09",
+        "2026-03-16",
+        "2026-03-23",
+        "2026-03-30",
+        "2026-04-06",
+        "2026-04-13",
+        "2026-04-20",
+        "2026-04-27",
+        "2026-05-04",
+        "2026-05-11",
+        "2026-05-18",
+        "2026-05-25",
+        "2026-06-01",
+        "2026-06-08",
+        "2026-06-15",
+        "2026-06-22",
+        "2026-06-29",
+        "2026-07-06",
+        "2026-07-13",
+        "2026-07-20",
+        "2026-07-27"
+      ],
+      "series": [
+        {
+          "code": "SCFI",
+          "label": "SCFI 総合",
+          "values": [
+            1316.75,
+            1266.56,
+            1251.46,
+            1333.11,
+            1489.19,
+            1710.35,
+            1706.95,
+            1827,
+            1855,
+            1891,
+            1886.54,
+            1875,
+            1911,
+            1954,
+            2140.66,
+            2218,
+            2571.73,
+            2726,
+            2985,
+            3122,
+            3240,
+            3327,
+            3184.82,
+            3080,
+            3063,
+            3205.97
+          ]
+        },
+        {
+          "code": "CCFI",
+          "label": "CCFI 総合",
+          "values": [
+            1175.59,
+            1122.15,
+            1088.14,
+            1044.57,
+            1054.26,
+            1072.16,
+            1120.61,
+            1139.04,
+            1184.7,
+            1209.84,
+            1211.08,
+            1233.76,
+            1269.64,
+            1278.79,
+            1280.46,
+            1317.36,
+            1366.76,
+            1411.6,
+            1480.11,
+            1599.07,
+            1710.47,
+            1811.15,
+            1873.15,
+            1910.67,
+            1901.27,
+            1857.04
+          ]
+        },
+        {
+          "code": "WCI",
+          "label": "WCI 総合",
+          "values": [
+            3820,
+            null,
+            null,
+            3120,
+            null,
+            null,
+            null,
+            null,
+            2710,
+            null,
+            null,
+            null,
+            2799,
+            null,
+            null,
+            null,
+            null,
+            3433,
+            3549,
+            3969,
+            4166,
+            4530,
+            4639,
+            4547,
+            4374,
+            4255
+          ]
+        },
+        {
+          "code": "FBX",
+          "label": "FBX 総合",
+          "values": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            2862.75,
+            2888.8,
+            3273.4,
+            3433,
+            3714.6,
+            3979.6,
+            3852.8,
+            3664.6,
+            3627.6
+          ]
+        }
+      ]
+    }
+  },
+  "rail": {
+    "source": "ERAI (Eurasian Rail Alliance Index)",
+    "asOf": "2026-08-01",
+    "indices": [
+      {
+        "code": "ERAI",
+        "label": "ERAI 総合",
+        "unit": null,
+        "value": 3704,
+        "changePct": 0.19,
+        "asOf": "2026-06-01"
+      },
+      {
+        "code": "ERAI_WEST",
+        "label": "ERAI 西航(中国→欧州)",
+        "unit": null,
+        "value": 3815,
+        "changePct": 0.05,
+        "asOf": "2026-06-01"
+      },
+      {
+        "code": "ERAI_EAST",
+        "label": "ERAI 東航(欧州→中国)",
+        "unit": null,
+        "value": 2604,
+        "changePct": 0.04,
+        "asOf": "2026-06-01"
+      },
+      {
+        "code": "ERAI_TRANSIT_DAYS",
+        "label": "ERAI 平均輸送日数",
+        "unit": "日",
+        "value": 7.48,
+        "changePct": null,
+        "asOf": "2026-08-01"
+      }
+    ],
+    "changeBasis": "前月比",
+    "note": "中国–欧州の鉄道運賃と輸送日数。日本発着ではないが、アジア–欧州の代替ルートとして参照する。変化率は前月比である。前年同月比ではない。"
+  },
+  "supply": {
+    "source": "Drewry Cancelled Sailings Tracker",
+    "unit": "sailings",
+    "scope": "主要East-West航路(アジア〜欧州・太平洋・大西洋)。日本発着に限った数字ではない。",
+    "asOf": "2026-07-31",
+    "blankedSailings": 58,
+    "plannedSailings": 723,
+    "blankPct": 8,
+    "recentNote": "公表週は連続していない。欠けている週がある。「直近N週」とは書かず、日付を挙げて「公表された直近N回」として述べる。",
+    "recent": [
+      {
+        "week": "2026-07-31",
+        "blankedSailings": 58,
+        "blankPct": 8
+      },
+      {
+        "week": "2026-07-17",
+        "blankedSailings": 39,
+        "blankPct": 5
+      },
+      {
+        "week": "2026-07-10",
+        "blankedSailings": 46,
+        "blankPct": 6
+      },
+      {
+        "week": "2026-07-03",
+        "blankedSailings": 48,
+        "blankPct": 7
+      },
+      {
+        "week": "2026-06-05",
+        "blankedSailings": 39,
+        "blankPct": 5.5
+      }
+    ],
+    "recentSpanWeeks": 9
+  },
+  "route": {
+    "unit": "TEU",
+    "northAmerica": {
+      "label": "北米往航(アジア→米国)",
+      "period": "2026-06",
+      "direction": "往航",
+      "source": "日本海事センター 北米コンテナ航路(PIERSデータを基に作成)",
+      "total": {
+        "name": "18ヶ国・地域 合計",
+        "teu": 1916307,
+        "yoyPct": 14,
+        "sharePct": 100,
+        "cumTeu": 10784755,
+        "cumYoyPct": 0.3
+      },
+      "japan": {
+        "name": "日本",
+        "teu": 53701,
+        "yoyPct": -3.2,
+        "sharePct": 2.8,
+        "cumTeu": 321930,
+        "cumYoyPct": -3.4
+      },
+      "peers": [
+        {
+          "name": "中国",
+          "teu": 954767,
+          "yoyPct": 25.5,
+          "sharePct": 49.8,
+          "cumTeu": 5223968,
+          "cumYoyPct": -3.7
+        },
+        {
+          "name": "韓国",
+          "teu": 108021,
+          "yoyPct": 0.9,
+          "sharePct": 5.6,
+          "cumTeu": 637425,
+          "cumYoyPct": -6.5
+        },
+        {
+          "name": "台湾",
+          "teu": 55234,
+          "yoyPct": -7.3,
+          "sharePct": 2.9,
+          "cumTeu": 305882,
+          "cumYoyPct": -11.3
+        },
+        {
+          "name": "ベトナム",
+          "teu": 313840,
+          "yoyPct": 3.4,
+          "sharePct": 16.4,
+          "cumTeu": 1799502,
+          "cumYoyPct": 9.8
+        }
+      ],
+      "hasCountryDetail": true
+    },
+    "europe": {
+      "label": "欧州往航(アジア→欧州)",
+      "period": "2026-05",
+      "direction": "往航",
+      "source": "日本海事センター 欧州コンテナ航路(Container Trades Statisticsを基に作成)",
+      "total": {
+        "name": "アジア 合計",
+        "teu": 1866984,
+        "yoyPct": 3.1,
+        "sharePct": 100,
+        "cumTeu": 8884023,
+        "cumYoyPct": 11.7
+      },
+      "japan": null,
+      "peers": [
+        {
+          "name": "北東アジア 計",
+          "teu": 144086,
+          "yoyPct": -9.8,
+          "sharePct": 7.7,
+          "cumTeu": 724251,
+          "cumYoyPct": -1.8
+        },
+        {
+          "name": "中華地域 計",
+          "teu": 1475375,
+          "yoyPct": 3.4,
+          "sharePct": 79,
+          "cumTeu": 7007861,
+          "cumYoyPct": 13.3
+        },
+        {
+          "name": "東南アジア 計",
+          "teu": 247523,
+          "yoyPct": 10.6,
+          "sharePct": 13.3,
+          "cumTeu": 1151906,
+          "cumYoyPct": 11.7
+        }
+      ],
+      "hasCountryDetail": false
+    },
+    "note": "北米は国別、欧州は地域別までの公表である。欧州航路に日本単独の数字は無く、日本は北東アジアに含まれる — 日本の数字として書かない。航路別の荷動き量であり、日本の港湾取扱量(港湾統計)とは母集団が異なる。両者を足したり、一方から他方を説明したりしない。"
+  },
+  "crossCheck": {
+    "checked": true,
+    "tradeTotalExport": 10926534582,
+    "commoditySum": 10926534582,
+    "diffPct": 0,
+    "ok": true
+  }
+}

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 336" width="720" height="336" font-family="Hiragino Sans, Yu Gothic, Meiryo, sans-serif">
+<rect width="720" height="336" fill="#ffffff"/>
+<text x="24" y="30" font-size="16" font-weight="700" fill="#1a2433">主要6港 コンテナ取扱量 前年同月比</text>
+<text x="24" y="50" font-size="11" fill="#828d9d">2026-05(速報値)</text>
+<text x="180" y="86" font-size="11" text-anchor="end" fill="#1a2433">東京港</text>
+<rect class="bar" x="190" y="75" width="3.8" height="16" rx="2" fill="#0d9488"/>
+<text x="199.7657070560116" y="87" font-size="11" fill="#828d9d">+0.06%</text>
+<text x="180" y="126" font-size="11" text-anchor="end" fill="#1a2433">横浜港</text>
+<rect class="bar" x="190" y="115" width="197.9" height="16" rx="2" fill="#0d9488"/>
+<text x="393.924569470136" y="127" font-size="11" fill="#828d9d">+3.05%</text>
+<text x="180" y="166" font-size="11" text-anchor="end" fill="#1a2433">名古屋港</text>
+<rect class="bar" x="190" y="155" width="50.7" height="16" rx="2" fill="#b45309"/>
+<text x="246.65968944211846" y="167" font-size="11" fill="#828d9d">-0.78%</text>
+<text x="180" y="206" font-size="11" text-anchor="end" fill="#1a2433">神戸港</text>
+<rect class="bar" x="190" y="195" width="46.2" height="16" rx="2" fill="#0d9488"/>
+<text x="242.23946574657256" y="207" font-size="11" fill="#828d9d">+0.71%</text>
+<text x="180" y="246" font-size="11" text-anchor="end" fill="#1a2433">大阪港</text>
+<rect class="bar" x="190" y="235" width="170.1" height="16" rx="2" fill="#b45309"/>
+<text x="366.06618679633993" y="247" font-size="11" fill="#828d9d">-2.62%</text>
+<text x="180" y="286" font-size="11" text-anchor="end" fill="#1a2433">川崎港</text>
+<rect class="bar" x="190" y="275" width="460.0" height="16" rx="2" fill="#b45309"/>
+<text x="656" y="287" font-size="11" fill="#828d9d">-7.09%</text>
+</svg>
