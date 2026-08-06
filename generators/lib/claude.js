@@ -32,13 +32,23 @@ function client() {
  * @param {string} [model] 호출부별 모델. 안 주면 CLAUDE_MODEL 또는 sonnet.
  *   일본 월간 리포트 본문은 opus를 쓴다 — 아래 WRITER_MODEL 주석 참고.
  */
+/**
+ * 한 호출의 상한. 실측으로 본문 생성(16k 예산)이 21초다.
+ *
+ * 상한이 없으면 소켓이 매달렸을 때 무한정 기다린다. 2026-08-05 실행이
+ * 18시간 걸린 적이 있는데 원인은 PC 절전이었다 — 코드 문제는 아니었지만,
+ * 네트워크가 끊겨도 증상이 같다. 밤새 돌려놓고 아침에 "안 끝났네"가 되지
+ * 않도록 상한을 둔다. 넉넉히 잡아 정상 호출은 걸리지 않는다.
+ */
+const CALL_TIMEOUT_MS = Number(process.env.CLAUDE_TIMEOUT_MS || 180000);
+
 async function callClaude({ system, messages, max_tokens = 8192, model }) {
   const res = await client().messages.create({
     model: model || MODEL(),
     max_tokens,
     ...(system ? { system } : {}),
     messages,
-  });
+  }, { timeout: CALL_TIMEOUT_MS });
   const text = res.content.filter((b) => b.type === 'text').map((b) => b.text).join('\n');
   return { content: [{ type: 'text', text }], usage: res.usage, stop_reason: res.stop_reason };
 }
