@@ -35,12 +35,33 @@ jobs:
       - name: Install deps
         run: npm ci
 
+      # 수집기는 키가 없으면 경고만 찍고 정상 종료한다(로컬에서 일부 축만 돌리려는 배려).
+      # CI에서는 그 배려가 독이다 — #1 실행이 여섯 축 중 넷을 건너뛰고도 초록불이 났다.
+      # 자격증명 누락은 여기서 먼저 막는다. 데이터가 늦은 것과 키가 없는 것은 다른 일이다.
+      - name: 자격증명 확인 (없으면 여기서 멈춘다)
+        env:
+          SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ESTAT_APP_ID:              ${{ secrets.ESTAT_APP_ID }}
+        run: |
+          missing=""
+          for k in SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY ESTAT_APP_ID; do
+            [ -n "$(eval echo \"\$$k\")" ] || missing="$missing $k"
+          done
+          [ -z "$missing" ] || {
+            echo "::error::Secrets 누락 —$missing (없으면 해당 축이 조용히 건너뛰어진다)"
+            exit 1
+          }
+          echo "자격증명 확인 완료"
+
       # 축 하나가 실패해도 나머지는 받는다. && 로 이으면 앞이 죽을 때 뒤가 통째로 빠진다.
       # 어느 축이 빠졌는지는 팩트시트가 KNOWN_GAPS 로 드러내므로 여기서 막지 않는다.
       - name: Collect (축별 독립 — 하나 실패해도 나머지 진행)
         env:
           SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          # 貿易·港湾 네 축이 이것으로 e-Stat 를 호출한다. #1 실행에서 빠뜨렸다.
+          ESTAT_APP_ID:              ${{ secrets.ESTAT_APP_ID }}
         run: |
           fail=0
           for s in collect:price:jp collect:trade:jp collect:trade:jp:commodity \
