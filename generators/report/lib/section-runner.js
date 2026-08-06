@@ -431,22 +431,29 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
     console.warn(`   ⚠️ PASS 1이 max_tokens에서 잘림! 상향 필요`);
 
   // PASS 2: 자기검수 + 수정
+  //
+  // 예산은 PASS 1의 두 배. sonnet-5는 사고 과정이 max_tokens를 함께 먹으므로,
+  // 초안을 통째로 다시 쓰는 이 패스는 초안보다 훨씬 큰 여유가 필요하다.
+  // 16000으로는 2026-08호에서 7섹션 중 5섹션이 한도에 걸렸다.
   console.log(`⏳ [${sectionConfig.id}] PASS 2 — 자기검수·수정...`);
   const pass2Res = await callWithRetry(
     () => client.messages.create({
       model:      'claude-sonnet-5',
-      max_tokens: 16000,
+      max_tokens: 32000,
       system:     buildCritiqueSystemPrompt(styleGuide),
       messages:   [{ role: 'user', content: buildCritiqueUserPrompt(draft) }],
     }),
     { tries: 3, baseMs: 4000 }
   );
-  let revised = pass2Res.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
+  const pass2Text = pass2Res.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
   const p2In  = pass2Res.usage?.input_tokens  || 0;
   const p2Out = pass2Res.usage?.output_tokens || 0;
   console.log(`   ✓ PASS 2 완료 (출력 ${p2Out} / 입력 ${p2In} tokens)`);
-  if (pass2Res.stop_reason === 'max_tokens')
-    console.warn(`   ⚠️ PASS 2가 max_tokens에서 잘림! 상향 필요`);
+
+  let revised = pickRevision(draft, pass2Text, pass2Res.stop_reason);
+  if (revised !== pass2Text)
+    console.warn(`   ⚠️ [${sectionConfig.id}] PASS 2 폐기 — 초안(PASS 1)으로 되돌림`
+      + ` (stop=${pass2Res.stop_reason}, 초안 ${draft.length}자 → 검수 ${pass2Text.length}자)`);
 
   // ocean 섹션: per-index 차트+표 주입 (02-1~02-5 각 소제목 아래, 둘째 지수부터 새 페이지)
   if (sectionConfig.id === 'ocean' && oceanBlocks && oceanBlocks.length) {
@@ -644,6 +651,31 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
   return { status: 'draft', text: revised, pass1Tokens: p1Out, pass2Tokens: p2Out };
 }
 
+/**
+ * PASS 2를 채택할지 초안을 지킬지 고른다.
+ *
+ * PASS 2는 초안을 고치는 패스다. 고치기에 실패했으면 고쳐지기 전 것이 남아야지,
+ * 빈 문자열이 남아서는 안 된다. 2026-08호에서 그 일이 실제로 벌어졌다 —
+ * sonnet-5의 사고 과정이 max_tokens를 다 먹고 본문 블록이 비어 돌아왔는데,
+ * 코드가 그 빈 값을 그대로 채택했다. 7섹션 중 5섹션에서 산문이 통째로 사라지고
+ * 코드가 주입한 표만 남았다(air.md 398바이트). 생성기는 exit 0으로 끝났다.
+ *
+ * 한도에 걸린 응답은 길이와 무관하게 버린다. 문장 중간에서 끊긴 원고는
+ * 손대지 않은 초안보다 낫지 않다.
+ *
+ * @param {string} draft PASS 1 초안
+ * @param {string} revised PASS 2 결과
+ * @param {string} stopReason 응답의 stop_reason
+ */
+function pickRevision(draft, revised, stopReason) {
+  if (!draft || !draft.trim()) return revised;           // 초안이 없으면 지킬 것이 없다
+  if (stopReason === 'max_tokens') return draft;
+  if (!revised || !revised.trim()) return draft;
+  // 검수가 초안의 절반 아래로 줄었다면 다듬은 것이 아니라 잃은 것이다.
+  if (revised.length < draft.length * 0.5) return draft;
+  return revised;
+}
+
 // ── File I/O ─────────────────────────────────────────────────────────────────
 
 function saveSectionFile(outDir, sectionId, month, status, text, extra = {}) {
@@ -661,4 +693,4 @@ function saveSectionFile(outDir, sectionId, month, status, text, extra = {}) {
   return outPath;
 }
 
-module.exports = { runSection, saveSectionFile, parseFrontmatter };
+module.exports = { runSection, saveSectionFile, parseFrontmatter, pickRevision };
