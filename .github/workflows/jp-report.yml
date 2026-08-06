@@ -25,6 +25,13 @@ on:
         type: boolean
         default: false
 
+# 수집이 세 번 돌면 이것도 세 번 붙는다. 겹쳐 돌면 같은 회차를 여러 벌 쓰고,
+# 끝에서 셋이 같은 브랜치에 초안을 커밋하려 밀친다.
+# 나중 것이 최신 데이터를 쓰므로 앞선 것을 취소한다.
+concurrency:
+  group: jp-report
+  cancel-in-progress: true
+
 jobs:
   draft-jp:
     runs-on: ubuntu-latest

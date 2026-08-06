@@ -17,6 +17,11 @@ on:
     - cron: '0 20 22,26,30 * *'   # 매월 22·26·30일 05:00 KST
   workflow_dispatch:
 
+# 같은 테이블에 동시에 upsert 하지 않는다. 먼저 것을 끝내고 다음을 돌린다.
+concurrency:
+  group: jp-collect
+  cancel-in-progress: false
+
 jobs:
   collect-jp:
     runs-on: ubuntu-latest
