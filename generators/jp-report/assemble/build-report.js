@@ -11,6 +11,7 @@ const path = require('path');
 const { marked } = require('marked');
 
 const { deriveTitle, deriveDescription, buildJsonLd, periodJa, SITE_NAME } = require('./seo');
+const { checkJargon } = require('../verify/jargon');
 const {
   sppiChart, portChart, globalTrendChart, sppiTrendChart, tradeChart,
 } = require('../image/charts');
@@ -120,6 +121,15 @@ const TOOL_NOTE = [
 ].join('\n');
 
 function assemble({ markdown, period, factsheet, publishedAt }) {
+  // 발행 직전 마지막 관문. writer 단계에서 잡지만, 마지막 재시도에서는
+  // 「기록 후 통과」로 빠져나올 수 있다. 독자에게 나가는 문서에는 없어야 한다.
+  // 2026-06호가 「fxYoyPctで示される為替の寄与は…」를 실은 채 발행됐다.
+  const jargon = checkJargon(markdown);
+  if (!jargon.ok) {
+    const list = jargon.hits.map((h) => `「${h.token}」 … ${h.context}`).join('\n   ');
+    throw new Error(`내부 명칭이 본문에 남아 있다 — 조립을 멈춘다.\n   ${list}`);
+  }
+
   const title = deriveTitle(markdown, period);
   const description = deriveDescription(markdown);
   const url = `${SITE_URL}/reports/${period}`;

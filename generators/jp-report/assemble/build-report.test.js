@@ -94,3 +94,33 @@ test('assemble: 벤치마크 도구 안내를 끝에 붙인다', () => {
   // 본문 뒤에 온다 — 앞에 끼면 첫 h2가 제목으로 잡히는 흐름이 깨진다.
   assert.ok(r.markdown.indexOf('本文。') < r.markdown.indexOf('物流費ベンチマーク'));
 });
+
+// 발행 직전 마지막 관문. writer가 놓쳐도 여기서 멈춰야 한다.
+// 2026-06호가 「fxYoyPctで示される為替の寄与は…」를 실은 채 발행됐다.
+test('assemble: 내부 명칭이 남아 있으면 멈춘다', () => {
+  const facts = {
+    periods: { sppi: '2026-06' }, sppi: { series: [], history: [], baseYear: '2020' },
+    global: { indices: [], history: [] }, port: { ports: [] },
+    trade: { countries: [] }, commodity: { export: [], import: [] },
+  };
+  assert.throws(
+    () => assemble({
+      markdown: '## 01. 総論\n\nfxYoyPctで示される為替の寄与は+11.2%だった。',
+      period: '2026-06', factsheet: facts, publishedAt: '2026-08-05T00:00:00Z',
+    }),
+    /내부 명칭이 본문에 남아 있다/,
+  );
+});
+
+test('assemble: 깨끗한 본문은 통과한다', () => {
+  const facts = {
+    periods: { sppi: '2026-06' }, sppi: { series: [], history: [], baseYear: '2020' },
+    global: { indices: [], history: [] }, port: { ports: [] },
+    trade: { countries: [] }, commodity: { export: [], import: [] },
+  };
+  const r = assemble({
+    markdown: '## 01. 総論\n\n為替換算による上乗せは+11.2%だった。',
+    period: '2026-06', factsheet: facts, publishedAt: '2026-08-05T00:00:00Z',
+  });
+  assert.match(r.markdown, /為替換算による上乗せ/);
+});

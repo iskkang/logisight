@@ -17,6 +17,8 @@ const { reviewSection, needsRewrite, buildIssueFeedback, splitBySeverity } = req
 const { generationOrder, outputOrder, slimFactsheet } = require('./sections');
 const { checkHedges, hedgeFeedback } = require('../verify/hedges');
 const { checkContinuity, continuityFeedback } = require('../verify/continuity');
+const { checkJargon, jargonFeedback } = require('../verify/jargon');
+const { checkCausation, causationFeedback } = require('../verify/causation');
 const { composeSection } = require('./heading');
 const { tablesFor } = require('./tables');
 
@@ -58,7 +60,7 @@ function systemPrompt() {
   ].join('\n');
 }
 
-function userPrompt(section, slim, digests, violations, issues, hedgeNote, phraseNote) {
+function userPrompt(section, slim, digests, violations, issues, hedgeNote, phraseNote, jargonNote, causeNote) {
   const parts = [
     `セクション「${section.no}. ${section.title}」の本文を書け。`,
     '',
@@ -80,7 +82,8 @@ function userPrompt(section, slim, digests, violations, issues, hedgeNote, phras
     '',
     // 金額は既に億円に換算して渡す。モデルに割り算をさせると表と1億円ずれた。
     '【ファクトシート】単位: 金額=億円(換算済み), 運賃=指数(2020年=100), 港湾=TEU',
-    '金額は自分で計算しない。exportOku などの値をそのまま使う。'
+    '【重要】ファクトシートの項目名(英数字のキー)を本文に書かない。必ず日本語に言い換える。',
+    '金額は自分で計算しない。換算済みの金額の値をそのまま使う。'
     + '1万億円以上は「10兆9265億円」のように兆で区切ってよいが、下4桁は変えない。',
     JSON.stringify(slim),
   );
@@ -94,6 +97,8 @@ function userPrompt(section, slim, digests, violations, issues, hedgeNote, phras
   }
   if (hedgeNote) parts.push('', hedgeNote);
   if (phraseNote) parts.push('', phraseNote);
+  if (jargonNote) parts.push('', jargonNote);
+  if (causeNote) parts.push('', causeNote);
   if (issues && issues.length > 0) {
     parts.push('', '【前回の指摘・編集】編集デスクの指摘である。すべて反映して書き直せ。',
       buildIssueFeedback(issues));
@@ -123,6 +128,8 @@ async function writeSection(section, factsheet, digests) {
   let issues = null;
   let hedgeNote = null;
   let phraseNote = null;
+  let jargonNote = null;
+  let causeNote = null;
   let body = '';
 
   for (let attempt = 0; attempt <= MAX_RETRY; attempt += 1) {
@@ -130,7 +137,7 @@ async function writeSection(section, factsheet, digests) {
       model: WRITER_MODEL,
       max_tokens: MAX_TOKENS,
       system: systemPrompt(),
-      messages: [{ role: 'user', content: userPrompt(section, slim, digests, violations, issues, hedgeNote, phraseNote) }],
+      messages: [{ role: 'user', content: userPrompt(section, slim, digests, violations, issues, hedgeNote, phraseNote, jargonNote, causeNote) }],
     });
     body = textOf(res);
     if (!body) throw new Error(`${section.id}: 본문이 비었다 (thinking이 예산을 소진했을 수 있다)`);
@@ -165,6 +172,28 @@ async function writeSection(section, factsheet, digests) {
       continue;
     }
     phraseNote = null;
+
+    // 내부 명칭이 본문에 나오면 무조건 다시 쓴다. 2026-06호 발행본에
+    // 「fxYoyPctで示される為替の寄与は…」가 그대로 실렸다.
+    const jargon = checkJargon(body);
+    if (!jargon.ok && !last) {
+      issues = null;
+      jargonNote = jargonFeedback(jargon);
+      console.warn(`  ⚠️ ${section.id}: 내부 명칭 노출 ${jargon.hits.length}건(${jargon.hits.map((h) => h.token).join(', ')}) — 재생성`);
+      continue;
+    }
+    jargonNote = null;
+
+    // 인과 단정과 %/포인트 혼동. 발행본이 「円ベース+52.8%のうち為替が+11.2%」로
+    // 곱 관계를 뺄셈처럼 썼고, 「半分近くを為替が押し上げた」로 인과를 단정했다.
+    const causation = checkCausation(body);
+    if (!causation.ok && !last) {
+      issues = null;
+      causeNote = causationFeedback(causation);
+      console.warn(`  ⚠️ ${section.id}: 인과·비율 표현 ${causation.hits.length}건 — 재생성`);
+      continue;
+    }
+    causeNote = null;
 
     // 검수자에게는 전체 팩트시트를 준다. 슬림본을 주면 총론이 인용한 수치를
     // 출처 불명으로 오판한다(실제로 그렇게 오탐이 났다).
