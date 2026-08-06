@@ -20,6 +20,7 @@ const { checkContinuity, continuityFeedback } = require('../verify/continuity');
 const { checkJargon, jargonFeedback } = require('../verify/jargon');
 const { checkCausation, causationFeedback } = require('../verify/causation');
 const { composeSection } = require('./heading');
+const cache = require('./cache');
 const { tablesFor } = require('./tables');
 
 const STYLE = fs.readFileSync(path.join(__dirname, 'STYLE.ja.md'), 'utf8');
@@ -118,6 +119,39 @@ function digestOf(body) {
 }
 
 /**
+ * 호출이 없는 검사들. 하나라도 걸리면 그 자리에서 돌려준다.
+ *
+ * 한곳에 모아두는 이유: 저장분을 되쓸 때도 이것들은 전부 다시 돌려야 한다.
+ * 검사기를 새로 추가했을 때, 예전에 통과한 본문이 그 검사를 건너뛰면 안 된다.
+ */
+function deterministicChecks(body, factsheet) {
+  const numbers = verifyNumbers(body, factsheet);
+  if (!numbers.ok) {
+    return { label: `수치 위반 ${numbers.violations.length}건`, violations: numbers.violations };
+  }
+  const hedges = checkHedges(body);
+  if (!hedges.ok) {
+    return { label: `유보 문구 ${hedges.sentences.length}건(상한 ${hedges.cap})`, note: hedgeFeedback(hedges), slot: 'hedge' };
+  }
+  const continuity = checkContinuity(body);
+  if (!continuity.ok) {
+    return { label: `지속 표현 ${continuity.hits.length}건`, note: continuityFeedback(continuity), slot: 'phrase' };
+  }
+  const jargon = checkJargon(body);
+  if (!jargon.ok) {
+    return {
+      label: `내부 명칭 노출 ${jargon.hits.length}건(${jargon.hits.map((h) => h.token).join(', ')})`,
+      note: jargonFeedback(jargon), slot: 'jargon',
+    };
+  }
+  const causation = checkCausation(body);
+  if (!causation.ok) {
+    return { label: `인과·비율 표현 ${causation.hits.length}건`, note: causationFeedback(causation), slot: 'cause' };
+  }
+  return null;
+}
+
+/**
  * 두 층으로 검수한다.
  * (a) 결정적 수치 대조 — 코드. 통과해야 (b)로 넘어간다(틀린 수치를 편집 검수에 보낼 이유가 없다).
  * (b) LLM 편집 검수 — 추측·출처 없는 단정·signals 누락·문체.
@@ -144,56 +178,29 @@ async function writeSection(section, factsheet, digests) {
 
     const last = attempt === MAX_RETRY;
 
-    const numbers = verifyNumbers(body, factsheet);
-    if (!numbers.ok) {
-      violations = numbers.violations;
+    const fail = deterministicChecks(body, factsheet);
+    if (fail) {
+      violations = fail.violations || null;
       issues = null;
-      console.warn(`  ⚠️ ${section.id}: 수치 위반 ${violations.length}건 — ${last ? '기록 후 통과' : '재생성'}`);
-      continue;
+      hedgeNote = fail.slot === 'hedge' ? fail.note : null;
+      phraseNote = fail.slot === 'phrase' ? fail.note : null;
+      jargonNote = fail.slot === 'jargon' ? fail.note : null;
+      causeNote = fail.slot === 'cause' ? fail.note : null;
+      console.warn(`  ⚠️ ${section.id}: ${fail.label} — ${last ? '미해결로 기록' : '재생성'}`);
+      if (!last) continue;
+      // 마지막 시도에도 걸렸다. 통과시키지 않는다 — 저장도 하지 않는다.
+      // 여기서 깨끗한 것으로 돌려주면 캐시에 들어가 다음 회차가 그대로 되쓴다.
+      return {
+        body,
+        violations: fail.violations || [],
+        issues: fail.violations ? [] : [{ type: 'deterministic', reason: fail.label }],
+        warnings: [],
+        attempts: attempt + 1,
+      };
+    } else {
+      violations = null;
+      hedgeNote = null; phraseNote = null; jargonNote = null; causeNote = null;
     }
-    violations = null;
-
-    // 유보 문구도 코드로 센다. LLM 검수에 맡기면 회차마다 흔들린다.
-    const hedges = checkHedges(body);
-    if (!hedges.ok && !last) {
-      issues = null;
-      hedgeNote = hedgeFeedback(hedges);
-      console.warn(`  ⚠️ ${section.id}: 유보 문구 ${hedges.sentences.length}건(상한 ${hedges.cap}) — 재생성`);
-      continue;
-    }
-    hedgeNote = null;
-
-    // 근거 없는 지속 부사도 코드로 잡는다. LLM 검수가 잡아도 2회 재시도로는 안 고쳐졌다.
-    const continuity = checkContinuity(body);
-    if (!continuity.ok && !last) {
-      issues = null;
-      phraseNote = continuityFeedback(continuity);
-      console.warn(`  ⚠️ ${section.id}: 지속 표현 ${continuity.hits.length}건 — 재생성`);
-      continue;
-    }
-    phraseNote = null;
-
-    // 내부 명칭이 본문에 나오면 무조건 다시 쓴다. 2026-06호 발행본에
-    // 「fxYoyPctで示される為替の寄与は…」가 그대로 실렸다.
-    const jargon = checkJargon(body);
-    if (!jargon.ok && !last) {
-      issues = null;
-      jargonNote = jargonFeedback(jargon);
-      console.warn(`  ⚠️ ${section.id}: 내부 명칭 노출 ${jargon.hits.length}건(${jargon.hits.map((h) => h.token).join(', ')}) — 재생성`);
-      continue;
-    }
-    jargonNote = null;
-
-    // 인과 단정과 %/포인트 혼동. 발행본이 「円ベース+52.8%のうち為替が+11.2%」로
-    // 곱 관계를 뺄셈처럼 썼고, 「半分近くを為替が押し上げた」로 인과를 단정했다.
-    const causation = checkCausation(body);
-    if (!causation.ok && !last) {
-      issues = null;
-      causeNote = causationFeedback(causation);
-      console.warn(`  ⚠️ ${section.id}: 인과·비율 표현 ${causation.hits.length}건 — 재생성`);
-      continue;
-    }
-    causeNote = null;
 
     // 검수자에게는 전체 팩트시트를 준다. 슬림본을 주면 총론이 인용한 수치를
     // 출처 불명으로 오판한다(실제로 그렇게 오탐이 났다).
@@ -215,19 +222,41 @@ async function writeSection(section, factsheet, digests) {
   return { body, violations: violations || [], issues: blocking, warnings, attempts: MAX_RETRY + 1 };
 }
 
-async function writeReport(factsheet) {
+async function writeReport(factsheet, { fresh = false } = {}) {
+  const period = factsheet.generatedFor;
+  if (fresh) cache.clear(period);
+
   const digests = [];
   const bodies = new Map();
   const allViolations = [];
+  let reused = 0;
 
   for (const section of generationOrder()) {
+    const slim = slimFactsheet(factsheet, section.id);
+    const fp = cache.fingerprint({ slim, section, style: STYLE, seo: SEO, digests });
+
+    // 저장분이 있어도 결정적 검사는 다시 돌린다. 검사기를 새로 추가했을 때
+    // 예전에 통과한 본문이 그 검사를 건너뛰면 안 된다.
+    const saved = cache.read(period, section.id, fp);
+    if (saved && !deterministicChecks(saved, factsheet)) {
+      console.log(`  ▸ ${section.no}. ${section.title} — 저장분 사용`);
+      bodies.set(section.id, composeSection(saved, section, tablesFor(section.id, factsheet)));
+      if (!section.generateLast) digests.push({ title: section.title, digest: digestOf(saved) });
+      reused += 1;
+      continue;
+    }
+
     console.log(`  ▸ ${section.no}. ${section.title}`);
     const { body, violations, issues } = await writeSection(section, factsheet, digests);
     // 섹션 제목과 표는 코드가 찍는다 — 모델은 소섹션 번호를 빠뜨리고,
     // 표를 그리게 하면 수치 오류가 섞인다. 목차·앵커가 번호에 의존한다.
     bodies.set(section.id, composeSection(body, section, tablesFor(section.id, factsheet)));
+
     if (violations.length > 0 || issues.length > 0) {
       allViolations.push({ section: section.id, violations, issues });
+      // 막힌 본문은 저장하지 않는다. 저장하면 다음 회차가 그걸 되쓴다.
+    } else {
+      cache.write(period, section.id, fp, body);
     }
     // 총론은 요지를 소비하는 쪽이므로 자신의 요지는 넘기지 않는다.
     if (!section.generateLast) digests.push({ title: section.title, digest: digestOf(body) });
@@ -238,7 +267,7 @@ async function writeReport(factsheet) {
     .filter(Boolean)
     .join('\n\n---\n\n');
 
-  return { markdown, violations: allViolations, period: factsheet.generatedFor };
+  return { markdown, violations: allViolations, period, reused, total: generationOrder().length };
 }
 
 async function main() {
@@ -250,21 +279,27 @@ async function main() {
   const factsheet = JSON.parse(fs.readFileSync(factsPath, 'utf8'));
   const outPath = arg('out', path.resolve(__dirname, `../../../content/drafts/jp-report-${factsheet.generatedFor}.md`));
 
-  console.log(`📝 일본 월간 리포트 생성 (${factsheet.generatedFor})`);
-  const { markdown, violations } = await writeReport(factsheet);
-
-  fs.mkdirSync(path.dirname(outPath), { recursive: true });
-  fs.writeFileSync(outPath, markdown, 'utf8');
-  console.log(`✅ ${outPath} (${markdown.length}자)`);
+  const fresh = process.argv.includes('--fresh');
+  console.log(`📝 일본 월간 리포트 생성 (${factsheet.generatedFor})${fresh ? ' — 저장분 버리고 전부 다시 씀' : ''}`);
+  const { markdown, violations, period, reused, total } = await writeReport(factsheet, { fresh });
 
   if (violations.length > 0) {
-    console.warn(`⚠️ 미해결 지적이 남은 섹션 ${violations.length}개 — 발행하지 않는다`);
+    // 통과한 섹션은 저장돼 있다. 다음 실행은 막힌 섹션만 다시 쓴다.
+    console.warn(`
+⚠️ 미해결 ${violations.length}개 섹션 — 원고를 조합하지 않는다`);
     violations.forEach((v) => {
       v.violations.forEach((x) => console.warn(`   ${v.section} 수치: 「${x.raw}」 …${x.context}…`));
       v.issues.forEach((x) => console.warn(`   ${v.section} 편집(${x.type}): ${x.reason}`));
     });
+    console.warn(`   통과 ${total - violations.length}/${total}개는 저장했다. 다시 실행하면 남은 것만 쓴다.`);
+    console.warn(`   저장 위치: ${path.join(cache.ROOT, String(period))}`);
     process.exitCode = 2; // 발행 파이프라인이 이 코드를 보고 멈춘다(fail-closed)
+    return;
   }
+
+  fs.mkdirSync(path.dirname(outPath), { recursive: true });
+  fs.writeFileSync(outPath, markdown, 'utf8');
+  console.log(`✅ ${outPath} (${markdown.length}자 · 저장분 재사용 ${reused}/${total})`);
 }
 
 if (require.main === module) {
