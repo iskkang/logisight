@@ -161,7 +161,7 @@ async function main() {
       } else {
         const { error } = await supabase
           .from('maritime_news')
-          .upsert(jaRow, { onConflict: 'url', ignoreDuplicates: false });
+          .upsert(jaRow, { onConflict: 'url,lang', ignoreDuplicates: false });
         if (error) throw new Error(error.message);
         console.log(`   ✅ ${jaRow.slug} | ${jaRow.title}`);
       }

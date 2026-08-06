@@ -56,7 +56,7 @@ function recordImage(asset) {
 async function upsert(row, section, mode) {
   const { error } = await supabase
     .from('maritime_news')
-    .upsert(row, { onConflict: 'url', ignoreDuplicates: false });
+    .upsert(row, { onConflict: 'url,lang', ignoreDuplicates: false });
   if (error) throw new Error(error.message);
   stats.published[section]++;
   console.log(`✅ [${section}][${mode}] ${row.title.slice(0, 50)}`);

@@ -63,6 +63,9 @@ jobs:
           SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           DEEPSEEK_API_KEY:          ${{ secrets.DEEPSEEK_API_KEY }}
+          # 뉴스 요약은 판단이 아니라 압축이다. 하루 50건이라 모델값이 그대로 비용이 된다.
+          # 리포트 생성·검수 쪽은 판단이 들어가므로 기본값(deepseek-v4-pro)을 유지한다.
+          DEEPSEEK_MODEL:            deepseek-v4-flash
           LIMIT:                     ${{ inputs.limit || '25' }}
         run: npm run collect:news:jp -- --limit="$LIMIT"
 

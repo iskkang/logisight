@@ -84,7 +84,7 @@ async function main() {
         title: generated.title || item.title,
         summary,
         content: generated.body,
-        url: item.url, // onConflict url → 기존 en 행을 ko 로 교체
+        url: item.url, // 원문 URL. 같은 URL의 en 행은 아래에서 지운다
         source: item.source || 'index1520',
         category: '철도',
         lang: 'ko',
@@ -101,8 +101,15 @@ async function main() {
 
       const { error: upErr } = await supabase
         .from('maritime_news')
-        .upsert(row, { onConflict: 'url', ignoreDuplicates: false });
+        .upsert(row, { onConflict: 'url,lang', ignoreDuplicates: false });
       if (upErr) throw new Error(upErr.message);
+
+      // 예전에는 url 이 전역 유일이라 upsert 한 번으로 en 행이 ko 로 바뀌었다.
+      // 유일키가 (url, lang) 이 되면서 en 행이 그대로 남으므로 명시적으로 지운다.
+      // 원문(en)은 이 한국어 기사로 대체된 것이고, 둘 다 목록에 뜨면 중복이다.
+      const { error: delErr } = await supabase
+        .from('maritime_news').delete().eq('url', item.url).eq('lang', 'en');
+      if (delErr) console.warn(`⚠️  en 행 삭제 실패(무시): ${delErr.message}`);
 
       published += 1;
       console.log(`✅ [철도/유라시아] ${row.title.slice(0, 50)}`);
