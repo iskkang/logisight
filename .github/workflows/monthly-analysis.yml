@@ -8,7 +8,9 @@ on:
 jobs:
   collect-monthly:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # 2026-08-02 실행이 20분 18초에 잘려 8월 초안이 통째로 사라졌다.
+    # 7섹션 × (생성 + 2패스 자체검수)가 20분에 안 들어간다. 첫 실행은 특히 그렇다.
+    timeout-minutes: 45
     permissions:
       contents: write
 
@@ -37,6 +39,29 @@ jobs:
           SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           DEEPSEEK_API_KEY:          ${{ secrets.DEEPSEEK_API_KEY }}
+
+      # 섹션이 끝나는 대로 남긴다.
+      #
+      # 2026-08-02 실행은 생성 도중 잘렸고, 커밋이 파이프라인 맨 끝에만 있어서
+      # 러너와 함께 섹션 파일이 전부 사라졌다. 재실행해도 처음부터 다시 쓰고,
+      # 다시 상한에 걸린다 — 계속 실패하는 구조였다.
+      #
+      # run-section.js 는 이미 approved 섹션을 건너뛴다. 여기서 커밋만 해두면
+      # 다음 실행이 남은 섹션만 쓴다. 조립이 실패해도 진행분은 남는다.
+      - name: 섹션 진행분 커밋 (조립 전 — 잘려도 다시 쓰지 않도록)
+        if: always()
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add content/monthly-report/**/*.md content/monthly-report/**/forecasts.json 2>/dev/null || true
+          git diff --cached --quiet && { echo "진행분 없음"; exit 0; }
+          git commit -m "chore(monthly): sections in progress $(date -u +%Y-%m)"
+          for i in 1 2 3; do
+            if git pull --rebase --autostash origin main && git push; then exit 0; fi
+            echo "push attempt $i failed — retrying"; sleep 5
+          done
+          # 진행분 저장은 최선 노력이다. 여기서 실패해도 본 작업을 멈추지 않는다.
+          echo "::warning::섹션 진행분 push 실패 — 다음 실행이 처음부터 쓰게 된다"
 
       - name: Assemble report (force — CI auto-approval)
         run: node generators/report/assemble-monthly-report.js --force

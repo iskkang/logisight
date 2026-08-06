@@ -49,6 +49,7 @@ jobs:
           echo "Chrome: $BIN"
 
       - name: PDF 생성 + 발행
+        id: pub
         env:
           MONTH: ${{ steps.m.outputs.month }}
           PUPPETEER_EXECUTABLE_PATH: ${{ steps.chrome.outputs.path }}
@@ -71,7 +72,11 @@ jobs:
           echo "::error::publish PDF push failed after 3 attempts"; exit 1
 
       - name: 최종 검증 (QA — 기계 린트 + Claude 교차모델)
-        if: always()   # 발행이 진행됐으면 검증은 항상 수행
+        # 발행이 성공했을 때만 검증한다. always() 로 두면 발행이 실패한 회차에서도
+        # 돌아 「QA Critical 결함 … 발행 자체는 유지됨」이라는 틀린 메시지를 낸다.
+        # 2026-08-06 실행이 그랬다 — 실제 원인은 초안 부재였는데 QA 결함으로 보였다.
+        # always() 는 남긴다. 발행 뒤 PDF 커밋이 실패해도 검증은 해야 한다.
+        if: always() && steps.pub.outcome == 'success'
         env:
           MONTH: ${{ steps.m.outputs.month }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
