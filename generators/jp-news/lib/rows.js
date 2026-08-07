@@ -41,9 +41,23 @@ const CATEGORY_JA = {
 
 const categoryJa = (ko) => CATEGORY_JA[ko] ?? '物流';
 
+/**
+ * 日次ダイジェストは訳さない。
+ *
+ * 韓国版は一日分をまとめた「글로벌 물류 동향 브리프」を毎日作る。中身は
+ * その日の個別記事の寄せ集めで、日付だけが違う同じ見出しになる。これを
+ * そのまま訳して入れたところ、日本版のニュース一覧が
+ * 「2026-07-30 グローバル物流動向ブリーフ」の列で埋まった(56件)。
+ *
+ * 個々の記事はグローバル媒体の記事として別に入るので、同じ内容を二度見せる
+ * ことにもなる。訳す対象から外す。
+ */
+const DIGEST_TITLE = /글로벌\s*물류\s*동향\s*브리프|グローバル物流動向ブリーフ/;
+
 /** すでに日本語行がある記事は飛ばす。再実行で未処理分だけを拾えるようにする。 */
 function needsTranslation(row, doneSlugs) {
   if (!row.slug) return false;
+  if (DIGEST_TITLE.test(row.title || '')) return false;
   return !doneSlugs.has(jaSlug(row));
 }
 

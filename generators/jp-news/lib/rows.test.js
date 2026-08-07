@@ -95,3 +95,19 @@ test('needsTranslation: 이미 번역된 건 건너뛴다', () => {
 test('needsTranslation: slug가 없으면 대상이 아니다', () => {
   assert.equal(needsTranslation({ ...SRC, slug: null }, new Set()), false);
 });
+
+// 일일 다이제스트는 옮기지 않는다.
+// 한국판이 매일 만드는 「글로벌 물류 동향 브리프」를 그대로 번역해 넣었더니
+// 일본판 뉴스 목록이 날짜만 다른 같은 제목으로 56건 덮였다.
+// 그 안의 개별 기사는 글로벌 매체 기사로 따로 들어오므로 중복이기도 하다.
+test('일일 다이제스트는 번역 대상에서 뺀다', () => {
+  const done = new Set();
+  assert.equal(needsTranslation({ slug: 'n1', title: '2026-07-30 글로벌 물류 동향 브리프' }, done), false);
+  assert.equal(needsTranslation({ slug: 'n2', title: '글로벌 물류 동향 브리프(2026-07-18)' }, done), false);
+  // 이미 일본어로 들어간 것도 다시 잡히면 안 된다
+  assert.equal(needsTranslation({ slug: 'n3', title: '2026-08-01 グローバル物流動向ブリーフ' }, done), false);
+});
+
+test('보통 기사는 그대로 번역 대상', () => {
+  assert.equal(needsTranslation({ slug: 'n4', title: '머스크, FI2 신규 서비스 론칭' }, new Set()), true);
+});
