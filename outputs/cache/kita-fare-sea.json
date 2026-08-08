@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-08-01T19:03:43.224Z",
+  "fetchedAt": "2026-08-08T18:31:59.923Z",
   "routes": [
     {
       "originName": "부산",
@@ -96,6 +96,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -189,6 +196,13 @@
           "feu": 7550,
           "teuChg": 2040,
           "feuChg": 2600
+        },
+        {
+          "yearMon": "202608",
+          "teu": 6200,
+          "feu": 7600,
+          "teuChg": 200,
+          "feuChg": 50
         }
       ]
     },
@@ -287,6 +301,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -380,6 +401,13 @@
           "feu": 7550,
           "teuChg": 2040,
           "feuChg": 2600
+        },
+        {
+          "yearMon": "202608",
+          "teu": 6200,
+          "feu": 7600,
+          "teuChg": 200,
+          "feuChg": 50
         }
       ]
     },
@@ -478,6 +506,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -571,6 +606,13 @@
           "feu": 7550,
           "teuChg": 2040,
           "feuChg": 2600
+        },
+        {
+          "yearMon": "202608",
+          "teu": 6200,
+          "feu": 7600,
+          "teuChg": 200,
+          "feuChg": 50
         }
       ]
     },
@@ -669,6 +711,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -764,11 +813,18 @@
           "feuChg": 3350
         },
         {
+          "yearMon": "202608",
+          "teu": 9400,
+          "feu": 11000,
+          "teuChg": 1900,
+          "feuChg": 1500
+        },
+        {
           "yearMon": "202507",
           "teu": 4300,
           "feu": 4800,
-          "teuChg": -3200,
-          "feuChg": -4700
+          "teuChg": -5100,
+          "feuChg": -6200
         },
         {
           "yearMon": "202508",
@@ -853,6 +909,13 @@
           "feu": 9500,
           "teuChg": 2500,
           "feuChg": 3350
+        },
+        {
+          "yearMon": "202608",
+          "teu": 9400,
+          "feu": 11000,
+          "teuChg": 1900,
+          "feuChg": 1500
         }
       ]
     },
@@ -951,6 +1014,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -1044,6 +1114,13 @@
           "feu": 9500,
           "teuChg": 2500,
           "feuChg": 3350
+        },
+        {
+          "yearMon": "202608",
+          "teu": 9400,
+          "feu": 11000,
+          "teuChg": 1900,
+          "feuChg": 1500
         }
       ]
     },
@@ -1142,6 +1219,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -1235,6 +1319,13 @@
           "feu": 9500,
           "teuChg": 2500,
           "feuChg": 3350
+        },
+        {
+          "yearMon": "202608",
+          "teu": 9400,
+          "feu": 11000,
+          "teuChg": 1900,
+          "feuChg": 1500
         }
       ]
     },
@@ -1333,6 +1424,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -1426,6 +1524,13 @@
           "feu": 7550,
           "teuChg": 2040,
           "feuChg": 2600
+        },
+        {
+          "yearMon": "202608",
+          "teu": 6200,
+          "feu": 7600,
+          "teuChg": 200,
+          "feuChg": 50
         }
       ]
     },
@@ -1524,6 +1629,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -1617,6 +1729,13 @@
           "feu": 10000,
           "teuChg": 2450,
           "feuChg": 2800
+        },
+        {
+          "yearMon": "202608",
+          "teu": 9050,
+          "feu": 9900,
+          "teuChg": 450,
+          "feuChg": -100
         }
       ]
     },
@@ -1715,6 +1834,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -1808,6 +1934,13 @@
           "feu": 10000,
           "teuChg": 2400,
           "feuChg": 2800
+        },
+        {
+          "yearMon": "202608",
+          "teu": 9050,
+          "feu": 9900,
+          "teuChg": 450,
+          "feuChg": -100
         }
       ]
     },
@@ -1906,6 +2039,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -1999,6 +2139,13 @@
           "feu": 10000,
           "teuChg": 1500,
           "feuChg": 1650
+        },
+        {
+          "yearMon": "202608",
+          "teu": 9050,
+          "feu": 9900,
+          "teuChg": 450,
+          "feuChg": -100
         }
       ]
     },
@@ -2097,6 +2244,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -2190,6 +2344,13 @@
           "feu": 10000,
           "teuChg": 4600,
           "feuChg": 5000
+        },
+        {
+          "yearMon": "202608",
+          "teu": 6200,
+          "feu": 7600,
+          "teuChg": -2400,
+          "feuChg": -2400
         }
       ]
     },
@@ -2288,6 +2449,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -2381,6 +2549,13 @@
           "feu": 10000,
           "teuChg": 2600,
           "feuChg": 3000
+        },
+        {
+          "yearMon": "202608",
+          "teu": 8500,
+          "feu": 9900,
+          "teuChg": -100,
+          "feuChg": -100
         }
       ]
     },
@@ -2479,6 +2654,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -2572,6 +2754,13 @@
           "feu": 10000,
           "teuChg": 2600,
           "feuChg": 3000
+        },
+        {
+          "yearMon": "202608",
+          "teu": 8500,
+          "feu": 9900,
+          "teuChg": -100,
+          "feuChg": -100
         }
       ]
     },
@@ -2670,6 +2859,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -2763,6 +2959,13 @@
           "feu": 5600,
           "teuChg": 550,
           "feuChg": 600
+        },
+        {
+          "yearMon": "202608",
+          "teu": 5500,
+          "feu": 5700,
+          "teuChg": 150,
+          "feuChg": 100
         }
       ]
     },
@@ -2861,6 +3064,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -2954,6 +3164,13 @@
           "feu": 7400,
           "teuChg": 1000,
           "feuChg": 1100
+        },
+        {
+          "yearMon": "202608",
+          "teu": 6800,
+          "feu": 7000,
+          "teuChg": -400,
+          "feuChg": -400
         }
       ]
     },
@@ -3052,6 +3269,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -3145,6 +3369,13 @@
           "feu": 7400,
           "teuChg": 1000,
           "feuChg": 1100
+        },
+        {
+          "yearMon": "202608",
+          "teu": 6800,
+          "feu": 7000,
+          "teuChg": -400,
+          "feuChg": -400
         }
       ]
     },
@@ -3243,6 +3474,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -3336,6 +3574,13 @@
           "feu": 7400,
           "teuChg": 1000,
           "feuChg": 1100
+        },
+        {
+          "yearMon": "202608",
+          "teu": 6800,
+          "feu": 7000,
+          "teuChg": -400,
+          "feuChg": -400
         }
       ]
     },
@@ -3434,6 +3679,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -3527,6 +3779,13 @@
           "feu": 5800,
           "teuChg": 750,
           "feuChg": 800
+        },
+        {
+          "yearMon": "202608",
+          "teu": 5500,
+          "feu": 5700,
+          "teuChg": -50,
+          "feuChg": -100
         }
       ]
     },
@@ -3625,6 +3884,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -3718,6 +3984,13 @@
           "feu": 5800,
           "teuChg": 750,
           "feuChg": 800
+        },
+        {
+          "yearMon": "202608",
+          "teu": 5500,
+          "feu": 5700,
+          "teuChg": -50,
+          "feuChg": -100
         }
       ]
     },
@@ -3816,6 +4089,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -3909,6 +4189,13 @@
           "feu": 6700,
           "teuChg": 1050,
           "feuChg": 900
+        },
+        {
+          "yearMon": "202608",
+          "teu": 7500,
+          "feu": 7700,
+          "teuChg": 1150,
+          "feuChg": 1000
         }
       ]
     },
@@ -4007,6 +4294,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -4100,6 +4394,13 @@
           "feu": 6315,
           "teuChg": 465,
           "feuChg": 515
+        },
+        {
+          "yearMon": "202608",
+          "teu": 6500,
+          "feu": 6700,
+          "teuChg": 435,
+          "feuChg": 385
         }
       ]
     },
@@ -4198,6 +4499,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -4291,6 +4599,13 @@
           "feu": 5800,
           "teuChg": 600,
           "feuChg": 1000
+        },
+        {
+          "yearMon": "202608",
+          "teu": 3380,
+          "feu": 5350,
+          "teuChg": -320,
+          "feuChg": -450
         }
       ]
     },
@@ -4389,6 +4704,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -4482,6 +4804,13 @@
           "feu": 5800,
           "teuChg": 600,
           "feuChg": 1000
+        },
+        {
+          "yearMon": "202608",
+          "teu": 3380,
+          "feu": 5350,
+          "teuChg": -320,
+          "feuChg": -450
         }
       ]
     },
@@ -4580,6 +4909,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -4673,6 +5009,13 @@
           "feu": 5800,
           "teuChg": 600,
           "feuChg": 1000
+        },
+        {
+          "yearMon": "202608",
+          "teu": 3380,
+          "feu": 5350,
+          "teuChg": -320,
+          "feuChg": -450
         }
       ]
     },
@@ -4771,6 +5114,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -4864,6 +5214,13 @@
           "feu": 5800,
           "teuChg": 600,
           "feuChg": 1000
+        },
+        {
+          "yearMon": "202608",
+          "teu": 3380,
+          "feu": 5350,
+          "teuChg": -320,
+          "feuChg": -450
         }
       ]
     },
@@ -4962,6 +5319,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -5055,6 +5419,13 @@
           "feu": 5800,
           "teuChg": 600,
           "feuChg": 1000
+        },
+        {
+          "yearMon": "202608",
+          "teu": 3380,
+          "feu": 5350,
+          "teuChg": -320,
+          "feuChg": -450
         }
       ]
     },
@@ -5153,6 +5524,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -5246,6 +5624,13 @@
           "feu": 6800,
           "teuChg": 500,
           "feuChg": 1000
+        },
+        {
+          "yearMon": "202608",
+          "teu": 4050,
+          "feu": 6350,
+          "teuChg": -550,
+          "feuChg": -450
         }
       ]
     },
@@ -5344,6 +5729,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -5437,6 +5829,13 @@
           "feu": 6800,
           "teuChg": 500,
           "feuChg": 1000
+        },
+        {
+          "yearMon": "202608",
+          "teu": 4050,
+          "feu": 6350,
+          "teuChg": -550,
+          "feuChg": -450
         }
       ]
     },
@@ -5535,6 +5934,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -5628,6 +6034,13 @@
           "feu": 6800,
           "teuChg": 500,
           "feuChg": 1000
+        },
+        {
+          "yearMon": "202608",
+          "teu": 4050,
+          "feu": 6350,
+          "teuChg": -550,
+          "feuChg": -450
         }
       ]
     },
@@ -5726,6 +6139,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -5819,6 +6239,13 @@
           "feu": 6800,
           "teuChg": 600,
           "feuChg": 1400
+        },
+        {
+          "yearMon": "202608",
+          "teu": 4200,
+          "feu": 6550,
+          "teuChg": -400,
+          "feuChg": -250
         }
       ]
     },
@@ -5917,6 +6344,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -6010,6 +6444,13 @@
           "feu": 6800,
           "teuChg": 600,
           "feuChg": 1400
+        },
+        {
+          "yearMon": "202608",
+          "teu": 4200,
+          "feu": 6550,
+          "teuChg": -400,
+          "feuChg": -250
         }
       ]
     },
@@ -6108,6 +6549,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -6201,6 +6649,13 @@
           "feu": 6800,
           "teuChg": 600,
           "feuChg": 1400
+        },
+        {
+          "yearMon": "202608",
+          "teu": 4200,
+          "feu": 6550,
+          "teuChg": -400,
+          "feuChg": -250
         }
       ]
     },
@@ -6299,6 +6754,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -6392,6 +6854,13 @@
           "feu": 6800,
           "teuChg": 600,
           "feuChg": 1400
+        },
+        {
+          "yearMon": "202608",
+          "teu": 4250,
+          "feu": 6650,
+          "teuChg": -350,
+          "feuChg": -150
         }
       ]
     },
@@ -6490,6 +6959,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -6583,6 +7059,13 @@
           "feu": 6400,
           "teuChg": 800,
           "feuChg": 1200
+        },
+        {
+          "yearMon": "202608",
+          "teu": 3400,
+          "feu": 5350,
+          "teuChg": -800,
+          "feuChg": -1050
         }
       ]
     },
@@ -6681,6 +7164,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -6774,6 +7264,13 @@
           "feu": 6400,
           "teuChg": 800,
           "feuChg": 1200
+        },
+        {
+          "yearMon": "202608",
+          "teu": 3500,
+          "feu": 5450,
+          "teuChg": -700,
+          "feuChg": -950
         }
       ]
     },
@@ -6872,6 +7369,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -6964,6 +7468,13 @@
           "teu": 650,
           "feu": 1000,
           "teuChg": 0,
+          "feuChg": 0
+        },
+        {
+          "yearMon": "202608",
+          "teu": 550,
+          "feu": 1000,
+          "teuChg": -100,
           "feuChg": 0
         }
       ]
@@ -7063,6 +7574,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -7156,6 +7674,13 @@
           "feu": 950,
           "teuChg": 0,
           "feuChg": 0
+        },
+        {
+          "yearMon": "202608",
+          "teu": 500,
+          "feu": 800,
+          "teuChg": 0,
+          "feuChg": -150
         }
       ]
     },
@@ -7254,6 +7779,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -7349,11 +7881,18 @@
           "feuChg": 0
         },
         {
+          "yearMon": "202608",
+          "teu": 400,
+          "feu": 650,
+          "teuChg": -100,
+          "feuChg": -250
+        },
+        {
           "yearMon": "202507",
           "teu": 500,
           "feu": 1000,
-          "teuChg": 0,
-          "feuChg": 100
+          "teuChg": 100,
+          "feuChg": 350
         },
         {
           "yearMon": "202508",
@@ -7438,6 +7977,13 @@
           "feu": 900,
           "teuChg": 0,
           "feuChg": 0
+        },
+        {
+          "yearMon": "202608",
+          "teu": 400,
+          "feu": 650,
+          "teuChg": -100,
+          "feuChg": -250
         }
       ]
     },
@@ -7536,6 +8082,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -7629,6 +8182,13 @@
           "feu": 900,
           "teuChg": 0,
           "feuChg": 0
+        },
+        {
+          "yearMon": "202608",
+          "teu": 450,
+          "feu": 800,
+          "teuChg": -50,
+          "feuChg": -100
         }
       ]
     },
@@ -7727,6 +8287,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -7820,6 +8387,13 @@
           "feu": 550,
           "teuChg": 0,
           "feuChg": 0
+        },
+        {
+          "yearMon": "202608",
+          "teu": 225,
+          "feu": 400,
+          "teuChg": -125,
+          "feuChg": -150
         }
       ]
     },
@@ -7918,6 +8492,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -8011,6 +8592,13 @@
           "feu": 500,
           "teuChg": 0,
           "feuChg": 0
+        },
+        {
+          "yearMon": "202608",
+          "teu": 200,
+          "feu": 350,
+          "teuChg": -50,
+          "feuChg": -150
         }
       ]
     },
@@ -8109,6 +8697,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -8202,6 +8797,13 @@
           "feu": 1300,
           "teuChg": 0,
           "feuChg": 250
+        },
+        {
+          "yearMon": "202608",
+          "teu": 600,
+          "feu": 1000,
+          "teuChg": 0,
+          "feuChg": -300
         }
       ]
     },
@@ -8300,6 +8902,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -8393,6 +9002,13 @@
           "feu": 1300,
           "teuChg": 0,
           "feuChg": 250
+        },
+        {
+          "yearMon": "202608",
+          "teu": 650,
+          "feu": 1100,
+          "teuChg": 0,
+          "feuChg": -200
         }
       ]
     },
@@ -8491,6 +9107,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -8584,6 +9207,13 @@
           "feu": 1300,
           "teuChg": 0,
           "feuChg": 50
+        },
+        {
+          "yearMon": "202608",
+          "teu": 650,
+          "feu": 1150,
+          "teuChg": -100,
+          "feuChg": -150
         }
       ]
     },
@@ -8682,6 +9312,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -8771,6 +9408,13 @@
         },
         {
           "yearMon": "202607",
+          "teu": 550,
+          "feu": 1000,
+          "teuChg": 0,
+          "feuChg": 0
+        },
+        {
+          "yearMon": "202608",
           "teu": 550,
           "feu": 1000,
           "teuChg": 0,
@@ -8873,6 +9517,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -8966,6 +9617,13 @@
           "feu": 1000,
           "teuChg": 0,
           "feuChg": 0
+        },
+        {
+          "yearMon": "202608",
+          "teu": 600,
+          "feu": 1050,
+          "teuChg": 50,
+          "feuChg": 50
         }
       ]
     },
@@ -9064,6 +9722,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -9157,6 +9822,13 @@
           "feu": 500,
           "teuChg": 0,
           "feuChg": 0
+        },
+        {
+          "yearMon": "202608",
+          "teu": 200,
+          "feu": 350,
+          "teuChg": -50,
+          "feuChg": -150
         }
       ]
     },
@@ -9255,6 +9927,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -9344,6 +10023,13 @@
         },
         {
           "yearMon": "202607",
+          "teu": 350,
+          "feu": 550,
+          "teuChg": 0,
+          "feuChg": 0
+        },
+        {
+          "yearMon": "202608",
           "teu": 350,
           "feu": 550,
           "teuChg": 0,
@@ -9446,6 +10132,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -9539,6 +10232,13 @@
           "feu": 1300,
           "teuChg": 0,
           "feuChg": 0
+        },
+        {
+          "yearMon": "202608",
+          "teu": 650,
+          "feu": 1100,
+          "teuChg": -100,
+          "feuChg": -200
         }
       ]
     },
@@ -9637,6 +10337,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -9730,6 +10437,13 @@
           "feu": 1500,
           "teuChg": 0,
           "feuChg": 0
+        },
+        {
+          "yearMon": "202608",
+          "teu": 525,
+          "feu": 1000,
+          "teuChg": -325,
+          "feuChg": -500
         }
       ]
     },
@@ -9828,6 +10542,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -9921,6 +10642,13 @@
           "feu": 2250,
           "teuChg": 0,
           "feuChg": 0
+        },
+        {
+          "yearMon": "202608",
+          "teu": 1175,
+          "feu": 2150,
+          "teuChg": -275,
+          "feuChg": -100
         }
       ]
     },
@@ -10019,6 +10747,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -10112,6 +10847,13 @@
           "feu": 2500,
           "teuChg": 0,
           "feuChg": 0
+        },
+        {
+          "yearMon": "202608",
+          "teu": 2100,
+          "feu": 2650,
+          "teuChg": 150,
+          "feuChg": 150
         }
       ]
     },
@@ -10210,6 +10952,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -10303,6 +11052,13 @@
           "feu": 2000,
           "teuChg": 0,
           "feuChg": 0
+        },
+        {
+          "yearMon": "202608",
+          "teu": 1300,
+          "feu": 1650,
+          "teuChg": -300,
+          "feuChg": -350
         }
       ]
     },
@@ -10401,6 +11157,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -10494,6 +11257,13 @@
           "feu": 4900,
           "teuChg": 0,
           "feuChg": 0
+        },
+        {
+          "yearMon": "202608",
+          "teu": 1750,
+          "feu": 1900,
+          "teuChg": -1300,
+          "feuChg": -3000
         }
       ]
     },
@@ -10592,6 +11362,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -10685,6 +11462,13 @@
           "feu": 2400,
           "teuChg": 0,
           "feuChg": 0
+        },
+        {
+          "yearMon": "202608",
+          "teu": 1550,
+          "feu": 1850,
+          "teuChg": -450,
+          "feuChg": -550
         }
       ]
     },
@@ -10783,6 +11567,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -10876,6 +11667,13 @@
           "feu": 2500,
           "teuChg": 0,
           "feuChg": 0
+        },
+        {
+          "yearMon": "202608",
+          "teu": 1650,
+          "feu": 1950,
+          "teuChg": -400,
+          "feuChg": -550
         }
       ]
     },
@@ -10974,6 +11772,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -11067,6 +11872,13 @@
           "feu": 2550,
           "teuChg": 0,
           "feuChg": 0
+        },
+        {
+          "yearMon": "202608",
+          "teu": 1450,
+          "feu": 1800,
+          "teuChg": -500,
+          "feuChg": -750
         }
       ]
     },
@@ -11165,6 +11977,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -11258,6 +12077,13 @@
           "feu": 200,
           "teuChg": -30,
           "feuChg": -60
+        },
+        {
+          "yearMon": "202608",
+          "teu": 50,
+          "feu": 100,
+          "teuChg": -50,
+          "feuChg": -100
         }
       ]
     },
@@ -11356,6 +12182,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -11449,6 +12282,13 @@
           "feu": 200,
           "teuChg": -30,
           "feuChg": -60
+        },
+        {
+          "yearMon": "202608",
+          "teu": 50,
+          "feu": 100,
+          "teuChg": -50,
+          "feuChg": -100
         }
       ]
     },
@@ -11547,6 +12387,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -11640,6 +12487,13 @@
           "feu": 200,
           "teuChg": -30,
           "feuChg": -60
+        },
+        {
+          "yearMon": "202608",
+          "teu": 50,
+          "feu": 100,
+          "teuChg": -50,
+          "feuChg": -100
         }
       ]
     },
@@ -11738,6 +12592,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -11831,6 +12692,13 @@
           "feu": 200,
           "teuChg": -30,
           "feuChg": -60
+        },
+        {
+          "yearMon": "202608",
+          "teu": 50,
+          "feu": 100,
+          "teuChg": -50,
+          "feuChg": -100
         }
       ]
     },
@@ -11929,6 +12797,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -12022,6 +12897,13 @@
           "feu": 200,
           "teuChg": -30,
           "feuChg": -60
+        },
+        {
+          "yearMon": "202608",
+          "teu": 50,
+          "feu": 100,
+          "teuChg": -50,
+          "feuChg": -100
         }
       ]
     },
@@ -12120,6 +13002,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -12213,6 +13102,13 @@
           "feu": 100,
           "teuChg": -50,
           "feuChg": -100
+        },
+        {
+          "yearMon": "202608",
+          "teu": 20,
+          "feu": 30,
+          "teuChg": -30,
+          "feuChg": -70
         }
       ]
     },
@@ -12311,6 +13207,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -12406,6 +13309,13 @@
           "feuChg": 0
         },
         {
+          "yearMon": "202608",
+          "teu": 750,
+          "feu": 1500,
+          "teuChg": 0,
+          "feuChg": 0
+        },
+        {
           "yearMon": "202507",
           "teu": 700,
           "feu": 1400,
@@ -12491,6 +13401,13 @@
         },
         {
           "yearMon": "202607",
+          "teu": 750,
+          "feu": 1500,
+          "teuChg": 0,
+          "feuChg": 0
+        },
+        {
+          "yearMon": "202608",
           "teu": 750,
           "feu": 1500,
           "teuChg": 0,
@@ -12593,6 +13510,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -12688,11 +13612,18 @@
           "feuChg": 0
         },
         {
+          "yearMon": "202608",
+          "teu": 600,
+          "feu": 1200,
+          "teuChg": -150,
+          "feuChg": -300
+        },
+        {
           "yearMon": "202507",
           "teu": 650,
           "feu": 1300,
-          "teuChg": -100,
-          "feuChg": -200
+          "teuChg": 50,
+          "feuChg": 100
         },
         {
           "yearMon": "202508",
@@ -12777,6 +13708,13 @@
           "feu": 1500,
           "teuChg": 0,
           "feuChg": 0
+        },
+        {
+          "yearMon": "202608",
+          "teu": 600,
+          "feu": 1200,
+          "teuChg": -150,
+          "feuChg": -300
         }
       ]
     },
@@ -12875,6 +13813,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": []
@@ -12974,6 +13919,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -13067,6 +14019,13 @@
           "feu": 30,
           "teuChg": -10,
           "feuChg": -30
+        },
+        {
+          "yearMon": "202608",
+          "teu": 20,
+          "feu": 30,
+          "teuChg": 0,
+          "feuChg": 0
         }
       ]
     },
@@ -13165,6 +14124,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -13258,6 +14224,13 @@
           "feu": 50,
           "teuChg": 0,
           "feuChg": -409
+        },
+        {
+          "yearMon": "202608",
+          "teu": 20,
+          "feu": 30,
+          "teuChg": -10,
+          "feuChg": -20
         }
       ]
     },
@@ -13356,6 +14329,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -13449,6 +14429,13 @@
           "feu": 30,
           "teuChg": -10,
           "feuChg": -30
+        },
+        {
+          "yearMon": "202608",
+          "teu": 20,
+          "feu": 30,
+          "teuChg": 0,
+          "feuChg": 0
         }
       ]
     },
@@ -13547,6 +14534,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -13640,6 +14634,13 @@
           "feu": 30,
           "teuChg": -10,
           "feuChg": -30
+        },
+        {
+          "yearMon": "202608",
+          "teu": 20,
+          "feu": 30,
+          "teuChg": 0,
+          "feuChg": 0
         }
       ]
     },
@@ -13738,6 +14739,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -13831,6 +14839,13 @@
           "feu": 700,
           "teuChg": 0,
           "feuChg": 0
+        },
+        {
+          "yearMon": "202608",
+          "teu": 250,
+          "feu": 450,
+          "teuChg": -150,
+          "feuChg": -250
         }
       ]
     },
@@ -13929,6 +14944,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -14022,6 +15044,13 @@
           "feu": 650,
           "teuChg": 200,
           "feuChg": 400
+        },
+        {
+          "yearMon": "202608",
+          "teu": 200,
+          "feu": 300,
+          "teuChg": -150,
+          "feuChg": -350
         }
       ]
     },
@@ -14120,6 +15149,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -14213,6 +15249,13 @@
           "feu": 450,
           "teuChg": -100,
           "feuChg": -250
+        },
+        {
+          "yearMon": "202608",
+          "teu": 300,
+          "feu": 550,
+          "teuChg": 0,
+          "feuChg": 100
         }
       ]
     },
@@ -14311,6 +15354,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -14404,6 +15454,13 @@
           "feu": 250,
           "teuChg": -50,
           "feuChg": -50
+        },
+        {
+          "yearMon": "202608",
+          "teu": 100,
+          "feu": 150,
+          "teuChg": -50,
+          "feuChg": -100
         }
       ]
     },
@@ -14502,6 +15559,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -14595,6 +15659,13 @@
           "feu": 30,
           "teuChg": -30,
           "feuChg": -62
+        },
+        {
+          "yearMon": "202608",
+          "teu": 20,
+          "feu": 30,
+          "teuChg": 0,
+          "feuChg": 0
         }
       ]
     },
@@ -14693,6 +15764,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -14782,6 +15860,13 @@
         },
         {
           "yearMon": "202607",
+          "teu": 50,
+          "feu": 100,
+          "teuChg": 0,
+          "feuChg": 0
+        },
+        {
+          "yearMon": "202608",
           "teu": 50,
           "feu": 100,
           "teuChg": 0,
@@ -14884,6 +15969,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -14977,6 +16069,13 @@
           "feu": 100,
           "teuChg": -50,
           "feuChg": -50
+        },
+        {
+          "yearMon": "202608",
+          "teu": 50,
+          "feu": 100,
+          "teuChg": 0,
+          "feuChg": 0
         }
       ]
     },
@@ -15075,6 +16174,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -15168,6 +16274,13 @@
           "feu": 60,
           "teuChg": -20,
           "feuChg": -32
+        },
+        {
+          "yearMon": "202608",
+          "teu": 100,
+          "feu": 150,
+          "teuChg": 70,
+          "feuChg": 90
         }
       ]
     },
@@ -15266,6 +16379,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -15359,6 +16479,13 @@
           "feu": 50,
           "teuChg": 0,
           "feuChg": -10
+        },
+        {
+          "yearMon": "202608",
+          "teu": 30,
+          "feu": 50,
+          "teuChg": 0,
+          "feuChg": 0
         }
       ]
     },
@@ -15457,6 +16584,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -15550,6 +16684,13 @@
           "feu": 4000,
           "teuChg": 1400,
           "feuChg": 890
+        },
+        {
+          "yearMon": "202608",
+          "teu": 3300,
+          "feu": 3800,
+          "teuChg": -700,
+          "feuChg": -200
         }
       ]
     },
@@ -15648,6 +16789,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -15741,6 +16889,13 @@
           "feu": 4100,
           "teuChg": 400,
           "feuChg": -20
+        },
+        {
+          "yearMon": "202608",
+          "teu": 3650,
+          "feu": 4350,
+          "teuChg": 250,
+          "feuChg": 250
         }
       ]
     },
@@ -15839,6 +16994,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -15932,6 +17094,13 @@
           "feu": 5100,
           "teuChg": 350,
           "feuChg": 550
+        },
+        {
+          "yearMon": "202608",
+          "teu": 3500,
+          "feu": 5150,
+          "teuChg": -50,
+          "feuChg": 50
         }
       ]
     },
@@ -16030,6 +17199,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -16123,6 +17299,13 @@
           "feu": 5300,
           "teuChg": 350,
           "feuChg": -350
+        },
+        {
+          "yearMon": "202608",
+          "teu": 3750,
+          "feu": 5700,
+          "teuChg": -150,
+          "feuChg": 400
         }
       ]
     },
@@ -16221,6 +17404,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -16314,6 +17504,13 @@
           "feu": 5650,
           "teuChg": 600,
           "feuChg": 700
+        },
+        {
+          "yearMon": "202608",
+          "teu": 3700,
+          "feu": 5400,
+          "teuChg": -500,
+          "feuChg": -250
         }
       ]
     },
@@ -16412,6 +17609,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -16505,6 +17709,13 @@
           "feu": 5000,
           "teuChg": 20,
           "feuChg": -50
+        },
+        {
+          "yearMon": "202608",
+          "teu": 3600,
+          "feu": 5100,
+          "teuChg": 350,
+          "feuChg": 100
         }
       ]
     },
@@ -16603,6 +17814,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -16696,6 +17914,13 @@
           "feu": 5100,
           "teuChg": 210,
           "feuChg": -180
+        },
+        {
+          "yearMon": "202608",
+          "teu": 3600,
+          "feu": 5600,
+          "teuChg": -100,
+          "feuChg": 500
         }
       ]
     },
@@ -16794,6 +18019,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -16887,6 +18119,13 @@
           "feu": 6300,
           "teuChg": 400,
           "feuChg": 450
+        },
+        {
+          "yearMon": "202608",
+          "teu": 5100,
+          "feu": 6950,
+          "teuChg": 800,
+          "feuChg": 650
         }
       ]
     },
@@ -16985,6 +18224,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -17078,6 +18324,13 @@
           "feu": 7700,
           "teuChg": 1720,
           "feuChg": 1650
+        },
+        {
+          "yearMon": "202608",
+          "teu": 4950,
+          "feu": 6150,
+          "teuChg": -2050,
+          "feuChg": -1550
         }
       ]
     },
@@ -17176,6 +18429,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -17269,6 +18529,13 @@
           "feu": 8800,
           "teuChg": 3220,
           "feuChg": 2350
+        },
+        {
+          "yearMon": "202608",
+          "teu": 6700,
+          "feu": 8500,
+          "teuChg": -1300,
+          "feuChg": -300
         }
       ]
     },
@@ -17367,6 +18634,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -17460,6 +18734,13 @@
           "feu": 8400,
           "teuChg": 1920,
           "feuChg": 530
+        },
+        {
+          "yearMon": "202608",
+          "teu": 6350,
+          "feu": 7900,
+          "teuChg": -1250,
+          "feuChg": -500
         }
       ]
     },
@@ -17558,6 +18839,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -17651,6 +18939,13 @@
           "feu": 11000,
           "teuChg": 4600,
           "feuChg": 4200
+        },
+        {
+          "yearMon": "202608",
+          "teu": 7510,
+          "feu": 8850,
+          "teuChg": -2290,
+          "feuChg": -2150
         }
       ]
     },
@@ -17749,6 +19044,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -17842,6 +19144,13 @@
           "feu": 4000,
           "teuChg": 640,
           "feuChg": 1080
+        },
+        {
+          "yearMon": "202608",
+          "teu": 2250,
+          "feu": 4500,
+          "teuChg": 100,
+          "feuChg": 500
         }
       ]
     },
@@ -17940,6 +19249,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -18033,6 +19349,13 @@
           "feu": 4000,
           "teuChg": 640,
           "feuChg": 1080
+        },
+        {
+          "yearMon": "202608",
+          "teu": 2250,
+          "feu": 4500,
+          "teuChg": 100,
+          "feuChg": 500
         }
       ]
     },
@@ -18131,6 +19454,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -18224,6 +19554,13 @@
           "feu": 4000,
           "teuChg": 640,
           "feuChg": 1080
+        },
+        {
+          "yearMon": "202608",
+          "teu": 2250,
+          "feu": 4500,
+          "teuChg": 100,
+          "feuChg": 500
         }
       ]
     },
@@ -18322,6 +19659,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -18415,6 +19759,13 @@
           "feu": 3550,
           "teuChg": 240,
           "feuChg": 630
+        },
+        {
+          "yearMon": "202608",
+          "teu": 2100,
+          "feu": 4000,
+          "teuChg": 350,
+          "feuChg": 450
         }
       ]
     },
@@ -18513,6 +19864,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -18608,11 +19966,18 @@
           "feuChg": 450
         },
         {
+          "yearMon": "202608",
+          "teu": 2200,
+          "feu": 4200,
+          "teuChg": 400,
+          "feuChg": 1000
+        },
+        {
           "yearMon": "202507",
           "teu": 1080,
           "feu": 1600,
-          "teuChg": -720,
-          "feuChg": -1600
+          "teuChg": -1120,
+          "feuChg": -2600
         },
         {
           "yearMon": "202508",
@@ -18697,6 +20062,13 @@
           "feu": 3200,
           "teuChg": 450,
           "feuChg": 450
+        },
+        {
+          "yearMon": "202608",
+          "teu": 2200,
+          "feu": 4200,
+          "teuChg": 400,
+          "feuChg": 1000
         }
       ]
     },
@@ -18795,6 +20167,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -18881,6 +20260,13 @@
           "feu": 6150,
           "teuChg": -550,
           "feuChg": -250
+        },
+        {
+          "yearMon": "202608",
+          "teu": 5300,
+          "feu": 7000,
+          "teuChg": 50,
+          "feuChg": 850
         }
       ]
     },
@@ -18979,6 +20365,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -19065,6 +20458,13 @@
           "feu": 6850,
           "teuChg": 275,
           "feuChg": 550
+        },
+        {
+          "yearMon": "202608",
+          "teu": 5450,
+          "feu": 7000,
+          "teuChg": 675,
+          "feuChg": 150
         }
       ]
     },
@@ -19163,6 +20563,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -19249,6 +20656,13 @@
           "feu": 10750,
           "teuChg": -725,
           "feuChg": -250
+        },
+        {
+          "yearMon": "202608",
+          "teu": 8000,
+          "feu": 13000,
+          "teuChg": 225,
+          "feuChg": 2250
         }
       ]
     },
@@ -19347,6 +20761,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -19433,6 +20854,13 @@
           "feu": 9500,
           "teuChg": 1000,
           "feuChg": 1700
+        },
+        {
+          "yearMon": "202608",
+          "teu": 7250,
+          "feu": 8800,
+          "teuChg": 250,
+          "feuChg": -700
         }
       ]
     },
@@ -19531,6 +20959,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": []
@@ -19630,6 +21065,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -19716,6 +21158,13 @@
           "feu": 11850,
           "teuChg": -2550,
           "feuChg": -3150
+        },
+        {
+          "yearMon": "202608",
+          "teu": 8000,
+          "feu": 13000,
+          "teuChg": -1450,
+          "feuChg": 1150
         }
       ]
     },
@@ -19814,6 +21263,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -19872,6 +21328,13 @@
           "feu": 1400,
           "teuChg": 0,
           "feuChg": 100
+        },
+        {
+          "yearMon": "202608",
+          "teu": 1000,
+          "feu": 1400,
+          "teuChg": 0,
+          "feuChg": 0
         }
       ]
     },
@@ -19970,6 +21433,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -20065,11 +21535,18 @@
           "feuChg": 300
         },
         {
+          "yearMon": "202608",
+          "teu": 4400,
+          "feu": 6400,
+          "teuChg": 0,
+          "feuChg": 100
+        },
+        {
           "yearMon": "202507",
           "teu": 3800,
           "feu": 5400,
           "teuChg": -600,
-          "feuChg": -900
+          "feuChg": -1000
         },
         {
           "yearMon": "202508",
@@ -20154,6 +21631,13 @@
           "feu": 6300,
           "teuChg": 100,
           "feuChg": 300
+        },
+        {
+          "yearMon": "202608",
+          "teu": 4400,
+          "feu": 6400,
+          "teuChg": 0,
+          "feuChg": 100
         }
       ]
     },
@@ -20252,6 +21736,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -20345,6 +21836,13 @@
           "feu": 6600,
           "teuChg": 50,
           "feuChg": 700
+        },
+        {
+          "yearMon": "202608",
+          "teu": 4300,
+          "feu": 6950,
+          "teuChg": 50,
+          "feuChg": 350
         }
       ]
     },
@@ -20443,6 +21941,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -20536,6 +22041,13 @@
           "feu": 3400,
           "teuChg": -150,
           "feuChg": -50
+        },
+        {
+          "yearMon": "202608",
+          "teu": 2400,
+          "feu": 3400,
+          "teuChg": 0,
+          "feuChg": 0
         }
       ]
     },
@@ -20634,6 +22146,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -20727,6 +22246,13 @@
           "feu": 4800,
           "teuChg": 0,
           "feuChg": 200
+        },
+        {
+          "yearMon": "202608",
+          "teu": 3150,
+          "feu": 4900,
+          "teuChg": 50,
+          "feuChg": 100
         }
       ]
     },
@@ -20825,6 +22351,13 @@
           "naIndex": 8920,
           "euIndex": 6100,
           "asiaIndex": 428
+        },
+        {
+          "yearMon": "202608",
+          "radis": 3569,
+          "naIndex": 8280,
+          "euIndex": 5680,
+          "asiaIndex": 283
         }
       ],
       "rates": [
@@ -20918,6 +22451,13 @@
           "feu": 6500,
           "teuChg": 100,
           "feuChg": -200
+        },
+        {
+          "yearMon": "202608",
+          "teu": 5000,
+          "feu": 6550,
+          "teuChg": 100,
+          "feuChg": 50
         }
       ]
     }
