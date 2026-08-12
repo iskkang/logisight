@@ -1,0 +1,85 @@
+name: JP Newsletter (週3回)
+
+# 日本版ニュースレター。月・水・金の朝に、配信へ同意した会員にだけ送る。
+#
+# ■ 同意した人にしか送らない
+# 送信先は jp_profiles.newsletter_opt_in = true の行だけである。会員登録は
+# 「データを見るため」に行われるもので、メールを受け取る同意とは別物になる。
+# 特定電子メール法はオプトイン方式で、アカウントがあることを同意とみなせない。
+# ここを間違えると法に触れるので、宛先の抽出は送信スクリプト側に固定してある。
+#
+# ■ 記事が無い日は送らない
+# 直近3日に日本語記事が無ければ送信スクリプトが自ら止まる。中身の無い便りを
+# 定期的に送ると、次から開かれなくなる。
+
+on:
+  schedule:
+    - cron: '0 23 * * 0,2,4' # 月・水・金 08:00 JST(前日 UTC 23:00)
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: '送らずに宛先と件数だけ確認する'
+        type: boolean
+        default: false
+
+# 同じ号が二重に飛ばないようにする。メールは取り消せない。
+concurrency:
+  group: jp-newsletter
+  cancel-in-progress: false
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install deps
+        run: npm ci
+
+      - name: 자격증명 확인
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+        run: |
+          missing=""
+          for k in SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY RESEND_API_KEY; do
+            [ -n "$(eval echo \"\$$k\")" ] || missing="$missing $k"
+          done
+          [ -z "$missing" ] || { echo "::error::Secrets 누락 —$missing"; exit 1; }
+
+      - name: Send
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+        run: |
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            npm run newsletter:jp -- --dry-run
+          else
+            npm run newsletter:jp
+          fi
+
+      - name: Log to data_updates
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          node -e "
+          const { createClient } = require('@supabase/supabase-js');
+          const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+          const status = process.env.JOB_STATUS === 'success' ? 'ok' : 'error';
+          sb.from('data_updates')
+            .insert({ dataset: 'jp_newsletter', status, notes: 'jp-newsletter workflow' })
+            .then(r => { console.log('data_updates logged:', r.error ? r.error.message : 'ok'); process.exit(0); })
+            .catch(e => { console.error(e.message); process.exit(0); });
+          "
