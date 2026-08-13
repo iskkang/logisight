@@ -24,8 +24,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate forecast drafts
-        run: npm run generate:forecasts
+      # 한국어와 일본어를 함께 돌린다.
+      #
+      # generate.js 는 --lang 이 없으면 ko 만 만든다. 여기서 인자를 안 주고 있어서
+      # 일본판 전망이 8월 4일 이후 한 건도 안 늘었다(그때 손으로 한 번 돌린 4건이 전부).
+      # 그 결과 일본판 화면은 「今週の発行 0件 / 的中率 集計中」으로 굳어 있었다.
+      #
+      # 적중률은 시간이 재료다. 발행이 없으면 판정도 없고, 판정이 없으면 적중률도
+      # 영원히 안 나온다. 늦게 시작할수록 그만큼 뒤로 밀린다.
+      #
+      # 언어마다 타깃이 다르므로(WEEKLY_BY_LANG), 한 번에 묶어도 서로 섞이지 않는다.
+      - name: Generate forecast drafts (ko + ja)
+        run: npm run generate:forecasts -- --lang=ko,ja
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
