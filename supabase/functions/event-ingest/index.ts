@@ -6,6 +6,7 @@
 // 주의: 피드 필드명(NHC/GDACS 속성)은 실제 응답으로 한 번 확인해 미세 조정할 것.
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { requireCronSecret } from "../_shared/require-cron-secret.ts";
 
 const UA = 'MTL-RiskMonitor/1.0 (logistics ops monitor)';
 // 업스트림이 응답을 안 주면 워커 wall-clock을 그대로 소진해 WORKER_RESOURCE_LIMIT(546)로 죽는다 → 소스별 상한.
@@ -24,7 +25,9 @@ async function getText(u: string) { const r = await fetch(u, { headers: { 'User-
 function tagText(xml: string, name: string): string { const m = xml.match(new RegExp('<' + name + '>([\\s\\S]*?)</' + name + '>')); return m ? m[1].trim() : ''; }
 function parseLatLon(v: string): number | null { const m = (v || '').match(/(-?\d+(?:\.\d+)?)\s*([NSEW])?/i); if (!m) return null; let n = parseFloat(m[1]); const d = (m[2] || '').toUpperCase(); if (d === 'S' || d === 'W') n = -n; return Number.isNaN(n) ? null : n; }
 
-serve(async () => {
+serve(async (req) => {
+  const denied = requireCronSecret(req);
+  if (denied) return denied;
   const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
   // 1) NOAA NHC — 활성 열대저기압 (대서양/동태평양)

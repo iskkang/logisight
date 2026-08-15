@@ -9,6 +9,7 @@
 // · maritime_news.id 는 bigint → weekly_pick.article_id(text)에 String()으로 저장.
 // · /news 가 lang='ko'만 노출 → ko 기사로 한정(영문 RSS 픽 방지). 주 경계는 KST(+09:00).
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { requireCronSecret } from "../_shared/require-cron-secret.ts";
 
 const sb = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -64,7 +65,9 @@ function norm(vals: number[]) {
   return (v: number) => (v - mn) / d;
 }
 
-Deno.serve(async () => {
+Deno.serve(async (req) => {
+  const denied = requireCronSecret(req);
+  if (denied) return denied;
   try {
     const { week_start, week_end, label } = weekRangeKST();
 

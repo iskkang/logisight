@@ -4,6 +4,7 @@
 //   → industry_briefs upsert. input_hash가 같으면 스킵 → 관세청 월간 갱신 시에만 LLM 호출(월 1회).
 //   monthly-trade-stats 워크플로가 POST로 트리거. service_role로 쓰기(RLS 우회).
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { requireCronSecret } from "../_shared/require-cron-secret.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -340,6 +341,8 @@ async function callDeepSeek(input: IndustryBriefInput) {
 }
 
 Deno.serve(async (req) => {
+  const denied = requireCronSecret(req);
+  if (denied) return denied;
   if (req.method !== "POST") return Response.json({ ok: false, error: "method_not_allowed" }, { status: 405 });
 
   try {

@@ -7,6 +7,7 @@
 // Open-Meteo 무료 티어는 비상업용. 상용 전환 시 유료 플랜 또는 Meteomatics/StormGlass로 URL만 교체.
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { requireCronSecret } from "../_shared/require-cron-secret.ts";
 
 const HORIZONS = [0, 3, 7, 14];
 const clamp = (x: number) => Math.max(0, Math.min(100, x));
@@ -30,7 +31,9 @@ function dayMin(a: (number | null)[], d: number) { let m = Infinity; for (let i 
 function daySum(a: (number | null)[], d: number) { let t = 0, any = false; for (let i = d * 24; i < d * 24 + 24 && i < a.length; i++) { const v = a[i]; if (v != null && !Number.isNaN(v)) { t += v; any = true; } } return any ? t : null; }
 async function getJSON(u: string) { const r = await fetch(u); if (!r.ok) throw new Error(r.status + ' ' + u); return await r.json(); }
 
-serve(async () => {
+serve(async (req) => {
+  const denied = requireCronSecret(req);
+  if (denied) return denied;
   const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
   const { data: assets, error } = await sb.from('assets').select('*');
   if (error) return new Response(error.message, { status: 500 });

@@ -19,4 +19,5 @@ jobs:
         run: |
           curl -sSf -X POST "https://hmgbvqczmyjixkqbruzp.supabase.co/functions/v1/weekly-pick-select" \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
             -H "Content-Type: application/json" -d '{}'

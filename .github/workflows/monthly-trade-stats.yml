@@ -56,7 +56,8 @@ jobs:
       - name: Regenerate industry brief (only if data changed)
         run: |
           curl -fsS -X POST "https://hmgbvqczmyjixkqbruzp.supabase.co/functions/v1/industry-brief-generate" \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}"
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}"
 
       - name: Log to data_updates
         if: always()
