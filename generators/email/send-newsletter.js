@@ -29,7 +29,13 @@ async function fetchActiveSubscribers() {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) throw new Error('SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY 환경변수가 필요합니다.');
-  const res = await fetch(`${url}/rest/v1/newsletter_subscribers?select=id,email&status=eq.active`, {
+  // 동의를 받은 사람에게만 보낸다 ★
+  // 예전에는 status=active 만 봤다. 그런데 marketing_consent·consent_at 컬럼이 있고,
+  // 공개 구독 폼(NewsletterForm.tsx)은 필수 체크박스를 받아 그 둘을 채운다.
+  // 문제는 관리자 추가 경로(subscribers.functions.ts addSubscriber)다 —— status:'active'
+  // 만 넣고 동의 필드는 비운 채로 들어간다. status 만 보면 동의 기록이 없는 주소로도
+  // 발송된다. 일본판은 이미 newsletter_opt_in=is.true 로 거르고 있었다.
+  const res = await fetch(`${url}/rest/v1/newsletter_subscribers?select=id,email&status=eq.active&marketing_consent=is.true`, {
     headers: { apikey: key, Authorization: `Bearer ${key}` },
   });
   if (!res.ok) throw new Error(`구독자 조회 실패: HTTP ${res.status}`);

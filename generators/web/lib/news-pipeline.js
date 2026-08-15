@@ -123,10 +123,34 @@ async function fetchUnsplash(keyword, seed) {
     const photo = results[pickIndex(seed, results.length)];
     if (!photo?.urls?.regular) return null;
     const photographer = photo.user?.name || photo.user?.username || 'Unsplash';
+
+    // Unsplash API 가이드라인 필수 항목 ★
+    // 사진을 실제로 쓰는 시점에 download_location 을 한 번 호출해야 한다. 이걸 빠뜨리면
+    // 사진작가의 다운로드 집계가 안 잡히고, Unsplash 는 이를 가이드라인 위반으로 보아
+    // API 키를 회수할 수 있다. 우리는 지금까지 검색만 하고 이 호출을 하지 않았다.
+    // 실패해도 사진 사용 자체를 막지는 않는다(집계 누락이지 권리 문제는 아니다).
+    const dl = photo.links?.download_location;
+    if (dl) {
+      try {
+        await fetch(`${dl}&client_id=${key}`, {
+          headers: { 'Accept-Version': 'v1' },
+          signal: AbortSignal.timeout(5000),
+        });
+      } catch {
+        console.warn('⚠️ Unsplash download 집계 호출 실패(사진은 그대로 사용)');
+      }
+    }
+
     return {
       imageUrl: `${photo.urls.regular}&w=1200&h=675&fit=crop`,
       imageSource: 'unsplash',
       imageCredit: `Photo: ${photographer} / Unsplash`,
+      // 가이드라인은 작가·Unsplash 로 링크를 걸고 utm_source 를 붙일 것도 요구한다.
+      // 지금 image_credit 은 평문 문자열이라 링크를 담을 수 없다 —— 렌더러까지 함께
+      // 고쳐야 해서 별건으로 남긴다. 링크 재료만 여기서 넘겨둔다.
+      imageCreditUrl: photo.user?.links?.html
+        ? `${photo.user.links.html}?utm_source=logisight&utm_medium=referral`
+        : null,
     };
   } catch {
     return null;
