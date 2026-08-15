@@ -55,6 +55,29 @@ function client() {
  * @param {string} [inp.coverPath]  로컬 표지 이미지(선택)
  * @returns {Promise<{id: string, pdfUrl: string}>}
  */
+/**
+ * ISO 8601 주차 문자열. "2026-08-03" → "2026-W32".
+ *
+ * 주간 리포트의 영구링크 파라미터가 이 값이다(/reports/weekly/2026-W32).
+ * 지금까지 reports.iso_week 를 아무도 채우지 않아 전부 null 이었고, 그래서 sitemap 이
+ * 주간 리포트 개별 호를 실을 수 없었다 —— 카탈로그(/reports)만 색인되고 각 호는 안 됐다.
+ *
+ * 소비하는 쪽(sitemap)에서 period_start 로 계산할 수도 있지만, 그러면 같은 규칙이 두
+ * 군데로 갈린다. 값은 발행 시점에 한 번 기록한다.
+ *
+ * ISO 규칙: 그 주의 목요일이 속한 해가 그 주의 연도다(연말연시에 해가 넘어간다).
+ */
+function isoWeekOf(dateStr) {
+  const d = new Date(`${dateStr}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) return null;
+  const t = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  const dayNum = t.getUTCDay() || 7;            // 월=1 … 일=7
+  t.setUTCDate(t.getUTCDate() + 4 - dayNum);    // 그 주의 목요일로 이동
+  const yearStart = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  const week = Math.ceil(((t - yearStart) / 86400000 + 1) / 7);
+  return `${t.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
+}
+
 async function publishReport(inp) {
   const sb = client();
   const lang = inp.lang ?? 'ko';
@@ -106,6 +129,9 @@ async function publishReport(inp) {
     // reports 테이블은 한국판·일본판이 공유한다. 언어를 안 박으면 기본값 'ko'가 되어
     // 일본 리포트가 한국 사이트 목록에 뜬다(migration 20260804000002).
     lang,
+    // 주간만 주차를 기록한다. 월간·권역은 이 파라미터를 쓰지 않는다.
+    // 이 값이 비면 sitemap 이 그 호의 영구링크를 만들지 못한다.
+    ...(inp.type === 'weekly' ? { iso_week: isoWeekOf(inp.periodStart) } : {}),
   };
   const { error } = await sb.from('reports').upsert(row, { onConflict: 'id' });
   if (error) throw new Error(`reports upsert 실패: ${error.message}`);
@@ -114,4 +140,4 @@ async function publishReport(inp) {
   return { id, pdfUrl };
 }
 
-module.exports = { publishReport, reportId, reportPdfKey, reportSite };
+module.exports = { publishReport, reportId, reportPdfKey, reportSite, isoWeekOf };

@@ -101,7 +101,8 @@
     "collect:port:kr": "npx tsx collectors/port_stats_kr.ts",
     "collect:port:hk": "npx tsx collectors/port_stats_hk.ts",
     "collect:port:tw": "npx tsx collectors/port_stats_tw.ts",
-    "ea:coverage": "node scripts/ea-coverage.mjs"
+    "ea:coverage": "node scripts/ea-coverage.mjs",
+    "test:publish": "node --test generators/lib/publish-report.test.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.24.0",
