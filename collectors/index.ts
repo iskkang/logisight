@@ -26,6 +26,7 @@ import { collect as collectCarrierAdvisories } from './carrier_advisories';
 import { collect as collectOceanNews }         from './ocean_news';
 import { collect as collectChokepoints }       from './chokepoints';
 import { collect as collectPortStats }         from './port_stats';
+import { collect as collectPortStatsKr }       from './port_stats_kr';
 import { collect as collectMonthlyAnalysis }   from './monthly_analysis';
 import { collect as collectIndex1520Reports }  from './index1520_reports';
 import { collect as collectFreightIndexExcel } from './freight_index_excel';
@@ -111,6 +112,7 @@ const GROUPS = [
       { name: 'ocean_news_weekly',   fn: () => collectOceanNews({ frequency: 'weekly' }) },
       { name: 'chokepoints_weekly',  fn: () => collectChokepoints({ frequency: 'weekly' }) },
       { name: 'port_stats',          fn: collectPortStats },
+      { name: 'port_stats_kr',       fn: collectPortStatsKr },
     ],
   },
   {
