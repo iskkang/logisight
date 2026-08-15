@@ -43,8 +43,16 @@ jobs:
           DASHBOARD_ANON_KEY:        ${{ secrets.DASHBOARD_ANON_KEY }}
           KOSIS_API_KEY:             ${{ secrets.KOSIS_API_KEY }}
 
-      - name: Check freight index freshness (non-blocking)
-        continue-on-error: true
+      # 이 스텝은 이제 막는다 ★
+      # check-freight-freshness.mjs 는 핵심 지수(SCFI·KCCI·WCI·CCFI·BDI·FBX)가 임계를
+      # 넘게 낡으면 exit 1 하도록 처음부터 그렇게 쓰여 있었다("핵심 지수만 stale 시
+      # 워크플로 실패", 스크립트 주석). 그런데 여기에 continue-on-error: true 가 걸려
+      # 있어서 그 exit 1 이 삼켜졌다 —— 스크립트는 막으려 했고 워크플로가 통과시켰다.
+      #
+      # 실패하지 못하는 검사는 검사가 아니라 장식이다. 낡은 지수를 그대로 두고 리포트를
+      # 만들면 "최신 운임"이라는 이름으로 지난달 값이 나간다.
+      # 레인·벙커 sublane 은 스크립트 안에서 이미 경고로만 다룬다(불규칙 갱신).
+      - name: Check freight index freshness — 핵심 지수가 낡으면 여기서 멈춘다
         run: node scripts/check-freight-freshness.mjs
         env:
           SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}

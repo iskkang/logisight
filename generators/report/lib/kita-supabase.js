@@ -8,14 +8,14 @@ require('dotenv').config({ path: path.resolve(__dirname, '../../../.env.local') 
 // Node < 22: 네이티브 WebSocket 부재 시 ws 폴리필 (supabase-js RealtimeClient 요구)
 if (typeof globalThis.WebSocket === 'undefined') { try { globalThis.WebSocket = require('ws'); } catch (_) {} }
 
-const { carryForwardOutliers } = require('./rate-outlier-guard');
+const { dropOutliers } = require('./rate-outlier-guard');
 
-// 노선별 carry-forward 보정 로그 출력 (적재 전 호출).
+// 노선별 이상치 폐기 로그 출력 (적재 전 호출).
 function logCorrections(kind, corrections) {
   if (!corrections.length) return;
-  console.log('⚠️ [' + kind + '] 이상치 carry-forward ' + corrections.length + '건 (±150% 초과 → 전월값 사용):');
+  console.log('⚠️ [' + kind + '] 이상치 ' + corrections.length + '건 폐기 (±150% 초과 → null, 표에는 —):');
   corrections.forEach(function(c) {
-    console.log('   ' + c.route + ' ' + c.yearMon + ' ' + c.field + ': ' + c.from + ' → ' + c.to);
+    console.log('   ' + c.route + ' ' + c.yearMon + ' ' + c.field + ': ' + c.dropped + ' 폐기 (직전 인정값 ' + c.comparedTo + ' 대비)');
   });
 }
 
@@ -68,8 +68,9 @@ async function pushSeaToSupabase(payload) {
     var route = payload.routes[ri];
     if (route.error) continue;
 
-    // 이상치 가드: 전월 대비 ±150% 초과 값은 담당자 오입력으로 보고 전월값으로 보정.
-    var routeCorr = carryForwardOutliers(route.rates || [], ['feu', 'teu'], { feu: 'feuChg', teu: 'teuChg' });
+    // 이상치 가드: 전월 대비 ±150% 초과 값은 담당자 오입력으로 보고 버린다(null).
+    // 전월값으로 채워 넣지 않는다 — rate-outlier-guard.js 상단 참조.
+    var routeCorr = dropOutliers(route.rates || [], ['feu', 'teu'], { feu: 'feuChg', teu: 'teuChg' });
     for (var c = 0; c < routeCorr.length; c++) {
       corrections.push(Object.assign({ route: route.originName + '→' + route.destName }, routeCorr[c]));
     }
@@ -124,8 +125,9 @@ async function pushAirToSupabase(payload) {
     var route = payload.routes[ri];
     if (route.error) continue;
 
-    // 이상치 가드: 전월 대비 ±150% 초과 값은 담당자 오입력으로 보고 전월값으로 보정.
-    var routeCorr = carryForwardOutliers(
+    // 이상치 가드: 전월 대비 ±150% 초과 값은 담당자 오입력으로 보고 버린다(null).
+    // 전월값으로 채워 넣지 않는다 — rate-outlier-guard.js 상단 참조.
+    var routeCorr = dropOutliers(
       route.rates || [], ['kg100', 'kg300', 'kg500'], { kg100: 'chg100', kg300: 'chg300', kg500: 'chg500' },
     );
     for (var c = 0; c < routeCorr.length; c++) {
