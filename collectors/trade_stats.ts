@@ -124,7 +124,21 @@ function parsePeriodArg(): string {
   return getPrevPeriod();
 }
 
-function toNum(val: string | undefined): number | null {
+/**
+ * nationtrade API 의 expDlr/impDlr 은 **이미 달러**다 → 변환하지 않는다.
+ *
+ * ★ 여기에 ×1000 을 넣지 말 것. 잠정 수집기(trade_provisional.ts)가 ×1000 하는 것을
+ *   보고 "통일"하면 이쪽이 1000배 부풀려진다. API 가 달라서 단위가 다른 것이다.
+ *
+ * 2026-08-14 실측으로 확인한 근거:
+ *   nationtrade  2026-06 중국 expDlr = 20,002,319,069  → $20.0B. 그대로 달러다.
+ *   235개국 합계 = 101,956,159,193 → 한국 6월 수출 $102.0B.
+ *   같은 달 잠정 API 01~30 = 101,956,159 (천 달러) 와 정확히 1000배 관계.
+ *
+ * 한국 월간 수출이 "$50B 대여야 정상"이라는 기준으로 판단하지 말 것 —— 실제 관세청
+ * 값이 $102B 이고, $50B 에 맞추려 하면 정상 데이터를 절반으로 깎게 된다.
+ */
+export function toNum(val: string | undefined): number | null {
   if (!val || val.trim() === '') return null;
   const n = Number(val.replace(/,/g, ''));
   return isNaN(n) ? null : n;

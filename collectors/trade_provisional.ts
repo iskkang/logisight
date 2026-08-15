@@ -94,8 +94,21 @@ function parseXmlItems(xmlText: string): Record<string, string>[] {
   return items;
 }
 
-// API 단위: 천 달러 → 달러 변환
-function toUsd(val: string | undefined): number | null {
+/**
+ * 잠정 API(cntyMmUtPrviExpAcrs / …ImpAcrs)는 **천 달러**로 준다 → 달러로 바꾼다.
+ *
+ * ★ 이 ×1000 을 빼지 말 것. nationtrade 수집기(trade_stats.ts)와 단위가 다른 것은
+ *   잘못이 아니라 API가 다르기 때문이다. 두 수집기를 "통일"하면 한쪽이 1000배 틀린다.
+ *
+ * 2026-08-14 실측으로 확인한 근거:
+ *   nationtrade  2026-06 235개국 expDlr 합계 = 101,956,159,193   (달러)
+ *   잠정 API     2026-06 01~30 itemUsdAmt00 =     101,956,159   (천 달러)
+ *   → 정확히 1000배. 같은 값을 다른 단위로 주고 있다.
+ *
+ * 응답 형태도 다르다. 필드명이 expDlr 이 아니라 itemUsdAmt00 이고, 값에 콤마와
+ * 앞쪽 공백이 들어온다("          28,496,961").
+ */
+export function toUsd(val: string | undefined): number | null {
   if (!val || val.trim() === '') return null;
   const n = Number(val.replace(/,/g, ''));
   return isNaN(n) ? null : n * 1000;
