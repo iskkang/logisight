@@ -1,0 +1,97 @@
+name: EA Sources (동아시아 항만 물동량)
+
+# 동아시아 물동량 월간 수집. PHASE 2 EA-4.
+#
+# ■ 공표 시차 (2026-08-15 실측)
+#   KR  data.go.kr 해수부   최신 2026-06  → 약 2개월 지연
+#   HK  HKMPB CSV          최신 2026-06  → 약 1.5개월 지연
+#   (JP 는 jp-collect.yml 이 따로 담당한다. 여기서 중복 수집하지 않는다)
+#
+# 두 소스 다 "전월분을 다음다음 달에" 내는 셈인데, 정확한 공표일이 공개돼 있지 않고
+# 달마다 흔들린다. 하루만 잡으면 그날 늦어졌을 때 그 달을 통째로 놓친다.
+# jp-collect.yml 과 같은 방식으로 한 달에 세 번 시도한다. 두 수집기 모두 같은 기간을
+# 여러 번 받아도 upsert 라 문제가 없다.
+#
+# ■ continue-on-error 를 쓰지 않는다
+# 실패를 삼키면 "수집이 안 됐다"와 "데이터가 아직 없다"가 구분되지 않는다.
+# 축별로는 독립 실행하되(하나 죽어도 나머지는 받는다), 전부 죽으면 잡을 실패시킨다.
+
+on:
+  schedule:
+    - cron: '0 21 12,18,24 * *'   # 매월 12·18·24일 06:00 KST
+  workflow_dispatch:
+
+# 같은 테이블(port_throughput)에 동시에 upsert 하지 않는다.
+concurrency:
+  group: ea-collect
+  cancel-in-progress: false
+
+jobs:
+  collect-ea:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install deps
+        run: npm ci
+
+      # 수집기는 키가 없으면 경고만 찍고 정상 종료한다(로컬에서 일부만 돌리려는 배려).
+      # CI 에서는 그 배려가 독이다 —— jp-collect 의 #1 실행이 여섯 축 중 넷을 건너뛰고도
+      # 초록불이 났다. 자격증명 누락은 여기서 먼저 막는다.
+      # 데이터가 늦은 것과 키가 없는 것은 다른 일이다.
+      - name: 자격증명 확인 (없으면 여기서 멈춘다)
+        env:
+          SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DATA_GO_KR_API_KEY:        ${{ secrets.DATA_GO_KR_API_KEY }}
+        run: |
+          missing=""
+          for k in SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY DATA_GO_KR_API_KEY; do
+            [ -n "$(eval echo \"\$$k\")" ] || missing="$missing $k"
+          done
+          [ -z "$missing" ] || {
+            echo "::error::Secrets 누락 —$missing (없으면 해당 축이 조용히 건너뛰어진다)"
+            exit 1
+          }
+          echo "자격증명 확인 완료"
+
+      # 축 하나가 실패해도 나머지는 받는다. && 로 이으면 앞이 죽을 때 뒤가 통째로 빠진다.
+      - name: Collect (축별 독립 — 하나 실패해도 나머지 진행)
+        env:
+          SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DATA_GO_KR_API_KEY:        ${{ secrets.DATA_GO_KR_API_KEY }}
+        run: |
+          fail=0; total=0
+          for s in collect:port:kr collect:port:hk; do
+            total=$((total+1))
+            echo "── $s ──"
+            npm run "$s" || { echo "::warning::$s 실패"; fail=$((fail+1)); }
+          done
+          echo "실패한 수집기: $fail / $total"
+          # 전부 실패했다면 자격증명이나 네트워크 문제다. 조용히 넘기지 않는다.
+          [ "$fail" -lt "$total" ] || { echo "::error::수집기 전부 실패"; exit 1; }
+
+      - name: Log to data_updates
+        if: always()
+        env:
+          JOB_STATUS:                ${{ job.status }}
+          SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          node -e "
+          const { createClient } = require('@supabase/supabase-js');
+          const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+          const status = process.env.JOB_STATUS === 'success' ? 'ok' : 'error';
+          sb.from('data_updates')
+            .insert({ dataset: 'ea_sources', status, notes: 'ea-collect workflow' })
+            .then(r => { console.log('data_updates logged:', r.error ? r.error.message : 'ok'); process.exit(0); })
+            .catch(e => { console.error(e.message); process.exit(0); });
+          "

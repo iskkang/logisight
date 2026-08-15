@@ -33,7 +33,7 @@
     "collect:trade:jp": "npx tsx collectors/trade_stats_jp.ts",
     "collect:trade:jp:commodity": "npx tsx collectors/trade_commodity_jp.ts",
     "collect:jp:all": "npm run collect:price:jp && npm run collect:trade:jp && npm run collect:trade:jp:commodity && npm run collect:port:jp:prelim && npm run collect:port:jp && npm run collect:route:jp",
-    "test:collectors": "npx tsx --test collectors/port_stats_jp.test.ts collectors/price_indices_jp.test.ts collectors/port_prelim_jp.test.ts collectors/trade_stats_jp.test.ts collectors/trade_commodity_jp.test.ts collectors/trade_unit.test.ts collectors/port_stats_kr.test.ts",
+    "test:collectors": "npx tsx --test collectors/port_stats_jp.test.ts collectors/price_indices_jp.test.ts collectors/port_prelim_jp.test.ts collectors/trade_stats_jp.test.ts collectors/trade_commodity_jp.test.ts collectors/trade_unit.test.ts collectors/port_stats_kr.test.ts collectors/port_stats_hk.test.ts",
     "jp:factsheet": "node generators/jp-report/research/build-factsheet.js",
     "jp:write": "node generators/jp-report/write/write-report.js",
     "jp:assemble": "node generators/jp-report/assemble/build-report.js",
@@ -98,7 +98,8 @@
     "rates-brief:generate": "node generators/web/rates-brief/generate-rates-brief.js",
     "lint": "eslint collectors generators scripts --ext ts,js",
     "weekly-report:verify": "node generators/weekly-report/verify-weekly-report.js",
-    "collect:port:kr": "npx tsx collectors/port_stats_kr.ts"
+    "collect:port:kr": "npx tsx collectors/port_stats_kr.ts",
+    "collect:port:hk": "npx tsx collectors/port_stats_hk.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.24.0",
