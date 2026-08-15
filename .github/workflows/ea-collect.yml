@@ -80,6 +80,21 @@ jobs:
           # 전부 실패했다면 자격증명이나 네트워크 문제다. 조용히 넘기지 않는다.
           [ "$fail" -lt "$total" ] || { echo "::error::수집기 전부 실패"; exit 1; }
 
+      # 수집이 조용히 멈추면 표는 그대로 있고 최신월만 안 올라간다 —— 화면상 아무 일도
+      # 일어나지 않아서 몇 달이 지나도 모른다. PHASE 4 의 규칙이 "매월 거르지 않는 것"이라,
+      # 거른 것을 사람이 눈치채는 구조가 필요하다.
+      #
+      # 위 수집 스텝은 "오늘 호출이 성공했는가"를 보고, 이 스텝은 "데이터가 실제로
+      # 최신인가"를 본다. 둘은 다르다 —— 소스가 옛 데이터를 200 으로 계속 돌려주면
+      # 수집은 매번 성공하면서 최신월은 몇 달째 그대로일 수 있다.
+      #
+      # 공표가 늦은 것인지 수집기가 죽은 것인지는 사람이 봐야 한다. 여기서는 알리기만 한다.
+      - name: 최신월 점검 (밀렸으면 실패)
+        env:
+          SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: npm run ea:coverage -- --check
+
       - name: Log to data_updates
         if: always()
         env:
