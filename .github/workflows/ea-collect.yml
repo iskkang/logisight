@@ -5,11 +5,12 @@ name: EA Sources (동아시아 항만 물동량)
 # ■ 공표 시차 (2026-08-15 실측)
 #   KR  data.go.kr 해수부   최신 2026-06  → 약 2개월 지연
 #   HK  HKMPB CSV          최신 2026-06  → 약 1.5개월 지연
+#   TW  臺灣港務公司 JSON   최신 2026-06  → 약 1.5개월 지연 (월별은 18개월치뿐)
 #   (JP 는 jp-collect.yml 이 따로 담당한다. 여기서 중복 수집하지 않는다)
 #
-# 두 소스 다 "전월분을 다음다음 달에" 내는 셈인데, 정확한 공표일이 공개돼 있지 않고
+# 셋 다 "전월분을 다음다음 달에" 내는 셈인데, 정확한 공표일이 공개돼 있지 않고
 # 달마다 흔들린다. 하루만 잡으면 그날 늦어졌을 때 그 달을 통째로 놓친다.
-# jp-collect.yml 과 같은 방식으로 한 달에 세 번 시도한다. 두 수집기 모두 같은 기간을
+# jp-collect.yml 과 같은 방식으로 한 달에 세 번 시도한다. 세 수집기 모두 같은 기간을
 # 여러 번 받아도 upsert 라 문제가 없다.
 #
 # ■ continue-on-error 를 쓰지 않는다
@@ -70,7 +71,7 @@ jobs:
           DATA_GO_KR_API_KEY:        ${{ secrets.DATA_GO_KR_API_KEY }}
         run: |
           fail=0; total=0
-          for s in collect:port:kr collect:port:hk; do
+          for s in collect:port:kr collect:port:hk collect:port:tw; do
             total=$((total+1))
             echo "── $s ──"
             npm run "$s" || { echo "::warning::$s 실패"; fail=$((fail+1)); }
