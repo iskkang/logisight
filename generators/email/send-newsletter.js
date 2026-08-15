@@ -15,13 +15,47 @@ const HTML_FILE = process.argv.find(a => a.startsWith('--html='))?.split('=').sl
 const TO = process.env.SEND_TO || process.env.INTERNAL_EMAIL;
 const { SITE_URL, SITE_HOST, NEWSLETTER_FROM: FROM } = require('../lib/site');
 
+// ── 정보통신망법 제50조 표시 ────────────────────────────────────────────────
+//
+// ★ 지금은 "(광고)" 를 붙이지 않는다. 붙여야 하는 시점이 정해져 있다.
+//
+// 이 법은 「영리목적의 광고성 정보」에만 적용된다. 지금 뉴스레터는 운임·시황 콘텐츠를
+// 전달할 뿐이라 정보성에 가깝다. 그런데 리포트를 유료로 전환하고 뉴스레터가 그 리포트로
+// 유도하기 시작하면 광고성이 된다.
+//
+// 그때 AD_LABEL 을 true 로 바꾼다. 제목 맨 앞에 "(광고)" 가 붙는다.
+// 빈칸이나 특수문자를 끼우지 않는다 —— 규정은 네 글자를 그대로 요구한다.
+//
+// 제목에 "(광고)" 가 붙으면 열람률이 떨어진다. 그게 이 스위치를 지금 켜지 않는 이유이고,
+// 동시에 켜야 할 때 잊으면 안 되는 이유이기도 하다.
+//
+// 함께 따라오는 것(켤 때 같이 확인):
+//   - 2년마다 수신동의 여부 재확인 (제50조 제8항). 지금 그 장치가 없다.
+//   - 야간(21시~익일 08시) 전송에는 별도 동의. 현재 발송은 08:00 KST 라 해당 없음.
+const AD_LABEL = false;
+
+function withAdLabel(subject) {
+  return AD_LABEL ? `(광고)${subject}` : subject;
+}
+
+// 전송자 표시는 광고성 여부와 무관하게 넣는다. 받는 사람이 누가 보냈고 어디로 문의하는지
+// 알아야 하는 건 기본이고, 스팸 필터도 이런 표시가 있는 쪽을 덜 의심한다.
+const SENDER_NAME = 'MTL Shipping Agency';
+const SENDER_EMAIL = 'newsletter@mtlb.co.kr';
+
 // 수신거부 링크 주입 — 생성 HTML의 {{UNSUBSCRIBE_URL}} 치환, 없으면 본문 끝에 최소 푸터 추가.
 // id 없는 내부 사본은 /news 로 대체.
 function withUnsub(html, id) {
   const url = id ? `${SITE_URL}/unsubscribe?id=${id}` : `${SITE_URL}/news`;
-  if (html.includes('{{UNSUBSCRIBE_URL}}')) return html.split('{{UNSUBSCRIBE_URL}}').join(url);
-  const fallback = `<div style="font-size:11px;color:#94a3b8;text-align:center;padding:16px;">수신거부: <a href="${url}" style="color:#93c5fd;">구독 해지</a> · Logisight</div>`;
-  return html.includes('</body>') ? html.replace('</body>', `${fallback}</body>`) : html + fallback;
+  const sender =
+    `<div style="font-size:11px;color:#94a3b8;text-align:center;padding:0 16px 16px;line-height:1.6;">` +
+    `${SENDER_NAME} · <a href="mailto:${SENDER_EMAIL}" style="color:#93c5fd;">${SENDER_EMAIL}</a><br>` +
+    `수신거부: <a href="${url}" style="color:#93c5fd;">구독 해지</a>` +
+    `</div>`;
+  const body = html.includes('{{UNSUBSCRIBE_URL}}')
+    ? html.split('{{UNSUBSCRIBE_URL}}').join(url)
+    : html;
+  return body.includes('</body>') ? body.replace('</body>', `${sender}</body>`) : body + sender;
 }
 
 // 활성 구독자 조회 — service_role 키로 PostgREST 직접 호출(RLS 우회, 의존성 최소화).
@@ -342,7 +376,7 @@ async function send() {
 
     let sent = 0, failed = 0;
     for (const group of chunk(recipients, 100)) {
-      const payload = group.map(r => ({ from: FROM, to: [r.email], subject, html: withUnsub(html, r.id) }));
+      const payload = group.map(r => ({ from: FROM, to: [r.email], subject: withAdLabel(subject), html: withUnsub(html, r.id) }));
       const result = await resend.batch.send(payload);
       if (result.error) {
         console.error('❌ 배치 발송 실패:', JSON.stringify(result.error));
@@ -365,7 +399,9 @@ async function send() {
     const result = await resend.emails.send({
       from: FROM,
       to: [TO],
-      subject,
+      // 내부 사본도 구독자가 받는 것과 같은 제목으로 본다. 미리보기가 실제와 다르면
+      // 미리보기를 하는 의미가 없다.
+      subject: withAdLabel(subject),
       html: withUnsub(html, null),
       ...(attachments.length > 0 ? { attachments } : {}),
     });
