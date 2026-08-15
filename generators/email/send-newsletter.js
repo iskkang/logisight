@@ -41,7 +41,9 @@ function withAdLabel(subject) {
 // 전송자 표시는 광고성 여부와 무관하게 넣는다. 받는 사람이 누가 보냈고 어디로 문의하는지
 // 알아야 하는 건 기본이고, 스팸 필터도 이런 표시가 있는 쪽을 덜 의심한다.
 const SENDER_NAME = 'MTL Shipping Agency';
-const SENDER_EMAIL = 'newsletter@mtlb.co.kr';
+// 발신 주소와 같은 것을 쓴다(lib/site.js DEFAULT_NEWSLETTER_EMAIL).
+// 받는 사람이 회신하는 자리라 실재하는 주소여야 한다 —— mtlb.co.kr 쪽은 없는 사서함이다.
+const SENDER_EMAIL = 'newsletter@logisight.net';
 
 // 수신거부 링크 주입 — 생성 HTML의 {{UNSUBSCRIBE_URL}} 치환, 없으면 본문 끝에 최소 푸터 추가.
 // id 없는 내부 사본은 /news 로 대체.
