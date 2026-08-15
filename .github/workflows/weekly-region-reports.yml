@@ -63,6 +63,25 @@ jobs:
               || echo "::warning::[$r] 생성 실패 또는 소스 없음 — 생략"
           done
 
+      # 권역 초안은 마크다운이 아니라 JSON 이라, 검증기가 문자열 잎(summary·issues[].lead)만
+      # 모아 산문으로 보고 indices 를 근거 수치로 쓴다. 생성 스텝이 "데이터 있는 권역만"
+      # 만들므로, 만들어진 파일에 대해서만 돈다.
+      - name: 발행 전 검증 (기계 린트) — critical 이면 여기서 멈춘다
+        if: ${{ github.event_name == 'schedule' || github.event.inputs.publish != 'false' }}
+        run: |
+          WEEK="${{ steps.w.outputs.week }}"
+          FOUND=0; FAILED=""
+          for f in content/weekly-region-deep/"$WEEK"-*.json; do
+            [ -e "$f" ] || continue
+            FOUND=$((FOUND+1))
+            npm run weekly-report:verify -- --file="$f" || FAILED="$FAILED $(basename "$f")"
+          done
+          [ "$FOUND" -gt 0 ] || { echo "::warning::$WEEK 권역 초안이 없다 — 검증 건너뜀"; exit 0; }
+          [ -z "$FAILED" ] || {
+            echo "::error::검증 실패 —$FAILED · critical 을 고친 뒤 다시 실행할 것"
+            exit 1
+          }
+
       - name: 발행 (reports 버킷 + 카탈로그)
         if: ${{ github.event_name == 'schedule' || github.event.inputs.publish != 'false' }}
         run: node weekly-region-publish.js --week="${{ steps.w.outputs.week }}" --commit

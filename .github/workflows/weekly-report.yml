@@ -39,6 +39,10 @@ jobs:
           npm run weekly-report:generate
           WEEK=$(date -u +%G-W%V)
           echo "주차: $WEEK"
+          # 승인 앞에 검증을 둔다. approve 는 status 를 draft → approved 로 바꾸고
+          # 바로 PDF·발행까지 부르므로, 여기서 막지 않으면 검사 기회가 사라진다.
+          # critical 이면 set -e 로 이 스텝이 죽고 뒤가 안 돈다.
+          npm run weekly-report:verify -- --week="$WEEK"
           npm run weekly-report:approve -- --week="$WEEK"
 
       - name: Commit md + PDF

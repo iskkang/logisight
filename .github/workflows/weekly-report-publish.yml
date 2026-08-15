@@ -64,6 +64,34 @@ jobs:
           echo "path=$BIN" >> "$GITHUB_OUTPUT"
           echo "Chrome: $BIN"
 
+      # ── 발행 전 검증 ────────────────────────────────────────────────
+      #
+      # 주간은 지금까지 아무 검사 없이 나갔다. approve-weekly-report.js 의 「승인」은
+      # status 를 draft → approved 로 바꾸는 것뿐이고 수치를 보지 않는다.
+      # 월간에는 verify-report.js 가 있었는데(순서가 뒤였을 뿐) 주간에는 그 자리가
+      # 비어 있었다.
+      #
+      # 기계 린트만 건다. 월간의 Claude 교차검증은 붙이지 않는다 —— 발행 빈도가
+      # 4배라 매번 부르면 비용과 대기가 커진다. 필요해지면 그때 얹는다.
+      #
+      # 실측(2026-08-14) 기준으로 최근 초안 3개는 critical 0 이다. 즉 이 게이트는
+      # 지금 나가는 것을 막지 않으면서, 「미수집」 문구 유출·표기 불일치 같은
+      # 사고만 잡는다.
+      - name: 발행 전 검증 (기계 린트) — critical 이면 여기서 멈춘다
+        if: steps.weeks.outputs.has == 'true'
+        env:
+          WEEKS: ${{ steps.weeks.outputs.list }}
+        run: |
+          FAILED=""
+          while IFS= read -r week; do
+            [ -z "$week" ] && continue
+            npm run weekly-report:verify -- --week="$week" || FAILED="$FAILED $week"
+          done <<< "$WEEKS"
+          [ -z "$FAILED" ] || {
+            echo "::error::검증 실패 —$FAILED · critical 을 고친 뒤 다시 실행할 것"
+            exit 1
+          }
+
       - name: PDF 생성 + 발행
         if: steps.weeks.outputs.has == 'true'
         env:
