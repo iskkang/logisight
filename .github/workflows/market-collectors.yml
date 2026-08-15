@@ -1,14 +1,19 @@
 # .github/workflows/market-collectors.yml
 # 운임 지수 · 벙커 가격 · 글로벌 뉴스 수집
-# 스케줄: 월요일 02:00 UTC (11:00 KST) + 금요일 06:00 UTC (15:00 KST)
+# 스케줄: 월·화 04:00 UTC (13:00 KST) + 금요일 10:30 UTC (19:30 KST)
 #   - 금요일 실행: 목요일 발표 WCI, 금요일 발표 SCFI를 발표 +1일 내 적재
-name: Logisight Market Collectors
-
+#
+# ■ 2026-08-15 시각 변경 — DeepSeek off-peak 요금 (eurasia AI insight·rail brief 스텝)
+# 새 가격 정책의 peak 는 01:00–04:00 · 06:00–10:00 UTC 이고, 그 밖은 전부 off-peak
+# (단가 절반). 종전 월·화 02:00, 금 06:00 은 셋 다 peak 한복판이었다.
+# 옮기는 방향은 전부 「뒤로」다 —— 앞으로 당기면 KCCI·WCI·SCFI 발표 전에 긁을
+# 위험이 생긴다. 뒤로 미루는 것은 데이터가 더 확정된 뒤에 받는 것이라 안전하다.
+# timeout 30분이므로 04:00 시작은 04:30 종료 → 06:00 peak 재개까지 90분 여유.
 on:
   schedule:
-    - cron: '0 2 * * 1'   # 월요일 02:00 UTC — 주초 1차
-    - cron: '0 2 * * 2'   # 화요일 02:00 UTC (11:00 KST) — KCCI 월요일 발표가 늦게 반영되는 경우 보강
-    - cron: '0 6 * * 5'   # 금요일 06:00 UTC (WCI 목/SCFI 금 발표 직후)
+    - cron: '0 4 * * 1'    # 월요일 04:00 UTC (13:00 KST) — 주초 1차
+    - cron: '0 4 * * 2'    # 화요일 04:00 UTC (13:00 KST) — KCCI 월요일 발표가 늦게 반영되는 경우 보강
+    - cron: '30 10 * * 5'  # 금요일 10:30 UTC (19:30 KST) — WCI 목/SCFI 금 발표 후, peak(~10:00) 종료 뒤
   workflow_dispatch:        # 수동 실행 허용
 
 jobs:

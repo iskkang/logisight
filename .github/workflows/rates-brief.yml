@@ -1,9 +1,12 @@
 name: Rates Intelligence Brief
 
+# 2026-08-15 시각 변경 — DeepSeek off-peak 요금(peak 01:00–04:00 · 06:00–10:00 UTC).
+# 종전 화 03:00 · 금 07:00 은 둘 다 peak 였다. market-collectors 를 따라 옮기되
+# 「수집 시작 +60분」 간격은 그대로 유지한다(수집 timeout 30분 → 30분 여유).
 on:
   schedule:
-    - cron: '0 3 * * 2'   # 화 03:00 UTC — market-collectors(화 02:00) 직후
-    - cron: '0 7 * * 5'   # 금 07:00 UTC — market-collectors(금 06:00) 직후
+    - cron: '0 5 * * 2'    # 화 05:00 UTC (14:00 KST) — market-collectors(화 04:00) 직후
+    - cron: '30 11 * * 5'  # 금 11:30 UTC (20:30 KST) — market-collectors(금 10:30) 직후
   workflow_dispatch:
 
 jobs:

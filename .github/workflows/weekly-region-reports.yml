@@ -6,7 +6,10 @@ name: Weekly Region Reports
 # 필요 secrets: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, DEEPSEEK_API_KEY, UNSPLASH_ACCESS_KEY
 on:
   schedule:
-    - cron: '30 6 * * 0'   # 일요일 15:30 KST (06:30 UTC) — 글로벌 weekly-report(14:00 KST) 이후
+    # 2026-08-15 시각 변경 — DeepSeek off-peak 요금(peak 01:00–04:00 · 06:00–10:00 UTC).
+    # 종전 06:30 UTC 는 peak 한복판이었다. 글로벌 weekly-report(05:00 UTC, timeout 20분)
+    # 이후라는 순서 조건은 그대로다.
+    - cron: '30 10 * * 0'   # 일요일 19:30 KST (10:30 UTC) — peak(~10:00) 종료 뒤
   workflow_dispatch:
     inputs:
       week:
