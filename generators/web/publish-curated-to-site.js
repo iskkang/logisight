@@ -53,6 +53,12 @@ function recordImage(asset) {
   else stats.images.missing++;
 }
 
+// 사람이 아니라 우리 AI 가 정리한 기사에 남기는 표기값.
+// 모델명(deepseek-v4-pro 등)을 넣지 않는다 —— 독자에게 필요한 정보는 "누가 책임지는가"
+// 이지 "어느 모델을 썼는가"가 아니고, 모델을 바꿀 때마다 지난 기사의 표기가 제각각이
+// 되어 버린다. 내부적으로 어느 모델이 돌았는지는 실행 로그가 남긴다.
+const AI_BYLINE = 'Logisight AI';
+
 async function upsert(row, section, mode) {
   const { error } = await supabase
     .from('maritime_news')
@@ -96,7 +102,7 @@ async function publishMain(curated) {
     // 큐레이션 항목을 틀에 채운 것이다. 어느 쪽이든 사람이 쓴 문장은 한 줄도 없으므로
     // 둘 다 표기한다. 표기를 생성 경로별로 나누면, 읽는 사람에게는 같은 것이
     // 어떤 때는 표시되고 어떤 때는 안 되는 상태가 된다.
-    generated_by: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
+    generated_by: AI_BYLINE,
     tags: [section],
     slug: makeSlug(date, main.title_ko),
     published_at: main.published_at || new Date().toISOString(), // 소스 날짜 없으면 게시 시각으로(사이트 정렬·표시용 NULL 방지)
@@ -142,7 +148,7 @@ async function publishLink(link, section, date) {
     agent_type: isInternal ? 'brief' : 'external',
     // 외부 링크 행은 우리 본문이 없다(원문으로 보낸다). 표기할 대상 자체가 없으므로
     // null 로 둔다 —— 여기에 모델명을 넣으면 남의 기사를 우리가 쓴 것처럼 표시된다.
-    generated_by: isInternal ? process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro' : null,
+    generated_by: isInternal ? AI_BYLINE : null,
     tags: [section],
     slug: isInternal ? makeSlug(date, link.title_ko) : null,
     published_at: link.published_at || new Date().toISOString(), // 소스 날짜 없으면 게시 시각으로(NULL 방지)

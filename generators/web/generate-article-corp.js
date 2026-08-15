@@ -222,7 +222,7 @@ async function main() {
     agentType: 'corp',
     // 이 기사의 초안은 위 callDeepSeek 이 썼다. 어느 모델이 썼는지까지 남긴다 —
     // 나중에 문제가 생겼을 때 "AI였다"만으로는 범위를 좁힐 수 없다.
-    generatedBy: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
+    generatedBy: 'Logisight AI',   // 모델명이 아니라 표기값. lib/supabase-insert.js 참조
     defaultCategory: '물류',
   });
 }
