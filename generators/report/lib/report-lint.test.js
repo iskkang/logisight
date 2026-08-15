@@ -143,3 +143,42 @@ test('미매칭 수치는 발췌에 명시 — 검토 용이성', () => {
   const f = findings.find(x => x.rule === 'number-mismatch');
   assert.ok(f && /9999|9,999/.test(f.excerpt));
 });
+
+// ── 오탐 제거 규칙 (2026-08-15, 월간 2026-07·08호 36건 분류 결과 반영) ──────────
+// 아래 넷은 「문서가 주장한 수치」가 아니라 토큰화가 만들어낸 유령이다.
+// 진짜 창작 수치는 여전히 걸려야 하므로, 마지막 테스트로 그것을 함께 고정한다.
+
+test('장-절 상호참조(06-2 · 02장 · 01.)는 수치로 취급 안 함', () => {
+  const { findings } = lintReport(
+    '지중해 축 물동량 회복세(상세 수치는 06-2 참조)와 02장에서 다룬 흐름.', []);
+  assert.ok(!findings.some(x => x.rule === 'number-mismatch'));
+});
+
+test('한국어 만·억 결합 수사는 쪼개지 않는다 (48만3684 → 48·3684 유령 방지)', () => {
+  const { findings } = lintReport(
+    '서배너항은 48만3684TEU를 처리했고 Adnoc은 5억9000만달러에 인수.', []);
+  assert.ok(!findings.some(x => x.rule === 'number-mismatch'));
+});
+
+test('조수사 뒤 조사(로·까지·에)가 붙어도 수치로 취급 안 함', () => {
+  const { findings } = lintReport(
+    '운행 노선이 76개로 늘었고, 연내 23기까지 확대하며, 미군 시설 8곳에 대응.', []);
+  assert.ok(!findings.some(x => x.rule === 'number-mismatch'));
+});
+
+test('범위(4,500~7,900)와 수준선(143선)은 서술 장치 — 수치로 취급 안 함', () => {
+  const { findings } = lintReport(
+    'FEU 기준 4,500~7,900달러 대역에 분포하며 지수는 143선을 중심으로 등락.', []);
+  assert.ok(!findings.some(x => x.rule === 'number-mismatch'));
+});
+
+test('기종 명칭(777-300ERSF)은 모델 번호 — 수치로 취급 안 함', () => {
+  const { findings } = lintReport('첫 Boeing 777-300ERSF 개조 화물기를 도입.', []);
+  assert.ok(!findings.some(x => x.rule === 'number-mismatch'));
+});
+
+test('오탐 규칙을 넣어도 표에 없는 평범한 수치는 그대로 걸린다 (구멍 방지)', () => {
+  const { findings } = lintReport('SCFI 종합이 3,155p로 후퇴.', [2000]);
+  const f = findings.find(x => x.rule === 'number-mismatch');
+  assert.ok(f && /3155|3,155/.test(f.excerpt), '3,155 는 여전히 미매칭으로 걸려야 한다');
+});
