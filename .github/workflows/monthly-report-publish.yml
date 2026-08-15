@@ -48,6 +48,65 @@ jobs:
           echo "path=$BIN" >> "$GITHUB_OUTPUT"
           echo "Chrome: $BIN"
 
+      # ── 검증을 발행 앞에 둔다 ────────────────────────────────────────
+      #
+      # 예전에는 [PDF 생성 → 발행 → 커밋 → QA] 순서였다. QA 가 critical 을 찾아도
+      # 이미 나간 뒤라, 워크플로 자신이 「QA Critical 결함 … 발행 자체는 유지됨」
+      # 이라고 찍었다. 실제로 2026-08호의 qa-report.md 가 「❌ 발행 보류 — critical
+      # 발견(창작 수치 2건)」인데 PDF 는 발행 상태로 남아 있었다.
+      #
+      # 검증은 내보내기 전에 하는 것이다. 나간 뒤에 하는 것은 검증이 아니라 기록이다.
+      # verify-report.js 는 원래부터 critical 이 있으면 exit 1 한다 —— 스크립트는
+      # 옳았고 부르는 순서가 틀려 있었다.
+
+      - name: 초안 존재 확인
+        # 초안이 없으면 QA 가 "읽을 파일이 없다"로 실패하고, 그게 「QA 결함」처럼
+        # 보인다. 2026-08-06 실행이 정확히 그랬다. 원인을 여기서 먼저 가른다.
+        env:
+          MONTH: ${{ steps.m.outputs.month }}
+        run: |
+          DRAFT="content/drafts/monthly-analysis-${MONTH}.md"
+          [ -f "$DRAFT" ] || {
+            echo "::error::초안이 없다: $DRAFT — monthly-analysis(매월 2일)가 돌았는지 확인할 것. QA 결함이 아니다."
+            exit 1
+          }
+          echo "초안 확인: $DRAFT"
+
+      - name: 검증 (기계 린트 + Claude 교차모델) — critical 이면 여기서 멈춘다
+        id: qa
+        env:
+          MONTH: ${{ steps.m.outputs.month }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: node generators/report/verify-report.js --month="$MONTH"
+
+      - name: qa-report 업로드
+        # 실패했을 때야말로 봐야 하는 파일이다. always() 로 둔다.
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-report-${{ steps.m.outputs.month }}
+          path: content/monthly-report/${{ steps.m.outputs.month }}/qa-report.md
+          if-no-files-found: warn
+
+      - name: qa-report 커밋
+        if: always()
+        env:
+          MONTH: ${{ steps.m.outputs.month }}
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add content/monthly-report/*/qa-report.md || true
+          if git commit -m "chore(monthly): QA report $MONTH"; then
+            for i in 1 2 3; do
+              if git pull --rebase --autostash origin main && git push; then break; fi
+              echo "qa push attempt $i failed — retrying"; sleep 5
+            done
+          else
+            echo "no qa changes"
+          fi
+
+      # 아래 두 스텝은 검증을 통과했을 때만 도달한다.
+      # QA 가 exit 1 하면 GitHub Actions 가 여기서 잡을 멈추므로, 조건을 따로 적지 않는다.
       - name: PDF 생성 + 발행
         id: pub
         env:
@@ -70,31 +129,3 @@ jobs:
             echo "push attempt $i failed — retrying"; sleep 5
           done
           echo "::error::publish PDF push failed after 3 attempts"; exit 1
-
-      - name: 최종 검증 (QA — 기계 린트 + Claude 교차모델)
-        # 발행이 성공했을 때만 검증한다. always() 로 두면 발행이 실패한 회차에서도
-        # 돌아 「QA Critical 결함 … 발행 자체는 유지됨」이라는 틀린 메시지를 낸다.
-        # 2026-08-06 실행이 그랬다 — 실제 원인은 초안 부재였는데 QA 결함으로 보였다.
-        # always() 는 남긴다. 발행 뒤 PDF 커밋이 실패해도 검증은 해야 한다.
-        if: always() && steps.pub.outcome == 'success'
-        env:
-          MONTH: ${{ steps.m.outputs.month }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: |
-          VERIFY_FAILED=""
-          node generators/report/verify-report.js --month="$MONTH" || VERIFY_FAILED=1
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
-          git add content/monthly-report/*/qa-report.md || true
-          if git commit -m "chore(monthly): QA report $MONTH"; then
-            for i in 1 2 3; do
-              if git pull --rebase --autostash origin main && git push; then break; fi
-              echo "qa push attempt $i failed — retrying"; sleep 5
-            done
-          else
-            echo "no qa changes"
-          fi
-          if [ -n "$VERIFY_FAILED" ]; then
-            echo "::error::QA Critical 결함 — qa-report.md 확인 후 핫픽스·재발행 필요 (발행 자체는 유지됨)"
-            exit 1
-          fi
