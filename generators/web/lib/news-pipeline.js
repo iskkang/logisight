@@ -218,8 +218,12 @@ function parseKsgArticle(text) {
   let body = bodyMatch ? bodyMatch[1].trim() : null;
   // TITLE/BODY 라벨이 없으면 전체를 본문으로 사용
   if (!body) body = (title ? text.replace(/TITLE:\s*.+\n?/, '') : text).trim();
-  // 모델이 덧붙이는 말미 디스클레이머 제거 ("본 기사는 …작성됐습니다")
-  body = body.replace(/(?:\n\s*)*본\s*기사는[^\n]*$/, '').trim();
+  // 모델이 스스로 붙인 고지("본 기사는 …작성됐습니다")를 지우지 않는다.
+  //
+  // 예전에는 정규식으로 잘라내고 발행했다. 그건 AI가 쓴 글에서 AI가 썼다는
+  // 표시만 떼어내는 일이고, 읽는 사람은 사람이 쓴 글로 받는다.
+  // 표기는 AI 표기 방식을 바꿔서 하는 것이지, 지워서 하는 게 아니다.
+  // (표기는 generated_by 컬럼과 화면의 배지로 한다.)
   if (!body || body.length < 100) return null;
   return { title: title || null, body };
 }

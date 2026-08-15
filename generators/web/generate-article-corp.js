@@ -220,6 +220,9 @@ async function main() {
     sourceName: selectedItem.source,
     publishedAt: selectedItem.published_at || null,
     agentType: 'corp',
+    // 이 기사의 초안은 위 callDeepSeek 이 썼다. 어느 모델이 썼는지까지 남긴다 —
+    // 나중에 문제가 생겼을 때 "AI였다"만으로는 범위를 좁힐 수 없다.
+    generatedBy: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
     defaultCategory: '물류',
   });
 }

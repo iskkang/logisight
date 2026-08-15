@@ -97,10 +97,14 @@ test('parseKsgArticle: 제목만 있고 본문 없으면 null', () => {
   assert.equal(parseKsgArticle('TITLE: 제목만 있음'), null);
 });
 
-test('parseKsgArticle: 말미 "본 기사는…" 디스클레이머 제거, 출처 줄은 유지', () => {
-  const body = '운임이 올랐다고 밝혔다. '.repeat(15) + '\n\n*출처: RailFreight*\n\n본 기사는 원문에서 확인된 사실만으로 작성됐습니다.';
+// 예전에는 이 고지를 정규식으로 잘라내고 발행했고, 테스트가 그걸 지켰다.
+// AI가 쓴 글에서 AI가 썼다는 표시만 떼어내는 일이었다. 방향을 뒤집는다 —
+// 모델이 붙인 고지는 그대로 두고, 표기는 generated_by 와 화면 배지로 한다.
+test('parseKsgArticle: 모델이 붙인 고지를 지우지 않는다', () => {
+  const body =
+    '운임이 올랐다고 밝혔다. '.repeat(15) +
+    '\n\n*출처: RailFreight*\n\n본 기사는 원문에서 확인된 사실만으로 작성됐습니다.';
   const r = parseKsgArticle('TITLE: 운임 4300弗 돌파\nBODY:\n' + body);
   assert.ok(r.body.includes('*출처: RailFreight*'));
-  assert.ok(!r.body.includes('본 기사는'));
-  assert.ok(r.body.trimEnd().endsWith('*출처: RailFreight*'));
+  assert.ok(r.body.includes('본 기사는'), '모델이 붙인 고지가 남아 있어야 한다');
 });

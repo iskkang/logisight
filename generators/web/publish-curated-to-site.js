@@ -90,6 +90,13 @@ async function publishMain(curated) {
     lang: 'ko',
     is_hero: true,
     agent_type: 'brief',
+    // 본문을 사람이 쓰지 않았다는 사실을 남긴다.
+    //
+    // generated?.body 가 있으면 모델이 직접 쓴 산문이고, 없으면 buildMainContent 가
+    // 큐레이션 항목을 틀에 채운 것이다. 어느 쪽이든 사람이 쓴 문장은 한 줄도 없으므로
+    // 둘 다 표기한다. 표기를 생성 경로별로 나누면, 읽는 사람에게는 같은 것이
+    // 어떤 때는 표시되고 어떤 때는 안 되는 상태가 된다.
+    generated_by: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
     tags: [section],
     slug: makeSlug(date, main.title_ko),
     published_at: main.published_at || new Date().toISOString(), // 소스 날짜 없으면 게시 시각으로(사이트 정렬·표시용 NULL 방지)
@@ -133,6 +140,9 @@ async function publishLink(link, section, date) {
     lang: 'ko',
     is_hero: false,
     agent_type: isInternal ? 'brief' : 'external',
+    // 외부 링크 행은 우리 본문이 없다(원문으로 보낸다). 표기할 대상 자체가 없으므로
+    // null 로 둔다 —— 여기에 모델명을 넣으면 남의 기사를 우리가 쓴 것처럼 표시된다.
+    generated_by: isInternal ? process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro' : null,
     tags: [section],
     slug: isInternal ? makeSlug(date, link.title_ko) : null,
     published_at: link.published_at || new Date().toISOString(), // 소스 날짜 없으면 게시 시각으로(NULL 방지)
