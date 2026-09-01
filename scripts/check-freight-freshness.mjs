@@ -14,9 +14,14 @@ if (!URL || !KEY) { console.error('env 없음 (SUPABASE_URL / SUPABASE_SERVICE_R
 
 // 코드별 허용 stale 일수 (week_date 기준). 핵심 지수는 발표주기 + 여유.
 const THRESHOLDS = {
-  SCFI: 10, CCFI: 10, KCCI: 10, WCI: 12, FBX: 14, BDI: 14,
+  SCFI: 10, CCFI: 10, KCCI: 10, WCI: 12, FBX: 14,
   // oneksa 레인/벙커 — 출처(oneksa.kr)가 불규칙(주간~격주) 갱신이라 여유를 둠
   SCFI_USWC: 21, SCFI_EU: 21, SCFI_USEC: 21, HSFO: 21, VLSFO: 21,
+  // BDI 도 같은 출처다. Baltic Exchange 원본은 매일 나오지만 우리가 보는 곳은
+  // oneksa 이고, 실제 적재 간격은 7·21·7·14일로 HSFO 와 똑같이 튄다. 14일로 두면
+  // oneksa 가 한 주 쉬는 날마다 「지수가 낡았다」고 워크플로가 빨개진다 —— 낡은 것은
+  // 우리 수집이 아니라 출처의 게시 주기다. 발표원이 아니라 실제 출처에 맞춘다.
+  BDI: 21,
   // WCI 레인
   WCI_SHA_RTM: 14, WCI_SHA_GOA: 14, WCI_SHA_LAX: 14, WCI_SHA_NYC: 14,
 };
