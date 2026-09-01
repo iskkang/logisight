@@ -27,6 +27,12 @@ concurrency:
   group: jp-newsletter
   cancel-in-progress: false
 
+# 発信アドレスの切り替え口。韓国語版(daily-newsletter.yml)と同じ変数を見る。
+# Resend のアカウントを移したときに、片方の便りだけが止まるのを防ぐ。
+# 変数が無ければ空になり、generators/lib/site.js の既定値が使われる(動作不変)。
+env:
+  NEWSLETTER_EMAIL: ${{ vars.NEWSLETTER_EMAIL }}
+
 jobs:
   send:
     runs-on: ubuntu-latest

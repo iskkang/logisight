@@ -24,9 +24,16 @@ const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env.local') });
 
 const SITE = 'https://jpn.logisight.net';
-// Resend で検証済みのドメインは mtlb.co.kr。logisight.net は入っていないため、
-// そちらから送ろうとすると拒否され、配信だけが静かに落ちる。
-const FROM = 'Logisight <noreply@mtlb.co.kr>';
+
+// 発信元は韓国語版と同じ一か所から取る。ここに直書きしてはいけない。
+//
+// Resend の無料プランは検証できるドメインが1つしかなく、logisight.net へ移すときに
+// アカウントごと差し替えている。日本語版だけ mtlb.co.kr を直書きしていたため、
+// GitHub の RESEND_API_KEY が新しいアカウントの鍵に替わった 8月下旬から
+// 403(ドメイン未検証)で配信が止まっていた。韓国語版は共有の定数を見ていたので
+// 何も起きず、こちらだけが3回続けて静かに落ちた。
+// 片方だけ取り残されないよう、定数を持たずに共有する。
+const { NEWSLETTER_FROM: FROM } = require('../lib/site');
 
 // 法定表示。フッターの記載と揃える。
 const SENDER = {
