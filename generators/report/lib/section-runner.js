@@ -148,7 +148,7 @@ function appendStickyRailGuide(lines, items) {
   lines.push('');
 }
 
-function buildSectionUserPrompt(title, items, month, indexFactText, railFactText, airFactText, portThroughputFactText, kitaFactText, topicGuides, priorDigest) {
+function buildSectionUserPrompt(title, items, month, indexFactText, railFactText, airFactText, portThroughputFactText, kitaFactText, derivedFactText, topicGuides, priorDigest) {
   const lines = [`분석 기준월: ${month}`, ''];
 
   if (priorDigest) {
@@ -181,6 +181,16 @@ function buildSectionUserPrompt(title, items, month, indexFactText, railFactText
 
   if (kitaFactText) {
     lines.push(kitaFactText);
+    lines.push('');
+  }
+
+  // 맺음말(07) 전용 — 파생 지표(계약-스팟 갭·탈동조화·공시 갭·벙커 괴리).
+  // 맺음말 프롬프트는 "이 블록의 수치를 반드시 1개 이상 그대로 인용"을 요구한다.
+  // 블록이 안 들어오면 모델에게 남는 길은 둘뿐이다 —— 숫자를 지어내거나(2026-09
+  // 초안의 CCFI/SCFI 53.4%: 실제 주입값은 52.3%), 요구를 통째로 버리고 아무 기사나
+  // 붙잡거나. 두 경우 다 실제로 일어났다.
+  if (derivedFactText) {
+    lines.push(derivedFactText);
     lines.push('');
   }
 
@@ -392,6 +402,7 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
                             airTable = null, airFactText = null,
                             portThroughputTable = null, portThroughputFactText = null, portCongestionTable = null,
                             kitaSeaBundle = null, kitaAirBundle = null,
+                            derivedFactText = null,
                             priorDigest = null }) {
   if (items.length === 0) {
     console.log(`⚠️  [${sectionConfig.id}] 관련 기사 없음 → status: no-data`);
@@ -405,7 +416,7 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
 
   const kitaFactText = (kitaSeaBundle && kitaSeaBundle.factText) || (kitaAirBundle && kitaAirBundle.factText) || null;
   const systemPrompt = buildSectionSystemPrompt(styleGuide, sectionConfig.focus);
-  const userPrompt   = buildSectionUserPrompt(sectionConfig.title, cappedItems, month, indexFactText, railFactText, airFactText, portThroughputFactText, kitaFactText, sectionConfig.topicGuides, priorDigest);
+  const userPrompt   = buildSectionUserPrompt(sectionConfig.title, cappedItems, month, indexFactText, railFactText, airFactText, portThroughputFactText, kitaFactText, derivedFactText, sectionConfig.topicGuides, priorDigest);
 
   // PASS 1: 초안 생성 — 품질 민감 경로(2026-07 하이브리드 정책): claude-sonnet-5 우선,
   // ANTHROPIC_API_KEY 미설정 시에만 deepseek-v4-pro(스트리밍) 폴백.

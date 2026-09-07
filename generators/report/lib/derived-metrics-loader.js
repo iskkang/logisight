@@ -56,8 +56,14 @@ function buildSpreadBlock(kcciByCode, scfiByCode) {
       const word = widened < 0 ? '축소' : widened > 0 ? '확대' : '유지';
       trend = ` (4주 전 ${fmtSigned(spread4wAgo)} → ${word})`;
     }
+    // 기준주를 반드시 적는다 ★
+    // laneSpread 는 KCCI·SCFI 가 둘 다 있는 "공통 최신주"로 맞춰 계산한다(그래야 같은
+    // 주끼리 뺀다). 그 주는 각 지수가 제 최신주를 쓰는 02 섹션 표보다 한 주 뒤일 수
+    // 있다 —— 2026-09 호에서 실제로 그랬고(부록 KCCI 7,095=08-24 vs 02-1 표 7,203=08-31),
+    // 주 표기가 없어 같은 지수가 두 값으로 병존하는 것으로 읽혀 QA critical 이 났다.
+    // 계산은 맞았고 라벨만 없었다. KITA 갭 블록은 이미 주를 적고 있다 —— 그 규칙을 따른다.
     lines.push(
-      `한중발 스프레드(${lane.label}): KCCI ${fmtNum(latest.kcci)} − SCFI ${fmtNum(latest.scfi)} = ${fmtSigned(latest.spread)}${trend}`
+      `한중발 스프레드(${lane.label}, ${latest.week} 기준): KCCI ${fmtNum(latest.kcci)} − SCFI ${fmtNum(latest.scfi)} = ${fmtSigned(latest.spread)}${trend}`
     );
   }
   if (!lines.length) return null;
@@ -72,7 +78,8 @@ function buildGapBlock(ccfiByCode, scfiByCode) {
   const { ratioLatest, ratio4wAgo, lagWeeks, corrAtLag } = r;
 
   const lines = [
-    `계약-스팟 갭(CCFI/SCFI 비율): ${fmtPct1(ratioLatest * 100)}` +
+    // 스프레드와 같은 이유로 기준주를 적는다(CCFI 는 SCFI 보다 늦게 올라오는 주가 있다).
+    `계약-스팟 갭(CCFI/SCFI 비율, ${r.week} 기준): ${fmtPct1(ratioLatest * 100)}` +
       (ratio4wAgo != null ? ` (4주 전 ${fmtPct1(ratio4wAgo * 100)})` : ''),
   ];
   if (lagWeeks != null) {

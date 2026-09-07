@@ -222,6 +222,11 @@ async function main() {
       airTable, airFactText,
       portThroughputTable, portThroughputFactText, portCongestionTable,
       kitaSeaBundle, kitaAirBundle,
+      // 맺음말에만 파생 지표를 넣는다. b37bcff(맺음말 신설)에서 이 블록을 만드는
+      // 함수는 추가됐는데 넘기는 자리가 빠져 있었다 —— 그래서 맺음말은 신설 이후
+      // 한 번도 파생 지표를 받아 본 적이 없다. 2026-07 맺음말이 멀쩡했던 것은
+      // 사람이 손으로 고쳤기 때문이고, 08·09 는 수치를 지어내다 QA 에 걸렸다.
+      derivedFactText: sec.id === 'closing' ? await buildClosingDerivedBlock() : null,
       priorDigest,
     });
     const saved   = saveSectionFile(OUT_DIR, sec.id, MONTH, result.status, result.text, {

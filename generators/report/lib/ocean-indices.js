@@ -85,6 +85,7 @@ function render(byCode, order, opts = {}) {
   const tableRows = [];
   const factLines = [];
   let latestWeek  = '';
+  const rowWeeks  = [];   // 표에 실제로 들어간 행들의 기준주(각주 표기용)
 
   for (const code of order) {
     const s = byCode[code];
@@ -93,6 +94,7 @@ function render(byCode, order, opts = {}) {
       continue;
     }
     if (!latestWeek) latestWeek = s[0].week;
+    rowWeeks.push(s[0].week);
 
     const latest = s[0].v;
     const prev1  = (chgDays1 === 7 ? s[1] : prevAtOrBefore(s, s[0].week, chgDays1))?.v ?? null;
@@ -111,9 +113,21 @@ function render(byCode, order, opts = {}) {
   const unitPart = unitNote ? ` (${unitNote})` : '';
   const header   = `| 지수/항로 | 최신값${unitPart} | ${chgLabel1} | ${chgLabel2} |`;
   const sep      = `|-----------|---------|---------|---------|`;
+
+  // 기준주는 행마다 다를 수 있다 ★
+  // 예전에는 `latestWeek`(그룹에서 데이터가 있는 첫 코드의 주) 하나를 표 전체의
+  // 기준으로 적었다. 그런데 지수마다 공표가 늦는 주가 있어, SCFI 종합은 08-31 인데
+  // 각주는 08-24 라고 적히는 일이 생긴다 —— 2026-09 호에서 실제로 그랬고, 같은 수치의
+  // 기준일이 문서 안에서 모순된다며 QA critical 이 났다.
+  // 한 주로 뭉뚱그리지 말고, 갈리면 갈린 대로 적는다. 총론 표(index-factsheet.js)는
+  // 이미 "기준주는 각 지수 최종 공표 주차"라고 적고 있다 —— 그 규칙을 여기에도 맞춘다.
+  const weeks = [...new Set(rowWeeks)].sort();
+  const asOf = weeks.length === 0 ? latestWeek
+             : weeks.length === 1 ? weeks[0]
+             : `${weeks[0]}~${weeks[weeks.length - 1]}(지수별 최종 공표주)`;
   const srcLine  = source
-    ? `※ ${latestWeek} 기준. 출처: ${source}.`
-    : `※ ${latestWeek} 기준.`;
+    ? `※ ${asOf} 기준. 출처: ${source}.`
+    : `※ ${asOf} 기준.`;
 
   const table = [header, sep, ...tableRows, '', srcLine].join('\n');
   return { table, factText: factLines.join('\n') };

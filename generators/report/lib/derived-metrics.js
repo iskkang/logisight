@@ -98,7 +98,10 @@ function contractSpotGap(ccfiSeries, scfiSeries, { weeks = 26 } = {}) {
   const lagWeeks = bestK;
   const corrAtLag = bestK != null ? bestCorr : null;
 
-  return { ratioLatest, ratio4wAgo, lagWeeks, corrAtLag };
+  // week — 이 비율이 어느 주의 CCFI·SCFI 를 맞춰 계산된 것인지. 표기에 쓴다.
+  // CCFI 는 SCFI 보다 늦게 올라오는 주가 있어, 이 값의 기준주가 02 섹션 표(각 지수의
+  // 자체 최신주)보다 한 주 뒤일 수 있다. 주를 안 적으면 같은 지수가 두 값으로 보인다.
+  return { ratioLatest, ratio4wAgo, lagWeeks, corrAtLag, week: matched[0].week };
 }
 
 // ── congestionRateSignal ──────────────────────────────────────────────────────
