@@ -53,6 +53,10 @@ function verdictMark(verdict) {
 }
 
 // judged: judgeClaims() 결과 / prevMonth: 'YYYY-MM' → {table, factText} (또는 judged 비면 null)
+// 건수는 세지 말고 받아 쓰게 한다 ★
+// judged 는 전체 주장에 판정(hit/miss/qualitative)을 붙인 것이라 judged.length 가 곧
+// 총 건수다. 본문이 "총 N건 중 정량 M건, 나머지 K건"을 직접 세면 어긋난다 —— 세 숫자를
+// 여기서 계산해 문장으로 준다. 오늘 QA 에 걸린 창작 수치들과 같은 처방이다.
 function buildScorecardBlock(judged, prevMonth) {
   if (!judged || !judged.length) return null;
 
@@ -63,8 +67,16 @@ function buildScorecardBlock(judged, prevMonth) {
   );
   const table = [header, sep, ...rows].join('\n');
 
+  const hit  = judged.filter(j => j.verdict === 'hit').length;
+  const miss = judged.filter(j => j.verdict === 'miss').length;
+  const qual = judged.length - hit - miss;
+  const countLine =
+    `전망 원문 총 ${judged.length}건 — 정량 판정 ${hit + miss}건(적중 ${hit}·빗나감 ${miss}), 정성 ${qual}건.`
+    + ` 본문에서 건수를 말할 때는 이 숫자만 쓰고 직접 세거나 더하지 말 것.`;
+
   const factText = [
     `## 지난달(${prevMonth}) 전망 점검(스코어카드 — 이 표를 "지난달 전망 점검" 소제목으로 본문에 포함, 적중·빗나감 모두 서술, 변명 금지)`,
+    ...(countLine ? [countLine] : []),
     table,
   ].join('\n');
 

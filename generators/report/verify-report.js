@@ -11,7 +11,7 @@ const path = require('path');
 
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env.local') });
 
-const { resolveMonth } = require('./lib/report-month');
+const { resolveMonth, prevMonthOf } = require('./lib/report-month');
 const { lintReport, extractNumbers } = require('./lib/report-lint');
 
 const ANTHROPIC_KEY  = process.env.ANTHROPIC_API_KEY;
@@ -20,7 +20,15 @@ const DRAFT_PATH     = path.resolve(__dirname, `../../content/drafts/monthly-ana
 const OUT_DIR        = path.resolve(__dirname, `../../content/monthly-report/${MONTH}`);
 const QA_PATH        = path.join(OUT_DIR, 'qa-report.md');
 const BRIEF_PATH     = path.join(OUT_DIR, 'editor-brief.md');
+// 이번 달 리포트에서 뽑아낸 전망(= 다음 달에 채점할 것). 숫자 근거로만 쓴다.
 const FORECASTS_PATH = path.join(OUT_DIR, 'forecasts.json');
+// "지난달 전망 점검" 표의 근거는 지난달 파일이다 ★
+// 예전에는 위 FORECASTS_PATH(이번 달)를 "지난달 전망 원문"이라며 주입했다. 생성기는
+// loadForecasts(직전월)을 쓰므로(run-section.js), 표는 지난달 17건으로 쓰이는데 검증은
+// 이번 달 16건과 대조하게 된다 —— 그 표는 무엇을 쓰든 어긋나고, 2026-09 에서 실제로
+// "17건은 창작"이라는 false critical 이 났다. 모델이 맞고 검증 근거가 틀렸던 것이다.
+const PREV_FORECASTS_PATH = path.resolve(
+  __dirname, `../../content/monthly-report/${prevMonthOf(MONTH)}/forecasts.json`);
 const STYLE_PATH     = path.resolve(__dirname, 'MONTHLY_REPORT_STYLE.md');
 
 function loadDraft() {
@@ -61,6 +69,22 @@ async function loadDerivedGrounding(month) {
     const d = await buildDerivedMetrics({ weekEnd, kitaSea: loadKitaLanes(), congestion });
     const texts = [d.spreadBlock, d.gapBlock, d.kitaGapBlock, d.decouplingBlock, d.bunkerDivergenceBlock].filter(Boolean).map(b => b.factText);
     if (d.congestionSignalText) texts.push(d.congestionSignalText);
+
+    // KITA 권역 지수(RADIS·북미·유럽·아시아)도 근거에 넣는다 ★
+    // 이 값들은 생성 시 kitaFactText 로 프롬프트에 들어가지만, 최종 문서에는 표가 아니라
+    // 차트로만 남는다. 검증자에게 안 보이니 본문이 인용하면 "표에 없는 창작 수치"로 걸린다.
+    // 2026-09 의 '북미 19,827.5원' critical 이 그것이었다 —— 실재하는 주입값이었다.
+    // 파생 지표를 여기서 재계산해 넣는 것과 같은 이유다.
+    try {
+      const { buildKitaSeaReport, buildKitaAirReport } = require('./lib/kita-report');
+      for (const build of [buildKitaSeaReport, buildKitaAirReport]) {
+        const b = build();
+        if (b && b.factText) texts.push(`## KITA 참고운임·권역 지수(생성 시 주입분)\n${b.factText}`);
+      }
+    } catch (e) {
+      console.warn('⚠️  KITA 근거 재수집 실패(무시) —', e.message);
+    }
+
     return texts.length ? texts.join('\n\n') : null;
   } catch (e) {
     console.warn('⚠️  파생 지표 근거 재계산 실패(무시) —', e.message);
@@ -236,11 +260,13 @@ async function main() {
   const draftMd = loadDraft();
   let derivedGrounding = await loadDerivedGrounding(MONTH);
   // 지난달 전망 스코어카드 원문도 근거로 — '지난달 전망 점검' 표를 창작으로 오판하지 않도록
-  if (fs.existsSync(FORECASTS_PATH)) {
+  if (fs.existsSync(PREV_FORECASTS_PATH)) {
     try {
-      const claimsText = JSON.parse(fs.readFileSync(FORECASTS_PATH, 'utf-8'))
+      const prevClaims = JSON.parse(fs.readFileSync(PREV_FORECASTS_PATH, 'utf-8'));
+      const claimsText = prevClaims
         .map(c => `- ${c.claim || c.text || JSON.stringify(c)}`).join('\n');
-      const block = `## 지난달 전망 원문(forecasts.json — "지난달 전망 점검" 표의 근거)\n\n${claimsText}`;
+      const block = `## 지난달(${prevMonthOf(MONTH)}) 전망 원문 — 총 ${prevClaims.length}건`
+        + ` ("지난달 전망 점검" 표의 근거. 본문의 건수 서술은 이 총계와 대조할 것)\n\n${claimsText}`;
       derivedGrounding = derivedGrounding ? `${derivedGrounding}\n\n${block}` : block;
     } catch (_) {}
   }
