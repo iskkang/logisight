@@ -28,15 +28,51 @@ const HEADERS = {
   "Accept-Language": "en-US,en;q=0.9",
 };
 
+const MAX_ATTEMPTS = 3;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// 다시 걸어도 같은 답이 오는 실패. 이건 즉시 던진다.
+class Fatal extends Error {}
+
+// Node 의 "fetch failed" 는 그 자체로는 아무것도 알려주지 않는다 —— 이름을 못 찾은
+// 것인지, 연결이 끊긴 것인지, 시간이 다 된 것인지는 cause 에 들어 있다. 로그에
+// ECONNRESET / ETIMEDOUT 까지 남겨야 다음에 같은 일이 났을 때 판단할 수 있다.
+function reason(err) {
+  return err.cause?.code || err.cause?.message || err.message;
+}
+
 // JSON fetch + 명확한 에러. 응답이 비정상이면 throw → 워크플로 실패.
+//
+// 재시도를 두는 이유 —— 국경 너머 단일 호스트(index1520.com)에 한 달 6번 걸는
+// 요청이다. 연결이 한 번 끊기면 그걸로 워크플로가 빨개지는데, 정작 새 데이터가
+// 없어서 성공해도 바로 끝났을 실행인 경우가 대부분이다. 한 번의 끊김과 출처가
+// 정말 죽은 것은 구분되어야 한다.
+// 4xx 와 형식이 깨진 응답은 다시 걸어도 같으므로 재시도하지 않는다.
 async function fetchJson(url) {
-  const res = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(30000) });
-  if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
-  const json = await res.json();
-  if (!json || typeof json !== "object" || json.meta?.success === false) {
-    throw new Error(`Invalid API response for ${url}`);
+  let last;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      const res = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(30000) });
+      if (!res.ok) {
+        if (res.status < 500) throw new Fatal(`HTTP ${res.status} for ${url}`);
+        throw new Error(`HTTP ${res.status}`); // 5xx 는 잠시 뒤 살아날 수 있다
+      }
+      const json = await res.json();
+      if (!json || typeof json !== "object" || json.meta?.success === false) {
+        throw new Fatal(`Invalid API response for ${url}`);
+      }
+      return json;
+    } catch (err) {
+      if (err instanceof Fatal) throw err;
+      last = err;
+      if (attempt < MAX_ATTEMPTS) {
+        const wait = attempt * 5000;
+        console.warn(`[index1520] ${reason(err)} — ${wait / 1000}초 뒤 ${attempt + 1}번째 시도: ${url}`);
+        await sleep(wait);
+      }
+    }
   }
-  return json;
+  throw new Error(`${MAX_ATTEMPTS}회 모두 실패 (${reason(last)}): ${url}`);
 }
 
 const num = (v) => (v === null || v === undefined || v === "" ? null : Number(v));
