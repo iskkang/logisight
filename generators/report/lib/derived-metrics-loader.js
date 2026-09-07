@@ -70,6 +70,17 @@ function buildSpreadBlock(kcciByCode, scfiByCode) {
   return { factText: ['## 한중발 스프레드(파생)', ...lines].join('\n') };
 }
 
+/**
+ * CCFI/SCFI 비율의 변화를 «갭» 의 방향으로 옮겨 적는다.
+ * 비율 하락 = 스팟이 계약보다 빨리 오름 = 계약이 더 뒤처짐 = 갭 확대.
+ * 비율 상승 = 계약이 스팟을 따라잡는 중 = 갭 축소.
+ */
+function gapWord(latest, prev) {
+  if (latest < prev) return '하락 = 계약이 스팟에 더 뒤처짐 = 갭 확대';
+  if (latest > prev) return '상승 = 계약이 스팟을 따라잡는 중 = 갭 축소';
+  return '보합 = 갭 유지';
+}
+
 // ── 계약-스팟 갭(파생) ─────────────────────────────────────────────────────────
 function buildGapBlock(ccfiByCode, scfiByCode) {
   if (!ccfiByCode || !scfiByCode) return null;
@@ -79,8 +90,17 @@ function buildGapBlock(ccfiByCode, scfiByCode) {
 
   const lines = [
     // 스프레드와 같은 이유로 기준주를 적는다(CCFI 는 SCFI 보다 늦게 올라오는 주가 있다).
+    //
+    // 방향까지 적는다 ★ —— 이 지표는 이름과 숫자의 방향이 반대다.
+    // 비율은 CCFI(계약)/SCFI(스팟)이므로 비율이 «내려가면» 스팟이 계약보다 빨리 올라
+    // 계약이 더 뒤처진 것, 즉 «갭 확대»다. 그런데 항목 이름이 "갭"이라 숫자가 줄면
+    // 갭이 줄었다고 읽힌다. 2026-09 초안이 정확히 그렇게 뒤집어 읽었고, 01·02-3·07
+    // 세 곳에서 반복된 데다 지난달 전망 채점까지 뒤집었다(적중을 빗나감으로 판정).
+    // 읽는 쪽의 주의력에 맡기지 말고 방향을 문장으로 준다.
     `계약-스팟 갭(CCFI/SCFI 비율, ${r.week} 기준): ${fmtPct1(ratioLatest * 100)}` +
-      (ratio4wAgo != null ? ` (4주 전 ${fmtPct1(ratio4wAgo * 100)})` : ''),
+      (ratio4wAgo != null
+        ? ` (4주 전 ${fmtPct1(ratio4wAgo * 100)} → 비율 ${gapWord(ratioLatest, ratio4wAgo)})`
+        : ''),
   ];
   if (lagWeeks != null) {
     lines.push(`SCFI→CCFI 전이 시차: ${lagWeeks}주 (상관계수 ${corrAtLag.toFixed(2)})`);
