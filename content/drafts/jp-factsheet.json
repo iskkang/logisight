@@ -656,98 +656,95 @@
   "global": {
     "source": "各指数の公表機関(SSE・Drewry・Freightos・Baltic Exchange ほか)",
     "unit": "index / USD",
-    "asOf": "2026-08-24",
+    "asOf": "2026-09-14",
     "indices": [
       {
         "code": "SCFI",
         "label": "SCFI 総合",
         "unit": null,
-        "value": 3509.53,
-        "changePct": 2.93,
-        "asOf": "2026-08-24"
+        "value": 3688,
+        "changePct": null,
+        "asOf": "2026-09-14"
       },
       {
         "code": "SCFI_EU",
         "label": "SCFI 上海→欧州",
         "unit": null,
-        "value": 2842,
+        "value": 3683,
         "changePct": null,
-        "asOf": "2026-08-17"
+        "asOf": "2026-09-14"
       },
       {
         "code": "SCFI_USWC",
         "label": "SCFI 上海→米西岸",
         "unit": null,
-        "value": 6765,
+        "value": 7560,
         "changePct": null,
-        "asOf": "2026-08-17"
+        "asOf": "2026-09-14"
       },
       {
         "code": "SCFI_USEC",
         "label": "SCFI 上海→米東岸",
         "unit": null,
-        "value": 9700,
+        "value": 10579,
         "changePct": null,
-        "asOf": "2026-08-17"
+        "asOf": "2026-09-14"
       },
       {
         "code": "CCFI",
         "label": "CCFI 総合",
         "unit": null,
-        "value": 1821.65,
-        "changePct": -1.37,
-        "asOf": "2026-08-17"
+        "value": 1897.15,
+        "changePct": 1.88,
+        "asOf": "2026-09-14"
       },
       {
         "code": "WCI",
         "label": "WCI 総合",
         "unit": null,
-        "value": 4473,
+        "value": 4500,
         "changePct": -1,
-        "asOf": "2026-08-24"
+        "asOf": "2026-09-14"
       },
       {
         "code": "FBX",
         "label": "FBX 総合",
         "unit": null,
-        "value": 3587.5,
-        "changePct": 0.47,
-        "asOf": "2026-08-24"
+        "value": 3407.4,
+        "changePct": -2.61,
+        "asOf": "2026-09-14"
       },
       {
         "code": "BDI",
         "label": "BDI(バルク)",
         "unit": null,
-        "value": 2815,
+        "value": 3367,
         "changePct": null,
-        "asOf": "2026-08-17"
+        "asOf": "2026-09-14"
       },
       {
         "code": "VLSFO",
         "label": "VLSFO(低硫黄C重油)",
         "unit": null,
-        "value": 844,
+        "value": 972,
         "changePct": null,
-        "asOf": "2026-08-17"
+        "asOf": "2026-09-14"
       },
       {
         "code": "HSFO",
         "label": "HSFO(高硫黄C重油)",
         "unit": null,
-        "value": 645,
+        "value": 800,
         "changePct": null,
-        "asOf": "2026-08-17"
+        "asOf": "2026-09-14"
       }
     ],
-    "containerUp": 2,
+    "containerUp": 1,
     "containerDown": 2,
-    "containerTotal": 4,
+    "containerTotal": 3,
     "asOfNote": "世界のスポット指数は週次、日本の統計は月次で基準日が揃わない。両者を同一時点の動きとして比較してはならない。同時期に観測された事実として並べるまでである。",
     "history": {
       "weeks": [
-        "2026-03-02",
-        "2026-03-09",
-        "2026-03-16",
         "2026-03-23",
         "2026-03-30",
         "2026-04-06",
@@ -770,16 +767,16 @@
         "2026-08-03",
         "2026-08-10",
         "2026-08-17",
-        "2026-08-24"
+        "2026-08-24",
+        "2026-08-31",
+        "2026-09-07",
+        "2026-09-14"
       ],
       "series": [
         {
           "code": "SCFI",
           "label": "SCFI 総合",
           "values": [
-            1489.19,
-            1710.35,
-            1706.95,
             1827,
             1855,
             1891,
@@ -802,16 +799,16 @@
             3276.14,
             3355,
             3410,
-            3509.53
+            3510,
+            3590,
+            3662,
+            3688
           ]
         },
         {
           "code": "CCFI",
           "label": "CCFI 総合",
           "values": [
-            1054.26,
-            1072.16,
-            1120.61,
             1139.04,
             1184.7,
             1209.84,
@@ -834,16 +831,16 @@
             1839.61,
             1846.96,
             1821.65,
-            null
+            1833.99,
+            1837.01,
+            1862.18,
+            1897.15
           ]
         },
         {
           "code": "WCI",
           "label": "WCI 総合",
           "values": [
-            null,
-            null,
-            null,
             null,
             2710,
             null,
@@ -866,16 +863,16 @@
             4297,
             4339,
             4526,
-            4473
+            4473,
+            4465,
+            4476,
+            4500
           ]
         },
         {
           "code": "FBX",
           "label": "FBX 総合",
           "values": [
-            null,
-            null,
-            null,
             null,
             null,
             null,
@@ -898,7 +895,10 @@
             3607,
             3689.8,
             3570.8,
-            3587.5
+            3590,
+            3520,
+            3498.6,
+            3407.4
           ]
         }
       ]
@@ -906,39 +906,39 @@
   },
   "rail": {
     "source": "ERAI (Eurasian Rail Alliance Index)",
-    "asOf": "2026-08-01",
+    "asOf": "2026-09-01",
     "indices": [
       {
         "code": "ERAI",
         "label": "ERAI 総合",
         "unit": null,
-        "value": 3903,
-        "changePct": 5.37,
-        "asOf": "2026-07-01"
+        "value": 3912,
+        "changePct": 0.23,
+        "asOf": "2026-08-01"
       },
       {
         "code": "ERAI_WEST",
         "label": "ERAI 西航(中国→欧州)",
         "unit": null,
-        "value": 4084,
-        "changePct": 7.05,
-        "asOf": "2026-07-01"
+        "value": 4082,
+        "changePct": -0.05,
+        "asOf": "2026-08-01"
       },
       {
         "code": "ERAI_EAST",
         "label": "ERAI 東航(欧州→中国)",
         "unit": null,
-        "value": 2609,
-        "changePct": 0.19,
-        "asOf": "2026-07-01"
+        "value": 2603,
+        "changePct": -0.23,
+        "asOf": "2026-08-01"
       },
       {
         "code": "ERAI_TRANSIT_DAYS",
         "label": "ERAI 平均輸送日数",
         "unit": "日",
-        "value": 6.82,
+        "value": 7.06,
         "changePct": null,
-        "asOf": "2026-08-01"
+        "asOf": "2026-09-01"
       }
     ],
     "changeBasis": "前月比",
@@ -948,12 +948,32 @@
     "source": "Drewry Cancelled Sailings Tracker",
     "unit": "sailings",
     "scope": "主要East-West航路(アジア〜欧州・太平洋・大西洋)。日本発着に限った数字ではない。",
-    "asOf": "2026-08-21",
-    "blankedSailings": 49,
-    "plannedSailings": null,
-    "blankPct": 6,
+    "asOf": "2026-09-18",
+    "blankedSailings": 77,
+    "plannedSailings": 720,
+    "blankPct": 10.7,
     "recentNote": "公表週は連続していない。欠けている週がある。「直近N週」とは書かず、日付を挙げて「公表された直近N回」として述べる。",
     "recent": [
+      {
+        "week": "2026-09-18",
+        "blankedSailings": 77,
+        "blankPct": 10.7
+      },
+      {
+        "week": "2026-09-11",
+        "blankedSailings": 79,
+        "blankPct": 11
+      },
+      {
+        "week": "2026-09-04",
+        "blankedSailings": 47,
+        "blankPct": 6.4
+      },
+      {
+        "week": "2026-08-28",
+        "blankedSailings": 45,
+        "blankPct": 6
+      },
       {
         "week": "2026-08-21",
         "blankedSailings": 49,
@@ -963,127 +983,107 @@
         "week": "2026-07-31",
         "blankedSailings": 58,
         "blankPct": 8
-      },
-      {
-        "week": "2026-07-17",
-        "blankedSailings": 39,
-        "blankPct": 5
-      },
-      {
-        "week": "2026-07-10",
-        "blankedSailings": 46,
-        "blankPct": 6
-      },
-      {
-        "week": "2026-07-03",
-        "blankedSailings": 48,
-        "blankPct": 7
-      },
-      {
-        "week": "2026-06-05",
-        "blankedSailings": 39,
-        "blankPct": 5.5
       }
     ],
-    "recentSpanWeeks": 12
+    "recentSpanWeeks": 8
   },
   "route": {
     "unit": "TEU",
     "northAmerica": {
       "label": "北米往航(アジア→米国)",
-      "period": "2026-06",
+      "period": "2026-07",
       "direction": "往航",
       "source": "日本海事センター 北米コンテナ航路(PIERSデータを基に作成)",
       "total": {
         "name": "18ヶ国・地域 合計",
-        "teu": 1916307,
-        "yoyPct": 14,
+        "teu": 2008373,
+        "yoyPct": -1.2,
         "sharePct": 100,
-        "cumTeu": 10784755,
-        "cumYoyPct": 0.3
+        "cumTeu": 12790658,
+        "cumYoyPct": 0.1
       },
       "japan": {
         "name": "日本",
-        "teu": 53701,
-        "yoyPct": -3.2,
-        "sharePct": 2.8,
-        "cumTeu": 321930,
-        "cumYoyPct": -3.4
+        "teu": 60189,
+        "yoyPct": -8.6,
+        "sharePct": 3,
+        "cumTeu": 382434,
+        "cumYoyPct": -4.2
       },
       "peers": [
         {
           "name": "中国",
-          "teu": 954767,
-          "yoyPct": 25.5,
-          "sharePct": 49.8,
-          "cumTeu": 5223968,
-          "cumYoyPct": -3.7
+          "teu": 1031626,
+          "yoyPct": -0.4,
+          "sharePct": 51.4,
+          "cumTeu": 6251949,
+          "cumYoyPct": -3.3
         },
         {
           "name": "韓国",
-          "teu": 108021,
-          "yoyPct": 0.9,
-          "sharePct": 5.6,
-          "cumTeu": 637425,
-          "cumYoyPct": -6.5
+          "teu": 117396,
+          "yoyPct": -3.2,
+          "sharePct": 5.8,
+          "cumTeu": 754284,
+          "cumYoyPct": -6
         },
         {
           "name": "台湾",
-          "teu": 55234,
-          "yoyPct": -7.3,
-          "sharePct": 2.9,
-          "cumTeu": 305882,
-          "cumYoyPct": -11.3
+          "teu": 49776,
+          "yoyPct": -18.6,
+          "sharePct": 2.5,
+          "cumTeu": 355672,
+          "cumYoyPct": -12.4
         },
         {
           "name": "ベトナム",
-          "teu": 313840,
-          "yoyPct": 3.4,
-          "sharePct": 16.4,
-          "cumTeu": 1799502,
-          "cumYoyPct": 9.8
+          "teu": 318870,
+          "yoyPct": 1.3,
+          "sharePct": 15.9,
+          "cumTeu": 2119315,
+          "cumYoyPct": 8.5
         }
       ],
       "hasCountryDetail": true
     },
     "europe": {
       "label": "欧州往航(アジア→欧州)",
-      "period": "2026-05",
+      "period": "2026-06",
       "direction": "往航",
       "source": "日本海事センター 欧州コンテナ航路(Container Trades Statisticsを基に作成)",
       "total": {
         "name": "アジア 合計",
-        "teu": 1866984,
-        "yoyPct": 3.1,
+        "teu": 1895293,
+        "yoyPct": 16.8,
         "sharePct": 100,
-        "cumTeu": 8884023,
-        "cumYoyPct": 11.7
+        "cumTeu": 10774653,
+        "cumYoyPct": 12.6
       },
       "japan": null,
       "peers": [
         {
           "name": "北東アジア 計",
-          "teu": 144086,
-          "yoyPct": -9.8,
-          "sharePct": 7.7,
-          "cumTeu": 724251,
-          "cumYoyPct": -1.8
+          "teu": 135393,
+          "yoyPct": -6.2,
+          "sharePct": 7.1,
+          "cumTeu": 858198,
+          "cumYoyPct": -2.7
         },
         {
           "name": "中華地域 計",
-          "teu": 1475375,
-          "yoyPct": 3.4,
-          "sharePct": 79,
-          "cumTeu": 7007861,
-          "cumYoyPct": 13.3
+          "teu": 1525758,
+          "yoyPct": 20.9,
+          "sharePct": 80.5,
+          "cumTeu": 8532249,
+          "cumYoyPct": 14.6
         },
         {
           "name": "東南アジア 計",
-          "teu": 247523,
-          "yoyPct": 10.6,
-          "sharePct": 13.3,
-          "cumTeu": 1151906,
-          "cumYoyPct": 11.7
+          "teu": 234142,
+          "yoyPct": 8.1,
+          "sharePct": 12.4,
+          "cumTeu": 1384201,
+          "cumYoyPct": 10.9
         }
       ],
       "hasCountryDetail": false
