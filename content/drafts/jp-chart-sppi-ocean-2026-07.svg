@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 300" width="720" height="300" font-family="Hiragino Sans, Yu Gothic, Meiryo, sans-serif">
+<rect width="720" height="300" fill="#ffffff"/>
+<text x="24" y="30" font-size="16" font-weight="700" fill="#1a2433">外航貨物輸送 — 円ベースと契約通貨ベースの推移</text>
+<text x="24" y="50" font-size="11" fill="#828d9d">月次 · 2020年=100 · 2024-08〜2026-07</text>
+<line x1="56" y1="252.0" x2="702" y2="252.0" stroke="#e5e9f0" stroke-width="1"/>
+<text x="48" y="256.0" font-size="10" text-anchor="end" fill="#828d9d">100</text>
+<line x1="56" y1="207.5" x2="702" y2="207.5" stroke="#e5e9f0" stroke-width="1"/>
+<text x="48" y="211.5" font-size="10" text-anchor="end" fill="#828d9d">150</text>
+<line x1="56" y1="163.0" x2="702" y2="163.0" stroke="#e5e9f0" stroke-width="1"/>
+<text x="48" y="167.0" font-size="10" text-anchor="end" fill="#828d9d">200</text>
+<line x1="56" y1="118.5" x2="702" y2="118.5" stroke="#e5e9f0" stroke-width="1"/>
+<text x="48" y="122.5" font-size="10" text-anchor="end" fill="#828d9d">250</text>
+<line x1="56" y1="74.0" x2="702" y2="74.0" stroke="#e5e9f0" stroke-width="1"/>
+<text x="48" y="78.0" font-size="10" text-anchor="end" fill="#828d9d">300</text>
+<text x="56.0" y="270" font-size="10" text-anchor="middle" fill="#828d9d">24-08</text>
+<text x="196.4" y="270" font-size="10" text-anchor="middle" fill="#828d9d">25-01</text>
+<text x="336.9" y="270" font-size="10" text-anchor="middle" fill="#828d9d">25-06</text>
+<text x="477.3" y="270" font-size="10" text-anchor="middle" fill="#828d9d">25-11</text>
+<text x="617.7" y="270" font-size="10" text-anchor="middle" fill="#828d9d">26-04</text>
+<text x="702.0" y="270" font-size="10" text-anchor="middle" fill="#828d9d">26-07</text>
+<path class="line" d="M56.0 200.6 L84.1 204.5 L112.2 194.5 L140.3 197.1 L168.3 200.7 L196.4 198.3 L224.5 202.2 L252.6 202.0 L280.7 210.0 L308.8 208.3 L336.9 204.8 L365.0 203.1 L393.0 202.2 L421.1 199.0 L449.2 200.6 L477.3 193.8 L505.4 193.2 L533.5 196.3 L561.6 187.9 L589.7 140.0 L617.7 132.2 L645.8 126.2 L673.9 133.7 L702.0 110.0" fill="none" stroke="#1B4D8C" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="702.0" cy="110.0" r="3" fill="#1B4D8C"/>
+<path class="line" d="M56.0 234.8 L84.1 235.9 L112.2 232.2 L140.3 236.6 L168.3 239.1 L196.4 239.0 L224.5 239.1 L252.6 237.4 L280.7 240.6 L308.8 239.5 L336.9 236.9 L365.0 237.0 L393.0 237.0 L421.1 234.7 L449.2 237.8 L477.3 235.4 L505.4 235.4 L533.5 237.7 L561.6 230.9 L589.7 200.7 L617.7 196.4 L645.8 191.6 L673.9 198.6 L702.0 184.4" fill="none" stroke="#b45309" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="702.0" cy="184.4" r="3" fill="#b45309"/>
+<rect x="56" y="283" width="14" height="3" fill="#1B4D8C"/>
+<text x="75" y="289" font-size="10" fill="#828d9d">円ベース</text>
+<rect x="216" y="283" width="14" height="3" fill="#b45309"/>
+<text x="235" y="289" font-size="10" fill="#828d9d">契約通貨ベース</text>
+</svg>
