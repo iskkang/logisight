@@ -7,11 +7,19 @@
 //
 // 발행은 완전 자동이되, 검수를 통과하지 못하면 발행하지 않고 멈춘다(fail-closed).
 // 사람이 승인 버튼을 누르지 않는다는 뜻이지, 틀린 수치를 내보낸다는 뜻이 아니다.
+//
+// 종료 코드
+//   0 — 리포트 준비(또는 발행) 완료
+//   2 — 검수 미해결. 조립도 발행도 하지 않는다. 미해결 목록은
+//       outputs/cache/jp-report/<월>/unresolved.json
+//   1 — 그 밖의 실패(팩트시트·원고 생성·조립·발행)
 
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env.local') });
+
+const cache = require('./write/cache');
 
 const DRAFTS = path.resolve(__dirname, '../../content/drafts');
 
@@ -37,10 +45,24 @@ function main() {
   const factsheet = JSON.parse(fs.readFileSync(path.join(DRAFTS, 'jp-factsheet.json'), 'utf8'));
   const period = factsheet.generatedFor;
 
-  // 종료 코드 2 = 검수 미해결. 원고는 만들어졌지만 발행하면 안 된다.
+  // 종료 코드 2 = 검수 미해결. 이때 writer는 원고를 만들지 않는다.
+  //
+  // 예전에는 미해결이어도 assembler를 돌렸다. 원고가 없으니 assembler가 "원고 없음"으로
+  // 죽고, 종료 코드가 1로 덮였다. 워크플로는 2(검수 미해결)를 기다리는데 영영 오지 않고
+  // 로그에는 조립 실패만 남아 진짜 이유가 가려졌다. 미해결이면 조립하지 않는다.
   const write = step('② writer — 섹션 생성 + 2층 검수', 'write/write-report.js');
-  const blocked = write.code === 2;
-  if (!write.ok && !blocked) {
+  if (write.code === 2) {
+    console.error('\n' + '─'.repeat(56));
+    console.error('⛔ 검수 미해결 — 조립·발행하지 않는다 (fail-closed)');
+    const saved = cache.readUnresolved(period);
+    ((saved && saved.unresolved) || []).forEach((u) => {
+      console.error(`   ${u.section} [${u.type}] ${u.detail}`);
+    });
+    console.error(`   목록: ${cache.unresolvedFile(period)}`);
+    console.error('   통과한 섹션은 저장돼 있다. 다시 실행하면 막힌 섹션만 다시 쓴다.');
+    process.exit(2);
+  }
+  if (!write.ok) {
     console.error('\n❌ 원고 생성 실패 — 중단');
     process.exit(1);
   }
@@ -52,11 +74,6 @@ function main() {
   }
 
   console.log('\n' + '─'.repeat(56));
-  if (blocked) {
-    console.error('⛔ 검수 미해결 — 발행하지 않는다 (fail-closed)');
-    console.error(`   원고와 HTML은 ${DRAFTS} 에 있다. 지적 내용은 위 로그 참조.`);
-    process.exit(2);
-  }
   console.log(`✅ ${period} 리포트 준비 완료`);
   if (!publish) {
     console.log('   발행하려면 --publish 를 붙여 실행한다.');

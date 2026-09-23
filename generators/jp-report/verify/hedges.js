@@ -52,35 +52,54 @@ function bodyLines(text) {
     .join('\n');
 }
 
+/** 본문을 문장으로 쪼갠다. 몇 번째 문장인지를 지적문에 실어 보내려면 전체가 필요하다. */
+function bodySentences(text) {
+  return bodyLines(text).split(/(?<=。)/).map((s) => s.trim()).filter(Boolean);
+}
+
 /** 유보 표현이 든 문장을 뽑는다. 한 문장에 두 개가 있어도 한 번으로 센다. */
 function findHedges(text) {
-  const out = [];
-  for (const sentence of bodyLines(text).split(/(?<=。)/)) {
-    const s = sentence.trim();
-    if (!s) continue;
-    if (HEDGE.some((h) => s.includes(h))) out.push(s);
-  }
-  return out;
+  return bodySentences(text).filter((s) => HEDGE.some((h) => s.includes(h)));
 }
 
 /**
  * @param {string} body 섹션 본문
  * @param {number} [cap] 허용 개수
- * @returns {{ok: boolean, cap: number, sentences: string[]}}
+ * @returns {{ok: boolean, cap: number, sentences: string[], hits: Array<{sentence: string, at: number}>}}
+ *   hits.at — 본문에서 몇 번째 문장인지(1부터). 재생성 피드백과 부분 수리가 위치를 짚는 데 쓴다.
  */
 function checkHedges(body, cap = DEFAULT_CAP) {
-  const sentences = findHedges(body);
-  return { ok: sentences.length <= cap, cap, sentences };
+  const all = bodySentences(body);
+  const sentences = all.filter((s) => HEDGE.some((h) => s.includes(h)));
+  const hits = sentences.map((s) => ({ sentence: s, at: all.indexOf(s) + 1 }));
+  return { ok: sentences.length <= cap, cap, sentences, hits };
 }
 
-/** 재생성 프롬프트에 붙일 지적문. 어느 문장을 남길지는 모델이 고른다. */
-function hedgeFeedback({ cap, sentences }) {
+/**
+ * 재생성 프롬프트에 붙일 지적문.
+ *
+ * 어느 것을 남기고 어느 것을 지울지까지 지정한다. 「減らせ」만 보냈더니 모델이
+ * 문장을 바꿔 쓰면서 개수는 그대로 두는 일이 회차마다 반복됐다.
+ * 앞의 cap개를 남기고 나머지를 번호로 지목한다.
+ */
+function hedgeFeedback({ cap, sentences, hits }) {
+  const list = hits || sentences.map((sentence) => ({ sentence, at: null }));
+  const mark = (h, i) => {
+    const at = h.at ? `${h.at}文目` : '該当文';
+    return i < cap
+      ? `- (${at}) 「${h.sentence}」 … これは残してよい。`
+      : `- (${at}) 「${h.sentence}」 … これを削るか、事実の記述で終える文に書き換える。`;
+  };
   return [
     `【留保の多用】このセクションに「〜できない」「〜を待つ必要がある」の類の文が${sentences.length}つある。${cap}つまでにする。`,
     '最も重要な一つを残し、残りは削るか、言えることに書き換える。',
     'データが無いことを繰り返し断るより、有るデータで言えることを増やす。',
-    ...sentences.map((s) => `- 「${s}」`),
+    '書き換えの例1: 「航空のスポット指数は本レポートのデータに含まれていない。」',
+    '  → 「国際航空貨物輸送は円ベース142.4、契約通貨ベース98.1である。」(事実の記述で終える)',
+    '書き換えの例2: 「需給のどちらから動いたかは説明できない。」',
+    '  → 「公表された直近回の欠航は49便(6%)である。」(有る数字で言えることを述べる)',
+    ...list.map(mark),
   ].join('\n');
 }
 
-module.exports = { HEDGE, DEFAULT_CAP, findHedges, checkHedges, hedgeFeedback };
+module.exports = { HEDGE, DEFAULT_CAP, bodySentences, findHedges, checkHedges, hedgeFeedback };

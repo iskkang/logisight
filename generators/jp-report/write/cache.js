@@ -85,4 +85,42 @@ function clear(period) {
   fs.rmSync(path.join(ROOT, String(period)), { recursive: true, force: true });
 }
 
-module.exports = { ROOT, fingerprint, read, write, clear, fileOf };
+// ── 미해결 목록 ──────────────────────────────────────────────────────
+// writer가 멈춘 이유를 파일로 남긴다. 오케스트레이터(run.js)는 자식 프로세스의
+// 종료 코드밖에 못 보는데, 워크플로 로그에서는 "무엇이 왜 막혔는지"를 봐야 한다.
+// 콘솔 출력은 로그 위로 밀려 올라가고, 재실행하면 사라진다.
+
+function unresolvedFile(period) {
+  return path.join(ROOT, String(period), 'unresolved.json');
+}
+
+/** @param {{status: string, unresolved: Array<{section, type, detail}>}} result */
+function writeUnresolved(period, result) {
+  const f = unresolvedFile(period);
+  fs.mkdirSync(path.dirname(f), { recursive: true });
+  fs.writeFileSync(f, JSON.stringify({
+    period: String(period),
+    status: result.status,
+    savedAt: new Date().toISOString(),
+    unresolved: result.unresolved || [],
+  }, null, 2), 'utf8');
+  return f;
+}
+
+function readUnresolved(period) {
+  try {
+    return JSON.parse(fs.readFileSync(unresolvedFile(period), 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
+/** 통과한 회차의 낡은 목록은 지운다. 남겨두면 다음 실행의 로그가 거짓말을 한다. */
+function clearUnresolved(period) {
+  fs.rmSync(unresolvedFile(period), { force: true });
+}
+
+module.exports = {
+  ROOT, fingerprint, read, write, clear, fileOf,
+  unresolvedFile, writeUnresolved, readUnresolved, clearUnresolved,
+};

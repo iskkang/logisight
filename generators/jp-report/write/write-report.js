@@ -4,21 +4,23 @@
 // 사용법: node generators/jp-report/write/write-report.js [--facts=경로] [--out=경로]
 //
 // 섹션마다 생성 직후 verifier(a)로 수치를 대조하고, 위반이 있으면 지적사항을 붙여
-// 1회 재생성한다. 그래도 남으면 위반을 리포트에 기록해 다음 단계(verifier b·발행)가
-// 판단하게 한다 — 조용히 통과시키지 않는다.
+// 재생성한다. 마지막 재시도까지 걸리면 섹션 전체를 또 쓰지 않고 걸린 문장만 고친다
+// (write/repair.js). 그래도 남으면 미해결로 기록하고 원고를 조합하지 않는다 —
+// 조용히 통과시키지 않는다.
+//
+// 종료 코드: 0 = 원고 작성, 2 = 검수 미해결(원고 없음), 1 = 실패.
+// 미해결 목록은 outputs/cache/jp-report/<월>/unresolved.json 에도 남긴다.
 
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../../../.env.local') });
 
 const { callClaude, callClaudeJson } = require('../../lib/claude');
-const { verifyNumbers } = require('../verify/numbers');
 const { reviewSection, needsRewrite, buildIssueFeedback, splitBySeverity } = require('../verify/editorial');
 const { generationOrder, outputOrder, slimFactsheet } = require('./sections');
-const { checkHedges, hedgeFeedback } = require('../verify/hedges');
-const { checkContinuity, continuityFeedback } = require('../verify/continuity');
-const { checkJargon, jargonFeedback } = require('../verify/jargon');
-const { checkCausation, causationFeedback } = require('../verify/causation');
+const { HEDGE } = require('../verify/hedges');
+const { deterministicChecks } = require('../verify/deterministic');
+const { attachSentences, repairSection, numberRule } = require('./repair');
 const { composeSection } = require('./heading');
 const cache = require('./cache');
 const { tablesFor } = require('./tables');
@@ -52,12 +54,64 @@ const WRITER_MODEL = process.env.JP_WRITER_MODEL || undefined;
 // 남은 편집 지적을 반영할 기회 없이 발행이 막혔다. 검사 수에 맞춰 늘린다.
 const MAX_RETRY = 4;
 
+/**
+ * 검사기가 기계적으로 세는 규칙을 프롬프트에 그대로 싣는다.
+ *
+ * STYLE.ja.md는 사람이 읽는 문체 가이드이고, 이쪽은 코드가 세는 목록이다.
+ * 「留保は一文まで」라고만 써두면 모델은 무엇이 留保로 세어지는지 모른 채 쓰고,
+ * 매번 상한 초과로 재생성된다(1회당 약 2분). 세는 말을 그대로 보여준다.
+ *
+ * HEDGE 목록은 verify/hedges.js에서 가져온다. 여기에 손으로 옮겨 적으면
+ * 검사기를 고쳤을 때 프롬프트만 옛 목록으로 남는다.
+ *
+ * 이 블록은 캐시 지문(fingerprint)에 들어가지 않는다 — 지문은 STYLE·SEO·팩트시트
+ * 조각으로 만든다. 여기를 고쳐도 통과한 섹션을 다시 쓰지 않는다. 의도한 것이다.
+ */
+function machineRules() {
+  return [
+    '=== 機械検査の規則(コードが数える。違反すると自動で書き直しになる) ===',
+    '',
+    '【留保は1セクションに1文まで】次の語を含む文を「留保」として数える。',
+    HEDGE.map((h) => `「${h}」`).join('・'),
+    '2文以上あると差し戻される。無いデータを繰り返し断るより、有るデータで言えることを増やす。',
+    '留保の代わりに事実の記述で終える:',
+    '  悪い例: 「航空のスポット指数は本レポートのデータに含まれていない。」',
+    '  良い例: 「国際航空貨物輸送は円ベース142.4、契約通貨ベース98.1である。」',
+    '  悪い例: 「需給のどちらから動いたかは説明できない。」',
+    '  良い例: 「公表された直近回の欠航は49便(6%)である。」',
+    '',
+    '【閾値・目安の数値を作らない】factsheet に無い数値は、丸めた目安であっても書けない。',
+    '「10%を上回る水準」「2000台を割り込む」のような基準線は、その数値が factsheet に無い限り書かない。',
+    'コードが本文の数字を factsheet と突き合わせるので、必ず弾かれる。',
+    '',
+    '【順位・最上級は factsheet に載っている範囲でだけ書く】',
+    'factsheet にあるのは一部の国・港・系列である。全体の順位は分からない。',
+    '  悪い例: 「最も伸びたのは台湾である」(全体の比較ができない)',
+    '  良い例: 「factsheet にある国のうち、伸び率が最も高いのは台湾である」',
+    '範囲を書けないなら順位ではなく水準の対比で述べる。',
+    '',
+    '【別の指数を同じ根拠に束ねない】',
+    'ERAI と SCFI・CCFI は対象も作成者も異なる。海運と航空も別である。',
+    '一方の動きをもう一方の裏付けとして使わない。並べるときは別々の事実として並べる。',
+    '',
+    '【反映される月を名指ししない】公表の遅れは事実として述べるだけにする。',
+    '  悪い例: 「8月分に反映される」「次の公表で表れる」(転嫁ラグを置いたことになる)',
+    '  良い例: 「日本の指数は6月分までの公表である」',
+    '',
+    '【factsheet に無い時点を書かない】periods は月次統計の基準月、asOf は週次データの基準日である。',
+    '週次の asOf が基準月より後を指すことはある(月次は遅れて出る)。そこまでは書いてよい。',
+    'しかし factsheet が持っていない時点の動きは、「〜月に入って」の形であっても書かない。',
+    '時点に触れるときは factsheet の日付をそのまま書く。',
+  ].join('\n');
+}
+
 function systemPrompt() {
   return [
     'あなたは日本の物流専門メディアの編集記者だ。荷主・フォワーダー向けの月次マーケットレポートを書く。',
     '以下の文体ガイドと SEO ガイドに従う。',
     '', '=== 文体ガイド ===', STYLE,
     '', '=== SEO ガイド ===', SEO,
+    '', machineRules(),
   ].join('\n');
 }
 
@@ -93,8 +147,13 @@ function userPrompt(section, slim, digests, violations, issues, hedgeNote, phras
       digests.map((d) => `- ${d.title}: ${d.digest}`).join('\n'));
   }
   if (violations && violations.length > 0) {
+    // 문맥 ±20자만 보내던 때는 모델이 어느 문장을 고칠지 못 짚고 같은 위반을 반복했다.
+    // 위반 숫자 · 그 문장 원문 · 무엇을 하라는 지시, 셋을 다 보낸다.
     parts.push('', '【前回の指摘・数値】以下の数値はファクトシートに存在しない。書き直せ。',
-      violations.map((v) => `- 「${v.raw}」 … ${v.context}`).join('\n'));
+      violations.map((v) => [
+        `- 「${v.raw}」 … ${v.sentence || v.context}`,
+        `  → ${v.rule || numberRule([v.raw])}`,
+      ].join('\n')).join('\n'));
   }
   if (hedgeNote) parts.push('', hedgeNote);
   if (phraseNote) parts.push('', phraseNote);
@@ -119,36 +178,30 @@ function digestOf(body) {
 }
 
 /**
- * 호출이 없는 검사들. 하나라도 걸리면 그 자리에서 돌려준다.
- *
- * 한곳에 모아두는 이유: 저장분을 되쓸 때도 이것들은 전부 다시 돌려야 한다.
- * 검사기를 새로 추가했을 때, 예전에 통과한 본문이 그 검사를 건너뛰면 안 된다.
+ * 걸린 한 문장만 다시 쓰게 한다. 부분 수리(write/repair.js)가 쓰는 호출기다.
+ * 섹션 전체 재생성은 약 2분, 이쪽은 수 초다.
  */
-function deterministicChecks(body, factsheet) {
-  const numbers = verifyNumbers(body, factsheet);
-  if (!numbers.ok) {
-    return { label: `수치 위반 ${numbers.violations.length}건`, violations: numbers.violations };
-  }
-  const hedges = checkHedges(body);
-  if (!hedges.ok) {
-    return { label: `유보 문구 ${hedges.sentences.length}건(상한 ${hedges.cap})`, note: hedgeFeedback(hedges), slot: 'hedge' };
-  }
-  const continuity = checkContinuity(body);
-  if (!continuity.ok) {
-    return { label: `지속 표현 ${continuity.hits.length}건`, note: continuityFeedback(continuity), slot: 'phrase' };
-  }
-  const jargon = checkJargon(body);
-  if (!jargon.ok) {
-    return {
-      label: `내부 명칭 노출 ${jargon.hits.length}건(${jargon.hits.map((h) => h.token).join(', ')})`,
-      note: jargonFeedback(jargon), slot: 'jargon',
-    };
-  }
-  const causation = checkCausation(body);
-  if (!causation.ok) {
-    return { label: `인과·비율 표현 ${causation.hits.length}건`, note: causationFeedback(causation), slot: 'cause' };
-  }
-  return null;
+async function rewriteSentence(sentence, instruction) {
+  const res = await callClaude({
+    model: WRITER_MODEL,
+    // sonnet은 thinking과 본문이 예산을 함께 쓴다. 한 문장이라도 넉넉히 준다.
+    max_tokens: 4000,
+    system: 'あなたは日本の物流専門メディアの編集記者だ。渡された一文だけを指示どおりに書き直す。',
+    messages: [{
+      role: 'user',
+      content: [
+        '次の一文を、指示に従って書き直せ。',
+        '', '【指示】', instruction,
+        '', '【条件】',
+        '- 常体(だ・である)で、一文だけ出力する。',
+        '- 前置き・説明・引用符・箇条書きを付けない。書き直した本文だけを出力する。',
+        '- 新しい数値を持ち込まない。指示で許された数値以外は書かない。',
+        '- 元の文が見出し(「#」で始まる)なら、見出しの形のまま書き直す。',
+        '', '【原文】', sentence,
+      ].join('\n'),
+    }],
+  });
+  return textOf(res);
 }
 
 /**
@@ -180,19 +233,35 @@ async function writeSection(section, factsheet, digests) {
 
     const fail = deterministicChecks(body, factsheet);
     if (fail) {
-      violations = fail.violations || null;
+      // 위반 숫자만이 아니라 그 문장 원문까지 되돌려준다 — ±20자 문맥으로는
+      // 모델이 어디를 고칠지 못 짚고 같은 위반을 반복했다.
+      violations = fail.violations ? attachSentences(body, fail.violations, factsheet) : null;
       issues = null;
       hedgeNote = fail.slot === 'hedge' ? fail.note : null;
       phraseNote = fail.slot === 'phrase' ? fail.note : null;
       jargonNote = fail.slot === 'jargon' ? fail.note : null;
       causeNote = fail.slot === 'cause' ? fail.note : null;
-      console.warn(`  ⚠️ ${section.id}: ${fail.label} — ${last ? '미해결로 기록' : '재생성'}`);
+      console.warn(`  ⚠️ ${section.id}: ${fail.label} — ${last ? '부분 수리 시도' : '재생성'}`);
       if (!last) continue;
-      // 마지막 시도에도 걸렸다. 통과시키지 않는다 — 저장도 하지 않는다.
-      // 여기서 깨끗한 것으로 돌려주면 캐시에 들어가 다음 회차가 그대로 되쓴다.
+
+      // 마지막 시도에도 걸렸다. 섹션 전체를 또 쓰는 대신 걸린 문장만 고친다.
+      // 통과하지 못하면 통과시키지 않는다 — 저장도 하지 않는다. 여기서 깨끗한 것으로
+      // 돌려주면 캐시에 들어가 다음 회차가 그대로 되쓴다.
+      const repaired = await repairSection({
+        body,
+        factsheet,
+        rewrite: rewriteSentence,
+        log: (msg) => console.warn(`  🔧 ${section.id}: ${msg}`),
+      });
+      if (repaired.ok) {
+        // 편집 검수(b)는 다시 돌리지 않는다. 바뀐 것은 문장 하나이고, 여기서
+        // 2분짜리 왕복을 한 번 더 도는 것은 이 단계의 취지에 어긋난다.
+        return { body: repaired.body, violations: [], issues: [], warnings: [], attempts: attempt + 1, repaired: repaired.how };
+      }
+      console.warn(`  ⚠️ ${section.id}: 부분 수리로도 해결되지 않았다 — 미해결로 기록`);
       return {
         body,
-        violations: fail.violations || [],
+        violations: violations || [],
         issues: fail.violations ? [] : [{ type: 'deterministic', reason: fail.label }],
         warnings: [],
         attempts: attempt + 1,
@@ -229,6 +298,7 @@ async function writeReport(factsheet, { fresh = false } = {}) {
   const digests = [];
   const bodies = new Map();
   const allViolations = [];
+  const rewrites = [];
   let reused = 0;
 
   for (const section of generationOrder()) {
@@ -247,7 +317,8 @@ async function writeReport(factsheet, { fresh = false } = {}) {
     }
 
     console.log(`  ▸ ${section.no}. ${section.title}`);
-    const { body, violations, issues } = await writeSection(section, factsheet, digests);
+    const { body, violations, issues, attempts, repaired } = await writeSection(section, factsheet, digests);
+    rewrites.push({ section: section.id, attempts, repaired: repaired || null });
     // 섹션 제목과 표는 코드가 찍는다 — 모델은 소섹션 번호를 빠뜨리고,
     // 표를 그리게 하면 수치 오류가 섞인다. 목차·앵커가 번호에 의존한다.
     bodies.set(section.id, composeSection(body, section, tablesFor(section.id, factsheet)));
@@ -267,7 +338,24 @@ async function writeReport(factsheet, { fresh = false } = {}) {
     .filter(Boolean)
     .join('\n\n---\n\n');
 
-  return { markdown, violations: allViolations, period, reused, total: generationOrder().length };
+  // 미해결 목록은 한 줄에 하나씩 평면화한다. run.js와 워크플로 로그가 이것을 그대로 찍는다.
+  const unresolved = allViolations.flatMap(({ section, violations, issues }) => [
+    ...violations.map((v) => ({
+      section, type: 'number', detail: `「${v.raw}」 … ${v.sentence || v.context}`,
+    })),
+    ...issues.map((i) => ({ section, type: i.type, detail: i.reason })),
+  ]);
+
+  return {
+    status: unresolved.length > 0 ? 'unresolved' : 'ok',
+    unresolved,
+    markdown,
+    violations: allViolations,
+    rewrites,
+    period,
+    reused,
+    total: generationOrder().length,
+  };
 }
 
 async function main() {
@@ -280,26 +368,45 @@ async function main() {
   const outPath = arg('out', path.resolve(__dirname, `../../../content/drafts/jp-report-${factsheet.generatedFor}.md`));
 
   const fresh = process.argv.includes('--fresh');
-  console.log(`📝 일본 월간 리포트 생성 (${factsheet.generatedFor})${fresh ? ' — 저장분 버리고 전부 다시 씀' : ''}`);
-  const { markdown, violations, period, reused, total } = await writeReport(factsheet, { fresh });
+  const period = factsheet.generatedFor;
+  console.log(`📝 일본 월간 리포트 생성 (${period})${fresh ? ' — 저장분 버리고 전부 다시 씀' : ''}`);
 
-  if (violations.length > 0) {
+  let result;
+  try {
+    result = await writeReport(factsheet, { fresh });
+  } catch (e) {
+    // status: 'error' — 원고 생성 자체가 실패했다. 미해결(2)과 구분해 1로 끝낸다.
+    result = { status: 'error', unresolved: [{ section: '-', type: 'error', detail: e.message }] };
+  }
+
+  if (result.status === 'error') {
+    console.error(`\n❌ 리포트 생성 실패: ${result.unresolved[0].detail}`);
+    console.error(`   기록: ${cache.writeUnresolved(period, result)}`);
+    process.exitCode = 1;
+    return;
+  }
+
+  const { markdown, violations, unresolved, reused, total } = result;
+
+  if (result.status === 'unresolved') {
     // 통과한 섹션은 저장돼 있다. 다음 실행은 막힌 섹션만 다시 쓴다.
-    console.warn(`
-⚠️ 미해결 ${violations.length}개 섹션 — 원고를 조합하지 않는다`);
-    violations.forEach((v) => {
-      v.violations.forEach((x) => console.warn(`   ${v.section} 수치: 「${x.raw}」 …${x.context}…`));
-      v.issues.forEach((x) => console.warn(`   ${v.section} 편집(${x.type}): ${x.reason}`));
-    });
+    console.warn(`\n⚠️ 미해결 ${violations.length}개 섹션 — 원고를 조합하지 않는다`);
+    unresolved.forEach((u) => console.warn(`   ${u.section} [${u.type}] ${u.detail}`));
     console.warn(`   통과 ${total - violations.length}/${total}개는 저장했다. 다시 실행하면 남은 것만 쓴다.`);
     console.warn(`   저장 위치: ${path.join(cache.ROOT, String(period))}`);
+    console.warn(`   미해결 목록: ${cache.writeUnresolved(period, result)}`);
     process.exitCode = 2; // 발행 파이프라인이 이 코드를 보고 멈춘다(fail-closed)
     return;
   }
 
+  cache.clearUnresolved(period); // 지난 실행의 목록이 남아 있으면 로그가 거짓말을 한다
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   fs.writeFileSync(outPath, markdown, 'utf8');
   console.log(`✅ ${outPath} (${markdown.length}자 · 저장분 재사용 ${reused}/${total})`);
+  // 어느 섹션이 몇 번 만에 통과했는지. 재시도가 어디로 몰리는지 로그에서 바로 보이게 한다.
+  result.rewrites.forEach((r) => {
+    console.log(`   ${r.section}: ${r.attempts}회${r.repaired ? ` · 부분 수리(${r.repaired})` : ''}`);
+  });
 }
 
 if (require.main === module) {
