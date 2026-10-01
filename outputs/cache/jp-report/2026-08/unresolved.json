@@ -1,0 +1,12 @@
+{
+  "period": "2026-08",
+  "status": "unresolved",
+  "savedAt": "2026-10-01T00:00:35.997Z",
+  "unresolved": [
+    {
+      "section": "overview",
+      "type": "unsupported_fact",
+      "detail": "ファクトシートでは国際航空貨物輸送のparentは航空貨物輸送であり、航空貨物輸送が親系列である。本文はこの親子関係を逆転させ、国際航空貨物輸送を航空貨物輸送の親系列であるかのように記述しており、hierarchyNoteおよびseries定義と矛盾する。"
+    }
+  ]
+}
