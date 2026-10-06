@@ -11,6 +11,7 @@ const SOURCES = [
     name: '카고뉴스',
     url: 'https://www.cargonews.co.kr/',
     rss: ['https://www.cargonews.co.kr/rss/allArticle.xml'],
+    articlePattern: null,   // RSS 사용 — HTML 경로로 내려오지 않는다
     section: 'shipping' as const,
   },
   {
@@ -19,6 +20,7 @@ const SOURCES = [
     // /feed·/rss.xml 후보는 전부 404 였다. 사이트가 안내하는 실제 경로는
     // /rssIndex.html 에 적혀 있고 allArticle.xml 이다(2026-10-06 확인, 50건).
     rss: ['https://www.shippingnewsnet.com/rss/allArticle.xml'],
+    articlePattern: null,   // RSS 사용 — HTML 경로로 내려오지 않는다
     section: 'shipping' as const,
   },
   {
@@ -28,24 +30,28 @@ const SOURCES = [
     // robots.txt 에도 피드 안내가 없다(2026-10-06 확인). 죽은 후보를 계속 두면
     // 매 실행 실패 3건이 찍히기만 하므로, 카고프레스·KL뉴스와 같은 HTML 경로로 돌린다.
     rss: null,
+    articlePattern: /board_view\.php\?.*bbs_number=\d+/,
     section: 'shipping' as const,
   },
   {
     name: '카고프레스',
     url: 'https://www.cargopress.co.kr/korean/news.php',
     rss: null,
+    articlePattern: /news_view\.php\?nd=\d+/,
     section: 'shipping' as const,
   },
   {
     name: 'KL뉴스',
     url: 'https://www.klnews.co.kr/',
     rss: null,
+    articlePattern: /(articleView|view)\.html\?idxno=\d+/,
     section: 'shipping' as const,
   },
   {
     name: '마리타임프레스',
     url: 'http://www.maritimepress.co.kr/',
     rss: null,
+    articlePattern: /view\.html\?idxno=\d+/,
     section: 'shipping' as const,
   },
   // 코리아쉬핑가제트 (한러·한중 항로 특화)
@@ -55,6 +61,7 @@ const SOURCES = [
     // RSS 가 없다. 홈페이지 HTML 에 피드 링크가 없고 흔한 경로(/rss/*, /feed,
     // /rss.php)와 sitemap.xml·robots.txt 까지 전부 404 다(2026-10-06 확인).
     rss: null,
+    articlePattern: /main_newsView\.jsp\?pNum=\d+/,
     section: 'shipping' as const,
   },
 ];
@@ -109,15 +116,37 @@ async function tryRssFallbacks(urls: string[], sourceName: string): Promise<News
   throw new Error(`RSS 모든 후보 실패: ${urls.join(', ')}`);
 }
 
-async function fetchAndParseHtml(pageUrl: string, sourceName: string): Promise<NewsItem[]> {
+// 선언 문자셋대로 읽는다 ★
+// res.text() 는 UTF-8 을 가정한다. 쉬핑데일리는 EUC-KR 이라 제목이 통째로 깨진
+// 채로 수집됐다("쉬핑데일리" → "���ε��ϸ�"). 그 쓰레기가 maritime_news 를 거쳐
+// 월간 리포트 아이템 풀까지 들어간다. Content-Type 헤더를 먼저 보고, 없으면
+// 본문의 <meta charset> 을 본다. 모르는 인코딩이면 UTF-8 로 되돌린다.
+function decodeBody(buf: ArrayBuffer, contentType: string | null): string {
+  const head = new TextDecoder('utf-8').decode(buf.slice(0, 2048));
+  const declared =
+    (contentType || '').match(/charset=([\w-]+)/i)?.[1] ||
+    head.match(/<meta[^>]+charset=["']?([\w-]+)/i)?.[1] ||
+    'utf-8';
+  try {
+    return new TextDecoder(declared.toLowerCase()).decode(buf);
+  } catch {
+    return new TextDecoder('utf-8').decode(buf);
+  }
+}
+
+async function fetchAndParseHtml(
+  pageUrl: string,
+  sourceName: string,
+  articlePattern: RegExp | null = null,
+): Promise<NewsItem[]> {
   const res = await fetch(pageUrl, {
     headers: FETCH_HEADERS,
     signal: AbortSignal.timeout(10000),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const html = await res.text();
+  const html = decodeBody(await res.arrayBuffer(), res.headers.get('content-type'));
 
-  const base = new URL(pageUrl).origin;
+  // base 는 더 쓰지 않는다 —— new URL(href, pageUrl) 이 상대 주소를 전부 해석한다.
   const items: NewsItem[] = [];
   const seen = new Set<string>();
 
@@ -128,7 +157,23 @@ async function fetchAndParseHtml(pageUrl: string, sourceName: string): Promise<N
     if (!href || href.startsWith('javascript') || href.startsWith('#') || href.startsWith('mailto')) continue;
     if (seen.has(title)) continue;
 
-    if (href.startsWith('/')) href = `${base}${href}`;
+    // 기사 링크만 고른다 ★
+    // 앵커를 전부 줍던 때는 메뉴가 기사로 들어왔다 —— 쉬핑데일리는 "회원가입·
+    // 사이트맵·탑뉴스", 코리아쉬핑가제트는 "English news·용어사전·스케줄" 5건이
+    // 전부였고 실제 기사는 0건이었다. 사이트마다 상세 페이지 주소가 뚜렷하므로
+    // (main_newsView.jsp?pNum= / news_view.php?nd= / view.html?idxno= /
+    // board_view.php?...bbs_number=) 그 모양을 가진 링크만 남긴다.
+    if (articlePattern && !articlePattern.test(href)) continue;
+
+    // 상대 주소는 전부 표준 해석에 맡긴다.
+    // 직접 붙이던 때는 './' 와 '/' 만 처리해서, 카고프레스처럼 접두사 없는
+    // 'news_view.php?nd=7541' 형태가 http 로 시작하지 않는다는 이유로 전부 버려졌다
+    // (그 소스만 0건이었다).
+    try {
+      href = new URL(href, pageUrl).href;
+    } catch {
+      continue;
+    }
     if (!href.startsWith('http')) continue;
 
     seen.add(title);
@@ -152,7 +197,7 @@ export async function collect(): Promise<CollectorResult> {
     try {
       const items = source.rss
         ? await rateLimited(source.url, () => tryRssFallbacks(source.rss!, source.name))
-        : await rateLimited(source.url, () => fetchAndParseHtml(source.url, source.name));
+        : await rateLimited(source.url, () => fetchAndParseHtml(source.url, source.name, source.articlePattern ?? null));
 
       for (const item of items) {
         result.data.push({

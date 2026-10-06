@@ -2,7 +2,10 @@ name: Monthly Analysis Sources
 
 on:
   schedule:
-    - cron: '0 19 2 * *'   # 매월 2일 04:00 KST — 월초 지수·기업 업데이트 발표 후
+    # 19:00 UTC 는 KST 로 +9h —— 날짜가 하루 넘어간다. 2일 19:00 UTC = 3일 04:00 KST.
+    # 예전 주석은 "매월 2일 04:00 KST"라고 적고 있었는데, 그 값이면 cron 이 '0 19 1 * *'
+    # 여야 한다. 발행일(5일) 과의 검수 창을 계산할 때 하루가 어긋난다.
+    - cron: '0 19 2 * *'   # 매월 3일 04:00 KST — 월초 지수·기업 업데이트 발표 후
   workflow_dispatch:
 
 jobs:
