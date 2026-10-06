@@ -158,6 +158,28 @@ export async function enrichNewsItem(item: NewsItem): Promise<NewsItem> {
   }
 }
 
+// Postgres 는 텍스트에 NUL(U+0000)을 담지 못한다 —— "unsupported Unicode escape
+// sequence" 로 거절한다. 기사 본문을 긁다 보면 로그인 위젯 같은 데서 섞여 들어온다
+// (2026-10 Evri 기사: "remember me on this device \u0000\u0000\u0000\u0000 Related
+// Stories"). 한 건만 섞여도 배치 전체가 거절되므로 —— 그날 수집한 220건이 통째로
+// 사라진다 —— 저장 직전에 턴다. 짝 없는 서러게이트도 같은 이유로 턴다(정상 이모지·
+// CJK 확장은 쌍으로 들어오므로 영향 없다).
+function pgSafeString(s: string): string {
+  return s
+    .replace(/\u0000/g, '')
+    .replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])/g, '')
+    .replace(/(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, '');
+}
+
+function pgSafeRow(row: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const key of Object.keys(row)) {
+    const v = row[key];
+    out[key] = typeof v === 'string' ? pgSafeString(v) : v;
+  }
+  return out;
+}
+
 export async function persistCollectedNews(result: CollectorResult): Promise<void> {
   const rowsByUrl = new Map<string, Record<string, unknown>>();
   for (const datum of result.data) {
@@ -166,7 +188,7 @@ export async function persistCollectedNews(result: CollectorResult): Promise<voi
     if (!item.url || !item.title) continue;
     const section = item.section ?? result.section;
     const category = CATEGORY_BY_SECTION[section as keyof typeof CATEGORY_BY_SECTION] ?? '물류';
-    rowsByUrl.set(item.url, {
+    rowsByUrl.set(item.url, pgSafeRow({
       title: item.title.slice(0, 500),
       url: item.url,
       source: item.source || datum.source,
@@ -182,7 +204,15 @@ export async function persistCollectedNews(result: CollectorResult): Promise<voi
       agent_type: 'external',
       slug: null,
       fetched_at: new Date().toISOString(),
-    });
+    }));
   }
-  await dbUpsert('maritime_news', [...rowsByUrl.values()], 'url');
+  // 충돌 키는 (url, lang) 이다 ★
+  // 2026-08-06 마이그레이션(20260806000001)이 maritime_news_url_key 를 떼고
+  // maritime_news_url_lang_key unique (url, lang) 을 달았다. 그런데 여기만 'url' 로
+  // 남아, 그날 이후 모든 upsert 가 "no unique or exclusion constraint matching the
+  // ON CONFLICT specification" 으로 실패했다. 호출부가 이 에러를 삼키고 "persist
+  // skipped" 로만 찍는 탓에 수집기는 계속 성공으로 끝났고, external 기사는 7월 606건
+  // → 9월 16건 → 10월 2건으로 조용히 말랐다. news_jp.ts 는 같은 날 고쳐졌는데
+  // 이 경로만 빠졌다 —— 일본 뉴스는 멀쩡하고 external 만 끊긴 이유다.
+  await dbUpsert('maritime_news', [...rowsByUrl.values()], 'url,lang');
 }
