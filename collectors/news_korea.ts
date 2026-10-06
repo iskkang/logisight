@@ -24,16 +24,6 @@ const SOURCES = [
     section: 'shipping' as const,
   },
   {
-    name: '쉬핑데일리',
-    url: 'https://www.shippingdaily.co.kr/index.php',
-    // RSS 가 없다. 사이트가 PHP 게시판(/bbs/board.php)이고 피드 경로가 전부 404,
-    // robots.txt 에도 피드 안내가 없다(2026-10-06 확인). 죽은 후보를 계속 두면
-    // 매 실행 실패 3건이 찍히기만 하므로, 카고프레스·KL뉴스와 같은 HTML 경로로 돌린다.
-    rss: null,
-    articlePattern: /board_view\.php\?.*bbs_number=\d+/,
-    section: 'shipping' as const,
-  },
-  {
     name: '카고프레스',
     url: 'https://www.cargopress.co.kr/korean/news.php',
     rss: null,
@@ -47,13 +37,6 @@ const SOURCES = [
     articlePattern: /(articleView|view)\.html\?idxno=\d+/,
     section: 'shipping' as const,
   },
-  {
-    name: '마리타임프레스',
-    url: 'http://www.maritimepress.co.kr/',
-    rss: null,
-    articlePattern: /view\.html\?idxno=\d+/,
-    section: 'shipping' as const,
-  },
   // 코리아쉬핑가제트 (한러·한중 항로 특화)
   {
     name: '코리아쉬핑가제트',
@@ -64,6 +47,20 @@ const SOURCES = [
     articlePattern: /main_newsView\.jsp\?pNum=\d+/,
     section: 'shipping' as const,
   },
+  // ── 뺀 소스 ─────────────────────────────────────────────────────────
+  // 쉬핑데일리(shippingdaily.co.kr)
+  //   RSS 없음. /news.php·/top_news.php 는 index.php 로 JS 리다이렉트만 돌려주고,
+  //   index.php 에 평문으로 노출되는 글은 전부 채용공고다("KSF선박금융 경력사원 모집",
+  //   "팬오션 사무직원 채용"…). 기사 목록(bbs/board.php)은 bbs_number 가 자바스크립트
+  //   함수 안에만 있어 정적 파싱으로 닿지 않는다. 되살리려면 news_browser.ts 쪽
+  //   Playwright 경로가 필요하다.
+  //
+  // 마리타임프레스(maritimepress.co.kr)
+  //   첫 화면에서 기사 후보가 2건뿐이고 그마저 2017~2018년 공지다. 최신 기사는
+  //   존재하나(2026-10-06) 같은 페이지의 다른 마크업에 있어 현재 파서로는 닿지 않는다.
+  //
+  // 둘 다 매 실행 5건씩 쓰레기를 스냅샷에 넣고 있었다. 그 스냅샷은 월간 리포트
+  // 아이템 풀과 기사 브리프의 재료다 —— 안 들어오는 편이 낫다.
 ];
 
 const FETCH_HEADERS = {
@@ -150,20 +147,40 @@ async function fetchAndParseHtml(
   const items: NewsItem[] = [];
   const seen = new Set<string>();
 
-  for (const m of html.matchAll(/<a[^>]+href="([^"]+)"[^>]*>([^<]{8,120})<\/a>/g)) {
+  // 앵커를 하나씩 독립적으로 읽는다 ★
+  // <a ...>(.*?)</a> 한 덩어리로 매칭하면, 기사 링크가 아닌 앵커가 먼저 걸려 그 뒤의
+  // 기사 앵커까지 통째로 삼킨다. 마리타임프레스에서 idxno 링크가 140개인데 25개만
+  // 보였던 이유다 —— 그 25개가 전부 인사·부고·결혼 공지라 기사가 한 건도 안 남았다.
+  // 여는 태그만 훑고 가장 가까운 </a> 까지를 제목으로 본다. 그러면 앵커끼리 서로를
+  // 삼키지 않는다(같은 페이지에서 기사 후보 2건 → 55건).
+  //
+  // 안쪽 태그는 벗긴다. <a><span>제목</span></a> 꼴이 흔하다.
+  for (const m of html.matchAll(/<a[^>]*href="([^"]+)"[^>]*>/g)) {
     let href = m[1].trim();
-    const title = m[2].trim().replace(/\s+/g, ' ');
+    const bodyStart = (m.index ?? 0) + m[0].length;
+    const bodyEnd = html.indexOf('</a>', bodyStart);
+    if (bodyEnd < 0 || bodyEnd - bodyStart > 400) continue;
+    const title = html.slice(bodyStart, bodyEnd)
+      .replace(/<[^>]*>/g, ' ')
+      // 엔티티를 풀어 둔다. 풀지 않으면 제목에 "&lt;아도라매직시티&gt;" 가 그대로 박힌다.
+      .replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&')
+      .trim().replace(/\s+/g, ' ');
+    if (title.length < 8 || title.length > 120) continue;
 
     if (!href || href.startsWith('javascript') || href.startsWith('#') || href.startsWith('mailto')) continue;
     if (seen.has(title)) continue;
 
-    // 기사 링크만 고른다 ★
-    // 앵커를 전부 줍던 때는 메뉴가 기사로 들어왔다 —— 쉬핑데일리는 "회원가입·
-    // 사이트맵·탑뉴스", 코리아쉬핑가제트는 "English news·용어사전·스케줄" 5건이
-    // 전부였고 실제 기사는 0건이었다. 사이트마다 상세 페이지 주소가 뚜렷하므로
-    // (main_newsView.jsp?pNum= / news_view.php?nd= / view.html?idxno= /
-    // board_view.php?...bbs_number=) 그 모양을 가진 링크만 남긴다.
     if (articlePattern && !articlePattern.test(href)) continue;
+
+    // 공지·행사 글은 기사가 아니다 ★
+    // 마리타임프레스 첫 화면은 공지가 위쪽에 깔려 있어서, 상위 5건만 집던 때는
+    // "(10/21)한국해사포럼 공개포럼개최", "교육/2017 하반기 …" 같은 것만 들어오고
+    // 정작 "HMM 톱10중 용선비중 가장 낮아", "8월 국내 항만 '컨'물동량 급증세" 같은
+    // 기사는 잘려 나갔다(103건 중 공지 27건이 앞자리를 차지한다).
+    // 제목 앞머리가 날짜 괄호이거나 분류 접두사면 거른다.
+    if (/^\(\d{1,2}\/\d{1,2}\)/.test(title)) continue;
+    if (/^(교육|알림|공지|이전|채용|모집|안내)\s*\//.test(title)) continue;
 
     // 상대 주소는 전부 표준 해석에 맡긴다.
     // 직접 붙이던 때는 './' 와 '/' 만 처리해서, 카고프레스처럼 접두사 없는
@@ -176,7 +193,14 @@ async function fetchAndParseHtml(
     }
     if (!href.startsWith('http')) continue;
 
+    // 주소로도 중복을 막는다 ★
+    // 같은 글이 "잘린 제목…" 과 "전체 제목" 두 벌로 걸리는 목록이 있다(코리아쉬핑가제트의
+    // "여수항, 초대형 크루즈 <아도라매직…" / "여수항, 초대형 크루즈 <아도라매직시티> 올…").
+    // 제목만 보면 서로 달라 보여 둘 다 들어왔다. 주소 해석이 끝난 뒤에 걸러야 키가 맞는다.
+    if (seen.has(href)) continue;
+
     seen.add(title);
+    seen.add(href);
     items.push({
       title,
       url: href,
@@ -184,10 +208,19 @@ async function fetchAndParseHtml(
       summary_en: '',
       source: sourceName,
     });
-
-    if (items.length >= 5) break;
   }
-  return items;
+
+  // 문서 순서가 아니라 최신순으로 5건을 고른다 ★
+  // 예전에는 매칭되는 앵커를 앞에서부터 5건 집고 끊었다. 그런데 이 사이트들은 공지를
+  // 페이지 위쪽에 고정해 둔다 —— 마리타임프레스는 103건 중 27건이 공지이고 그게 전부
+  // 앞자리라, 정작 "HMM 톱10중 용선비중 가장 낮아" 같은 기사는 잘려 나갔다.
+  // 네 소스 모두 상세 주소에 숫자 ID 가 있고(pNum·nd·idxno·bbs_number) 큰 값일수록
+  // 새 글이다. 그 값으로 내림차순 정렬해 위에서 5건을 가져온다.
+  const idOf = (u: string) => {
+    const m = u.match(/(?:pNum|nd|idxno|bbs_number)=(\d+)/);
+    return m ? Number(m[1]) : -1;
+  };
+  return items.sort((a, b) => idOf(b.url) - idOf(a.url)).slice(0, 5);
 }
 
 export async function collect(): Promise<CollectorResult> {
