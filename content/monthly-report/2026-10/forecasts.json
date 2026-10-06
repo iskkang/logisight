@@ -1,0 +1,107 @@
+[
+  {
+    "section": "index",
+    "claim": "이 양극화는 4분기 성수기 진입에도 좁혀지지 않을 전망.",
+    "metric": null,
+    "direction": "flat",
+    "horizon": "M+1"
+  },
+  {
+    "section": "ocean",
+    "claim": "유럽·지중해 조정이 깊어지는 가운데 미주·역내 항로가 KCCI 하단을 지지하는 비대칭 국면 지속 전망",
+    "metric": "KCCI",
+    "direction": "flat",
+    "horizon": "M+1"
+  },
+  {
+    "section": "ocean",
+    "claim": "연휴 이후 물동량 회복 시점까지는 단기 반등보다 조정 지속 가능성이 높고, 다만 미주 항로는 연말 성수기 수요에 대한 기대가 하방을 제한하는 요인으로 작용할 전망.",
+    "metric": "SCFI",
+    "direction": "down",
+    "horizon": "M+1"
+  },
+  {
+    "section": "ocean",
+    "claim": "향후 몇 주 안에 CCFI 역시 조정 국면에 진입할 가능성 상존.",
+    "metric": "CCFI",
+    "direction": "down",
+    "horizon": "M+1"
+  },
+  {
+    "section": "air",
+    "claim": "아시아태평양 중심의 수요·공급 동반 확대는 4분기 성수기 진입과 맞물려 전반적 적재율 상승 기조가 이어질 전망.",
+    "metric": null,
+    "direction": "up",
+    "horizon": "M+1"
+  },
+  {
+    "section": "air",
+    "claim": "4분기 성수기 진입 이후 단거리·중동 노선 중심의 추가 강세와 장거리 노선의 완만한 조정이 병행될 전망.",
+    "metric": null,
+    "direction": "up",
+    "horizon": "M+1"
+  },
+  {
+    "section": "air",
+    "claim": "공급 증가세가 제한적인 가운데 성수기 수요만 꾸준히 확대될 경우, 아시아-북미 노선을 중심으로 한 운임 강세와 단기계약 중심의 유동적 협상 구도가 4분기 내내 이어질 전망.",
+    "metric": null,
+    "direction": "up",
+    "horizon": "M+1"
+  },
+  {
+    "section": "rail",
+    "claim": "러시아-중국 축은 자원 수출과 소비재·자동차 부품 수입이 맞물리며 당분간 확장세를 이어갈 전망이나, 육상 국경 정체는 극동 해상-철도 복합루트로의 전환 압력을 지속할 공산.",
+    "metric": null,
+    "direction": "up",
+    "horizon": "M+1"
+  },
+  {
+    "section": "rail",
+    "claim": "단기적으로는 발트 3국 철도 운영사들의 구조조정과 인력 감축이 추가로 이어질 공산이 크며, 라트비아·핀란드 경유 물동량의 반등 계기는 뚜렷하지 않은 상황.",
+    "metric": null,
+    "direction": "down",
+    "horizon": "M+1"
+  },
+  {
+    "section": "region",
+    "claim": "입항료 유예가 공식화되기 전까지는 선사들의 가격 책정이 보수적으로 유지될 가능성이 높고, 춘절 전 수요 반등 시점까지 운임 바닥이 예상보다 높게 유지되는 국면이 이어질 전망.",
+    "metric": null,
+    "direction": "flat",
+    "horizon": "M+1"
+  },
+  {
+    "section": "region",
+    "claim": "장기예약제가 확산될수록 현물 슬롯 확보 경쟁은 완화되겠으나, 동시에 기준가 인상이 운하 통항 비용의 구조적 상승으로 이어질 수 있어 아시아-미 동안 항로 원가 구조에 중장기적으로 반영될 변수로 남을 전망.",
+    "metric": null,
+    "direction": "up",
+    "horizon": "M+1"
+  },
+  {
+    "section": "region",
+    "claim": "11월 초 아시아-유럽 항로 공급 구조 재편 여부를 가늠할 분수령이 될 전망.",
+    "metric": null,
+    "direction": null,
+    "horizon": "M+1"
+  },
+  {
+    "section": "macro",
+    "claim": "관세 완화에 따른 운임 하방 압력과 벙커유 공급난에 따른 비용 상방 압력이 충돌하면서 단기적으로는 운임 하단이 예상보다 높게 유지될 가능성",
+    "metric": null,
+    "direction": "up",
+    "horizon": "M+1"
+  },
+  {
+    "section": "macro",
+    "claim": "물동량 지수는 당분간 보합권에서 춘절 재입고 수요 재개 시점을 관전 포인트로 삼는 국면 지속 전망",
+    "metric": null,
+    "direction": "flat",
+    "horizon": "M+1"
+  },
+  {
+    "section": "macro",
+    "claim": "혼잡 완화와 운임 하락의 비대칭이 지속될 경우 공급비용발 하방 경직 국면이 당분간 이어질 가능성",
+    "metric": null,
+    "direction": "flat",
+    "horizon": "M+1"
+  }
+]
