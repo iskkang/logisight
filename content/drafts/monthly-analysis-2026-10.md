@@ -1,4 +1,4 @@
-<!-- assembled: 2026-10-06T08:23:18.236Z by assemble-monthly-report.js -->
+<!-- assembled: 2026-10-06T08:46:59.360Z by assemble-monthly-report.js -->
 <!-- sections: index, ocean, air, rail, region, macro, closing (7개) -->
 
 # Logisight 월간 시장 인텔리전스 — 2026-10

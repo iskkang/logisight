@@ -13,6 +13,7 @@ const SECTIONS = require('./sections.config');
 const { parseFrontmatter } = require('./lib/section-runner');
 const { normalizeMonthlyReportMarkdown } = require('./lib/report-style-normalizer');
 const { resolveMonth } = require('./lib/report-month');
+const { saveGrounding } = require('./lib/derived-grounding');
 
 const TODAY    = new Date().toISOString().slice(0, 10);
 const MONTH    = resolveMonth(process.argv.slice(2), new Date());
@@ -21,7 +22,7 @@ const SEC_DIR  = path.resolve(__dirname, `../../content/monthly-report/${MONTH}`
 const OUT_DIR  = path.resolve(__dirname, '../../content/drafts');
 const OUT_PATH = path.join(OUT_DIR, `monthly-analysis-${MONTH}.md`);
 
-function main() {
+async function main() {
   if (!fs.existsSync(SEC_DIR)) {
     console.error(`ERROR: 섹션 디렉터리 없음: ${SEC_DIR}`);
     console.error('먼저 실행하세요: node generators/report/run-section.js --all');
@@ -112,6 +113,19 @@ function main() {
 
   console.log(`✅ 병합 완료: ${OUT_PATH}`);
   console.log(`   포함 섹션 (${approved.length}개): ${approved.map(s => s.id).join(', ')}`);
+
+  // 초안이 확정되는 이 순간의 근거를 얼린다 ★
+  // 검증(verify-report.js)이 이 파일과 대조한다. 재계산하면 늦게 도착한 지수 행과
+  // 실시간 혼잡도 때문에 통과했던 리포트가 한 달 뒤 저절로 실패한다 —— 2026-09호가
+  // 9/7 critical 0 에서 10/6 critical 3 으로 뒤집힌 이유다.
+  // 실패해도 병합은 끝난 것으로 본다. 스냅샷이 없으면 검증이 재계산으로 물러난다.
+  try {
+    const saved = await saveGrounding(MONTH);
+    console.log(saved ? `   근거 스냅샷: ${saved}` : '   근거 스냅샷: (파생 지표 없음 — 생략)');
+  } catch (e) {
+    console.warn(`::warning::근거 스냅샷 저장 실패 — ${e.message}`);
+  }
+
   if (skipped.length) {
     console.log(`   스킵 (${skipped.length}개):`);
     for (const s of skipped) console.log(`     ${s.id}: ${s.reason}`);
@@ -119,4 +133,4 @@ function main() {
   console.log('\n→ PDF 생성: node generators/report/monthly-report-pdf.js');
 }
 
-main();
+main().catch(e => { console.error('조립 실패:', e.message); process.exit(1); });

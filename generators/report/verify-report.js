@@ -13,6 +13,7 @@ require('dotenv').config({ path: path.resolve(__dirname, '../../.env.local') });
 
 const { resolveMonth, prevMonthOf } = require('./lib/report-month');
 const { lintReport, extractNumbers } = require('./lib/report-lint');
+const { loadGrounding, buildGroundingText } = require('./lib/derived-grounding');
 
 const ANTHROPIC_KEY  = process.env.ANTHROPIC_API_KEY;
 const MONTH          = resolveMonth(process.argv.slice(2), new Date());
@@ -59,37 +60,20 @@ function collectInjectedNumbers(md) {
 
 // 파생 지표(스프레드·계약-스팟 갭·KITA 갭) factText — 생성 시 프롬프트에 주입됐지만 최종 문서
 // 표에는 없음. 본문이 인용한 '4주 전 스프레드' 등을 창작으로 오판하지 않도록 검증 근거로 재계산.
+// 근거는 "다시 계산"하지 않고 "얼려 둔 것"을 읽는다 ★
+//
+// 예전에는 검증할 때마다 파생 지표·혼잡 신호를 다시 계산했다. 본문은 생성 시점에
+// 고정되는데 근거만 움직이니, 통과했던 리포트가 시간이 지나면 저절로 실패했다.
+// 2026-09호가 9/7 에 critical 0 이었다가 10/6 에 critical 3 으로 뒤집힌 것이
+// 그 때문이다(늦게 도착한 CCFI 08-31 행, 늘어난 표본, 실시간 혼잡도).
+//
+// 스냅샷이 없는 옛 호는 예전처럼 재계산하되, 그 결과가 당시와 다를 수 있음을 밝힌다.
 async function loadDerivedGrounding(month) {
-  try {
-    const { prevMonthOf, monthEndISO } = require('./lib/report-month');
-    const { buildDerivedMetrics, loadKitaLanes } = require('./lib/derived-metrics-loader');
-    const weekEnd = monthEndISO(prevMonthOf(month));
-    let congestion = null;
-    try { congestion = await require('./lib/port-congestion').buildPortCongestion(); } catch (_) {}
-    const d = await buildDerivedMetrics({ weekEnd, kitaSea: loadKitaLanes(), congestion });
-    const texts = [d.spreadBlock, d.gapBlock, d.kitaGapBlock, d.decouplingBlock, d.bunkerDivergenceBlock].filter(Boolean).map(b => b.factText);
-    if (d.congestionSignalText) texts.push(d.congestionSignalText);
-
-    // KITA 권역 지수(RADIS·북미·유럽·아시아)도 근거에 넣는다 ★
-    // 이 값들은 생성 시 kitaFactText 로 프롬프트에 들어가지만, 최종 문서에는 표가 아니라
-    // 차트로만 남는다. 검증자에게 안 보이니 본문이 인용하면 "표에 없는 창작 수치"로 걸린다.
-    // 2026-09 의 '북미 19,827.5원' critical 이 그것이었다 —— 실재하는 주입값이었다.
-    // 파생 지표를 여기서 재계산해 넣는 것과 같은 이유다.
-    try {
-      const { buildKitaSeaReport, buildKitaAirReport } = require('./lib/kita-report');
-      for (const build of [buildKitaSeaReport, buildKitaAirReport]) {
-        const b = build();
-        if (b && b.factText) texts.push(`## KITA 참고운임·권역 지수(생성 시 주입분)\n${b.factText}`);
-      }
-    } catch (e) {
-      console.warn('⚠️  KITA 근거 재수집 실패(무시) —', e.message);
-    }
-
-    return texts.length ? texts.join('\n\n') : null;
-  } catch (e) {
-    console.warn('⚠️  파생 지표 근거 재계산 실패(무시) —', e.message);
-    return null;
-  }
+  const frozen = loadGrounding(month);
+  if (frozen) return frozen;
+  console.warn(`::warning::${month} 근거 스냅샷(derived-grounding.md)이 없어 재계산한다 —`
+    + ' 생성 시점과 값이 달라져 본문이 틀린 것처럼 보일 수 있다.');
+  return buildGroundingText(month);
 }
 
 // MONTHLY_REPORT_STYLE.md에서 "## ★ 품질 계약" 섹션만 추출(다음 "---" 전까지).

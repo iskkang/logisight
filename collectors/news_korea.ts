@@ -16,21 +16,18 @@ const SOURCES = [
   {
     name: '쉬핑뉴스넷',
     url: 'https://www.shippingnewsnet.com/',
-    rss: [
-      'https://www.shippingnewsnet.com/feed',
-      'https://www.shippingnewsnet.com/feed/rss',
-      'https://www.shippingnewsnet.com/rss.xml',
-    ],
+    // /feed·/rss.xml 후보는 전부 404 였다. 사이트가 안내하는 실제 경로는
+    // /rssIndex.html 에 적혀 있고 allArticle.xml 이다(2026-10-06 확인, 50건).
+    rss: ['https://www.shippingnewsnet.com/rss/allArticle.xml'],
     section: 'shipping' as const,
   },
   {
     name: '쉬핑데일리',
     url: 'https://www.shippingdaily.co.kr/index.php',
-    rss: [
-      'https://www.shippingdaily.co.kr/feed',
-      'https://www.shippingdaily.co.kr/rss.xml',
-      'https://www.shippingdaily.co.kr/feed/rss',
-    ],
+    // RSS 가 없다. 사이트가 PHP 게시판(/bbs/board.php)이고 피드 경로가 전부 404,
+    // robots.txt 에도 피드 안내가 없다(2026-10-06 확인). 죽은 후보를 계속 두면
+    // 매 실행 실패 3건이 찍히기만 하므로, 카고프레스·KL뉴스와 같은 HTML 경로로 돌린다.
+    rss: null,
     section: 'shipping' as const,
   },
   {
@@ -51,14 +48,13 @@ const SOURCES = [
     rss: null,
     section: 'shipping' as const,
   },
-  // 신규: 코리아쉬핑가제트 (한러·한중 항로 특화, RSS 경로 불확실하여 fallback 배열 사용)
+  // 코리아쉬핑가제트 (한러·한중 항로 특화)
   {
     name: '코리아쉬핑가제트',
     url: 'https://www.ksg.co.kr/news/main_news.jsp',
-    rss: [
-      'https://www.ksg.co.kr/rss/news.jsp',
-      'https://www.ksg.co.kr/rss/allArticle.xml',
-    ],
+    // RSS 가 없다. 홈페이지 HTML 에 피드 링크가 없고 흔한 경로(/rss/*, /feed,
+    // /rss.php)와 sitemap.xml·robots.txt 까지 전부 404 다(2026-10-06 확인).
+    rss: null,
     section: 'shipping' as const,
   },
 ];
