@@ -105,142 +105,184 @@ async function main() {
 
   let generated = 0;
   let skipped   = 0;
+  const failed  = [];   // 생성에 실패한 섹션 — 나머지는 계속 쓰고, 끝에서 종료코드로 남긴다
   const priorDigests = [];   // 크로스섹션 dedup — 앞 섹션 핵심 주제 누적
 
   for (const sec of targets) {
     const outPath = path.join(OUT_DIR, `${sec.id}.md`);
 
-    // approved 섹션은 --force 없이 스킵 (스킵해도 dedup 다이제스트에는 포함)
+    // 이미 생성된 섹션은 건너뛴다 ★
+    //
+    // 예전에는 status === 'approved' 일 때만 건너뛰었다. 그런데 생성된 섹션은 전부
+    // 'draft' 로 저장된다 —— approved 로 바꾸는 것은 사람이 검수한 뒤의 일이다.
+    // 그래서 "진행분을 커밋해 두면 다음 실행이 남은 섹션만 쓴다"던 워크플로의 재개
+    // 장치가 실제로는 한 번도 동작하지 않았다. 2026-10 생성이 macro 에서 죽었을 때
+    // 재실행했더라도 멀쩡한 4개를 처음부터 다시 썼을 것이다.
+    //
+    // no-data 는 건너뛰지 않는다. 기사가 0건이라 빈 채로 끝난 섹션이므로, 풀이
+    // 채워진 뒤 다시 시도해야 한다(2026-10 macro 가 정확히 그랬다).
     if (!force && fs.existsSync(outPath)) {
       const existing = fs.readFileSync(outPath, 'utf-8');
       const { meta } = parseFrontmatter(existing);
-      if (meta.status === 'approved') {
-        console.log(`⏭️  [${sec.id}] status: approved — 스킵 (--force 로 재생성 가능)`);
+      if (meta.status === 'approved' || meta.status === 'draft') {
+        console.log(`⏭️  [${sec.id}] 이미 생성됨 (status: ${meta.status}) — 스킵 (--force 로 재생성)`);
         priorDigests.push(extractDigest(existing, sec.title));
         skipped++;
         continue;
       }
     }
 
-    const items = rankAndCap(sec.filterItems(allItems), sec.maxItems ?? DEFAULT_MONTHLY_ITEM_CAP);
-    console.log(`▶ [${sec.id}] ${sec.title} — 관련 기사 ${items.length}건`);
+    try {
+      const items = rankAndCap(sec.filterItems(allItems), sec.maxItems ?? DEFAULT_MONTHLY_ITEM_CAP);
+      console.log(`▶ [${sec.id}] ${sec.title} — 관련 기사 ${items.length}건`);
 
-    // ── ocean per-index 지수 블록 + KITA 부산발 참고운임 ──
-    let oceanBlocks = null, oceanFactText = null, kitaSeaBundle = null;
-    if (sec.id === 'ocean') {
-      const built  = await buildOceanIndices({ weekEnd: WEEK_END });
-      oceanBlocks  = built.blocks;
-      oceanFactText = built.factText;
-      console.log(`▶ [ocean] per-index 지수 블록 ${oceanBlocks.length}개 로드`);
-      kitaSeaBundle = buildKitaSeaReport();
-      if (kitaSeaBundle) console.log(`▶ [ocean] KITA 해상 참고운임 로드 (기준 ${kitaSeaBundle.asOf})`);
-      else               console.warn('⚠️  [ocean] KITA 해상 운임 미수집 — notice 표시');
+      // ── ocean per-index 지수 블록 + KITA 부산발 참고운임 ──
+      let oceanBlocks = null, oceanFactText = null, kitaSeaBundle = null;
+      if (sec.id === 'ocean') {
+        const built  = await buildOceanIndices({ weekEnd: WEEK_END });
+        oceanBlocks  = built.blocks;
+        oceanFactText = built.factText;
+        console.log(`▶ [ocean] per-index 지수 블록 ${oceanBlocks.length}개 로드`);
+        kitaSeaBundle = buildKitaSeaReport();
+        if (kitaSeaBundle) console.log(`▶ [ocean] KITA 해상 참고운임 로드 (기준 ${kitaSeaBundle.asOf})`);
+        else               console.warn('⚠️  [ocean] KITA 해상 운임 미수집 — notice 표시');
 
-      // ── 파생 지표(한중발 스프레드·계약-스팟 갭·KITA 공시-실측 갭) — oceanFactText 뒤에 합류 ──
-      const derived = await buildDerivedMetrics({ weekEnd: WEEK_END, kitaSea: loadKitaLanes() });
-      const derivedTexts = [derived.spreadBlock, derived.gapBlock, derived.kitaGapBlock, derived.decouplingBlock, derived.bunkerDivergenceBlock]
-        .filter(Boolean).map(b => b.factText);
-      if (derivedTexts.length) oceanFactText = [oceanFactText, ...derivedTexts].join('\n\n');
-    }
-
-    // ── air: IATA·KITA·TAC/BAI·Superset 수집 ──
-    let airBundle = null, airTable = null, airFactText = null, kitaAirBundle = null;
-    if (sec.id === 'air') {
-      console.log('▶ [air] 항공 데이터 수집 (IATA·KITA·TAC/BAI·Superset)...');
-      airBundle = await buildAirIndices();
-      if (airBundle) {
-        airTable    = airBundle.table;
-        airFactText = airBundle.factText;
-      } else {
-        console.warn('⚠️  [air] 항공 데이터 미수집 — notice 표시');
+        // ── 파생 지표(한중발 스프레드·계약-스팟 갭·KITA 공시-실측 갭) — oceanFactText 뒤에 합류 ──
+        const derived = await buildDerivedMetrics({ weekEnd: WEEK_END, kitaSea: loadKitaLanes() });
+        const derivedTexts = [derived.spreadBlock, derived.gapBlock, derived.kitaGapBlock, derived.decouplingBlock, derived.bunkerDivergenceBlock]
+          .filter(Boolean).map(b => b.factText);
+        if (derivedTexts.length) oceanFactText = [oceanFactText, ...derivedTexts].join('\n\n');
       }
-      kitaAirBundle = buildKitaAirReport();
-      if (kitaAirBundle) console.log(`▶ [air] KITA 항공 참고운임 로드 (기준 ${kitaAirBundle.asOf})`);
-      else               console.warn('⚠️  [air] KITA 항공 운임 미수집 — notice 표시');
-    }
 
-    // ── macro: Container Port Throughput + Port Congestion 수집 ──
-    let portThroughputTable = null, portThroughputFactText = null, portCongestionTable = null;
-    if (sec.id === 'macro') {
-      console.log('▶ [macro] Port Throughput 데이터 수집...');
-      const ptData = await buildPortThroughput();
-      if (ptData) { portThroughputTable = ptData.table; portThroughputFactText = ptData.factText; }
-      else console.warn('⚠️  [macro] Port Throughput 미수집 — ⚠️ notice 표시');
-
-      const pcData = await buildPortCongestion();
-      if (pcData) { portCongestionTable = pcData.table; }   // ① 항만 혼잡도
-      else console.warn('⚠️  [macro] 항만 혼잡도 미수집');
-
-      // ── 혼잡-운임 교차 신호(파생) — portThroughputFactText 뒤에 합류 ──
-      const derived = await buildDerivedMetrics({ weekEnd: WEEK_END, congestion: pcData });
-      if (derived.congestionSignalText) {
-        portThroughputFactText = portThroughputFactText
-          ? `${portThroughputFactText}\n\n${derived.congestionSignalText}`
-          : derived.congestionSignalText;
-      }
-    }
-
-    // ── rail: Landbridge 중국 철도·中欧班列 정량 데이터 수집 ──
-    let railTable = null, railFactText = null;
-    if (sec.id === 'rail') {
-      console.log('▶ [rail] Landbridge 데이터 수집...');
-      const railData = await buildRailIndices({ month: MONTH });
-      if (railData) { railTable = railData.table || null; railFactText = railData.factText; }
-      else console.warn('⚠️  [rail] Landbridge 미수집 — factText 없음');
-    }
-
-    // ── index: 전월 전망(forecasts.json) 자동 판정 → 스코어카드를 synthesis 블록에 이어붙임 ──
-    let priorDigest;
-    if (sec.id === 'index') {
-      const synthesis = buildSynthesisBlock(collectSectionDigests(OUT_DIR));   // 총론 = 전 섹션 종합
-      let scorecardFactText = null;
-      try {
-        const prevMonth = prevMonthOf(MONTH);
-        const claims = loadForecasts(prevMonth);
-        if (claims && claims.length) {
-          const seriesByMetric = await loadGroup(['SCFI', 'KCCI', 'CCFI', 'WCI', 'BDI'], WEEK_END);
-          const judged  = judgeClaims(claims, seriesByMetric || {});
-          const block   = buildScorecardBlock(judged, prevMonth);
-          scorecardFactText = block ? block.factText : null;
-          if (scorecardFactText) console.log(`▶ [index] 전월(${prevMonth}) 전망 스코어카드 주입 (${judged.length}건)`);
+      // ── air: IATA·KITA·TAC/BAI·Superset 수집 ──
+      let airBundle = null, airTable = null, airFactText = null, kitaAirBundle = null;
+      if (sec.id === 'air') {
+        console.log('▶ [air] 항공 데이터 수집 (IATA·KITA·TAC/BAI·Superset)...');
+        airBundle = await buildAirIndices();
+        if (airBundle) {
+          airTable    = airBundle.table;
+          airFactText = airBundle.factText;
+        } else {
+          console.warn('⚠️  [air] 항공 데이터 미수집 — notice 표시');
         }
-      } catch (e) {
-        console.warn('⚠️  [index] 전망 스코어카드 생성 실패(무시) —', e.message);
+        kitaAirBundle = buildKitaAirReport();
+        if (kitaAirBundle) console.log(`▶ [air] KITA 항공 참고운임 로드 (기준 ${kitaAirBundle.asOf})`);
+        else               console.warn('⚠️  [air] KITA 항공 운임 미수집 — notice 표시');
       }
-      priorDigest = [synthesis, scorecardFactText].filter(Boolean).join('\n\n');
-    } else {
-      priorDigest = buildPriorDigestBlock(priorDigests);   // 그 외 = 중복 금지
-    }
 
-    const result  = await runSection({
-      client, sectionConfig: sec, items, styleGuide, month: MONTH,
-      indexTable:    sec.id === 'index' ? indexTable    : null,
-      indexFactText: sec.id === 'ocean' ? oceanFactText
-                   : sec.id === 'index' ? indexFactText : null,
-      railTable, railFactText, oceanBlocks,
-      airBundle,
-      airTable, airFactText,
-      portThroughputTable, portThroughputFactText, portCongestionTable,
-      kitaSeaBundle, kitaAirBundle,
-      // 맺음말에만 파생 지표를 넣는다. b37bcff(맺음말 신설)에서 이 블록을 만드는
-      // 함수는 추가됐는데 넘기는 자리가 빠져 있었다 —— 그래서 맺음말은 신설 이후
-      // 한 번도 파생 지표를 받아 본 적이 없다. 2026-07 맺음말이 멀쩡했던 것은
-      // 사람이 손으로 고쳤기 때문이고, 08·09 는 수치를 지어내다 QA 에 걸렸다.
-      derivedFactText: sec.id === 'closing' ? await buildClosingDerivedBlock() : null,
-      priorDigest,
-    });
-    const saved   = saveSectionFile(OUT_DIR, sec.id, MONTH, result.status, result.text, {
-      pass1_tokens: result.pass1Tokens,
-      pass2_tokens: result.pass2Tokens,
-      items_count:  items.length,
-    });
-    console.log(`✅ [${sec.id}] 저장: ${saved}\n`);
-    priorDigests.push(extractDigest(result.text, sec.title));   // 다음 섹션 dedup용 누적
-    generated++;
+      // ── macro: Container Port Throughput + Port Congestion 수집 ──
+      let portThroughputTable = null, portThroughputFactText = null, portCongestionTable = null;
+      if (sec.id === 'macro') {
+        console.log('▶ [macro] Port Throughput 데이터 수집...');
+        const ptData = await buildPortThroughput();
+        if (ptData) { portThroughputTable = ptData.table; portThroughputFactText = ptData.factText; }
+        else console.warn('⚠️  [macro] Port Throughput 미수집 — ⚠️ notice 표시');
+
+        const pcData = await buildPortCongestion();
+        if (pcData) { portCongestionTable = pcData.table; }   // ① 항만 혼잡도
+        else console.warn('⚠️  [macro] 항만 혼잡도 미수집');
+
+        // ── 혼잡-운임 교차 신호(파생) — portThroughputFactText 뒤에 합류 ──
+        const derived = await buildDerivedMetrics({ weekEnd: WEEK_END, congestion: pcData });
+        if (derived.congestionSignalText) {
+          portThroughputFactText = portThroughputFactText
+            ? `${portThroughputFactText}\n\n${derived.congestionSignalText}`
+            : derived.congestionSignalText;
+        }
+      }
+
+      // ── rail: Landbridge 중국 철도·中欧班列 정량 데이터 수집 ──
+      let railTable = null, railFactText = null;
+      if (sec.id === 'rail') {
+        console.log('▶ [rail] Landbridge 데이터 수집...');
+        const railData = await buildRailIndices({ month: MONTH });
+        if (railData) { railTable = railData.table || null; railFactText = railData.factText; }
+        else console.warn('⚠️  [rail] Landbridge 미수집 — factText 없음');
+      }
+
+      // ── index: 전월 전망(forecasts.json) 자동 판정 → 스코어카드를 synthesis 블록에 이어붙임 ──
+      let priorDigest;
+      if (sec.id === 'index') {
+        const synthesis = buildSynthesisBlock(collectSectionDigests(OUT_DIR));   // 총론 = 전 섹션 종합
+        let scorecardFactText = null;
+        try {
+          const prevMonth = prevMonthOf(MONTH);
+          const claims = loadForecasts(prevMonth);
+          if (claims && claims.length) {
+            const seriesByMetric = await loadGroup(['SCFI', 'KCCI', 'CCFI', 'WCI', 'BDI'], WEEK_END);
+            const judged  = judgeClaims(claims, seriesByMetric || {});
+            const block   = buildScorecardBlock(judged, prevMonth);
+            scorecardFactText = block ? block.factText : null;
+            if (scorecardFactText) console.log(`▶ [index] 전월(${prevMonth}) 전망 스코어카드 주입 (${judged.length}건)`);
+          }
+        } catch (e) {
+          console.warn('⚠️  [index] 전망 스코어카드 생성 실패(무시) —', e.message);
+        }
+        priorDigest = [synthesis, scorecardFactText].filter(Boolean).join('\n\n');
+      } else {
+        priorDigest = buildPriorDigestBlock(priorDigests);   // 그 외 = 중복 금지
+      }
+
+      const result  = await runSection({
+        client, sectionConfig: sec, items, styleGuide, month: MONTH,
+        indexTable:    sec.id === 'index' ? indexTable    : null,
+        indexFactText: sec.id === 'ocean' ? oceanFactText
+                     : sec.id === 'index' ? indexFactText : null,
+        railTable, railFactText, oceanBlocks,
+        airBundle,
+        airTable, airFactText,
+        portThroughputTable, portThroughputFactText, portCongestionTable,
+        kitaSeaBundle, kitaAirBundle,
+        // 맺음말에만 파생 지표를 넣는다. b37bcff(맺음말 신설)에서 이 블록을 만드는
+        // 함수는 추가됐는데 넘기는 자리가 빠져 있었다 —— 그래서 맺음말은 신설 이후
+        // 한 번도 파생 지표를 받아 본 적이 없다. 2026-07 맺음말이 멀쩡했던 것은
+        // 사람이 손으로 고쳤기 때문이고, 08·09 는 수치를 지어내다 QA 에 걸렸다.
+        derivedFactText: sec.id === 'closing' ? await buildClosingDerivedBlock() : null,
+        priorDigest,
+      });
+      // 빈 결과가 멀쩡한 원고를 덮지 않게 한다 ★
+      // --force 로 다시 쓸 때 그 달 풀이 얇으면 기사 0건 → status: no-data 로 저장되는데,
+      // 그 자리에 이미 제대로 쓰인 섹션이 있으면 빈 스텁이 좋은 원고를 지운다.
+      // 2026-10-06 에 실제로 index·closing 을 그렇게 날렸다(git 에서 복구했다).
+      // 되살릴 데가 없는 상황 —— 커밋 전 재생성 —— 이면 그대로 유실이다.
+      if (result.status === 'no-data' && fs.existsSync(outPath)) {
+        const prev = fs.readFileSync(outPath, 'utf-8');
+        const { meta: prevMeta } = parseFrontmatter(prev);
+        if (prevMeta.status === 'draft' || prevMeta.status === 'approved') {
+          console.warn(`⚠️  [${sec.id}] 기사 0건 — 기존 ${prevMeta.status} 원고를 지우지 않고 저장을 건너뛴다`);
+          priorDigests.push(extractDigest(prev, sec.title));
+          skipped++;
+          continue;
+        }
+      }
+
+      const saved   = saveSectionFile(OUT_DIR, sec.id, MONTH, result.status, result.text, {
+        pass1_tokens: result.pass1Tokens,
+        pass2_tokens: result.pass2Tokens,
+        items_count:  items.length,
+      });
+      console.log(`✅ [${sec.id}] 저장: ${saved}\n`);
+      priorDigests.push(extractDigest(result.text, sec.title));   // 다음 섹션 dedup용 누적
+      generated++;
+    } catch (err) {
+      // 한 섹션이 죽어도 나머지는 계속 쓴다 ★
+      // 2026-10-02 실행은 macro 에서 예외가 나며 그대로 끝났고, index·closing 과
+      // 조립·QA·초안 커밋까지 전부 함께 날아갔다. 그 달 리포트가 통째로 없었던
+      // 이유다. 한 섹션의 사고가 나머지 여섯을 볼모로 잡을 이유가 없다.
+      failed.push({ id: sec.id, message: err.message });
+      console.error(`::error::[${sec.id}] 생성 실패 — ${err.message}`);
+      console.error('   남은 섹션은 계속 생성한다. 이 실행은 실패로 끝난다.');
+    }
   }
 
   console.log(`\n${'-'.repeat(60)}`);
   console.log(`완료: ${generated}개 생성, ${skipped}개 스킵`);
+  if (failed.length) {
+    console.error(`실패: ${failed.length}개 섹션`);
+    failed.forEach(f => console.error(`  - ${f.id}: ${f.message}`));
+    // 진행분은 디스크에 남아 있다. 재실행하면 성공한 섹션은 건너뛰고 실패분만 다시 쓴다.
+    process.exitCode = 1;
+  }
   if (generated > 0) {
     console.log(`\n다음 단계:`);
     console.log(`  1. 각 섹션 파일에서 status: draft → status: approved 로 변경`);

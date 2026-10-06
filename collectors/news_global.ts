@@ -9,6 +9,7 @@ import {
 } from './utils/news_enrichment';
 import { sourcesFor, type NewsSection } from './news_sources';
 import type { CollectorResult } from './types';
+import { reportPersistFailure } from './utils/persist-failure';
 
 export async function collect(
   sections: NewsSection[] = ['shipping', 'air', 'rail', 'trade', 'logistics'],
@@ -50,7 +51,7 @@ export async function collect(
   }
 
   await persistCollectedNews(result).catch((error) =>
-    console.warn('[maritime_news] Supabase persist skipped:', (error as Error).message),
+    reportPersistFailure('maritime_news', error),
   );
   return result;
 }

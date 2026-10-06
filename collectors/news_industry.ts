@@ -7,6 +7,7 @@ import type { CollectorResult, NewsItem } from './types';
 import { enrichNewsItem, persistCollectedNews } from './utils/news_enrichment';
 import { rateLimited } from './utils/rate_limiter';
 import { snapshotWriter } from './utils/snapshot_writer';
+import { reportPersistFailure } from './utils/persist-failure';
 
 async function scrapePage(page: Page, source: NewsSource): Promise<NewsItem[]> {
   await page.goto(source.url, { waitUntil: 'domcontentloaded', timeout: 25000 });
@@ -88,7 +89,7 @@ export async function collect(): Promise<CollectorResult> {
   }
 
   await persistCollectedNews(result).catch((error) =>
-    console.warn('[maritime_news] Supabase persist skipped:', (error as Error).message),
+    reportPersistFailure('maritime_news', error),
   );
   return result;
 }

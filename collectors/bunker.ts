@@ -6,6 +6,7 @@ import { rateLimited } from './utils/rate_limiter';
 import { snapshotWriter } from './utils/snapshot_writer';
 import { dbUpsert } from './utils/supabase_writer';
 import type { CollectorResult } from './types';
+import { reportPersistFailure } from './utils/persist-failure';
 
 const PORTS = [
   { port: 'Singapore', url: 'https://shipandbunker.com/prices/apac/sg/sg-sin-singapore' },
@@ -95,7 +96,7 @@ export async function collect(): Promise<CollectorResult> {
   }
 
   await persistBunkerPrices(allRows).catch(e =>
-    console.warn('[bunker_prices] Supabase persist skipped:', (e as Error).message)
+    reportPersistFailure('bunker_prices', e)
   );
 
   const success = result.data.filter(d => d.is_complete).length;

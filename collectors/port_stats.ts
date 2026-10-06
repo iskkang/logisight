@@ -13,6 +13,7 @@
 import { rateLimited } from './utils/rate_limiter';
 import { dbUpsert } from './utils/supabase_writer';
 import type { CollectorResult } from './types';
+import { reportPersistFailure } from './utils/persist-failure';
 
 const BOT_HEADERS = { 'User-Agent': 'Logisight/1.0 (logisight.mtlship.com; stats-bot)' };
 const TODAY = new Date();
@@ -98,7 +99,7 @@ export async function collect(): Promise<CollectorResult> {
 
   if (rows.length > 0) {
     await dbUpsert('port_throughput', rows as unknown as Record<string, unknown>[], 'port_code,year,month').catch(e =>
-      console.warn('[port_throughput] Supabase persist skipped:', (e as Error).message)
+      reportPersistFailure('port_throughput', e)
     );
   }
 

@@ -8,6 +8,7 @@ import { snapshotWriter } from './utils/snapshot_writer';
 import { enrichNewsItem, parseFeedXml, persistCollectedNews } from './utils/news_enrichment';
 import { NEWS_SOURCES } from './news_sources';
 import type { CollectorResult, NewsItem } from './types';
+import { reportPersistFailure } from './utils/persist-failure';
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 
@@ -79,7 +80,7 @@ export async function collect(): Promise<CollectorResult> {
     console.log(`[DRY] persist 생략 — 총 ${result.data.length}건`);
   } else {
     await persistCollectedNews(result).catch((e) =>
-      console.warn('[maritime_news] persist skipped:', (e as Error).message));
+      reportPersistFailure('maritime_news', e));
   }
   return result;
 }

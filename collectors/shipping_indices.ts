@@ -7,6 +7,7 @@ import { rateLimited } from './utils/rate_limiter';
 import { snapshotWriter } from './utils/snapshot_writer';
 import { dbUpsert } from './utils/supabase_writer';
 import type { CollectorResult } from './types';
+import { reportPersistFailure } from './utils/persist-failure';
 
 interface IndexData {
   code: string;            // freight_indices.index_code 그대로 (예: 'WCI', 'WCI_SHA_LAX')
@@ -307,7 +308,7 @@ export async function collect(): Promise<CollectorResult> {
 
   // Supabase persist (에러가 발생해도 snapshotWriter 경로는 영향 없음)
   await persistFreightIndices(result).catch(e =>
-    console.warn('[freight_indices] Supabase persist skipped:', (e as Error).message)
+    reportPersistFailure('freight_indices', e)
   );
 
   return result;
