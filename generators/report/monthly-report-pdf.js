@@ -722,6 +722,20 @@ tbody tr:nth-child(even) td{background:var(--c-zebra)}
 td.up{color:var(--c-up);font-weight:700}
 td.down{color:var(--c-down);font-weight:700}
 
+/* 전망 스코어카드 (전월 전망 | 실측 | 판정) — 클래스는 PDF 생성 중 DOM 에서 붙인다.
+   열 너비를 고정하지 않으면 첫 열(전망 문장)이 폭을 거의 다 가져가고 판정 열이 눌려
+   "—(정성)" 이 두 줄로 쪼개진다. 행 높이가 제각각이 되어 표가 어긋나 보인다. */
+table.scorecard{table-layout:fixed}
+table.scorecard th:nth-child(1),table.scorecard td:nth-child(1){width:auto}
+table.scorecard th:nth-child(2),table.scorecard td:nth-child(2){width:38mm}
+/* 판정 열 폭: 9pt 기준 "✗ 빗나감"·"—(정성)" 이 약 15mm, 좌우 패딩 6mm → 22mm.
+   이미 발행된 호의 본문에는 옛 표기 "—(정성)" 이 남아 있으므로 그것도 한 줄에 들어가야 한다. */
+table.scorecard th:nth-child(3),table.scorecard td:nth-child(3){width:22mm;white-space:nowrap}
+/* 실측 열은 "SCFI 미주서안 MoM ▲9.2%·미주동안 …" 처럼 길어 줄바꿈이 필요하다.
+   다만 숫자·기호 사이에서 끊기지 않게 단어 단위로만 접는다. */
+table.scorecard td:nth-child(2){word-break:keep-all;line-height:1.45}
+table.scorecard td:nth-child(1){word-break:keep-all}
+
 /* 차트 카드 = design.md §5-4 : 라이트 박스 */
 .chart-box{height:64mm;background:#fff;border:1px solid var(--c-rule);border-top:1mm solid var(--c-primary);
   border-radius:0;padding:3mm 3mm 2mm;margin:4mm 0 5mm;break-inside:avoid}
@@ -1088,6 +1102,29 @@ async function main() {
       );
       await new Promise((r) => setTimeout(r, 450)); // 캔버스 페인트 여유
     }
+
+    // 전망 스코어카드 표에 클래스를 붙인다 ★
+    //
+    // 이 표(전월 전망 | 실측 | 판정)는 본문 마크다운으로 들어온다 —— 모델이 쓴 것이라
+    // exec-page 의 heatmap 처럼 생성 시점에 class 를 달 수 없다. 그래서 DOM 에서
+    // 머리글을 보고 찾는다.
+    //
+    // 왜 필요한가: 기본 표 스타일은 열 너비를 브라우저 자동 배분에 맡긴다. 첫 열(전망
+    // 문장)이 길어 폭을 거의 다 가져가고, 판정 열이 눌려 "—(정성)" 이 두 줄로 쪼개진다
+    // (2026-10호 5쪽). 행마다 높이가 달라져 표 전체가 들쭉날쭉해 보인다.
+    //
+    // 레이아웃 조정(headingLayout 이하)보다 먼저 돌려야 한다. 뒤에 붙이면 넘침 계산이
+    // 옛 너비로 끝난 뒤에 폭이 바뀐다.
+    await page.evaluate(() => {
+      for (const table of document.querySelectorAll("table")) {
+        const heads = [...table.querySelectorAll("thead th")].map((th) =>
+          (th.textContent || "").trim(),
+        );
+        if (heads.length === 3 && heads[2] === "판정" && heads[1] === "실측") {
+          table.classList.add("scorecard");
+        }
+      }
+    });
 
     const headingLayout = await page.evaluate(async () => {
       const nextFrame = () =>

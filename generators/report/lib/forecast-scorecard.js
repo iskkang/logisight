@@ -49,7 +49,9 @@ function truncateClaim(claim) {
 function verdictMark(verdict) {
   if (verdict === 'hit')  return '✓ 적중';
   if (verdict === 'miss') return '✗ 빗나감';
-  return '—(정성)';
+  // '—(정성)' 이었다. 괄호까지 5자라 좁은 판정 열에서 두 줄로 쪼개졌다(2026-10호 5쪽).
+  // 뜻은 그대로다 —— 정량 판정이 불가능한 정성 전망이라는 표시다.
+  return '정성';
 }
 
 // judged: judgeClaims() 결과 / prevMonth: 'YYYY-MM' → {table, factText} (또는 judged 비면 null)
