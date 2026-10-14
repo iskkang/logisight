@@ -29,7 +29,15 @@ function hscore(v: number, c: { a: number; r: number }) { return clamp((v - c.a)
 function dayMax(a: (number | null)[], d: number) { let m = -Infinity; for (let i = d * 24; i < d * 24 + 24 && i < a.length; i++) { const v = a[i]; if (v != null && !Number.isNaN(v) && v > m) m = v; } return m === -Infinity ? null : m; }
 function dayMin(a: (number | null)[], d: number) { let m = Infinity; for (let i = d * 24; i < d * 24 + 24 && i < a.length; i++) { const v = a[i]; if (v != null && !Number.isNaN(v) && v < m) m = v; } return m === Infinity ? null : m; }
 function daySum(a: (number | null)[], d: number) { let t = 0, any = false; for (let i = d * 24; i < d * 24 + 24 && i < a.length; i++) { const v = a[i]; if (v != null && !Number.isNaN(v)) { t += v; any = true; } } return any ? t : null; }
-async function getJSON(u: string) { const r = await fetch(u); if (!r.ok) throw new Error(r.status + ' ' + u); return await r.json(); }
+// 업스트림이 응답을 안 주면 워커 wall-clock을 그대로 소진해 워커가 죽는다(클라이언트에는 520) → 호출당 상한.
+const TIMEOUT_MS = 8_000;
+// 자산 61개를 순차로 돌면 업스트림 왕복 101회(예보 61 + 해양 40)가 그대로 누적된다.
+// 실측 62초 —— free 플랜 워커 wall-clock 150초의 40%를 한 번에 쓴다. Open-Meteo가
+// 느린 날엔 한도를 넘겨 워커가 죽는다. 벽시계를 나눠 쓴다(event-ingest와 같은 방식).
+// 호출은 자산 단위로 순차(예보→해양)라 최악(전건 타임아웃)은 (40자산×16초 + 21×8초)/8
+// ≈ 101초 —— 스케줄 쏠림을 얹어도 150초 안에 든다.
+const CONCURRENCY = 8;
+async function getJSON(u: string) { const r = await fetch(u, { signal: AbortSignal.timeout(TIMEOUT_MS) }); if (!r.ok) throw new Error(r.status + ' ' + u); return await r.json(); }
 
 serve(async (req) => {
   const denied = requireCronSecret(req);
@@ -42,7 +50,8 @@ serve(async (req) => {
   // (안 하면 첫 INSERT 시각에 고정 → 프론트 신선도 게이트가 영구 "예보 불충분"으로 회색 처리)
   const nowIso = new Date().toISOString();
   const rows: any[] = [];
-  for (const a of assets!) {
+  let skipped = 0;
+  const runAsset = async (a: any) => {
     const isSea = a.type === 'port' || a.type === 'choke';
     const fc = `https://api.open-meteo.com/v1/forecast?latitude=${a.lat}&longitude=${a.lon}` +
       `&hourly=wind_speed_10m,wind_gusts_10m,precipitation,snowfall,temperature_2m&wind_speed_unit=ms&forecast_days=16&timezone=UTC`;
@@ -73,14 +82,23 @@ serve(async (req) => {
       // precip(강수)는 inland 외 자산은 운영 임계 미포함 → 점수 미반영, 측정값만 컬럼 기록.
 
       cand.sort((x, y) => y[1] - x[1]);
-      const top = cand[0] || ['정상', 0, ''];
+      // 자산 타입마다 해저드가 최소 하나는 걸리므로, 후보가 비었다는 건 예보를 못 받았다는 뜻이다.
+      // 그때 '정상'(score 0, level g)을 쓰면 수집 실패가 "안전"으로 보인다 → 행을 쓰지 않고
+      // 이전 행을 남겨 프론트 신선도 게이트가 "예보 불충분"으로 회색 처리하게 둔다.
+      if (!cand.length) { skipped++; continue; }
+      const top = cand[0];
       const score = Math.round(top[1]);                       // 최악 해저드 등급이 점수 결정
       const level = score >= 60 ? 'r' : score >= 30 ? 'a' : 'g';
       const driver = score >= 30 ? `${top[0]}${top[2] ? ` (${top[2]})` : ''}` : '정상';
       rows.push({ asset_id: a.id, horizon_days: d, score, level, driver, wind_speed: sustained, wind_gust: gust, wave_height: wave, precip: prcp, snowfall: snowS, temp_min: tmin, is_freeze: isFreeze, updated_at: nowIso });
     }
-  }
+  };
+  // Deno는 단일 스레드라 next++ 경쟁은 없다. 워커 8개가 같은 큐를 비운다.
+  let next = 0;
+  const worker = async () => { while (next < assets!.length) await runAsset(assets![next++]); };
+  await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()));
+
   const { error: up } = await sb.from('asset_risk').upsert(rows, { onConflict: 'asset_id,horizon_days' });
   if (up) return new Response(up.message, { status: 500 });
-  return new Response(JSON.stringify({ updated: rows.length }), { headers: { 'Content-Type': 'application/json' } });
+  return new Response(JSON.stringify({ updated: rows.length, skipped }), { headers: { 'Content-Type': 'application/json' } });
 });
