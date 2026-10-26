@@ -31,6 +31,24 @@ const NAME_VARIANT_PAIRS = [
   ['튀르키예', '터키'],   // 정책상 하나로 통일 필요(어느 쪽이든 단일 사용)
 ];
 
+/**
+ * 변형 표기를 표준 표기(쌍의 앞쪽)로 통일한다.
+ *
+ * 린터는 혼용을 잡을 뿐 고치지는 못한다. 그런데 권역 리포트는 기사 원제와 LLM 분석을
+ * 한 문서에 담으므로, 원문이 '터키'를 쓰고 분석이 '튀르키예'를 쓰면 생성기로서는
+ * 통제할 수 없는 혼용이 생긴다 —— 쓰기 직전에 여기서 통일한다.
+ *
+ * 변형 목록을 린터와 공유하는 것이 요점이다. 목록이 둘로 갈리면 정규화를 하고도
+ * 린트가 계속 막는다.
+ */
+function canonicalizeNames(text) {
+  let out = String(text);
+  for (const [canonical, variant] of NAME_VARIANT_PAIRS) {
+    out = out.split(variant).join(canonical);
+  }
+  return out;
+}
+
 function stripFrontmatter(md) {
   const m = String(md).match(/^---\n[\s\S]*?\n---\n/);
   return m ? md.slice(m[0].length) : md;
@@ -136,7 +154,10 @@ function lintReport(md, injectedNumbers) {
   }
 
   // ①-b 고유명사 표기 혼용 — 문서 전체에서 변형 표기가 함께 등장하면 critical
-  const fullText = lines.join('\n');
+  // URL 라인만 뺀다. 링크 주소의 '터키' 는 표기 선택이 아니라 남의 주소이고, 고치면
+  // 링크가 깨진다 —— 발행을 막을 근거가 못 된다. ② 수치 대조는 이미 URL 을 빼고 있다.
+  // (표·제목은 그대로 본다. 거기 혼용은 실제로 고칠 수 있는 우리 글이다.)
+  const fullText = lines.filter((l) => !/^https?:\/\//.test(l.trim())).join('\n');
   for (const [a, b] of NAME_VARIANT_PAIRS) {
     if (fullText.includes(a) && fullText.includes(b)) {
       findings.push({
@@ -173,4 +194,4 @@ function lintReport(md, injectedNumbers) {
   return { findings };
 }
 
-module.exports = { lintReport, extractNumbers, proseNumberTokens };
+module.exports = { lintReport, extractNumbers, proseNumberTokens, canonicalizeNames };

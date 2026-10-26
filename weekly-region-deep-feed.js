@@ -12,11 +12,25 @@ require('dotenv').config({ path: path.resolve(__dirname, '.env.local') });
 const { createClient } = require('@supabase/supabase-js');
 const { callDeepSeekJson } = require('./generators/lib/deepseek');
 const { assignPool, REGIONS } = require('./lib/region-assign');
+const { canonicalizeNames } = require('./generators/report/lib/report-lint');
 
 const CATS = ['해상', '항공', '무역', '물류', '철도'];
 const POOL_PER_REGION = 18;     // 클러스터링 입력 상한
 const MAX_ISSUES = 3;
 const MAX_ARTS_PER_ISSUE = 5;
+
+// 쓰기 직전 고유명사 표기 통일. 검증기(verify-weekly-report.js)는 indices 를 뺀 모든
+// 문자열 잎을 한 덩이 산문으로 보고 혼용을 critical 로 막는다 —— 기사 원제가 '터키',
+// LLM 분석이 '튀르키예' 를 쓰면 그대로 발행이 멈춘다(2026-W43 러시아가 그랬다).
+// url 은 건드리지 않는다. 링크를 바꿔 깨뜨릴 이유가 없다.
+function canonAll(value, key) {
+  if (typeof value === 'string') return key === 'url' ? value : canonicalizeNames(value);
+  if (Array.isArray(value)) return value.map((v) => canonAll(v, key));
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, canonAll(v, k)]));
+  }
+  return value;
+}
 
 // 권역별 운임 지표 코드(차트/표).
 //  - SCFI 권역 항로가 있으면 SCFI + KCCI 함께 표기(차트는 SCFI 기준): 미주, 유럽, 중국.
@@ -251,7 +265,7 @@ async function main() {
   };
   const dir = path.join(__dirname, 'content/weekly-region-deep');
   fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, `${week}-${region}.json`), JSON.stringify(out, null, 2), 'utf-8');
+  fs.writeFileSync(path.join(dir, `${week}-${region}.json`), JSON.stringify(canonAll(out), null, 2), 'utf-8');
   console.log(`\n✅ [${region}] deep-feed: 이슈 ${issues.length}, 지표 ${indices ? indices.table.length + '행' : '없음'} → content/weekly-region-deep/${week}-${region}.json`);
 }
 

@@ -1,7 +1,7 @@
 'use strict';
 const test   = require('node:test');
 const assert = require('node:assert/strict');
-const { lintReport } = require('./report-lint');
+const { lintReport, canonicalizeNames } = require('./report-lint');
 
 function criticalRules(findings) {
   return findings.filter(f => f.severity === 'critical').map(f => f.rule);
@@ -121,6 +121,34 @@ test('고유명사 표기 혼용(호르무즈/오르무즈 동시 사용) — cr
 test('단일 표기만 쓰면 표기 혼용 미검출', () => {
   const { findings } = lintReport('호르무즈 해협 긴장 지속. 호르무즈 통항 재개.', []);
   assert.ok(!findings.some(x => x.rule === 'inconsistent-name'));
+});
+
+test('URL 라인의 변형 표기는 혼용으로 보지 않는다 (남의 주소라 고칠 수 없다)', () => {
+  const md = '튀르키예 경유 물동량이 늘었다.\n\nhttps://example.com/ko/터키-회랑';
+  assert.ok(!lintReport(md, []).findings.some(x => x.rule === 'inconsistent-name'));
+});
+
+test('표·제목의 변형 표기는 여전히 혼용으로 잡는다 (구멍 방지)', () => {
+  const md = '# 터키 회랑\n\n튀르키예 경유 물동량이 늘었다.';
+  assert.ok(lintReport(md, []).findings.some(x => x.rule === 'inconsistent-name'));
+});
+
+test('canonicalizeNames: 변형 표기를 표준 표기로 바꾼다', () => {
+  assert.equal(canonicalizeNames('터키(아할칼라키 경유)가 2.1%'), '튀르키예(아할칼라키 경유)가 2.1%');
+  assert.equal(canonicalizeNames('오르무즈 사태 이후'), '호르무즈 사태 이후');
+});
+
+test('canonicalizeNames: 이미 표준 표기면 그대로 두고, 두 번 돌려도 같다', () => {
+  const s = '튀르키예와 호르무즈 해협';
+  assert.equal(canonicalizeNames(s), s);
+  assert.equal(canonicalizeNames(canonicalizeNames(s)), s);
+});
+
+test('canonicalizeNames 를 거치면 혼용 critical 이 사라진다 (생성기가 쓰는 계약)', () => {
+  // 2026-W43 러시아 권역이 막힌 모양 그대로 — 기사 원제는 '터키', 분석은 '튀르키예'.
+  const mixed = '튀르키예는 중간회랑 물동량을 늘렸다.\n\n터키(아할칼라키 경유)가 2.1%를 차지했다.';
+  assert.ok(lintReport(mixed, []).findings.some(x => x.rule === 'inconsistent-name'));
+  assert.ok(!lintReport(canonicalizeNames(mixed), []).findings.some(x => x.rule === 'inconsistent-name'));
 });
 
 test('STATS/OGIMG 토큰 라인은 수치 대조 제외 (시스템 주입 카드)', () => {
