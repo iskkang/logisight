@@ -25,6 +25,41 @@ async function getText(u: string) { const r = await fetch(u, { headers: { 'User-
 function tagText(xml: string, name: string): string { const m = xml.match(new RegExp('<' + name + '>([\\s\\S]*?)</' + name + '>')); return m ? m[1].trim() : ''; }
 function parseLatLon(v: string): number | null { const m = (v || '').match(/(-?\d+(?:\.\d+)?)\s*([NSEW])?/i); if (!m) return null; let n = parseFloat(m[1]); const d = (m[2] || '').toUpperCase(); if (d === 'S' || d === 'W') n = -n; return Number.isNaN(n) ? null : n; }
 
+// 분석 시각은 UTC 로 발표된다('YYYY-MM-DD hh:mm:ss'). 그대로 두면 시간대가 모호해진다.
+const toIsoUtc = (v: string) => { const s = String(v || '').trim(); return s ? s.replace(' ', 'T') + 'Z' : null; };
+
+// ── WMO SWIC 보조 ────────────────────────────────────────────────────────────
+// 같은 태풍을 NHC·HKO 가 또 들고 오면 지도에 핀이 두 개 찍힌다. 이름으로 맞춘다 ——
+// 실측(Vance/Olana/CHAMPI)에서 대소문자만 달랐다. WMO 쪽 id 는 NHC 와는 맞지만
+// HKO 와는 다르므로(HKO 2647 ↔ WMO 2630) 이름이 유일하게 통하는 열쇠다.
+// 이름 없는 저기압은 서로 다른 폭풍이 같은 '이름'을 갖게 되므로 맞추지 않는다.
+const GENERIC_TC = /^(NONAME|UNNAMED|INVEST|TROPICALSYSTEM|TROPICALCYCLONE|TROPICALSTORM|TROPICALDEPRESSION)$/;
+function tcKey(name: string): string | null {
+  const k = String(name || '').toUpperCase().replace(/[^A-Z]/g, '');
+  return !k || GENERIC_TC.test(k) ? null : k;
+}
+// 강도 어휘가 RSMC 마다 다르다(실측: TD·TS·STS·TY·Depression·Tropical Storm·
+// Hurricane·DEVELOPED LOW·TROPICAL DEPRESSION). 태풍·허리케인급만 경보(r).
+// 모르는 어휘는 주의(a) 로 둔다 —— 기존 NHC 규칙과 같은 방향이고, 과장하지 않는다.
+function tcSeverity(intensity: string): 'a' | 'r' {
+  const t = String(intensity || '').toUpperCase();
+  return (/^(TY|STY|STS)$/.test(t) || /TYPHOON|HURRICANE|SEVERE|SUPER/.test(t)) ? 'r' : 'a';
+}
+// WMO 는 국가·해역 이름을 주지 않는다(center_id 만 있고 그 이름표는 공개돼 있지 않다).
+// area 는 다른 소스가 전부 지명으로 채우는 자리라 좌표에서 해역을 붙인다.
+function tcBasin(lon: number, lat: number): string {
+  if (lat >= 0) {
+    if (lon >= 100) return 'NW Pacific';   // 100E–180
+    if (lon >= 40) return 'N Indian';      // 40E–100E (벵골만·아라비아해)
+    if (lon >= -100) return 'Atlantic';    // 100W–40E (멕시코만·카리브 포함)
+    if (lon >= -140) return 'E Pacific';   // 140W–100W
+    return 'C Pacific';                    // 180–140W
+  }
+  if (lon >= 20 && lon < 90) return 'SW Indian';
+  if (lon >= 90 && lon < 160) return 'Australia';
+  return 'S Pacific';
+}
+
 serve(async (req) => {
   const denied = requireCronSecret(req);
   if (denied) return denied;
@@ -40,7 +75,7 @@ serve(async (req) => {
       const hu = (s.classification || '').toUpperCase().includes('HU');
       out.push({ id: 'nhc:' + s.id, source: 'nhc', kind: 'cyclone', title: (s.name || 'Tropical System') + ' (' + (s.classification || '') + ')',
         severity: hu ? 'r' : 'a', lon: isNaN(lon) ? null : lon, lat: isNaN(lat) ? null : lat, area: s.binNumber || 'Atlantic/E-Pacific',
-        starts_at: null, ends_at: null, url: 'https://www.nhc.noaa.gov/' });
+        starts_at: null, ends_at: null, url: 'https://www.nhc.noaa.gov/', _tc: tcKey(s.name) });
     });
   } catch (_) {}
   return out;
@@ -130,13 +165,63 @@ serve(async (req) => {
         title: (name || 'Tropical Cyclone') + (intensity ? ' (' + intensity + ')' : ''),
         // area는 다른 소스가 전부 원문 영어로 채운다('Greece'·'China'·'Washington, RI').
         // 여기만 한국어를 박아 두면 일본 사이트 화면에 '북서태평양'이 그대로 나온다.
-        severity: low ? 'a' : 'r', lon, lat, area: 'NW Pacific', starts_at: null, ends_at: null, url, track });
+        severity: low ? 'a' : 'r', lon, lat, area: 'NW Pacific', starts_at: null, ends_at: null, url, track, _tc: tcKey(name) });
     }));
   } catch (_) {}
   return out;
   };
 
-  // 5) Meteoalarm — 유럽 경보 (EUMETNET Atom 피드). 커버국 자산에만 앵커링.
+  // 5) WMO SWIC — 전 해역 열대저기압 (Severe Weather Information Centre, HKO 가 WMO 를 대신해 운영).
+  //    tc_inforce.json(활성 색인) → tc_<sysid>.json(분석 트랙 + 예보 트랙).
+  //    RSMC/TCWC 공식 통보를 WMO 가 모은 것이라 NHC(대서양·동태평양)·HKO(북서태평양)가
+  //    비워 두는 해역이 메워진다 —— 붙이던 시점에 벵골만 저압부와 IN-FA 를 둘 다 놓치고 있었다.
+  //    track 은 HKO 와 같은 뜻으로 담는다: 현재 분석점을 선두로 한 예보 폴리라인.
+  //    문서화된 공개 API 가 아니라 사이트가 쓰는 경로다. 실패하면 조용히 건너뛰고 NHC·HKO 가 남는다.
+  const wmo = async () => {
+  const out: any[] = [];
+  try {
+    const idx = await getJSON('https://severeweather.wmo.int/json/tc_inforce.json');
+    const fields: string[] = Array.isArray(idx.fields) ? idx.fields : [];
+    const storms: any[] = (idx.inforce || []).map((row: any[]) => {
+      const o: any = {};
+      fields.forEach((f, i) => { o[f] = row[i]; });
+      return o;
+    });
+    // 활성 태풍 수만큼 돌므로 순차로 두면 지연이 곱해진다 —— HKO 와 같이 병렬.
+    await Promise.all(storms.map(async (s) => {
+      try {
+        const d = await getJSON(`https://severeweather.wmo.int/json/tc_${s.sysid}.json`);
+        const track: any[] = Array.isArray(d.track) ? d.track : [];
+        const fcst: any[] = Array.isArray(d.forecast) ? d.forecast : [];
+        const now = track[track.length - 1];
+        if (!now) return;
+        const lat = parseFloat(now.lat), lon = parseFloat(now.lng);
+        if (Number.isNaN(lat) || Number.isNaN(lon)) return;
+        const pts: number[][] = [[lon, lat]];
+        for (const p of fcst) {
+          const a = parseFloat(p.lat), b = parseFloat(p.lng);
+          if (!Number.isNaN(a) && !Number.isNaN(b)) pts.push([b, a]);
+        }
+        const intensity = String(s.intensity || now.intensity || '').trim();
+        const name = String(s.name || '').trim();
+        out.push({
+          id: 'wmo-' + s.sysid, source: 'wmo', kind: 'cyclone',
+          title: (name || 'Tropical Cyclone') + (intensity ? ' (' + intensity + ')' : ''),
+          severity: tcSeverity(intensity), lon, lat, area: tcBasin(lon, lat),
+          starts_at: toIsoUtc(track[0] && track[0].analysis_time),
+          // 수명은 활성 집합(매 run delete→upsert)이 관리. NHC·HKO 와 같다.
+          ends_at: null,
+          url: 'https://severeweather.wmo.int/tc.html',
+          track: pts.length > 1 ? pts : null,
+          _tc: tcKey(name),
+        });
+      } catch (_) {}
+    }));
+  } catch (_) {}
+  return out;
+  };
+
+  // 6) Meteoalarm — 유럽 경보 (EUMETNET Atom 피드). 커버국 자산에만 앵커링.
   //    legacy RSS는 2026-01-14 sunset → Atom 사용. orange(awareness_level 3, ≈Severe)+ 만 채택(green/yellow 스킵=노이즈).
   //    Meteoalarm은 지역 단위라 점좌표 없음 → 해당 국가 대표 자산 좌표에 앵커링(국가 단위 근사). 미커버국(RU/BY/TR) 제외.
   const MA: { country: string; assets: string[] }[] = [
@@ -193,19 +278,26 @@ serve(async (req) => {
   };
 
   // 소스별로 순차 await하면 지연이 합산돼 워커 wall-clock 한도를 넘긴다 → 병렬 수집, 부분 실패 허용.
-  const settled = await Promise.allSettled([nhc(), gdacs(), nws(), hko(), meteoalarm()]);
+  const settled = await Promise.allSettled([nhc(), gdacs(), nws(), hko(), meteoalarm(), wmo()]);
   const out = settled.flatMap((s) => (s.status === 'fulfilled' ? s.value : []));
 
   // 피드가 같은 이벤트를 여러 feature/에피소드로 중복 방출할 수 있음 → id 기준 dedup(나중 값 우선).
   // (안 하면 upsert 한 배치에 동일 id 2건 → "ON CONFLICT DO UPDATE command cannot affect row a second time")
   const byId = new Map<string, any>();
   for (const r of out) byId.set(r.id, r);
-  const rows = [...byId.values()];
-  // 컬럼 균일화: HKO만 track 보유 → 나머지는 null로 채워 upsert 컬럼 추론 일관성 확보.
-  for (const r of rows) if (!('track' in r)) r.track = null;
+  let rows = [...byId.values()];
+
+  // 같은 태풍을 WMO 와 NHC·HKO 가 함께 들고 오면 지도에 핀이 두 개 찍힌다. WMO 쪽을
+  // 남긴다 —— RSMC 공식 통보에 예보 트랙이 붙어 있다. WMO 가 한 건도 못 받으면
+  // wmoNames 가 비어 아무것도 지워지지 않고 NHC·HKO 가 그대로 남는다.
+  const wmoNames = new Set(rows.filter((r) => r.source === 'wmo' && r._tc).map((r) => r._tc));
+  rows = rows.filter((r) => r.source === 'wmo' || !r._tc || !wmoNames.has(r._tc));
+  // 컬럼 균일화: HKO·WMO만 track 보유 → 나머지는 null로 채워 upsert 컬럼 추론 일관성 확보.
+  // _tc 는 중복 제거용 보조 필드라 표에 없다 —— 남기면 upsert 가 깨진다.
+  for (const r of rows) { delete r._tc; if (!('track' in r)) r.track = null; }
 
   // 피드는 "현재 활성 집합"이므로 소스별 통째 교체
-  await sb.from('events').delete().in('source', ['nhc', 'gdacs', 'nws', 'hko', 'meteoalarm']);
+  await sb.from('events').delete().in('source', ['nhc', 'gdacs', 'nws', 'hko', 'meteoalarm', 'wmo']);
   if (rows.length) { const { error } = await sb.from('events').upsert(rows, { onConflict: 'id' }); if (error) return new Response(error.message, { status: 500 }); }
   return new Response(JSON.stringify({ events: rows.length }), { headers: { 'Content-Type': 'application/json' } });
 });
