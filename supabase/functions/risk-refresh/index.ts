@@ -9,7 +9,10 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { requireCronSecret } from "../_shared/require-cron-secret.ts";
 
-const HORIZONS = [0, 3, 7, 14];
+// 화면이 쓰는 예보 시점(climate.ts 의 HDAYS)과 맞춰야 한다. 7일을 5일로 바꿨다 ——
+// 사이트가 horizon_days=5 를 조회하므로 여기서 만들지 않으면 "예보 불충분"이 된다.
+// 14일은 화면에서 쓰지 않지만 그대로 둔다(해상 파고가 장기예보 미제공이라 제외된 자리).
+const HORIZONS = [0, 3, 5, 14];
 const clamp = (x: number) => Math.max(0, Math.min(100, x));
 
 // ── g/a/r 임계값 (승인된 운영 디폴트) ──────────────────────────────────────
