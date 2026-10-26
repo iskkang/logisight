@@ -18,9 +18,10 @@ on:
 
 jobs:
   collect:
-    # ubuntu-latest 가 26.04 로 바뀌었는데 고정된 Playwright 1.60.0 은 26.04 를 모른다
-    # (지원: 20.04·22.04·24.04) → install --with-deps 가 죽는다. 러너를 고정한다.
-    runs-on: ubuntu-24.04
+    # 러너는 고정한다. ubuntu-latest 는 2026-11 에 26.04 로 바뀌는데 롤아웃이 이미
+    # 진행 중이다 —— #157 이 전환 공지 전에 26.04 로 떨어져 깨졌다. 라벨을 믿을 수 없다.
+    # 26.04 는 Playwright 1.64.1 이 지원한다(1.61.0 부터).
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
 
     steps:
