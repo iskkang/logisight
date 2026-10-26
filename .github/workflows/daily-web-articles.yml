@@ -13,7 +13,9 @@ on:
 
 jobs:
   generate-articles:
-    runs-on: ubuntu-latest
+    # ubuntu-latest 가 26.04 로 바뀌었는데 고정된 Playwright 1.60.0 은 26.04 를 모른다
+    # (지원: 20.04·22.04·24.04) → install --with-deps 가 죽는다. 러너를 고정한다.
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
 
     steps:
