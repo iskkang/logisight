@@ -656,15 +656,15 @@
   "global": {
     "source": "各指数の公表機関(SSE・Drewry・Freightos・Baltic Exchange ほか)",
     "unit": "index / USD",
-    "asOf": "2026-10-12",
+    "asOf": "2026-10-19",
     "indices": [
       {
         "code": "SCFI",
         "label": "SCFI 総合",
         "unit": null,
-        "value": 3679.58,
-        "changePct": 0.42,
-        "asOf": "2026-10-12"
+        "value": 3681.34,
+        "changePct": 0.05,
+        "asOf": "2026-10-19"
       },
       {
         "code": "SCFI_EU",
@@ -694,25 +694,25 @@
         "code": "CCFI",
         "label": "CCFI 総合",
         "unit": null,
-        "value": 1922.64,
-        "changePct": 0.54,
-        "asOf": "2026-10-12"
+        "value": 1876.27,
+        "changePct": -2.41,
+        "asOf": "2026-10-19"
       },
       {
         "code": "WCI",
         "label": "WCI 総合",
         "unit": null,
-        "value": 4485,
-        "changePct": 3,
-        "asOf": "2026-10-12"
+        "value": 4585,
+        "changePct": -2,
+        "asOf": "2026-10-19"
       },
       {
         "code": "FBX",
         "label": "FBX 総合",
         "unit": null,
-        "value": 3397.2,
-        "changePct": 1.59,
-        "asOf": "2026-10-12"
+        "value": 3560.2,
+        "changePct": 4.8,
+        "asOf": "2026-10-19"
       },
       {
         "code": "BDI",
@@ -739,13 +739,12 @@
         "asOf": "2026-10-05"
       }
     ],
-    "containerUp": 4,
-    "containerDown": 0,
+    "containerUp": 2,
+    "containerDown": 2,
     "containerTotal": 4,
     "asOfNote": "世界のスポット指数は週次、日本の統計は月次で基準日が揃わない。両者を同一時点の動きとして比較してはならない。同時期に観測された事実として並べるまでである。",
     "history": {
       "weeks": [
-        "2026-04-20",
         "2026-04-27",
         "2026-05-04",
         "2026-05-11",
@@ -770,14 +769,14 @@
         "2026-09-21",
         "2026-09-28",
         "2026-10-05",
-        "2026-10-12"
+        "2026-10-12",
+        "2026-10-19"
       ],
       "series": [
         {
           "code": "SCFI",
           "label": "SCFI 総合",
           "values": [
-            1875,
             1911,
             1954,
             2140.66,
@@ -802,14 +801,14 @@
             3686.62,
             3662,
             3664,
-            3679.58
+            3679.58,
+            3681.34
           ]
         },
         {
           "code": "CCFI",
           "label": "CCFI 総合",
           "values": [
-            1233.76,
             1269.64,
             1278.79,
             1280.46,
@@ -834,14 +833,14 @@
             1917.68,
             1923.93,
             1912.38,
-            1922.64
+            1922.64,
+            1876.27
           ]
         },
         {
           "code": "WCI",
           "label": "WCI 総合",
           "values": [
-            null,
             2799,
             null,
             null,
@@ -866,14 +865,14 @@
             4468,
             4434,
             4351,
-            4485
+            4485,
+            4585
           ]
         },
         {
           "code": "FBX",
           "label": "FBX 総合",
           "values": [
-            null,
             null,
             null,
             null,
@@ -898,7 +897,8 @@
             3380.4,
             3343,
             3344,
-            3397.2
+            3397.2,
+            3560.2
           ]
         }
       ]
@@ -1062,6 +1062,14 @@
       "japan": null,
       "peers": [
         {
+          "name": "東南アジア 計",
+          "teu": 263812,
+          "yoyPct": 18.4,
+          "sharePct": 13.7,
+          "cumTeu": 1650006,
+          "cumYoyPct": 12.2
+        },
+        {
           "name": "北東アジア 計",
           "teu": 143225,
           "yoyPct": -8.3,
@@ -1076,14 +1084,6 @@
           "sharePct": 78.9,
           "cumTeu": 10059489,
           "cumYoyPct": 14
-        },
-        {
-          "name": "東南アジア 計",
-          "teu": 263812,
-          "yoyPct": 18.4,
-          "sharePct": 13.7,
-          "cumTeu": 1650006,
-          "cumYoyPct": 12.2
         }
       ],
       "hasCountryDetail": false
