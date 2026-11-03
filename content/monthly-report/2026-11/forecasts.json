@@ -1,0 +1,121 @@
+[
+  {
+    "section": "index",
+    "claim": "수에즈 항로 복귀세 확산과 선사들의 선제적 공급조절이 수요 회복분을 그대로 흡수한 결과…항공·철도 전반으로 공급측 의사결정이 가격을 좌우하는 복합 보합 국면이 당분간 지속될 전망.",
+    "metric": null,
+    "direction": "flat",
+    "horizon": "M+1"
+  },
+  {
+    "section": "index",
+    "claim": "물동량 반등이 공급 조절 해소로 이어지지 않는 한, 운임은 당분간 완만한 보합권 등락을 반복할 전망.",
+    "metric": null,
+    "direction": "flat",
+    "horizon": "M+1"
+  },
+  {
+    "section": "ocean",
+    "claim": "4분기 성수기 전자상거래·특송 물량이 집중되면 이들 권역의 적재율 추가 상승이 이어질 전망.",
+    "metric": null,
+    "direction": null,
+    "horizon": "M+1"
+  },
+  {
+    "section": "air",
+    "claim": "4분기 성수기 수요가 더 확대될 경우 장거리 노선 중심의 운임 강세가 연말까지 이어질 전망.",
+    "metric": null,
+    "direction": "up",
+    "horizon": "M+1"
+  },
+  {
+    "section": "air",
+    "claim": "4분기 성수기 수요가 이어질수록 제트유 가격 변수에 따라 노선·방향별 수익성 양극화가 더 벌어질 전망.",
+    "metric": null,
+    "direction": null,
+    "horizon": "M+1"
+  },
+  {
+    "section": "rail",
+    "claim": "단기적으로는 호르고스·아라산쿠 등 접경 통상구의 처리 능력이 증가세의 상한선을 결정할 변수로 남을 전망.",
+    "metric": null,
+    "direction": null,
+    "horizon": "M+1"
+  },
+  {
+    "section": "rail",
+    "claim": "EU 수입규제 변수가 중장기 물동량 흐름의 분기점이 될 전망.",
+    "metric": null,
+    "direction": null,
+    "horizon": "M+1"
+  },
+  {
+    "section": "rail",
+    "claim": "남부회랑 수출 약세가 4분기에도 이어질 경우 RZD 연간 적재량의 하방 리스크는 더 확대될 수 있으며, 반대로 국제 환적 수요는 유럽-아시아 간 해상 운임 변동성에 연동해 당분간 완만한 성장세를 지속할 전망.",
+    "metric": null,
+    "direction": "down",
+    "horizon": "M+1"
+  },
+  {
+    "section": "region",
+    "claim": "완공 시점인 2032년을 전후로 르아브르항과 북유럽 주요항만 간 내륙운송 경쟁 구도가 재편되고, 한국산 화물의 유럽 내 환적·배송 경로가 다변화될 가능성이 점차 커질 전망.",
+    "metric": null,
+    "direction": null,
+    "horizon": "M+1"
+  },
+  {
+    "section": "region",
+    "claim": "법안이 시행되면 초기에는 인증 시스템 안정화 전까지 반출 지연이 발생할 가능성이 있고, 유사 규제가 함부르크·브레멘 등 인근 주로 확산될 가능성도 배제할 수 없는 상황.",
+    "metric": null,
+    "direction": null,
+    "horizon": "M+1"
+  },
+  {
+    "section": "region",
+    "claim": "관세 정책 향방에 따라 걸프만 항로의 물동량 변동성이 당분간 이어질 전망.",
+    "metric": null,
+    "direction": null,
+    "horizon": "M+1"
+  },
+  {
+    "section": "macro",
+    "claim": "달러 강세 기조와 조달비용 부담이 단기간 더 이어질 전망.",
+    "metric": null,
+    "direction": null,
+    "horizon": "M+1"
+  },
+  {
+    "section": "macro",
+    "claim": "단기적으로는 홍해 리스크 완화가 운임에 우호적으로, 러시아발 유가 변동성은 비용 측 리스크로 공존할 전망.",
+    "metric": null,
+    "direction": null,
+    "horizon": "M+1"
+  },
+  {
+    "section": "macro",
+    "claim": "단기적으로는 상승 흐름이 유지될 전망.",
+    "metric": null,
+    "direction": "up",
+    "horizon": "M+1"
+  },
+  {
+    "section": "closing",
+    "claim": "현재로서는 11월 하순 완만한 반등 전환이 우세할 전망.",
+    "metric": "CCFI",
+    "direction": "up",
+    "horizon": "M+1"
+  },
+  {
+    "section": "closing",
+    "claim": "최근 4주간 확대 흐름이 이어져온 만큼 11월에도 추가 확대가 우세할 전망.",
+    "metric": "KCCI",
+    "direction": "up",
+    "horizon": "M+1"
+  },
+  {
+    "section": "closing",
+    "claim": "이러한 구조적 병목이 벌크 시황에도 유사하게 작용한다면 BDI는 연료비 상승 압박에도 큰 폭 하락보다 보합에 가까운 흐름이 우세할 전망.",
+    "metric": "BDI",
+    "direction": "flat",
+    "horizon": "M+1"
+  }
+]
