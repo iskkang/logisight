@@ -80,7 +80,13 @@ jobs:
         if: always()
         run: node generators/report/assemble-monthly-report.js --force
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_API_KEY:         ${{ secrets.ANTHROPIC_API_KEY }}
+          # 조립이 derived-grounding.md(근거 스냅샷)를 쓰려면 DB 가 필요하다. 이 둘이
+          # 빠져 있어 매번 "supabaseUrl is required"로 조용히 건너뛰었고, 스냅샷이
+          # 없으니 QA 가 파생 지표를 제 시점에 다시 계산한다 —— 생성 때와 값이 달라져
+          # 본문이 틀린 것처럼 보일 수 있다고 스스로 경고까지 남기고 있었다.
+          SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
       - name: 초안 QA + 에디터 브리프 (검수 창용 — 실패해도 초안 커밋은 진행)
         if: always()
