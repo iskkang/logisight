@@ -441,6 +441,18 @@ async function runSection({ client, sectionConfig, items, styleGuide, month,
   if (pass1Res.stop_reason === 'max_tokens')
     console.warn(`   ⚠️ PASS 1이 max_tokens에서 잘림! 상향 필요`);
 
+  // PASS 1 이 text 블록을 하나도 안 냈으면 초안이 없는 것이다 ★
+  // sonnet-5 는 thinking 이 max_tokens 를 함께 먹는다. 사고가 예산을 다 쓰면 출력 토큰은
+  // 한도에 닿는데 text 는 비어 나온다. 그 빈 초안을 PASS 2 에 넘기면 "검수·수정할 원문을
+  // 입력해 주시면…" 같은 되묻기가 돌아오고, pickRevision 은 지킬 초안이 없으니 그것을
+  // 그대로 채택한다 —— 2026-11 ocean 이 그렇게 LLM 의 되묻기를 본문으로 싣고 발행 QA 에서
+  // critical 로 막혔다(pass1_tokens 16000 = 한도, pass2_tokens 95).
+  // 여기서 끊으면 호출부가 섹션 실패로 기록하고, 저장을 건너뛰어 기존 원고를 덮지 않는다.
+  if (!draft.trim())
+    throw new Error(
+      `PASS 1 이 본문을 내지 않았다 — 빈 초안 (출력 ${p1Out} tokens, stop=${pass1Res.stop_reason}). `
+      + `thinking 이 max_tokens 를 다 쓴 경우다. 예산을 올리거나 입력을 줄여야 한다.`);
+
   // PASS 2: 자기검수 + 수정
   //
   // 예산은 PASS 1의 두 배. sonnet-5는 사고 과정이 max_tokens를 함께 먹으므로,
