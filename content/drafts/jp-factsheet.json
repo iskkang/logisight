@@ -419,7 +419,7 @@
       "importJpy": 11510333013,
       "balanceJpy": -556478671,
       "yoyExportPct": 16.5,
-      "yoyImportPct": 18.900000000000006
+      "yoyImportPct": 18.5
     },
     "countries": [
       {
@@ -428,7 +428,7 @@
         "importJpy": 1570279575,
         "balanceJpy": 391706348,
         "yoyExportPct": 22.900000000000006,
-        "yoyImportPct": 44.80000000000001
+        "yoyImportPct": 44
       },
       {
         "name": "中国",
@@ -444,7 +444,7 @@
         "importJpy": 663313501,
         "balanceJpy": 254849091,
         "yoyExportPct": 37.69999999999999,
-        "yoyImportPct": 54.900000000000006
+        "yoyImportPct": 54.80000000000001
       },
       {
         "name": "韓国",
@@ -452,7 +452,7 @@
         "importJpy": 549103233,
         "balanceJpy": 232309199,
         "yoyExportPct": 35.5,
-        "yoyImportPct": 40.900000000000006
+        "yoyImportPct": 40.69999999999999
       },
       {
         "name": "香港",
@@ -468,7 +468,7 @@
         "importJpy": 129970963,
         "balanceJpy": 314540604,
         "yoyExportPct": 53.19999999999999,
-        "yoyImportPct": 21.599999999999994
+        "yoyImportPct": 21.200000000000003
       },
       {
         "name": "タイ",
@@ -484,7 +484,7 @@
         "importJpy": 464239852,
         "balanceJpy": -189812934,
         "yoyExportPct": 10.400000000000006,
-        "yoyImportPct": 22.599999999999994
+        "yoyImportPct": 22.5
       },
       {
         "name": "オーストラリア",
@@ -492,7 +492,7 @@
         "importJpy": 681984347,
         "balanceJpy": -421074978,
         "yoyExportPct": 37,
-        "yoyImportPct": 31.19999999999999
+        "yoyImportPct": 30.30000000000001
       },
       {
         "name": "インド",
@@ -508,7 +508,7 @@
         "importJpy": 314840196,
         "balanceJpy": -71086770,
         "yoyExportPct": -2.700000000000003,
-        "yoyImportPct": 0.9000000000000057
+        "yoyImportPct": 0.7000000000000028
       },
       {
         "name": "マレーシア",
@@ -516,7 +516,7 @@
         "importJpy": 317076308,
         "balanceJpy": -81447141,
         "yoyExportPct": 29.400000000000006,
-        "yoyImportPct": 28.5
+        "yoyImportPct": 28.599999999999994
       },
       {
         "name": "メキシコ",
@@ -524,7 +524,7 @@
         "importJpy": 105058430,
         "balanceJpy": 101322580,
         "yoyExportPct": 25,
-        "yoyImportPct": 22.299999999999997
+        "yoyImportPct": 20.799999999999997
       },
       {
         "name": "英国",
@@ -540,7 +540,7 @@
         "importJpy": 143878812,
         "balanceJpy": 34117899,
         "yoyExportPct": 35.400000000000006,
-        "yoyImportPct": 7.299999999999997
+        "yoyImportPct": 7.099999999999994
       }
     ]
   },
@@ -656,87 +656,87 @@
   "global": {
     "source": "各指数の公表機関(SSE・Drewry・Freightos・Baltic Exchange ほか)",
     "unit": "index / USD",
-    "asOf": "2026-10-26",
+    "asOf": "2026-11-16",
     "indices": [
       {
         "code": "SCFI",
         "label": "SCFI 総合",
         "unit": null,
-        "value": 3687.35,
-        "changePct": 0.16,
-        "asOf": "2026-10-26"
+        "value": 3503.78,
+        "changePct": -1.92,
+        "asOf": "2026-11-16"
       },
       {
         "code": "SCFI_EU",
         "label": "SCFI 上海→欧州",
         "unit": null,
-        "value": 2351,
+        "value": 2325,
         "changePct": null,
-        "asOf": "2026-10-19"
+        "asOf": "2026-11-02"
       },
       {
         "code": "SCFI_USWC",
         "label": "SCFI 上海→米西岸",
         "unit": null,
-        "value": 7521,
+        "value": 7381,
         "changePct": null,
-        "asOf": "2026-10-19"
+        "asOf": "2026-11-02"
       },
       {
         "code": "SCFI_USEC",
         "label": "SCFI 上海→米東岸",
         "unit": null,
-        "value": 10388,
+        "value": 9857,
         "changePct": null,
-        "asOf": "2026-10-19"
+        "asOf": "2026-11-02"
       },
       {
         "code": "CCFI",
         "label": "CCFI 総合",
         "unit": null,
-        "value": 1881.82,
-        "changePct": 0.3,
-        "asOf": "2026-10-26"
+        "value": 1923.21,
+        "changePct": 0.21,
+        "asOf": "2026-11-16"
       },
       {
         "code": "WCI",
         "label": "WCI 総合",
         "unit": null,
-        "value": 4429,
+        "value": 4176,
         "changePct": -3,
-        "asOf": "2026-10-26"
+        "asOf": "2026-11-16"
       },
       {
         "code": "FBX",
         "label": "FBX 総合",
         "unit": null,
-        "value": 3513.25,
-        "changePct": -1.32,
-        "asOf": "2026-10-26"
+        "value": 3504.25,
+        "changePct": 0.55,
+        "asOf": "2026-11-16"
       },
       {
         "code": "BDI",
         "label": "BDI(バルク)",
         "unit": null,
-        "value": 2634,
+        "value": 2695,
         "changePct": null,
-        "asOf": "2026-10-19"
+        "asOf": "2026-11-02"
       },
       {
         "code": "VLSFO",
         "label": "VLSFO(低硫黄C重油)",
         "unit": null,
-        "value": 1059,
+        "value": 954,
         "changePct": null,
-        "asOf": "2026-10-19"
+        "asOf": "2026-11-02"
       },
       {
         "code": "HSFO",
         "label": "HSFO(高硫黄C重油)",
         "unit": null,
-        "value": 953,
+        "value": 818,
         "changePct": null,
-        "asOf": "2026-10-19"
+        "asOf": "2026-11-02"
       }
     ],
     "containerUp": 2,
@@ -745,9 +745,6 @@
     "asOfNote": "世界のスポット指数は週次、日本の統計は月次で基準日が揃わない。両者を同一時点の動きとして比較してはならない。同時期に観測された事実として並べるまでである。",
     "history": {
       "weeks": [
-        "2026-05-04",
-        "2026-05-11",
-        "2026-05-18",
         "2026-05-25",
         "2026-06-01",
         "2026-06-08",
@@ -770,16 +767,16 @@
         "2026-10-05",
         "2026-10-12",
         "2026-10-19",
-        "2026-10-26"
+        "2026-10-26",
+        "2026-11-02",
+        "2026-11-09",
+        "2026-11-16"
       ],
       "series": [
         {
           "code": "SCFI",
           "label": "SCFI 総合",
           "values": [
-            1954,
-            2140.66,
-            2218,
             2571.73,
             2726,
             2985,
@@ -802,16 +799,16 @@
             3664,
             3679.58,
             3681,
-            3687.35
+            3687,
+            3633,
+            3572.33,
+            3503.78
           ]
         },
         {
           "code": "CCFI",
           "label": "CCFI 総合",
           "values": [
-            1278.79,
-            1280.46,
-            1317.36,
             1366.76,
             1411.6,
             1480.11,
@@ -834,16 +831,16 @@
             1912.38,
             1922.64,
             1876.27,
-            1881.82
+            1881.82,
+            null,
+            1919.27,
+            1923.21
           ]
         },
         {
           "code": "WCI",
           "label": "WCI 総合",
           "values": [
-            null,
-            null,
-            null,
             null,
             3433,
             3549,
@@ -866,16 +863,16 @@
             4351,
             4485,
             4585,
-            4429
+            4429,
+            4389,
+            4305,
+            4176
           ]
         },
         {
           "code": "FBX",
           "label": "FBX 総合",
           "values": [
-            null,
-            null,
-            null,
             null,
             2862.75,
             2888.8,
@@ -898,7 +895,10 @@
             3344,
             3397.2,
             3560.2,
-            3513.25
+            3513.4,
+            3451.8,
+            3485.2,
+            3504.25
           ]
         }
       ]
@@ -906,39 +906,39 @@
   },
   "rail": {
     "source": "ERAI (Eurasian Rail Alliance Index)",
-    "asOf": "2026-10-01",
+    "asOf": "2026-11-01",
     "indices": [
       {
         "code": "ERAI",
         "label": "ERAI 総合",
         "unit": null,
-        "value": 3930,
-        "changePct": 0.46,
-        "asOf": "2026-09-01"
+        "value": 3891,
+        "changePct": -0.99,
+        "asOf": "2026-10-01"
       },
       {
         "code": "ERAI_WEST",
         "label": "ERAI 西航(中国→欧州)",
         "unit": null,
-        "value": 4084,
-        "changePct": 0.05,
-        "asOf": "2026-09-01"
+        "value": 4082,
+        "changePct": -0.05,
+        "asOf": "2026-10-01"
       },
       {
         "code": "ERAI_EAST",
         "label": "ERAI 東航(欧州→中国)",
         "unit": null,
-        "value": 2601,
-        "changePct": -0.08,
-        "asOf": "2026-09-01"
+        "value": 2602,
+        "changePct": 0.04,
+        "asOf": "2026-10-01"
       },
       {
         "code": "ERAI_TRANSIT_DAYS",
         "label": "ERAI 平均輸送日数",
         "unit": "日",
-        "value": 7,
+        "value": 9,
         "changePct": null,
-        "asOf": "2026-10-01"
+        "asOf": "2026-11-01"
       }
     ],
     "changeBasis": "前月比",
@@ -948,12 +948,27 @@
     "source": "Drewry Cancelled Sailings Tracker",
     "unit": "sailings",
     "scope": "主要East-West航路(アジア〜欧州・太平洋・大西洋)。日本発着に限った数字ではない。",
-    "asOf": "2026-10-16",
-    "blankedSailings": 44,
-    "plannedSailings": 713,
-    "blankPct": 6.2,
+    "asOf": "2026-11-13",
+    "blankedSailings": 52,
+    "plannedSailings": 716,
+    "blankPct": 7.3,
     "recentNote": "公表週は連続していない。欠けている週がある。「直近N週」とは書かず、日付を挙げて「公表された直近N回」として述べる。",
     "recent": [
+      {
+        "week": "2026-11-13",
+        "blankedSailings": 52,
+        "blankPct": 7.3
+      },
+      {
+        "week": "2026-11-06",
+        "blankedSailings": 46,
+        "blankPct": 6.4
+      },
+      {
+        "week": "2026-10-30",
+        "blankedSailings": 56,
+        "blankPct": 7.8
+      },
       {
         "week": "2026-10-16",
         "blankedSailings": 44,
@@ -968,24 +983,9 @@
         "week": "2026-09-18",
         "blankedSailings": 77,
         "blankPct": 10.7
-      },
-      {
-        "week": "2026-09-11",
-        "blankedSailings": 79,
-        "blankPct": 11
-      },
-      {
-        "week": "2026-09-04",
-        "blankedSailings": 47,
-        "blankPct": 6.4
-      },
-      {
-        "week": "2026-08-28",
-        "blankedSailings": 45,
-        "blankPct": 6
       }
     ],
-    "recentSpanWeeks": 8
+    "recentSpanWeeks": 9
   },
   "route": {
     "unit": "TEU",
