@@ -1,10 +1,10 @@
 {
-  "generatedFor": "2026-09",
+  "generatedFor": "2026-10",
   "periods": {
-    "sppi": "2026-09",
+    "sppi": "2026-10",
     "port": "2026-08",
-    "trade": "2026-09",
-    "commodity": "2026-09"
+    "trade": "2026-10",
+    "commodity": "2026-10"
   },
   "periodMismatch": true,
   "gaps": [
@@ -13,7 +13,7 @@
   ],
   "publicationLag": "世界のスポット指数は週次で直近まで公表される。日本の企業向けサービス価格指数は月次で、当月分の公表までに約2か月かかる。したがって、直近のスポットの動きは、まだ公表されていない日本の指数がどちらを向くかを考える材料になる。ただし転嫁の幅と時期は契約条件によって異なり、データからは特定できない。",
   "sppi": {
-    "period": "2026-09",
+    "period": "2026-10",
     "source": "日本銀行 企業向けサービス価格指数(SPPI)",
     "baseYear": "2020",
     "unit": "index",
@@ -23,32 +23,32 @@
       {
         "name": "航空貨物輸送",
         "category": "air",
-        "yen": 121.6,
-        "contract": 91.1,
+        "yen": 126.2,
+        "contract": 94.2,
         "parent": "運輸・郵便",
-        "yoyYenPct": 25.36082474226804,
-        "yoyContractPct": 19.084967320261438,
-        "fxSinceBasePct": 33.5,
-        "fxYoyPct": 5.3
+        "yoyYenPct": 25.198412698412696,
+        "yoyContractPct": 20.306513409961703,
+        "fxSinceBasePct": 34,
+        "fxYoyPct": 4.1
       },
       {
         "name": "国際航空貨物輸送",
         "category": "air",
-        "yen": 133.9,
-        "contract": 93.2,
+        "yen": 139.8,
+        "contract": 97.1,
         "parent": "航空貨物輸送",
-        "yoyYenPct": 33.499501495513464,
-        "yoyContractPct": 27.496580027359798,
-        "fxSinceBasePct": 43.7,
-        "fxYoyPct": 4.7
+        "yoyYenPct": 32.51184834123224,
+        "yoyContractPct": 28.609271523178805,
+        "fxSinceBasePct": 44,
+        "fxYoyPct": 3
       },
       {
         "name": "国内航空貨物輸送",
         "category": "air",
-        "yen": 84.5,
+        "yen": 85.5,
         "contract": null,
         "parent": "航空貨物輸送",
-        "yoyYenPct": -2.6497695852534475,
+        "yoyYenPct": -1.2702078521939941,
         "yoyContractPct": null,
         "fxSinceBasePct": null,
         "fxYoyPct": null
@@ -56,10 +56,10 @@
       {
         "name": "陸上貨物輸送",
         "category": "land",
-        "yen": 113.2,
+        "yen": 113.4,
         "contract": null,
         "parent": "運輸・郵便",
-        "yoyYenPct": 4.621072088724576,
+        "yoyYenPct": 4.612546125461248,
         "yoyContractPct": null,
         "fxSinceBasePct": null,
         "fxYoyPct": null
@@ -67,10 +67,10 @@
       {
         "name": "鉄道貨物輸送",
         "category": "land",
-        "yen": 108.1,
+        "yen": 109.1,
         "contract": null,
         "parent": "陸上貨物輸送",
-        "yoyYenPct": 2.1739130434782483,
+        "yoyYenPct": 2.730696798493404,
         "yoyContractPct": null,
         "fxSinceBasePct": null,
         "fxYoyPct": null
@@ -78,10 +78,10 @@
       {
         "name": "道路貨物輸送",
         "category": "land",
-        "yen": 113.3,
+        "yen": 113.4,
         "contract": null,
         "parent": "陸上貨物輸送",
-        "yoyYenPct": 4.616805170821792,
+        "yoyYenPct": 4.516129032258065,
         "yoyContractPct": null,
         "fxSinceBasePct": null,
         "fxYoyPct": null
@@ -89,43 +89,43 @@
       {
         "name": "海上貨物輸送",
         "category": "ocean",
-        "yen": 191.4,
-        "contract": 156.4,
+        "yen": 203.4,
+        "contract": 164,
         "parent": "運輸・郵便",
-        "yoyYenPct": 46.218487394957975,
-        "yoyContractPct": 34.711455641688204,
-        "fxSinceBasePct": 22.4,
-        "fxYoyPct": 8.5
+        "yoyYenPct": 55.62356541698548,
+        "yoyContractPct": 42.237640936686915,
+        "fxSinceBasePct": 24,
+        "fxYoyPct": 9.4
       },
       {
         "name": "外航貨物輸送",
         "category": "ocean",
-        "yen": 315.9,
-        "contract": 221,
+        "yen": 347.2,
+        "contract": 240.2,
         "parent": "海上貨物輸送",
-        "yoyYenPct": 97.68460575719646,
-        "yoyContractPct": 84.78260869565217,
-        "fxSinceBasePct": 42.9,
-        "fxYoyPct": 7
+        "yoyYenPct": 120.44444444444444,
+        "yoyContractPct": 107.60587726879862,
+        "fxSinceBasePct": 44.5,
+        "fxYoyPct": 6.2
       },
       {
         "name": "外航貨物輸送（除外航タンカー）",
         "category": "ocean",
-        "yen": 210.8,
-        "contract": 146,
+        "yen": 219.4,
+        "contract": 150.4,
         "parent": "外航貨物輸送",
-        "yoyYenPct": 30.607187112763334,
-        "yoyContractPct": 23.519458544839257,
-        "fxSinceBasePct": 44.4,
-        "fxYoyPct": 5.7
+        "yoyYenPct": 36.52769135034226,
+        "yoyContractPct": 30.442324371205554,
+        "fxSinceBasePct": 45.9,
+        "fxYoyPct": 4.7
       },
       {
         "name": "内航貨物輸送",
         "category": "ocean",
-        "yen": 139.6,
+        "yen": 141.5,
         "contract": null,
         "parent": "海上貨物輸送",
-        "yoyYenPct": 8.13323005422153,
+        "yoyYenPct": 8.346094946401239,
         "yoyContractPct": null,
         "fxSinceBasePct": null,
         "fxYoyPct": null
@@ -136,7 +136,7 @@
         "yen": 105.1,
         "contract": null,
         "parent": "運輸・郵便",
-        "yoyYenPct": 0.7670182166826356,
+        "yoyYenPct": 0.09523809523808158,
         "yoyContractPct": null,
         "fxSinceBasePct": null,
         "fxYoyPct": null
@@ -144,21 +144,21 @@
       {
         "name": "運輸・郵便",
         "category": "total",
-        "yen": 121.8,
-        "contract": 118.4,
+        "yen": 123.5,
+        "contract": 119.7,
         "parent": null,
-        "yoyYenPct": 8.362989323843406,
-        "yoyContractPct": 6.762849413886385,
-        "fxSinceBasePct": 2.9,
-        "fxYoyPct": 1.5
+        "yoyYenPct": 9.388839681133732,
+        "yoyContractPct": 7.450628366247747,
+        "fxSinceBasePct": 3.2,
+        "fxYoyPct": 1.8
       },
       {
         "name": "倉庫",
         "category": "warehouse",
-        "yen": 105.6,
+        "yen": 105.8,
         "contract": null,
         "parent": "運輸・郵便",
-        "yoyYenPct": 2.127659574468077,
+        "yoyYenPct": 2.420135527589551,
         "yoyContractPct": null,
         "fxSinceBasePct": null,
         "fxYoyPct": null
@@ -170,21 +170,21 @@
         "intlTop": {
           "name": "外航貨物輸送",
           "category": "ocean",
-          "yen": 315.9,
-          "contract": 221,
+          "yen": 347.2,
+          "contract": 240.2,
           "parent": "海上貨物輸送",
-          "yoyYenPct": 97.68460575719646,
-          "yoyContractPct": 84.78260869565217,
-          "fxSinceBasePct": 42.9,
-          "fxYoyPct": 7
+          "yoyYenPct": 120.44444444444444,
+          "yoyContractPct": 107.60587726879862,
+          "fxSinceBasePct": 44.5,
+          "fxYoyPct": 6.2
         },
         "domesticLow": {
           "name": "国内航空貨物輸送",
           "category": "air",
-          "yen": 84.5,
+          "yen": 85.5,
           "contract": null,
           "parent": "航空貨物輸送",
-          "yoyYenPct": -2.6497695852534475,
+          "yoyYenPct": -1.2702078521939941,
           "yoyContractPct": null,
           "fxSinceBasePct": null,
           "fxYoyPct": null
@@ -194,21 +194,20 @@
       {
         "kind": "contract_below_base",
         "series": "航空貨物輸送",
-        "contract": 91.1,
-        "yen": 121.6,
-        "note": "契約通貨ベース 91.1 — 基準年(2020年)を下回る。円ベース 121.6 との差は為替要因。"
+        "contract": 94.2,
+        "yen": 126.2,
+        "note": "契約通貨ベース 94.2 — 基準年(2020年)を下回る。円ベース 126.2 との差は為替要因。"
       },
       {
         "kind": "contract_below_base",
         "series": "国際航空貨物輸送",
-        "contract": 93.2,
-        "yen": 133.9,
-        "note": "契約通貨ベース 93.2 — 基準年(2020年)を下回る。円ベース 133.9 との差は為替要因。"
+        "contract": 97.1,
+        "yen": 139.8,
+        "note": "契約通貨ベース 97.1 — 基準年(2020年)を下回る。円ベース 139.8 との差は為替要因。"
       }
     ],
     "history": {
       "months": [
-        "2024-10",
         "2024-11",
         "2024-12",
         "2025-01",
@@ -231,13 +230,13 @@
         "2026-06",
         "2026-07",
         "2026-08",
-        "2026-09"
+        "2026-09",
+        "2026-10"
       ],
       "series": [
         {
           "name": "外航貨物輸送",
           "yen": [
-            164.6,
             161.7,
             157.6,
             160.2,
@@ -260,10 +259,10 @@
             232.9,
             259.5,
             272.3,
-            315.9
+            315.8,
+            347.2
           ],
           "contract": [
-            122.2,
             117.3,
             114.5,
             114.6,
@@ -285,14 +284,14 @@
             167.9,
             160,
             175.9,
-            188.5,
-            221
+            188.6,
+            220.9,
+            240.2
           ]
         },
         {
           "name": "国際航空貨物輸送",
           "yen": [
-            105.9,
             103.7,
             103.9,
             106.8,
@@ -315,10 +314,10 @@
             142.4,
             132.7,
             123.3,
-            133.9
+            133.9,
+            139.8
           ],
           "contract": [
-            77.8,
             74.9,
             75.6,
             76.4,
@@ -341,7 +340,8 @@
             98.1,
             90,
             84.8,
-            93.2
+            93.2,
+            97.1
           ]
         }
       ]
@@ -411,245 +411,245 @@
     ]
   },
   "trade": {
-    "period": "2026-09",
+    "period": "2026-10",
     "source": "財務省貿易統計",
     "unit": "thousand_jpy",
     "total": {
-      "exportJpy": 10953854342,
-      "importJpy": 11510333013,
-      "balanceJpy": -556478671,
-      "yoyExportPct": 16.5,
-      "yoyImportPct": 18.5
+      "exportJpy": 11765500980,
+      "importJpy": 12246223103,
+      "balanceJpy": -480722123,
+      "yoyExportPct": 20.5,
+      "yoyImportPct": 21.599999999999994
     },
     "countries": [
       {
         "name": "米国",
-        "exportJpy": 1961985923,
-        "importJpy": 1570279575,
-        "balanceJpy": 391706348,
-        "yoyExportPct": 22.900000000000006,
-        "yoyImportPct": 44
+        "exportJpy": 2173597841,
+        "importJpy": 1483754731,
+        "balanceJpy": 689843110,
+        "yoyExportPct": 23.900000000000006,
+        "yoyImportPct": 19.799999999999997
       },
       {
         "name": "中国",
-        "exportJpy": 1728040175,
-        "importJpy": 2757404900,
-        "balanceJpy": -1029364725,
-        "yoyExportPct": 8.5,
-        "yoyImportPct": 16.400000000000006
+        "exportJpy": 1936991135,
+        "importJpy": 2842767119,
+        "balanceJpy": -905775984,
+        "yoyExportPct": 13.299999999999997,
+        "yoyImportPct": 14.700000000000003
       },
       {
         "name": "台湾",
-        "exportJpy": 918162592,
-        "importJpy": 663313501,
-        "balanceJpy": 254849091,
-        "yoyExportPct": 37.69999999999999,
-        "yoyImportPct": 54.80000000000001
+        "exportJpy": 976939960,
+        "importJpy": 687925988,
+        "balanceJpy": 289013972,
+        "yoyExportPct": 42.69999999999999,
+        "yoyImportPct": 54.69999999999999
       },
       {
         "name": "韓国",
-        "exportJpy": 781412432,
-        "importJpy": 549103233,
-        "balanceJpy": 232309199,
-        "yoyExportPct": 35.5,
-        "yoyImportPct": 40.69999999999999
-      },
-      {
-        "name": "香港",
-        "exportJpy": 568252672,
-        "importJpy": 64660632,
-        "balanceJpy": 503592040,
-        "yoyExportPct": -8.099999999999994,
-        "yoyImportPct": 18.799999999999997
+        "exportJpy": 757333164,
+        "importJpy": 572641818,
+        "balanceJpy": 184691346,
+        "yoyExportPct": 31.30000000000001,
+        "yoyImportPct": 51.400000000000006
       },
       {
         "name": "シンガポール",
-        "exportJpy": 444511567,
-        "importJpy": 129970963,
-        "balanceJpy": 314540604,
-        "yoyExportPct": 53.19999999999999,
-        "yoyImportPct": 21.200000000000003
+        "exportJpy": 522390411,
+        "importJpy": 153606228,
+        "balanceJpy": 368784183,
+        "yoyExportPct": 107.19999999999999,
+        "yoyImportPct": 57.69999999999999
+      },
+      {
+        "name": "香港",
+        "exportJpy": 519242368,
+        "importJpy": 12609874,
+        "balanceJpy": 506632494,
+        "yoyExportPct": -10.799999999999997,
+        "yoyImportPct": 2.299999999999997
       },
       {
         "name": "タイ",
-        "exportJpy": 420980971,
-        "importJpy": 394448010,
-        "balanceJpy": 26532961,
-        "yoyExportPct": 22.5,
-        "yoyImportPct": 18.099999999999994
+        "exportJpy": 434964410,
+        "importJpy": 420169918,
+        "balanceJpy": 14794492,
+        "yoyExportPct": 18.700000000000003,
+        "yoyImportPct": 21.5
       },
       {
         "name": "ベトナム",
-        "exportJpy": 274426918,
-        "importJpy": 464239852,
-        "balanceJpy": -189812934,
-        "yoyExportPct": 10.400000000000006,
-        "yoyImportPct": 22.5
-      },
-      {
-        "name": "オーストラリア",
-        "exportJpy": 260909369,
-        "importJpy": 681984347,
-        "balanceJpy": -421074978,
-        "yoyExportPct": 37,
-        "yoyImportPct": 30.30000000000001
-      },
-      {
-        "name": "インド",
-        "exportJpy": 255931440,
-        "importJpy": 118976205,
-        "balanceJpy": 136955235,
-        "yoyExportPct": 5.5,
-        "yoyImportPct": 66.30000000000001
+        "exportJpy": 298572247,
+        "importJpy": 521883443,
+        "balanceJpy": -223311196,
+        "yoyExportPct": 14,
+        "yoyImportPct": 25
       },
       {
         "name": "ドイツ",
-        "exportJpy": 243753426,
-        "importJpy": 314840196,
-        "balanceJpy": -71086770,
-        "yoyExportPct": -2.700000000000003,
-        "yoyImportPct": 0.7000000000000028
+        "exportJpy": 283084317,
+        "importJpy": 314316760,
+        "balanceJpy": -31232443,
+        "yoyExportPct": 18.299999999999997,
+        "yoyImportPct": 28.80000000000001
+      },
+      {
+        "name": "オーストラリア",
+        "exportJpy": 274043438,
+        "importJpy": 593170464,
+        "balanceJpy": -319127026,
+        "yoyExportPct": 11.900000000000006,
+        "yoyImportPct": 2
+      },
+      {
+        "name": "インド",
+        "exportJpy": 258352099,
+        "importJpy": 122314009,
+        "balanceJpy": 136038090,
+        "yoyExportPct": 11.400000000000006,
+        "yoyImportPct": 36.5
       },
       {
         "name": "マレーシア",
-        "exportJpy": 235629167,
-        "importJpy": 317076308,
-        "balanceJpy": -81447141,
-        "yoyExportPct": 29.400000000000006,
-        "yoyImportPct": 28.599999999999994
+        "exportJpy": 252319591,
+        "importJpy": 338379327,
+        "balanceJpy": -86059736,
+        "yoyExportPct": 35.80000000000001,
+        "yoyImportPct": 24.900000000000006
       },
       {
         "name": "メキシコ",
-        "exportJpy": 206381010,
-        "importJpy": 105058430,
-        "balanceJpy": 101322580,
-        "yoyExportPct": 25,
-        "yoyImportPct": 20.799999999999997
-      },
-      {
-        "name": "英国",
-        "exportJpy": 181562946,
-        "importJpy": 112595831,
-        "balanceJpy": 68967115,
-        "yoyExportPct": 20.299999999999997,
-        "yoyImportPct": -10.5
+        "exportJpy": 221662543,
+        "importJpy": 118116561,
+        "balanceJpy": 103545982,
+        "yoyExportPct": 37.80000000000001,
+        "yoyImportPct": 22.900000000000006
       },
       {
         "name": "カナダ",
-        "exportJpy": 177996711,
-        "importJpy": 143878812,
-        "balanceJpy": 34117899,
-        "yoyExportPct": 35.400000000000006,
-        "yoyImportPct": 7.099999999999994
+        "exportJpy": 186506213,
+        "importJpy": 197432899,
+        "balanceJpy": -10926686,
+        "yoyExportPct": 24.799999999999997,
+        "yoyImportPct": 12.299999999999997
+      },
+      {
+        "name": "英国",
+        "exportJpy": 182168149,
+        "importJpy": 133833864,
+        "balanceJpy": 48334285,
+        "yoyExportPct": 25.799999999999997,
+        "yoyImportPct": 17.299999999999997
       }
     ]
   },
   "commodity": {
-    "period": "2026-09",
+    "period": "2026-10",
     "source": "財務省貿易統計 概況品別国別表",
     "unit": "thousand_jpy",
     "export": [
       {
         "name": "機械類及び輸送用機器",
-        "valueJpy": 6375900638,
-        "sharePct": 58.206914561143066
+        "valueJpy": 6869440841,
+        "sharePct": 58.38630120958946
       },
       {
         "name": "特殊取扱品",
-        "valueJpy": 1272689562,
-        "sharePct": 11.618646024168577
+        "valueJpy": 1355783708,
+        "sharePct": 11.523382729767958
       },
       {
         "name": "化学製品",
-        "valueJpy": 1108941951,
-        "sharePct": 10.123760243442536
+        "valueJpy": 1202780640,
+        "sharePct": 10.222944539672293
       },
       {
         "name": "原料別製品",
-        "valueJpy": 1108309250,
-        "sharePct": 10.11798418526022
+        "valueJpy": 1140564667,
+        "sharePct": 9.694144507223525
       },
       {
         "name": "雑製品",
-        "valueJpy": 586605551,
-        "sharePct": 5.3552433023579455
+        "valueJpy": 628525610,
+        "sharePct": 5.3421066478037895
       },
       {
         "name": "鉱物性燃料",
-        "valueJpy": 193064199,
-        "sharePct": 1.76252297111292
+        "valueJpy": 235220664,
+        "sharePct": 1.999240528727575
       },
       {
         "name": "原材料",
-        "valueJpy": 181193352,
-        "sharePct": 1.654151555633311
+        "valueJpy": 189110165,
+        "sharePct": 1.6073277739848524
       },
       {
         "name": "食料品及び動物",
-        "valueJpy": 102759511,
-        "sharePct": 0.9381128120901938
+        "valueJpy": 115816617,
+        "sharePct": 0.9843747172081745
       },
       {
         "name": "飲料及びたばこ",
-        "valueJpy": 19498783,
-        "sharePct": 0.17800841960474556
+        "valueJpy": 23024756,
+        "sharePct": 0.19569720013741396
       },
       {
         "name": "動植物性油脂",
-        "valueJpy": 4891545,
-        "sharePct": 0.044655925186484466
+        "valueJpy": 5233312,
+        "sharePct": 0.044480145884956614
       }
     ],
     "import": [
       {
         "name": "機械類及び輸送用機器",
-        "valueJpy": 3812467108,
-        "sharePct": 33.12212690713746
+        "valueJpy": 4031360761,
+        "sharePct": 32.919217027921235
       },
       {
         "name": "鉱物性燃料",
-        "valueJpy": 2346682590,
-        "sharePct": 20.387616825243978
+        "valueJpy": 2516133061,
+        "sharePct": 20.546196487173376
       },
       {
         "name": "雑製品",
-        "valueJpy": 1312269077,
-        "sharePct": 11.400791580207951
+        "valueJpy": 1403724680,
+        "sharePct": 11.462511079486415
       },
       {
         "name": "化学製品",
-        "valueJpy": 1148614873,
-        "sharePct": 9.978989067499015
+        "valueJpy": 1262426456,
+        "sharePct": 10.308700448963231
       },
       {
         "name": "原料別製品",
-        "valueJpy": 961454895,
-        "sharePct": 8.352972011444965
+        "valueJpy": 1044742222,
+        "sharePct": 8.531138239218146
       },
       {
         "name": "食料品及び動物",
-        "valueJpy": 767084810,
-        "sharePct": 6.66431465652331
+        "valueJpy": 840226531,
+        "sharePct": 6.861107493576259
       },
       {
         "name": "原材料",
-        "valueJpy": 687712344,
-        "sharePct": 5.974738899589473
+        "valueJpy": 777374995,
+        "sharePct": 6.347875491583717
       },
       {
         "name": "特殊取扱品",
-        "valueJpy": 304657336,
-        "sharePct": 2.6468160013781867
+        "valueJpy": 263026107,
+        "sharePct": 2.1478141038894316
       },
       {
         "name": "飲料及びたばこ",
-        "valueJpy": 138691992,
-        "sharePct": 1.2049346603904378
+        "valueJpy": 73830245,
+        "sharePct": 0.6028817569223734
       },
       {
         "name": "動植物性油脂",
-        "valueJpy": 30697988,
-        "sharePct": 0.26669939058521663
+        "valueJpy": 33378045,
+        "sharePct": 0.27255787126582126
       }
     ]
   },
@@ -710,8 +710,8 @@
         "code": "FBX",
         "label": "FBX 総合",
         "unit": null,
-        "value": 3504.25,
-        "changePct": 0.55,
+        "value": 3487.2,
+        "changePct": 0.06,
         "asOf": "2026-11-16"
       },
       {
@@ -898,7 +898,7 @@
             3513.4,
             3451.8,
             3485.2,
-            3504.25
+            3487.2
           ]
         }
       ]
@@ -948,12 +948,17 @@
     "source": "Drewry Cancelled Sailings Tracker",
     "unit": "sailings",
     "scope": "主要East-West航路(アジア〜欧州・太平洋・大西洋)。日本発着に限った数字ではない。",
-    "asOf": "2026-11-13",
-    "blankedSailings": 52,
-    "plannedSailings": 716,
-    "blankPct": 7.3,
+    "asOf": "2026-11-20",
+    "blankedSailings": 42,
+    "plannedSailings": 724,
+    "blankPct": 5.8,
     "recentNote": "公表週は連続していない。欠けている週がある。「直近N週」とは書かず、日付を挙げて「公表された直近N回」として述べる。",
     "recent": [
+      {
+        "week": "2026-11-20",
+        "blankedSailings": 42,
+        "blankPct": 5.8
+      },
       {
         "week": "2026-11-13",
         "blankedSailings": 52,
@@ -978,112 +983,107 @@
         "week": "2026-10-09",
         "blankedSailings": 34,
         "blankPct": 5
-      },
-      {
-        "week": "2026-09-18",
-        "blankedSailings": 77,
-        "blankPct": 10.7
       }
     ],
-    "recentSpanWeeks": 9
+    "recentSpanWeeks": 7
   },
   "route": {
     "unit": "TEU",
     "northAmerica": {
       "label": "北米往航(アジア→米国)",
-      "period": "2026-09",
+      "period": "2026-10",
       "direction": "往航",
       "source": "日本海事センター 北米コンテナ航路(PIERSデータを基に作成)",
       "total": {
         "name": "18ヶ国・地域 合計",
-        "teu": 2053213,
-        "yoyPct": 13.2,
+        "teu": 2164025,
+        "yoyPct": 21.2,
         "sharePct": 100,
-        "cumTeu": 16868736,
-        "cumYoyPct": 1.6
+        "cumTeu": 19015782,
+        "cumYoyPct": 3.4
       },
       "japan": {
         "name": "日本",
-        "teu": 55152,
-        "yoyPct": 24.5,
-        "sharePct": 2.7,
-        "cumTeu": 493275,
-        "cumYoyPct": -1.6
+        "teu": 56837,
+        "yoyPct": 1.3,
+        "sharePct": 2.6,
+        "cumTeu": 549995,
+        "cumYoyPct": -1.4
       },
       "peers": [
         {
           "name": "中国",
-          "teu": 1067336,
-          "yoyPct": 22.4,
-          "sharePct": 52,
-          "cumTeu": 8323916,
-          "cumYoyPct": -0.2
+          "teu": 1147815,
+          "yoyPct": 27.9,
+          "sharePct": 53,
+          "cumTeu": 9460698,
+          "cumYoyPct": 2.4
         },
         {
           "name": "韓国",
-          "teu": 107013,
-          "yoyPct": 15.7,
-          "sharePct": 5.2,
-          "cumTeu": 981163,
-          "cumYoyPct": -2.6
+          "teu": 129690,
+          "yoyPct": 29.6,
+          "sharePct": 6,
+          "cumTeu": 1110227,
+          "cumYoyPct": 0.2
         },
         {
           "name": "台湾",
-          "teu": 53125,
-          "yoyPct": 8.9,
-          "sharePct": 2.6,
-          "cumTeu": 459105,
-          "cumYoyPct": -10
+          "teu": 52154,
+          "yoyPct": 7.2,
+          "sharePct": 2.4,
+          "cumTeu": 511064,
+          "cumYoyPct": -8.5
         },
         {
           "name": "ベトナム",
-          "teu": 321746,
-          "yoyPct": 2.5,
-          "sharePct": 15.7,
-          "cumTeu": 2770725,
-          "cumYoyPct": 7.2
+          "teu": 318979,
+          "yoyPct": 10,
+          "sharePct": 14.7,
+          "cumTeu": 3088530,
+          "cumYoyPct": 7.5
         }
       ],
       "hasCountryDetail": true
     },
     "europe": {
       "label": "欧州往航(アジア→欧州)",
-      "period": "2026-08",
+      "period": "2026-09",
       "direction": "往航",
       "source": "日本海事センター 欧州コンテナ航路(Container Trades Statisticsを基に作成)",
       "total": {
         "name": "アジア 合計",
-        "teu": 1817932,
-        "yoyPct": -1.7,
+        "teu": 1971303,
+        "yoyPct": 21.1,
         "sharePct": 100,
-        "cumTeu": 14530035,
-        "cumYoyPct": 10.2
+        "cumTeu": 16499089,
+        "cumYoyPct": 11.4
       },
       "japan": null,
       "peers": [
         {
           "name": "北東アジア 計",
-          "teu": 132131,
-          "yoyPct": -9.2,
-          "sharePct": 7.3,
-          "cumTeu": 1134305,
-          "cumYoyPct": -4.1
+          "teu": 127739,
+          "yoyPct": -8.2,
+          "sharePct": 6.5,
+          "cumTeu": 1261895,
+          "cumYoyPct": -4.6
         },
         {
           "name": "東南アジア 計",
-          "teu": 251551,
-          "yoyPct": 9.8,
-          "sharePct": 13.8,
-          "cumTeu": 1901474,
-          "cumYoyPct": 11.9
+          "teu": 237482,
+          "yoyPct": 13,
+          "sharePct": 12,
+          "cumTeu": 2138939,
+          "cumYoyPct": 12
         },
         {
           "name": "中華地域 計",
-          "teu": 1434248,
-          "yoyPct": -2.8,
-          "sharePct": 78.9,
-          "cumTeu": 11494249,
-          "cumYoyPct": 11.6
+          "teu": 1606080,
+          "yoyPct": 25.6,
+          "sharePct": 81.5,
+          "cumTeu": 13098246,
+          "cumYoyPct": 13.1
         }
       ],
       "hasCountryDetail": false
@@ -1092,8 +1092,8 @@
   },
   "crossCheck": {
     "checked": true,
-    "tradeTotalExport": 10953854342,
-    "commoditySum": 10953854342,
+    "tradeTotalExport": 11765500980,
+    "commoditySum": 11765500980,
     "diffPct": 0,
     "ok": true
   }

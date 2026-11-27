@@ -1,0 +1,12 @@
+{
+  "period": "2026-10",
+  "status": "unresolved",
+  "savedAt": "2026-11-27T03:10:21.982Z",
+  "unresolved": [
+    {
+      "section": "ocean",
+      "type": "deterministic",
+      "detail": "유보 문구 2건(상한 1)"
+    }
+  ]
+}
